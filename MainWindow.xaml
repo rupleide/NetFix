@@ -1,0 +1,1104 @@
+<Window x:Class="NetFix.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="NetFix" Height="680" Width="880"
+        MinHeight="580" MinWidth="760"
+        WindowStyle="None" AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="CanResize"
+        WindowStartupLocation="CenterScreen">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome ResizeBorderThickness="5" CaptionHeight="0"
+                      CornerRadius="0" GlassFrameThickness="0"
+                      UseAeroCaptionButtons="False"/>
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <!-- ═══ BRUSHES ═══ -->
+        <SolidColorBrush x:Key="BgBrush"      Color="#161616"/>
+        <SolidColorBrush x:Key="Bg2Brush"     Color="#1e1e1e"/>
+        <SolidColorBrush x:Key="Bg3Brush"     Color="#252525"/>
+        <SolidColorBrush x:Key="Bg4Brush"     Color="#2e2e2e"/>
+        <SolidColorBrush x:Key="BorderBrush_" Color="#333333"/>
+        <SolidColorBrush x:Key="TextBrush"    Color="#f0f0f0"/>
+        <SolidColorBrush x:Key="MutedBrush"   Color="#888888"/>
+        <SolidColorBrush x:Key="AccentBrush"  Color="#3b82f6"/>
+        <SolidColorBrush x:Key="GreenBrush"   Color="#22c55e"/>
+        <SolidColorBrush x:Key="YellowBrush"  Color="#eab308"/>
+        <SolidColorBrush x:Key="RedBrush"     Color="#ef4444"/>
+
+        <!-- ═══ FLAT BUTTON ═══ -->
+        <Style x:Key="FlatBtn" TargetType="Button">
+            <Setter Property="Background"   Value="Transparent"/>
+            <Setter Property="BorderBrush"  Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground"   Value="#888888"/>
+            <Setter Property="FontFamily"   Value="Segoe UI"/>
+            <Setter Property="FontSize"     Value="13"/>
+            <Setter Property="Cursor"       Value="Hand"/>
+            <Setter Property="Padding"      Value="12,6"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ═══ ACCENT BUTTON ═══ -->
+        <Style x:Key="AccentBtn" TargetType="Button">
+            <Setter Property="Background"   Value="#3b82f6"/>
+            <Setter Property="Foreground"   Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontFamily"   Value="Segoe UI"/>
+            <Setter Property="FontSize"     Value="13"/>
+            <Setter Property="Cursor"       Value="Hand"/>
+            <Setter Property="Padding"      Value="20,8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#2563eb"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ═══ OUTLINE BUTTON ═══ -->
+        <Style x:Key="OutlineBtn" TargetType="Button" BasedOn="{StaticResource FlatBtn}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="Transparent"
+                                BorderBrush="#333333" BorderThickness="1"
+                                CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#252525"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ═══ BACK BUTTON ═══ -->
+        <Style x:Key="BackBtn" TargetType="Button" BasedOn="{StaticResource FlatBtn}">
+            <Setter Property="Background" Value="#1e1e1e"/>
+            <Setter Property="BorderBrush" Value="#333333"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="#cccccc"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#2e2e2e"/>
+                                <Setter Property="Foreground" Value="#ffffff"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#252525"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ═══ BIG MAIN BUTTON ═══ -->
+        <Style x:Key="BigBtn" TargetType="Button">
+            <Setter Property="Background"      Value="#161625"/>
+            <Setter Property="Foreground"      Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontFamily"      Value="Segoe UI"/>
+            <Setter Property="FontSize"        Value="14"/>
+            <Setter Property="FontWeight"      Value="SemiBold"/>
+            <Setter Property="Width"           Value="170"/>
+            <Setter Property="Height"          Value="170"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <!-- Тёмный ореол — строго в границах 170x170 -->
+                            <Border x:Name="outerRing"
+                                    CornerRadius="85"
+                                    Background="#0a0a18"/>
+                            <!-- Основной круг кнопки -->
+                            <Border x:Name="bd"
+                                    CornerRadius="80"
+                                    Margin="10"
+                                    Background="{TemplateBinding Background}">
+                                <StackPanel HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Margin="0,6,0,0">
+                                    <TextBlock x:Name="BtnIcon"
+                                               Text="&#x23FB;"
+                                               FontSize="36"
+                                               Foreground="#7c6af7"
+                                               HorizontalAlignment="Center"
+                                               FontFamily="Segoe UI Symbol"
+                                               Margin="0,0,0,8"/>
+                                    <TextBlock x:Name="BtnLine1"
+                                               Text="Починить"
+                                               FontSize="13"
+                                               Foreground="#cccccc"
+                                               FontWeight="SemiBold"
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="BtnLine2"
+                                               Text="интернет"
+                                               FontSize="13"
+                                               Foreground="#cccccc"
+                                               FontWeight="SemiBold"
+                                               HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#1e1e38"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ═══ TOGGLE SWITCH (CheckBox) ═══ -->
+        <Style x:Key="Toggle" TargetType="CheckBox">
+            <Setter Property="Foreground"   Value="#f0f0f0"/>
+            <Setter Property="FontFamily"   Value="Segoe UI"/>
+            <Setter Property="FontSize"     Value="13"/>
+            <Setter Property="Cursor"       Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <StackPanel Orientation="Horizontal">
+                            <Border x:Name="track" Width="40" Height="22" CornerRadius="11"
+                                    Background="#333333" VerticalAlignment="Center" Margin="0,0,10,0">
+                                <Ellipse x:Name="thumb" Width="16" Height="16" Fill="White"
+                                         HorizontalAlignment="Left" VerticalAlignment="Center" Margin="3,0,0,0">
+                                    <Ellipse.RenderTransform>
+                                        <TranslateTransform x:Name="thumbTrans"/>
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
+                            </Border>
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="track" Property="Background" Value="#3b82f6"/>
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="thumbTrans"
+                                                             Storyboard.TargetProperty="X"
+                                                             To="18" Duration="0:0:0.12"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="thumbTrans"
+                                                             Storyboard.TargetProperty="X"
+                                                             To="0" Duration="0:0:0.12"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ═══ PROGRESS BAR ═══ -->
+        <Style TargetType="ProgressBar">
+            <Setter Property="Height"           Value="4"/>
+            <Setter Property="Background"       Value="#2e2e2e"/>
+            <Setter Property="Foreground"       Value="#3b82f6"/>
+            <Setter Property="BorderThickness"  Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="2">
+                            <Border x:Name="PART_Track" CornerRadius="2">
+                                <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}"
+                                        HorizontalAlignment="Left" CornerRadius="2"/>
+                            </Border>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ═══ INPUT TEXTBOX ═══ -->
+        <Style x:Key="InputBox" TargetType="TextBox">
+            <Setter Property="Background"       Value="#252525"/>
+            <Setter Property="Foreground"       Value="#f0f0f0"/>
+            <Setter Property="BorderBrush"      Value="#333333"/>
+            <Setter Property="BorderThickness"  Value="1"/>
+            <Setter Property="CaretBrush"       Value="#f0f0f0"/>
+            <Setter Property="FontFamily"       Value="Segoe UI"/>
+            <Setter Property="FontSize"         Value="12"/>
+            <Setter Property="Padding"          Value="8,6"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ═══ LOG BOX ═══ -->
+        <Style x:Key="LogBox" TargetType="RichTextBox">
+            <Setter Property="Background"       Value="#1e1e1e"/>
+            <Setter Property="Foreground"       Value="#cccccc"/>
+            <Setter Property="BorderBrush"      Value="#333333"/>
+            <Setter Property="BorderThickness"  Value="1"/>
+            <Setter Property="FontFamily"       Value="Consolas"/>
+            <Setter Property="FontSize"         Value="12"/>
+            <Setter Property="IsReadOnly"       Value="True"/>
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="HorizontalScrollBarVisibility" Value="Disabled"/>
+            <Setter Property="Padding"          Value="10"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RichTextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10" Padding="{TemplateBinding Padding}">
+                            <ScrollViewer x:Name="PART_ContentHost"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ═══ CLOSE BUTTON ═══ -->
+        <Style x:Key="CloseBtn" TargetType="Button" BasedOn="{StaticResource FlatBtn}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#ef4444"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#b91c1c"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ═══ SCROLLBAR (minimal) ═══ -->
+        <Style TargetType="ScrollBar">
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="Width" Value="10"/>
+            <!-- Даем невидимую зону для удобного клика мышкой -->
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Grid Background="{TemplateBinding Background}">
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <!-- Добавлены отступы сверху и снизу (Margin="0,4,2,4"), чтобы края не обрезались и были закругленными -->
+                                                <Border Background="#333333" CornerRadius="5" Width="5" HorizontalAlignment="Right" Margin="0,4,2,4"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0" Focusable="False"/>
+                                </Track.IncreaseRepeatButton>
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" Focusable="False"/>
+                                </Track.DecreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- ROOT                                                                -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <Border Background="#161616" x:Name="RootBorder" CornerRadius="12" BorderBrush="#333333" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="54"/>
+                <!-- Header  -->
+                <RowDefinition Height="*"/>
+                <!-- Content -->
+                <RowDefinition Height="42"/>
+                <!-- Footer  -->
+            </Grid.RowDefinitions>
+
+            <!-- ══════════════════ HEADER ══════════════════ -->
+            <Border Grid.Row="0" Background="#1e1e1e" CornerRadius="11,11,0,0"
+                    MouseLeftButtonDown="Header_Drag">
+                <Grid Margin="18,0,12,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Logo + status -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="NetFix" FontFamily="Segoe UI" FontSize="18"
+                                   FontWeight="Bold" Foreground="White"/>
+                        <TextBlock Text="  by rupleide" FontFamily="Segoe UI" FontSize="11"
+                                   Foreground="#888888" VerticalAlignment="Center" Margin="0,0,15,0"/>
+
+                        <!-- Net Status -->
+                        <Ellipse x:Name="NetDot" Width="8" Height="8" Fill="#888888" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="NetLbl" Text="Сеть" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
+                                   Foreground="#888888" VerticalAlignment="Center" Margin="5,0,15,0"/>
+
+                        <!-- VPN Status -->
+                        <Ellipse x:Name="VpnDot" Width="8" Height="8" Fill="#888888" VerticalAlignment="Center"/>
+                        <TextBlock Text="VPN" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
+                                   Foreground="#888888" VerticalAlignment="Center" Margin="5,0,15,0"/>
+
+                        <!-- Zapret Status -->
+                        <Ellipse x:Name="ZapretDot" Width="8" Height="8" Fill="#888888" VerticalAlignment="Center"/>
+                        <TextBlock Text="Zapret" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
+                                   Foreground="#888888" VerticalAlignment="Center" Margin="5,0,15,0"/>
+
+                        <!-- TgWsProxy Status -->
+                        <Ellipse x:Name="TgWsDot" Width="8" Height="8" Fill="#888888" VerticalAlignment="Center"/>
+                        <TextBlock Text="TgWsProxy" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
+                                   Foreground="#888888" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                    </StackPanel>
+
+                    <!-- Nav + window controls -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+
+                        <Button x:Name="ServicesBtn" Content="⚡  Сервисы"
+        Style="{StaticResource FlatBtn}"
+        Foreground="#888888" FontSize="13"
+        Padding="12,6" Margin="0,0,10,0"
+        WindowChrome.IsHitTestVisibleInChrome="True"
+        Click="ServicesBtn_Click"/>
+<Button x:Name="FaqNavBtn" Content="Частые вопросы"
+        Style="{StaticResource FlatBtn}" Foreground="#888888"
+        Padding="12,6" Margin="0,0,10,0"
+        WindowChrome.IsHitTestVisibleInChrome="True"
+        Click="FaqNavBtn_Click"/>
+<Button x:Name="DiagNavBtn" Content="Диагностика"
+        Style="{StaticResource FlatBtn}" Foreground="#888888"
+        Padding="12,6" Margin="0,0,10,0"
+        WindowChrome.IsHitTestVisibleInChrome="True"
+        Click="DiagNavBtn_Click"/>
+
+                        <Button Style="{StaticResource FlatBtn}"
+                                Width="36" Padding="0"
+                                WindowChrome.IsHitTestVisibleInChrome="True"
+                                Click="SettingsBtn_Click" Margin="4,0,0,0">
+                            <Path Width="16" Height="16" Stretch="Uniform" 
+                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+                                  Data="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+                        </Button>
+
+                        <!-- Window controls -->
+                        <Button Content="−" Style="{StaticResource FlatBtn}"
+                                Width="34" Padding="0" FontSize="14"
+                                WindowChrome.IsHitTestVisibleInChrome="True"
+                                Click="MinBtn_Click" Margin="10,0,0,0"/>
+                        <Button Content="✕" Style="{StaticResource CloseBtn}"
+                                Width="34" Padding="0" FontSize="13"
+                                WindowChrome.IsHitTestVisibleInChrome="True"
+                                Click="CloseBtn_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ══════════════════ CONTENT ══════════════════ -->
+            <Grid Grid.Row="1" x:Name="ContentGrid">
+
+                <!-- ── MAIN PAGE ── -->
+                <ScrollViewer x:Name="MainPage" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="32,24,32,24">
+
+                        <!-- Title -->
+                        <TextBlock Text="⚡  Починить Telegram и Discord"
+                                   FontFamily="Segoe UI" FontSize="22" FontWeight="Bold"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center"
+                                   TextAlignment="Center"
+                                   Margin="0,0,0,4"/>
+                        <TextBlock Text="Одна кнопка — скачает, настроит и запустит всё необходимое."
+                                   FontFamily="Segoe UI" FontSize="13" Foreground="#888888"
+                                   HorizontalAlignment="Center"
+                                   TextAlignment="Center"
+                                   Margin="0,0,0,24"/>
+
+                        <!-- Round power button — enhanced animation system -->
+                        <Grid HorizontalAlignment="Center" Width="200" Height="200" Margin="0,0,0,8">
+
+                            <Button x:Name="FixBtn" Content=""
+                                    Style="{StaticResource BigBtn}"
+                                    WindowChrome.IsHitTestVisibleInChrome="True"
+                                    Click="FixBtn_Click"/>
+
+                            <!-- Idle: статические кольца -->
+                            <Ellipse x:Name="IdleRingOuter" Width="188" Height="188"
+                                     Stroke="#3b82f6" StrokeThickness="2.5" Fill="Transparent"
+                                     IsHitTestVisible="False" Opacity="0.5"/>
+                            <Ellipse x:Name="IdleRingInner" Width="174" Height="174"
+                                     Stroke="#3b82f6" StrokeThickness="0.8"
+                                     StrokeDashArray="6 8" Fill="Transparent"
+                                     IsHitTestVisible="False" Opacity="0.2"/>
+
+                            <!-- Loading: пульсирующие гало -->
+                            <Ellipse x:Name="PulseRing1" Width="180" Height="180"
+                                     Stroke="#5b8df5" StrokeThickness="6" Fill="Transparent"
+                                     IsHitTestVisible="False" Visibility="Collapsed" Opacity="0.15"
+                                     RenderTransformOrigin="0.5,0.5">
+                                <Ellipse.RenderTransform>
+                                    <ScaleTransform x:Name="PulseScale1" ScaleX="1" ScaleY="1"/>
+                                </Ellipse.RenderTransform>
+                            </Ellipse>
+                            <Ellipse x:Name="PulseRing2" Width="210" Height="210"
+                                     Stroke="#5b8df5" StrokeThickness="4" Fill="Transparent"
+                                     IsHitTestVisible="False" Visibility="Collapsed" Opacity="0.08"
+                                     RenderTransformOrigin="0.5,0.5">
+                                <Ellipse.RenderTransform>
+                                    <ScaleTransform x:Name="PulseScale2" ScaleX="1" ScaleY="1"/>
+                                </Ellipse.RenderTransform>
+                            </Ellipse>
+
+                            <!-- Loading: спиннер 1 (синий, по часовой) -->
+                            <Ellipse x:Name="SpinArc" Width="188" Height="188"
+                                     Stroke="#5b8df5" StrokeThickness="3"
+                                     StrokeDashArray="200 430" StrokeDashCap="Round"
+                                     Fill="Transparent" RenderTransformOrigin="0.5,0.5"
+                                     IsHitTestVisible="False" Visibility="Collapsed">
+                                <Ellipse.RenderTransform>
+                                    <TransformGroup>
+                                        <RotateTransform x:Name="SpinRotation" Angle="-90"/>
+                                        <RotateTransform x:Name="SpinOffset" Angle="0"/>
+                                    </TransformGroup>
+                                </Ellipse.RenderTransform>
+                            </Ellipse>
+
+                            <!-- Loading: спиннер 2 (фиолетовый, против часовой) -->
+                            <Ellipse x:Name="SpinArc2" Width="174" Height="174"
+                                     Stroke="#7c6af7" StrokeThickness="2"
+                                     StrokeDashArray="80 550" StrokeDashCap="Round"
+                                     Fill="Transparent" RenderTransformOrigin="0.5,0.5"
+                                     IsHitTestVisible="False" Visibility="Collapsed">
+                                <Ellipse.RenderTransform>
+                                    <TransformGroup>
+                                        <RotateTransform Angle="60"/>
+                                        <RotateTransform x:Name="SpinRotation2" Angle="0"/>
+                                    </TransformGroup>
+                                </Ellipse.RenderTransform>
+                            </Ellipse>
+
+                            <!-- Success: заполняющаяся дуга -->
+                            <Ellipse x:Name="SuccessArc" Width="188" Height="188"
+                                     Stroke="#22c55e" StrokeThickness="3" StrokeDashCap="Round"
+                                     Fill="Transparent" RenderTransformOrigin="0.5,0.5"
+                                     IsHitTestVisible="False" Visibility="Collapsed">
+                                <Ellipse.RenderTransform>
+                                    <RotateTransform Angle="-90"/>
+                                </Ellipse.RenderTransform>
+                            </Ellipse>
+
+                            <!-- Success: галочка -->
+                            <Border x:Name="SuccessCheck" 
+                                    Background="#22c55e" CornerRadius="12"
+                                    Width="24" Height="24" IsHitTestVisible="False"
+                                    Visibility="Collapsed" HorizontalAlignment="Right"
+                                    VerticalAlignment="Top" Margin="0,30,30,0"
+                                    RenderTransformOrigin="0.5,0.5">
+                                <Border.RenderTransform>
+                                    <ScaleTransform x:Name="SuccessCheckScale" ScaleX="0" ScaleY="0"/>
+                                </Border.RenderTransform>
+                                <TextBlock Text="✓" Foreground="White" FontSize="14"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           FontWeight="Bold"/>
+                            </Border>
+
+                            <!-- Error: красное пунктирное кольцо -->
+                            <Ellipse x:Name="ErrorRing" Width="188" Height="188"
+                                     Stroke="#ef4444" StrokeThickness="2.5"
+                                     StrokeDashArray="12 8" Fill="Transparent"
+                                     IsHitTestVisible="False" Visibility="Collapsed" Opacity="0.7"/>
+
+                            <!-- Совместимость со старым кодом -->
+                            <Border x:Name="GlowOuter" Visibility="Collapsed"/>
+                            <Border x:Name="GlowMid"   Visibility="Collapsed"/>
+                            <Border x:Name="GlowInner" Visibility="Collapsed"/>
+                        </Grid>
+
+                        <!-- Progress -->
+                        <ProgressBar x:Name="SetupProg" Value="0" Maximum="100" Margin="0,16,0,0"/>
+                        <TextBlock x:Name="SetupProgLbl" Text="" FontSize="12"
+                                   Foreground="#888888" Margin="0,5,0,0"/>
+
+                        <!-- Separator -->
+                        <Border Height="1" Background="#333333" Margin="0,24,0,0"/>
+
+                        <!-- Log header -->
+                        <Grid Margin="0,16,0,0">
+                            <TextBlock Text="Лог" FontFamily="Segoe UI" FontSize="13"
+                                       FontWeight="Bold" Foreground="#888888" VerticalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="Скопировать" Style="{StaticResource FlatBtn}" FontSize="11"
+                                        Height="24" Padding="8,2" Margin="0,0,8,0"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="CopyLog_Click"/>
+                                <Button Content="Очистить" Style="{StaticResource FlatBtn}" FontSize="11"
+                                        Height="24" Padding="8,2"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="ClearLog_Click"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Log box -->
+                        <RichTextBox x:Name="LogBox" Style="{StaticResource LogBox}"
+                                     Height="270" Margin="0,8,0,16">
+                            <FlowDocument PagePadding="0"/>
+                        </RichTextBox>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- ── FAQ PAGE ── -->
+                <!-- ── FAQ PAGE ── -->
+                <Grid x:Name="FaqPage" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="32,20,32,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Button x:Name="FaqBackBtn" Content="← Назад" Style="{StaticResource BackBtn}"
+                                    WindowChrome.IsHitTestVisibleInChrome="True"
+                                    Click="FaqBackBtn_Click"/>
+                            <TextBlock x:Name="FaqHeaderTitle" Text="Частые вопросы" FontFamily="Segoe UI" FontSize="18"
+                                       FontWeight="Bold" Foreground="White"
+                                       VerticalAlignment="Center" Margin="16,0,0,0"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Grid.Row="1" Height="1" Background="#333333" Margin="32,14,32,0"/>
+
+                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="32,14,32,0">
+                        <StackPanel x:Name="FaqContainer" Margin="0,0,0,20"/>
+                    </ScrollViewer>
+                </Grid>
+
+                <!-- ── SOLUTION PAGE ── -->
+                <Grid x:Name="SolutionPage" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Title bar -->
+                    <Grid Grid.Row="0" Margin="32,20,32,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="← Назад" Style="{StaticResource BackBtn}"
+                                    WindowChrome.IsHitTestVisibleInChrome="True"
+                                    Click="BackFromSolution_Click"/>
+                            <TextBlock x:Name="SolutionTitle" Text="Решение проблемы" FontFamily="Segoe UI" FontSize="18"
+                                       FontWeight="Bold" Foreground="White"
+                                       VerticalAlignment="Center" Margin="16,0,0,0"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Grid.Row="1" Height="1" Background="#333333" Margin="32,14,32,0"/>
+
+                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="32,14,32,0">
+                        <StackPanel Margin="0,0,0,32">
+                            <!-- Auto -->
+                            <TextBlock Text="Автоматическое решение" FontFamily="Segoe UI" FontSize="15"
+                                       FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
+                            <Button x:Name="SolutionAutoFixBtn" Content="⚡ Исправить в один клик"
+                                    Style="{StaticResource AccentBtn}" HorizontalAlignment="Left"
+                                    WindowChrome.IsHitTestVisibleInChrome="True"
+                                    Click="SolutionAutoFixBtn_Click" Margin="0,0,0,24"/>
+
+                            <Border Height="1" Background="#333333" Margin="0,0,0,24"/>
+
+                            <!-- Manual -->
+                            <TextBlock Text="Ручное решение" FontFamily="Segoe UI" FontSize="15"
+                                       FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
+                            <TextBlock x:Name="SolutionManualText" Text="..."
+                                       FontFamily="Segoe UI" FontSize="13" Foreground="#f0f0f0"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+
+                <!-- ── DIAGNOSTICS PAGE ── -->
+                <Grid x:Name="DiagPage" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Title bar -->
+                    <Grid Grid.Row="0" Margin="32,20,32,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="← Назад" Style="{StaticResource BackBtn}"
+                                    WindowChrome.IsHitTestVisibleInChrome="True"
+                                    Click="BackBtn_Click"/>
+                            <TextBlock Text="Диагностика" FontFamily="Segoe UI" FontSize="18"
+                                       FontWeight="Bold" Foreground="White"
+                                       VerticalAlignment="Center" Margin="16,0,0,0"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Run button + progress -->
+                    <StackPanel Grid.Row="1" Margin="32,14,32,0">
+                        <Button x:Name="DiagRunBtn" Content="🔍  Запустить проверку"
+                                Style="{StaticResource AccentBtn}" HorizontalAlignment="Left"
+                                WindowChrome.IsHitTestVisibleInChrome="True"
+                                Click="DiagRunBtn_Click"/>
+                        <ProgressBar x:Name="DiagProg" Value="0" Maximum="100" Margin="0,12,0,0"/>
+                        <TextBlock x:Name="DiagProgLbl" Text="" FontSize="12"
+                                   Foreground="#888888" Margin="0,5,0,0"/>
+                    </StackPanel>
+
+                    <Border Grid.Row="2" Height="1" Background="#333333" Margin="32,14,32,0"/>
+
+                    <!-- Results -->
+                    <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" Margin="32,14,32,0">
+                        <StackPanel x:Name="DiagResults"/>
+                    </ScrollViewer>
+                </Grid>
+
+                <!-- ── NO INTERNET OVERLAY ── -->
+                <Border x:Name="NoInternetPage" Visibility="Collapsed" Background="#161616" Panel.ZIndex="5">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="🔌" FontSize="52" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Нет подключения к интернету"
+                                   FontFamily="Segoe UI" FontSize="20" FontWeight="Bold"
+                                   Foreground="White" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+                        <TextBlock Text="Подключитесь к сети и нажмите «Проверить снова»."
+                                   FontFamily="Segoe UI" FontSize="13" Foreground="#888888"
+                                   HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                        <Button Content="Проверить снова" Style="{StaticResource AccentBtn}"
+                                HorizontalAlignment="Center" Margin="0,24,0,0"
+                                WindowChrome.IsHitTestVisibleInChrome="True"
+                                Click="RetryNet_Click"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ══════════════════ FOOTER ══════════════════ -->
+            <Border Grid.Row="2" Background="#1e1e1e" CornerRadius="0,0,11,11">
+                <Grid Margin="18,0,12,0">
+                    <TextBlock Text="by RuBi — rupleide" FontFamily="Segoe UI" FontSize="11"
+                               Foreground="#888888" VerticalAlignment="Center"/>
+                    <Button Content="☕ Поддержать разработку" HorizontalAlignment="Right"
+                            Style="{StaticResource FlatBtn}" FontSize="11"
+                            WindowChrome.IsHitTestVisibleInChrome="True"
+                            VerticalAlignment="Center"
+                            Click="DonateBtn_Click"/>
+                </Grid>
+            </Border>
+
+            <!-- ══════════════════ SETTINGS OVERLAY ══════════════════ -->
+            <Grid Grid.Row="0" Grid.RowSpan="3" x:Name="SettingsLayer"
+                  Visibility="Collapsed" Panel.ZIndex="10">
+                <!-- Backdrop -->
+                <Rectangle x:Name="SettingsBackdrop" Fill="Black" Opacity="0"
+                           MouseLeftButtonDown="SettingsBackdrop_Click"/>
+
+                <!-- Slide-in panel -->
+                <Border x:Name="SettingsPanel" Width="370" HorizontalAlignment="Right"
+                        Background="#1e1e1e" CornerRadius="12,0,0,12" BorderBrush="#333333" BorderThickness="1,0,0,0">
+                    <Border.RenderTransform>
+                        <TranslateTransform x:Name="SettingsTrans" X="370"/>
+                    </Border.RenderTransform>
+
+                    <DockPanel>
+                        <!-- Settings header -->
+                        <Border DockPanel.Dock="Top" Height="54" BorderBrush="#333333" BorderThickness="0,0,0,1">
+                            <Grid Margin="20,0">
+                                <TextBlock Text="Настройки" FontFamily="Segoe UI" FontSize="15"
+                                           FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                                <Button Content="✕" HorizontalAlignment="Right"
+                                        Style="{StaticResource FlatBtn}" FontSize="14" Padding="0" Width="34"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="SettingsCloseBtn_Click"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Settings body -->
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="20,16,20,24">
+
+                                <TextBlock Text="ПУТИ К ФАЙЛАМ" FontFamily="Segoe UI" FontSize="11"
+                                           Foreground="#888888" FontWeight="Bold" Margin="0,0,0,10"/>
+
+                                <!-- Zapret -->
+                                <TextBlock Text="Zapret (winws.exe / service.bat)" FontSize="12"
+                                           Foreground="#f0f0f0" Margin="0,0,0,4"/>
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="38"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="ZapretBox" Style="{StaticResource InputBox}" Height="32"
+         HorizontalScrollBarVisibility="Hidden"
+         TextAlignment="Left"
+         Padding="8,0,8,0"/>
+                                    <Button Grid.Column="1" Content="…" Style="{StaticResource OutlineBtn}"
+                                            Height="32" Padding="0" Margin="4,0,0,0" FontSize="14"
+                                            WindowChrome.IsHitTestVisibleInChrome="True"
+                                            Click="BrowseZapret_Click"/>
+                                </Grid>
+
+                                <!-- tg-ws-proxy -->
+                                <TextBlock Text="tg-ws-proxy (.exe)" FontSize="12"
+                                           Foreground="#f0f0f0" Margin="0,0,0,4"/>
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="38"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="TgWsBox" Style="{StaticResource InputBox}" Height="32"
+         HorizontalScrollBarVisibility="Hidden"
+         TextAlignment="Left"
+         Padding="8,0,8,0"/>
+                                    <Button Grid.Column="1" Content="…" Style="{StaticResource OutlineBtn}"
+                                            Height="32" Padding="0" Margin="4,0,0,0" FontSize="14"
+                                            WindowChrome.IsHitTestVisibleInChrome="True"
+                                            Click="BrowseTgWs_Click"/>
+                                </Grid>
+
+                                <!-- GoodbyeDPI -->
+                                <TextBlock Text="GoodbyeDPI (.exe)" FontSize="12"
+                                           Foreground="#f0f0f0" Margin="0,0,0,4"/>
+                                <Grid Margin="0,0,0,20">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="38"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="GdpiBox" Style="{StaticResource InputBox}" Height="32"
+         HorizontalScrollBarVisibility="Hidden"
+         TextAlignment="Left"
+         Padding="8,0,8,0"/>
+                                    <Button Grid.Column="1" Content="…" Style="{StaticResource OutlineBtn}"
+                                            Height="32" Padding="0" Margin="4,0,0,0" FontSize="14"
+                                            WindowChrome.IsHitTestVisibleInChrome="True"
+                                            Click="BrowseGdpi_Click"/>
+                                </Grid>
+
+                                <Border Height="1" Background="#333333" Margin="0,0,0,16"/>
+                                <TextBlock Text="АВТОЗАПУСК" FontFamily="Segoe UI" FontSize="11"
+                                           Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
+
+                                <CheckBox x:Name="AutoTgWsCB" Style="{StaticResource Toggle}"
+                                          Content="tg-ws-proxy в автозапуск Windows" Margin="0,0,0,10"/>
+                                <CheckBox x:Name="AutoAppCB" Style="{StaticResource Toggle}"
+                                          Content="NetFix в автозапуск Windows" Margin="0,0,0,20"/>
+
+                                <Border Height="1" Background="#333333" Margin="0,0,0,16"/>
+                                <TextBlock Text="ПРОЧЕЕ" FontFamily="Segoe UI" FontSize="11"
+                                           Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
+
+                                <CheckBox x:Name="NotifyCB" Style="{StaticResource Toggle}"
+                                          Content="Уведомлять о проблемах" Margin="0,0,0,10"/>
+                                <CheckBox x:Name="AutoUpdatesCB" Style="{StaticResource Toggle}"
+                                          Content="Автоматические обновления" Margin="0,0,0,20"/>
+
+                                <Button Content="Проверить обновления" Style="{StaticResource OutlineBtn}"
+                                        HorizontalAlignment="Stretch" Padding="12,8" Margin="0,0,0,20"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="CheckUpdateBtn_Click"/>
+
+                                <Button Content="Сохранить" Style="{StaticResource AccentBtn}"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="SaveSettings_Click"/>
+
+                                <Border Height="1" Background="#333333" Margin="0,20"/>
+                                <TextBlock Text="🚀 БУДУЩЕЕ ПРОЕКТА И ПОДДЕРЖКА" FontFamily="Segoe UI" FontSize="11"
+                                           Foreground="#888888" FontWeight="Bold" Margin="0,0,0,10"/>
+                                <TextBlock Text="Нравится, как всё работает? Ты можешь поддержать разработку! В планах — реализовать такое же приложение на телефон с полным функционалом, потому что на мобилках сейчас такая же беда с интернетом.&#x0a;Если хочешь помочь финансово — жми на кнопку ниже. А если ты шаришь в коде и хочешь вписаться в разработку напрямую — пиши мне в личку, обсудим."
+                                           Foreground="#f0f0f0" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                                <Button Content="☕ Задонатить / Поддержать"
+                                        Style="{StaticResource AccentBtn}" HorizontalAlignment="Stretch" Padding="12,8" Margin="0,0,0,6"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="DonateBtn_Click"/>
+                                <Button Content="✉ Написать в телеграм"
+                                        Style="{StaticResource OutlineBtn}" HorizontalAlignment="Stretch" Padding="12,8" Margin="0,0,0,16" Foreground="#f0f0f0"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="SupportBtn_Click"/>
+
+                                <Border Height="1" Background="#333333" Margin="0,20"/>
+                                <TextBlock Text="О ПРИЛОЖЕНИИ" FontFamily="Segoe UI" FontSize="11"
+                                           Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
+                                <TextBlock TextWrapping="Wrap" FontFamily="Segoe UI" FontSize="12"
+                                           Foreground="#f0f0f0" Margin="0,0,0,8"
+                                           Text="NetFix создан rupleide как удобная оболочка для настройки интернета на Windows. Интерфейс, логика приложения, кнопки и весь дизайн — авторская работа."/>
+                                <TextBlock TextWrapping="Wrap" FontFamily="Segoe UI" FontSize="12"
+                                           Foreground="#f0f0f0" Margin="0,0,0,8"
+                                           Text="Zapret и tg-ws-proxy — инструменты разработчика Flowseal. Я не претендую на авторство этих утилит и лишь использую их как основу. Вся заслуга по обходу блокировок принадлежит ему."/>
+                                <TextBlock TextWrapping="Wrap" FontFamily="Segoe UI" FontSize="12"
+                                           Foreground="#f0f0f0" Margin="0,0,0,0"
+                                           Text="Цель NetFix — сделать настройку простой и понятной для любого пользователя."/>
+
+                                <Border Height="1" Background="#333333" Margin="0,20"/>
+                                <TextBlock Text="ССЫЛКИ" FontFamily="Segoe UI" FontSize="11"
+                                           Foreground="#888888" FontWeight="Bold" Margin="0,0,0,10"/>
+
+                                <Button Content="↗ Zapret на GitHub" HorizontalAlignment="Left"
+                                        Style="{StaticResource FlatBtn}" Foreground="#3b82f6"
+                                        FontSize="12" Padding="0,4"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="LinkZapret_Click"/>
+                                <Button Content="↗ tg-ws-proxy на GitHub" HorizontalAlignment="Left"
+                                        Style="{StaticResource FlatBtn}" Foreground="#3b82f6"
+                                        FontSize="12" Padding="0,4"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="LinkTgWs_Click"/>
+                                <Button Content="↗ GoodbyeDPI на GitHub" HorizontalAlignment="Left"
+                                        Style="{StaticResource FlatBtn}" Foreground="#3b82f6"
+                                        FontSize="12" Padding="0,4"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="LinkGdpi_Click"/>
+
+                                <Border Height="1" Background="#333333" Margin="0,16"/>
+                                <TextBlock Text="СБРОС" FontFamily="Segoe UI" FontSize="11"
+                                           Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
+                                <Button Content="↩ Пройти онбординг заново"
+                                        Style="{StaticResource OutlineBtn}" HorizontalAlignment="Stretch"
+                                        Padding="12,8" Margin="0,0,0,6" Foreground="#888888"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="ReOnboard_Click"/>
+                                <Button Content="Сбросить все настройки"
+                                        Style="{StaticResource OutlineBtn}" HorizontalAlignment="Stretch"
+                                        Padding="12,8" Foreground="#ef4444"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="ResetSettings_Click"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+            </Grid>
+
+            <!-- ══════════════════ ZAPRET WIZARD OVERLAY ══════════════════ -->
+            <Grid Grid.Row="0" Grid.RowSpan="3" x:Name="WizardLayer"
+                  Visibility="Collapsed" Panel.ZIndex="15">
+                <Rectangle x:Name="WizardBackdrop" Fill="Black" Opacity="0.6"/>
+                <Border Width="370" HorizontalAlignment="Right"
+                        Background="#1e1e1e" CornerRadius="12,0,0,12" BorderBrush="#333333" BorderThickness="1,0,0,0">
+                    <Border.RenderTransform>
+                        <TranslateTransform x:Name="WizardTrans" X="370"/>
+                    </Border.RenderTransform>
+                    <DockPanel>
+                        <Border DockPanel.Dock="Top" Height="54" BorderBrush="#333333" BorderThickness="0,0,0,1">
+                            <Grid Margin="20,0">
+                                <TextBlock Text="Мастер настройки Zapret" FontFamily="Segoe UI" FontSize="15"
+                                           FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                                <Button Content="✕" HorizontalAlignment="Right"
+                                        Style="{StaticResource FlatBtn}" FontSize="14" Padding="0" Width="34"
+                                        Click="WizardCloseBtn_Click"/>
+                            </Grid>
+                        </Border>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="WizardContent" Margin="20,20,20,24"/>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+            </Grid>
+
+            <!-- ══════════════════ ONBOARDING OVERLAY ══════════════════ -->
+            <Border Grid.Row="0" Grid.RowSpan="3" x:Name="OnboardLayer"
+                  Visibility="Collapsed" Background="#161616" CornerRadius="12" ClipToBounds="True" Panel.ZIndex="20">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <!-- Content injected from code-behind -->
+                    <ContentControl x:Name="OnboardContent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                </Grid>
+            </Border>
+
+            <!-- ══════════════════ SERVICES PANEL ══════════════════ -->
+            <Grid Grid.Row="0" Grid.RowSpan="3" x:Name="ServicesLayer"
+                  Visibility="Collapsed" Panel.ZIndex="14">
+                <Rectangle Fill="Black" Opacity="0.4"
+                           MouseLeftButtonDown="ServicesBackdrop_Click"/>
+                <Border x:Name="ServicesPanel" Width="300"
+                        HorizontalAlignment="Right"
+                        Background="#1e1e1e" CornerRadius="12,0,0,12"
+                        BorderBrush="#333333" BorderThickness="1,0,0,0">
+                    <Border.RenderTransform>
+                        <TranslateTransform x:Name="ServicesTrans" X="300"/>
+                    </Border.RenderTransform>
+                    <DockPanel>
+
+                        <!-- Заголовок -->
+                        <Border DockPanel.Dock="Top" Height="54"
+                                BorderBrush="#333333" BorderThickness="0,0,0,1">
+                            <Grid Margin="20,0">
+                                <TextBlock Text="Управление сервисами"
+                                           FontFamily="Segoe UI" FontSize="15"
+                                           FontWeight="Bold" Foreground="White"
+                                           VerticalAlignment="Center"/>
+                                <Button Content="✕" HorizontalAlignment="Right"
+                                        Style="{StaticResource FlatBtn}"
+                                        FontSize="14" Padding="0" Width="34"
+                                        Click="ServicesCloseBtn_Click"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Контент -->
+                        <StackPanel Margin="20,20,20,24">
+
+                            <!-- Zapret -->
+                            <Border Background="#252525" CornerRadius="12"
+                                    BorderBrush="#333333" BorderThickness="1"
+                                    Padding="16,14" Margin="0,0,0,10">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="38" Height="38" CornerRadius="10"
+                                            Background="#1a2a3a" Margin="0,0,12,0"
+                                            VerticalAlignment="Center">
+                                        <TextBlock Text="Z" FontFamily="Segoe UI"
+                                                   FontSize="17" FontWeight="Bold"
+                                                   Foreground="#3b82f6"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="Zapret"
+                                                   FontFamily="Segoe UI" FontSize="13"
+                                                   FontWeight="SemiBold" Foreground="White"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                            <Ellipse x:Name="ZapretDot2" Width="6" Height="6"
+                                                     Fill="#888888" VerticalAlignment="Center"
+                                                     Margin="0,0,5,0"/>
+                                            <TextBlock x:Name="ZapretStatusLbl"
+                                                       Text="Не запущен"
+                                                       FontFamily="Segoe UI" FontSize="11"
+                                                       Foreground="#888888"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <Button x:Name="ZapretToggleBtn" Grid.Column="2"
+                                            Content="▶  Запустить"
+                                            Style="{StaticResource AccentBtn}"
+                                            Padding="12,7" FontSize="12"
+                                            WindowChrome.IsHitTestVisibleInChrome="True"
+                                            Click="ZapretToggle_Click"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- tg-ws-proxy -->
+                            <Border Background="#252525" CornerRadius="12"
+                                    BorderBrush="#333333" BorderThickness="1"
+                                    Padding="16,14">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="38" Height="38" CornerRadius="10"
+                                            Background="#1a2a3a" Margin="0,0,12,0"
+                                            VerticalAlignment="Center">
+                                        <TextBlock Text="T" FontFamily="Segoe UI"
+                                                   FontSize="17" FontWeight="Bold"
+                                                   Foreground="#3b82f6"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="tg-ws-proxy"
+                                                   FontFamily="Segoe UI" FontSize="13"
+                                                   FontWeight="SemiBold" Foreground="White"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                            <Ellipse x:Name="TgWsDot2" Width="6" Height="6"
+                                                     Fill="#888888" VerticalAlignment="Center"
+                                                     Margin="0,0,5,0"/>
+                                            <TextBlock x:Name="TgWsStatusLbl"
+                                                       Text="Не запущен"
+                                                       FontFamily="Segoe UI" FontSize="11"
+                                                       Foreground="#888888"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <Button x:Name="TgWsToggleBtn" Grid.Column="2"
+                                            Content="▶  Запустить"
+                                            Style="{StaticResource AccentBtn}"
+                                            Padding="12,7" FontSize="12"
+                                            WindowChrome.IsHitTestVisibleInChrome="True"
+                                            Click="TgWsToggle_Click"/>
+                                </Grid>
+                            </Border>
+
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

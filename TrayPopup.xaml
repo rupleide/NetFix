@@ -1,0 +1,63 @@
+<Window x:Class="NetFix.TrayPopup"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None" AllowsTransparency="True"
+        Background="Transparent" Topmost="True"
+        ShowInTaskbar="False" SizeToContent="WidthAndHeight"
+        Deactivated="OnDeactivated">
+
+    <Border Background="#1e1e1e" CornerRadius="12"
+            BorderBrush="#333333" BorderThickness="1"
+            Padding="6">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="20" ShadowDepth="0"
+                              Color="Black" Opacity="0.6"/>
+        </Border.Effect>
+        <StackPanel Width="180">
+
+            <!-- Заголовок -->
+            <Border Padding="14,10,14,10">
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="8" Height="8" Fill="#22c55e"
+                             VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="NetFix" Foreground="#f0f0f0"
+                               FontFamily="Segoe UI" FontSize="13"
+                               FontWeight="SemiBold"/>
+                </StackPanel>
+            </Border>
+
+            <Border Height="1" Background="#2a2a2a" Margin="8,0"/>
+
+            <!-- Открыть -->
+            <Border x:Name="OpenBtn" CornerRadius="8" Margin="4,4,4,2"
+                    Padding="12,10" Cursor="Hand"
+                    IsHitTestVisible="True" Background="Transparent"
+                    MouseEnter="OpenBtn_Hover" MouseLeave="OpenBtn_Leave"
+                    MouseLeftButtonUp="OpenBtn_Click">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE8AF;" FontFamily="Segoe MDL2 Assets"
+                               FontSize="13" Foreground="#3b82f6"
+                               VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBlock Text="Открыть" Foreground="#f0f0f0"
+                               FontFamily="Segoe UI" FontSize="13"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Выйти -->
+            <Border x:Name="ExitBtn" CornerRadius="8" Margin="4,2,4,4"
+                    Padding="12,10" Cursor="Hand"
+                    IsHitTestVisible="True" Background="Transparent"
+                    MouseEnter="ExitBtn_Hover" MouseLeave="ExitBtn_Leave"
+                    MouseLeftButtonUp="ExitBtn_Click">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE7E8;" FontFamily="Segoe MDL2 Assets"
+                               FontSize="13" Foreground="#ef4444"
+                               VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBlock Text="Выйти" Foreground="#ef4444"
+                               FontFamily="Segoe UI" FontSize="13"/>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </Border>
+</Window>
