@@ -36,6 +36,13 @@
 | 🚀 GitHub (рекомендуется) | **[Скачать последнюю версию](https://github.com/rupleide/NetFix/releases/latest)** |
 | ☁️ Google Drive (зеркало) | **[Открыть зеркало](https://drive.google.com/file/d/1djW9sOeUevblH1OM--PSFI8RwZl16Rwx/view?usp=sharing)** |
 
+</div>
+
+### 📋 Системные требования:
+*   **ОС:** Windows 10 / 11 (x64).
+*   **Права:** Запуск от имени **администратора** (необходимо для работы драйвера WinDivert).
+*   **Среда:** Наличие **[.NET Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)** (если вы скачали версию приложения, которая не является Self-contained).
+
 ---
 
 </div>
