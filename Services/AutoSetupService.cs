@@ -52,7 +52,7 @@ public static class AutoSetupService
         // Step 3 — Zapret
         if (string.IsNullOrEmpty(settings.ZapretPath) || !File.Exists(settings.ZapretPath))
         {
-            log($"Нахожу Zapret {zapretVer}…", "info");
+            log($"Нахожу Zapret {(string.IsNullOrEmpty(zapretVer) ? "последнюю версию" : zapretVer)}…", "info");
             log($"Откройте в браузере и скачайте архив для Windows:\nhttps://github.com/{ZapretRepo}/releases/latest", "link");
             log("⏳ После скачивания укажите путь в Настройках → Пути к файлам", "warn");
         }
@@ -70,7 +70,7 @@ public static class AutoSetupService
         // Step 4 — tg-ws-proxy
         if (string.IsNullOrEmpty(settings.TgWsProxyPath) || !File.Exists(settings.TgWsProxyPath))
         {
-            log($"Нахожу tg-ws-proxy {tgWsVer}…", "info");
+            log($"Нахожу tg-ws-proxy {(string.IsNullOrEmpty(tgWsVer) ? "последнюю версию" : tgWsVer)}…", "info");
             log($"Откройте в браузере и скачайте для Windows:\nhttps://github.com/{TgWsProxyRepo}/releases/latest", "link");
             log("⏳ После скачивания укажите путь в Настройках → Пути к файлам", "warn");
         }
@@ -87,11 +87,6 @@ public static class AutoSetupService
 
         // Step 5 — manual instructions
         log("", "spacer");
-        log("📋 Ручные шаги (нужно сделать один раз):", "section");
-        log("1. Найдите значок tg-ws-proxy в трее (правый нижний угол)", "step");
-        log("2. Нажмите правой кнопкой → «Подключить прокси»", "step");
-        log("3. Откройте Telegram → Настройки → Продвинутые → Тип соединения", "step");
-        log("4. Выберите «Использовать прокси» и добавьте подключение", "step");
         progress(1.0);
         await Task.Delay(200);
 

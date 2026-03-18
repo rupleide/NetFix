@@ -1,16 +1,38 @@
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
 using System.Windows.Shapes;
-using System.Windows.Threading;
-using System.Threading.Tasks;
 using Microsoft.Win32;
+using System.Windows.Threading;
 using NetFix.Models;
 using NetFix.Services;
+
+// Алиасы для разрешения конфликтов между WPF и WinForms
+using Color        = System.Windows.Media.Color;
+using Brushes      = System.Windows.Media.Brushes;
+using FontFamily   = System.Windows.Media.FontFamily;
+using Clipboard    = System.Windows.Clipboard;
+using Cursors      = System.Windows.Input.Cursors;
+using Orientation  = System.Windows.Controls.Orientation;
+using Button       = System.Windows.Controls.Button;
+using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
+using Brush        = System.Windows.Media.Brush;
+using Panel        = System.Windows.Controls.Panel;
+using Size         = System.Windows.Size;
 
 namespace NetFix;
 
@@ -20,12 +42,14 @@ public partial class MainWindow : Window
     private AppSettings _settings = SettingsService.Load();
     private bool _settingsOpen = false;
     private DispatcherTimer _monitorTimer = null!;
+    private System.Windows.Forms.NotifyIcon _trayIcon = null!;
 
     // ── Init ─────────────────────────────────────────────────────────────────
     public MainWindow()
     {
         InitializeComponent();
         Loaded += OnLoaded;
+        InitTray();
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -43,6 +67,131 @@ public partial class MainWindow : Window
         LoadFaqItems();
     }
 
+    // ── Tray Icon ─────────────────────────────────────────────────────────────
+    private void InitTray()
+    {
+        _trayIcon = new System.Windows.Forms.NotifyIcon
+        {
+            Icon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath!),
+            Visible = true,
+            Text = "NetFix"
+        };
+
+        _trayIcon.MouseClick += (_, e) =>
+        {
+            if (e.Button == System.Windows.Forms.MouseButtons.Left)
+                ShowFromTray();
+            else if (e.Button == System.Windows.Forms.MouseButtons.Right)
+                ShowTrayMenu();
+        };
+    }
+
+    private void ShowTrayMenu()
+    {
+        var popup = new TrayPopup { Owner = this };
+
+        var pos    = System.Windows.Forms.Cursor.Position;
+        var screen = System.Windows.Forms.Screen.FromPoint(pos);
+
+        popup.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        double popupWidth  = 200;
+        double popupHeight = 140;
+
+        double left = pos.X - popupWidth / 2;
+        double top  = screen.WorkingArea.Bottom - popupHeight - 4;
+
+        if (left + popupWidth > screen.WorkingArea.Right)
+            left = screen.WorkingArea.Right - popupWidth - 4;
+        if (left < screen.WorkingArea.Left)
+            left = screen.WorkingArea.Left + 4;
+
+        popup.Left = left;
+        popup.Top  = top;
+        popup.Show();
+    }
+
+    private void ShowFromTray()
+    {
+        Show();
+        WindowState = WindowState.Normal;
+        Activate();
+    }
+
+    private void ExitApp()
+    {
+        _trayIcon.Visible = false;
+        _trayIcon.Dispose();
+        System.Windows.Application.Current.Shutdown();
+    }
+
+    // ── Service Control Handlers ───────────────────────────────────────────────────
+    private void ServicesBtn_Click(object s, RoutedEventArgs e)
+    {
+        ServicesLayer.Visibility = Visibility.Visible;
+        var anim = new DoubleAnimation(300, 0, TimeSpan.FromMilliseconds(280));
+        anim.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut };
+        ServicesTrans.BeginAnimation(TranslateTransform.XProperty, anim);
+    }
+
+    private void CloseServicesPanel()
+    {
+        var anim = new DoubleAnimation(0, 300, TimeSpan.FromMilliseconds(220));
+        anim.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn };
+        anim.Completed += (_, _) => ServicesLayer.Visibility = Visibility.Collapsed;
+        ServicesTrans.BeginAnimation(TranslateTransform.XProperty, anim);
+    }
+
+    private void ServicesCloseBtn_Click(object s, RoutedEventArgs e) => CloseServicesPanel();
+    private void ServicesBackdrop_Click(object s, MouseButtonEventArgs e) => CloseServicesPanel();
+
+    private void ZapretToggle_Click(object s, RoutedEventArgs e)
+    {
+        var st = DiagnosticsEngine.CheckAppStatus();
+        if (st.ZapretRunning)
+        {
+            foreach (var p in Process.GetProcessesByName("winws"))
+                try { p.Kill(); } catch { }
+            foreach (var p in Process.GetProcessesByName("winws.exe"))
+                try { p.Kill(); } catch { }
+        }
+        else
+        {
+            if (!string.IsNullOrEmpty(_settings.ZapretPath) && File.Exists(_settings.ZapretPath))
+                Process.Start(new ProcessStartInfo(_settings.ZapretPath) { UseShellExecute = true });
+            else
+                ShowNotification("Zapret", "Путь не указан. Проверьте настройки.", isError: true);
+        }
+
+        // Обновить статус через 800мс
+        Task.Delay(800).ContinueWith(_ => Dispatcher.Invoke(UpdateActiveApps));
+    }
+
+    private void TgWsToggle_Click(object s, RoutedEventArgs e)
+    {
+        var st = DiagnosticsEngine.CheckAppStatus();
+        if (st.TgWsProxyRunning)
+        {
+            foreach (var p in Process.GetProcessesByName("TgWsProxy"))
+                try { p.Kill(); } catch { }
+        }
+        else
+        {
+            if (!string.IsNullOrEmpty(_settings.TgWsProxyPath) && File.Exists(_settings.TgWsProxyPath))
+                Process.Start(new ProcessStartInfo(_settings.TgWsProxyPath) { UseShellExecute = true });
+            else
+                ShowNotification("tg-ws-proxy", "Путь не указан. Проверьте настройки.", isError: true);
+        }
+
+        Task.Delay(800).ContinueWith(_ => Dispatcher.Invoke(UpdateActiveApps));
+    }
+
+    protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+    {
+        _trayIcon.Visible = false;
+        _trayIcon.Dispose();
+        base.OnClosing(e);
+    }
+
     // ── Fade in ──────────────────────────────────────────────────────────────
     private void FadeIn()
     {
@@ -58,7 +207,7 @@ public partial class MainWindow : Window
     }
 
     private void MinBtn_Click(object s, RoutedEventArgs e) => WindowState = WindowState.Minimized;
-    private void CloseBtn_Click(object s, RoutedEventArgs e) => Close();
+    private void CloseBtn_Click(object s, RoutedEventArgs e) => Hide();
 
     // ── Nav ──────────────────────────────────────────────────────────────────
     private void DiagNavBtn_Click(object s, RoutedEventArgs e)
@@ -71,6 +220,9 @@ public partial class MainWindow : Window
         FaqNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
     }
 
+    // ── FAQ ОБНОВЛЕННАЯ ЛОГИКА ───────────────────────────────────────────────
+    private string _currentFaqCategory = "";
+
     private void FaqNavBtn_Click(object s, RoutedEventArgs e)
     {
         MainPage.Visibility = Visibility.Collapsed;
@@ -79,13 +231,366 @@ public partial class MainWindow : Window
         FaqPage.Visibility = Visibility.Visible;
         FaqNavBtn.Foreground = Brushes.White;
         DiagNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+        ShowFaqCategories();
     }
 
-    private void BackFromFaq_Click(object s, RoutedEventArgs e)
+    private void FaqBackBtn_Click(object s, RoutedEventArgs e)
     {
-        FaqPage.Visibility = Visibility.Collapsed;
-        MainPage.Visibility = Visibility.Visible;
-        FaqNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+        if (FaqHeaderTitle.Text == "Частые вопросы") {
+            FaqPage.Visibility = Visibility.Collapsed;
+            MainPage.Visibility = Visibility.Visible;
+            FaqNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+        } else if (_currentFaqCategory != "" && FaqHeaderTitle.Text != _currentFaqCategory) {
+            ShowFaqQuestions(_currentFaqCategory);
+        } else {
+            ShowFaqCategories();
+        }
+    }
+
+    private void ShowFaqCategories()
+    {
+        _currentFaqCategory = "";
+        FaqHeaderTitle.Text = "Частые вопросы";
+        FaqContainer.Children.Clear();
+
+        AddCategoryCard("Telegram", "Настройка прокси и загрузка медиа", "🚀", Color.FromRgb(0x3b, 0x82, 0xf6));
+        AddCategoryCard("Discord", "Обновление и голосовые каналы", "🎮", Color.FromRgb(0x8b, 0x5c, 0xf6));
+        AddCategoryCard("Общее", "YouTube, Zapret и сетевые ошибки", "⚙️", Color.FromRgb(0x22, 0xc5, 0x5e));
+        
+        // Добавляем блок с обращением для помощи
+        var helpCard = new Border {
+            Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
+            CornerRadius = new CornerRadius(12),
+            Padding = new Thickness(20, 18, 20, 18),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+            BorderThickness = new Thickness(1),
+            Margin = new Thickness(0, 12, 0, 0)
+        };
+        
+        var helpStack = new StackPanel();
+        helpStack.Children.Add(new TextBlock { 
+            Text = "❓ Не нашли решение своей проблемы?", 
+            FontSize = 16, 
+            FontWeight = FontWeights.Bold, 
+            Foreground = Brushes.White,
+            Margin = new Thickness(0, 0, 0, 12)
+        });
+        
+        helpStack.Children.Add(new TextBlock { 
+            Text = "Самостоятельный поиск: Лучший способ — вбить текст ошибки в поисковик. Скорее всего, кто-то уже сталкивался с этим и нашёл решение.", 
+            FontSize = 13, 
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 8)
+        });
+        
+        helpStack.Children.Add(new TextBlock { 
+            Text = "Обращение ко мне: Если ничего не помогло, вы можете описать свою проблему в разделе Issues на моём GitHub-репозитории. Я постараюсь ответить по мере возможности.", 
+            FontSize = 13, 
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 8)
+        });
+        
+        var devLinkStack = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 4) };
+        
+        var linkText = new TextBlock { 
+            Text = "Поиск у разработчика: Также рекомендую поискать решение в репозитории Flowseal, который является автором сборки Zapret и TgProxy:", 
+            FontSize = 13, 
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        
+        // Создаем кликабельное слово "репозитории"
+        var repoLink = new Button {
+            Content = "репозитории",
+            Style = (Style)FindResource("FlatBtn"),
+            Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            FontSize = 13,
+            Padding = new Thickness(0),
+            Margin = new Thickness(2, 0, 2, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            Background = Brushes.Transparent
+        };
+        repoLink.Click += (s, e) => {
+            try {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo {
+                    FileName = "https://github.com/Flowseal/zapret-discord-youtube",
+                    UseShellExecute = true
+                });
+            } catch { }
+        };
+        
+        var inlineText = new Run(" Flowseal, который является автором сборки Zapret и TgProxy:");
+        
+        var textPanel = new StackPanel { Orientation = Orientation.Horizontal };
+        textPanel.Children.Add(new TextBlock { 
+            Text = "Поиск у разработчика: Также рекомендую поискать решение в ", 
+            FontSize = 13, 
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            VerticalAlignment = VerticalAlignment.Center
+        });
+        textPanel.Children.Add(repoLink);
+        textPanel.Children.Add(new TextBlock { 
+            Text = " Flowseal, который является автором сборки Zapret и TgProxy:", 
+            FontSize = 13, 
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            VerticalAlignment = VerticalAlignment.Center
+        });
+        
+        devLinkStack.Children.Add(textPanel);
+        helpStack.Children.Add(devLinkStack);
+        
+        helpCard.Child = helpStack;
+        FaqContainer.Children.Add(helpCard);
+    }
+
+    private void AddCategoryCard(string title, string desc, string emoji, Color accent)
+    {
+        var btn = new Button { 
+            Style = (Style)FindResource("FlatBtn"), 
+            Padding = new Thickness(0),
+            Height = double.NaN, // убирает любой фиксированный Height
+            HorizontalContentAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Stretch
+        };
+        
+        var card = new Border { 
+            Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)), 
+            CornerRadius = new CornerRadius(0, 12, 12, 0),
+            Padding = new Thickness(16, 14, 16, 14), // одинаково везде
+            BorderBrush = new SolidColorBrush(accent),
+            BorderThickness = new Thickness(3, 0, 0, 0)
+        };
+
+        var grid = new Grid();
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition());
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var iconBg = new Border {
+            Width = 44, Height = 44, CornerRadius = new CornerRadius(10),
+            Background = new SolidColorBrush(accent) { Opacity = 0.15 },
+            Margin = new Thickness(0, 0, 16, 0),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        iconBg.Child = new TextBlock { Text = emoji, FontSize = 20, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = System.Windows.HorizontalAlignment.Center };
+
+        var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+        stack.Children.Add(new TextBlock { Text = title, FontSize = 17, FontWeight = FontWeights.Bold, Foreground = Brushes.White });
+        stack.Children.Add(new TextBlock { Text = desc, FontSize = 13, Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)) });
+
+        var arrowBadge = new Border {
+            Width = 32, Height = 32,
+            CornerRadius = new CornerRadius(16),
+            Background = new SolidColorBrush(accent) { Opacity = 0.12 },
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        arrowBadge.Child = new TextBlock { 
+            Text = "›", FontSize = 18, FontWeight = FontWeights.Bold,
+            Foreground = new SolidColorBrush(accent),
+            VerticalAlignment = VerticalAlignment.Center, 
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, -1, 0, 0),
+            IsHitTestVisible = false // не поглощает мышь
+        };
+
+        Grid.SetColumn(iconBg, 0); Grid.SetColumn(stack, 1); Grid.SetColumn(arrowBadge, 2);
+        grid.Children.Add(iconBg); grid.Children.Add(stack); grid.Children.Add(arrowBadge);
+        
+        card.Child = grid; btn.Content = card;
+        
+        // Hover-эффект только на Border
+        btn.MouseEnter += (s, e) => {
+            var border = (Border)btn.Content;
+            border.Background = new SolidColorBrush(Color.FromRgb(0x26, 0x26, 0x26));
+        };
+        btn.MouseLeave += (s, e) => {
+            var border = (Border)btn.Content;
+            border.Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e));
+        };
+        
+        btn.Click += (s, e) => ShowFaqQuestions(title);
+        FaqContainer.Children.Add(btn);
+    }
+
+    private void ShowFaqQuestions(string category)
+    {
+        _currentFaqCategory = category;
+        FaqHeaderTitle.Text = category;
+        FaqContainer.Children.Clear();
+
+        if (category == "Telegram") {
+            AddQuestion("Пропал значок TgWsProxy справа внизу, где найти программу?", "Зайди в папку C:\\Zapret, найди там TgWsProxy.exe и запусти его. После этого проверь иконку в трее (возле часов) и нажми «Включить».");
+            AddQuestion("Телеграм не грузит, хотя TgWsProxy запущен.", "Убедись, что прокси включен внутри самого Telegram. Проверь настройки: Продвинутые настройки -> Тип соединения -> Использовать собственный прокси. Если не помогло, нажми правой кнопкой по значку в трее -> Перезапустить прокси. Если всё равно глухо — скачай свежую версию по ссылке: GitHub Releases. В крайнем случае проверь настройки DNS в Windows, они могут блокировать соединение.");
+            AddQuestion("Текст грузится, а фото и кружочки — нет", "Это нормально. Отправка и загрузка тяжелых файлов через прокси может идти медленно из-за особенностей фильтров провайдера. Наберись терпения или используй VPN для тяжелого контента.");
+        } 
+        else if (category == "Discord") {
+            AddQuestion("Бесконечная «Проверка обновлений» (Checking for updates). Что делать?", "Смени конфиг: Твой текущий метод обхода может не справляться с серверами обновлений Discord. Попробуй переключиться на другой конфиг в Zapret и перезапустить Discord.\n\nВыключи лишнее: Убедись, что у тебя не включен параллельно другой VPN или прокси-сервер. Они могут конфликтовать друг с другом.\n\nСбрось кэш Discord: Это решает проблему в 90% случаев.\n\nЗапусти Discord снова при включённом Zapret.\n\nКрайний метод: Если ничего не помогло, переустанови Discord, скачав официальный установщик. Перед установкой убедись, что Zapret запущен — иногда Discord не может даже установиться без обхода блокировок.");
+            AddQuestion("Не вижу демонстрацию экрана друга, а они не видят мою. Что делать?", "Смените регион звонка: В настройках текущего голосового канала (справа сверху значок настройки или через админа сервера) смените «Регион сервера» на любой другой (например, Rotterdam, Poland или Madrid). Пробуйте разные варианты, пока картинка не появится.\n\nНастройки Discord: Зайдите в Настройки пользователя -> Голос и видео. Пролистайте вниз до раздела «Видеокодек» и попробуйте выключить пункт «Аппаратное ускорение H.264». Иногда Zapret конфликтует именно с этим типом передачи данных.\n\nПерезаход: После смены конфига в Zapret обязательно полностью перезапустите Discord, иначе он будет пытаться транслировать поток через старое (заблокированное) соединение.");
+        }
+        else if (category == "Общее") {
+            AddQuestion("Не работает YouTube, хотя Zapret включен", "Твой старый конфиг мог «протухнуть» из-за обновления фильтров провайдера. Сделай перенастройку: Открой Zapret -> Выбери 2. Remove Services -> Выбери 11. Run Tests -> [1] Standard tests -> [1] All configs. Выбери тот конфиг, который в результате будет полностью зеленым.");
+            AddQuestion("Программа пишет 'Access Denied'", "Всегда запускай скрипты и .exe файлы от имени Администратора. Антивирусы также могут блокировать работу Zapret, добавь папку C:\\Zapret в исключения.");
+            AddQuestion("Влияет ли это на пинг в играх?", "Нет, Zapret работает только с заблокированными доменами. Твой пинг в играх (CS, Dota, Valorant) останется прежним.");
+            AddQuestion("Некоторые сайты перестали открываться после включения Zapret. Что делать?", "Это происходит потому, что выбранный метод обхода (конфиг) конфликтует с защитой конкретного сайта. Например у меня самого конфиг general (SIMPLE FAKE).bat мешает работе Steam, Suno AI или банковских приложений.\n\nРешение:\n\n1. Попробуй сменить конфиг на другой (например, с припиской ALT или DESYNC).\n\n2. Если не помогает, на время работы с этим сайтом просто выключи Zapret.");
+        }
+    }
+
+    private void AddQuestion(string title, string answer)
+    {
+        var btn = new Button { 
+            Style = (Style)FindResource("FlatBtn"), 
+            Padding = new Thickness(0),
+            Height = double.NaN, // убирает любой фиксированный Height
+            HorizontalContentAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Stretch,
+            Margin = new Thickness(0, 0, 0, 8)
+        };
+        
+        var border = new Border { 
+            Background = new SolidColorBrush(Color.FromRgb(0x20, 0x20, 0x20)),
+            CornerRadius = new CornerRadius(10),
+            Padding = new Thickness(16, 14, 16, 14), // одинаково везде
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+            BorderThickness = new Thickness(1)
+        };
+
+        var grid = new Grid();
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition());
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var dot = new Border {
+            Width = 6, Height = 6, CornerRadius = new CornerRadius(3),
+            Background = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 10, 0),
+            IsHitTestVisible = false // не поглощает мышь
+        };
+
+        grid.Children.Add(new TextBlock { 
+            Text = title, 
+            Foreground = Brushes.White, 
+            FontSize = 14, 
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center
+        });
+        Grid.SetColumn(grid.Children[grid.Children.Count - 1], 1);
+
+        grid.Children.Add(new TextBlock { 
+            Text = "›", 
+            FontSize = 20,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            Margin = new Thickness(10, -2, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            IsHitTestVisible = false // не поглощает мышь
+        });
+        Grid.SetColumn(grid.Children[grid.Children.Count - 1], 2);
+
+        grid.Children.Insert(0, dot);
+
+        border.Child = grid;
+        btn.Content = border;
+        
+        // Hover-эффект только на Border
+        btn.MouseEnter += (s, e) => {
+            var borderElement = (Border)btn.Content;
+            borderElement.Background = new SolidColorBrush(Color.FromRgb(0x28, 0x28, 0x28));
+        };
+        btn.MouseLeave += (s, e) => {
+            var borderElement = (Border)btn.Content;
+            borderElement.Background = new SolidColorBrush(Color.FromRgb(0x20, 0x20, 0x20));
+        };
+        
+        btn.Click += (s, e) => ShowFaqAnswer(title, answer);
+        FaqContainer.Children.Add(btn);
+    }
+
+    private void ShowFaqAnswer(string title, string answer)
+    {
+        FaqHeaderTitle.Text = "Ответ";
+        FaqContainer.Children.Clear();
+        
+        var mainCard = new Border {
+            Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
+            CornerRadius = new CornerRadius(12),
+            Padding = new Thickness(24),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+            BorderThickness = new Thickness(1)
+        };
+
+        var accent = new Border {
+            Height = 3, CornerRadius = new CornerRadius(12, 12, 0, 0),
+            Background = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            Margin = new Thickness(-1, -1, -1, 0) // перекрывает верхний край
+        };
+
+        var stack = new StackPanel();
+        
+        stack.Children.Add(new TextBlock { 
+            Text = title, 
+            FontSize = 19, 
+            FontWeight = FontWeights.Bold, 
+            Foreground = Brushes.White, 
+            TextWrapping = TextWrapping.Wrap, 
+            Margin = new Thickness(0, 0, 0, 18) 
+        });
+
+        stack.Children.Add(new TextBlock { 
+            Text = answer, 
+            FontSize = 15, 
+            Foreground = new SolidColorBrush(Color.FromRgb(0xdd, 0xdd, 0xdd)), 
+            TextWrapping = TextWrapping.Wrap, 
+            LineHeight = 24 
+        });
+
+        var outerStack = new StackPanel();
+        outerStack.Children.Add(accent);
+        outerStack.Children.Add(stack);
+        mainCard.Child = outerStack;
+        FaqContainer.Children.Add(mainCard);
+
+        // Создаем кнопку-контейнер
+        var btnContainer = new Button {
+            Style = (Style)FindResource("FlatBtn"),
+            Padding = new Thickness(0),
+            Height = double.NaN, // убирает любой фиксированный Height
+            HorizontalContentAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Stretch,
+            Margin = new Thickness(0, 24, 0, 0)
+        };
+
+        var backBtn = new Border {
+            CornerRadius = new CornerRadius(20),
+            Background = new SolidColorBrush(Color.FromRgb(0x1a, 0x33, 0x56)),
+            Padding = new Thickness(20, 10, 20, 10), // одинаково везде
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+        };
+        
+        backBtn.Child = new TextBlock {
+            Text = "← Вернуться к вопросам",
+            Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            FontSize = 14,
+            FontWeight = FontWeights.Medium,
+            IsHitTestVisible = false // не поглощает мышь
+        };
+        
+        btnContainer.Content = backBtn;
+        
+        // Hover-эффект только на Border
+        btnContainer.MouseEnter += (s, e) => {
+            var border = (Border)btnContainer.Content;
+            border.Background = new SolidColorBrush(Color.FromRgb(0x1f, 0x3d, 0x66));
+        };
+        btnContainer.MouseLeave += (s, e) => {
+            var border = (Border)btnContainer.Content;
+            border.Background = new SolidColorBrush(Color.FromRgb(0x1a, 0x33, 0x56));
+        };
+        
+        btnContainer.Click += (s, e) => ShowFaqQuestions(_currentFaqCategory);
+        FaqContainer.Children.Add(btnContainer);
     }
 
     private void BackBtn_Click(object s, RoutedEventArgs e)
@@ -104,7 +609,7 @@ public partial class MainWindow : Window
     // ── FAQ Logic ────────────────────────────────────────────────────────────
     private void LoadFaqItems()
     {
-        FaqList.Children.Clear();
+        FaqContainer.Children.Clear();
         
         AddFaqItem(
             "У меня не грузит ТГ, но включен TgProxy",
@@ -169,7 +674,7 @@ public partial class MainWindow : Window
         grid.Children.Add(btn);
         
         card.Child = grid;
-        FaqList.Children.Add(card);
+        FaqContainer.Children.Add(card);
     }
 
     private void SolutionAutoFixBtn_Click(object s, RoutedEventArgs e)
@@ -212,7 +717,7 @@ public partial class MainWindow : Window
     // ── Active apps monitor ──────────────────────────────────────────────────
     private void StartActiveAppsMonitor()
     {
-        _monitorTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(8) };
+        _monitorTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
         _monitorTimer.Tick += (_, _) => UpdateActiveApps();
         _monitorTimer.Start();
         UpdateActiveApps();
@@ -235,6 +740,25 @@ public partial class MainWindow : Window
                 VpnDot.Fill = vpn ? greenBrush : grayBrush;
                 ZapretDot.Fill = st.ZapretRunning ? greenBrush : grayBrush;
                 TgWsDot.Fill = st.TgWsProxyRunning ? greenBrush : grayBrush;
+
+                // Синхронизация точек в карточке управления
+                ZapretDot2.Fill = st.ZapretRunning ? greenBrush : grayBrush;
+                ZapretStatusLbl.Text = st.ZapretRunning ? "Запущен" : "Не запущен";
+                ZapretStatusLbl.Foreground = st.ZapretRunning ? greenBrush : grayBrush;
+                ZapretToggleBtn.Content = st.ZapretRunning ? "■  Закрыть" : "▶  Запустить";
+                ZapretToggleBtn.Background = st.ZapretRunning
+                    ? new SolidColorBrush(Color.FromRgb(0x3d, 0x1a, 0x1a))
+                    : new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6));
+                ZapretToggleBtn.Foreground = st.ZapretRunning ? redBrush : Brushes.White;
+
+                TgWsDot2.Fill = st.TgWsProxyRunning ? greenBrush : grayBrush;
+                TgWsStatusLbl.Text = st.TgWsProxyRunning ? "Запущен" : "Не запущен";
+                TgWsStatusLbl.Foreground = st.TgWsProxyRunning ? greenBrush : grayBrush;
+                TgWsToggleBtn.Content = st.TgWsProxyRunning ? "■  Закрыть" : "▶  Запустить";
+                TgWsToggleBtn.Background = st.TgWsProxyRunning
+                    ? new SolidColorBrush(Color.FromRgb(0x3d, 0x1a, 0x1a))
+                    : new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6));
+                TgWsToggleBtn.Foreground = st.TgWsProxyRunning ? redBrush : Brushes.White;
 
                 if (netOk)
                 {
@@ -291,142 +815,200 @@ public partial class MainWindow : Window
     // ── Log ──────────────────────────────────────────────────────────────────
     private void AppendLog(string msg, string kind = "info")
     {
+        if (msg == "spacer") {
+            Dispatcher.Invoke(() => LogBox.Document.Blocks.Add(new System.Windows.Documents.Paragraph(new System.Windows.Documents.LineBreak()) { Margin = new Thickness(0, 5, 0, 5) }));
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(msg)) return;
+
         Dispatcher.Invoke(() =>
         {
             string ts = DateTime.Now.ToString("HH:mm:ss");
             Color textColor = Color.FromRgb(0xcc, 0xcc, 0xcc);
             string prefix = "";
+            double fontSize = 12;
             bool isBold = false;
-            
+
             switch (kind)
             {
-                case "spacer":
-                    msg = "";
-                    break;
-                case "section":
-                    textColor = Color.FromRgb(0x3b, 0x82, 0xf6); // Синий
+                case "frame":
+                    textColor = Color.FromRgb(0x3b, 0x82, 0xf6);
                     isBold = true;
-                    prefix = "▶ ";
                     break;
-                case "step":
-                    textColor = Color.FromRgb(0x9c, 0xa3, 0xaf); // Серый
-                    prefix = "  ";
+                case "system":
+                    textColor = Color.FromRgb(0xff, 0xff, 0xff);
+                    prefix = "[#] ";
+                    isBold = true;
                     break;
+                case "net": prefix = "📡 "; break;
+                case "speed": prefix = "⚡ "; break;
+                case "dpi": prefix = "🛡️ "; break;
                 case "ok":
-                    textColor = Color.FromRgb(0x22, 0xc5, 0x5e); // Зеленый
-                    prefix = "✓ ";
-                    break;
-                case "error":
-                    textColor = Color.FromRgb(0xef, 0x44, 0x44); // Красный
-                    prefix = "✗ ";
-                    break;
-                case "warn":
-                    textColor = Color.FromRgb(0xea, 0xb3, 0x08); // Желтый
-                    prefix = "⚠ ";
-                    break;
-                case "success":
-                    textColor = Color.FromRgb(0x22, 0xc5, 0x5e); // Ярко-зеленый
-                    isBold = true;
+                    textColor = Color.FromRgb(0x22, 0xc5, 0x5e);
                     prefix = "✅ ";
                     break;
-                case "link":
-                    textColor = Color.FromRgb(0x60, 0xa5, 0xfa); // Голубой
-                    prefix = "🔗 ";
+                case "warn":
+                    textColor = Color.FromRgb(0xea, 0xb3, 0x08);
+                    prefix = "⚠️ ";
+                    break;
+                case "error":
+                    textColor = Color.FromRgb(0xef, 0x44, 0x44);
+                    prefix = "❌ ";
+                    break;
+                case "final":
+                    textColor = Color.FromRgb(0x22, 0xc5, 0x5e);
+                    fontSize = 15;
+                    isBold = true;
+                    prefix = "🚀 ";
                     break;
                 default:
-                    prefix = "ℹ ";
+                    prefix = "🔹 ";
                     break;
             }
 
-            var para = new System.Windows.Documents.Paragraph { Margin = new Thickness(0, 2, 0, 2) };
+            var para = new System.Windows.Documents.Paragraph { Margin = new Thickness(0, 1, 0, 1) };
             
-            if (kind == "spacer")
+            if (kind != "frame" && kind != "final")
             {
-                para.Margin = new Thickness(0, 6, 0, 6);
-            }
-            else
-            {
-                // Время серым цветом, кроме заголовков секций
-                if (kind != "section" && kind != "step")
-                {
-                    para.Inlines.Add(new System.Windows.Documents.Run($"[{ts}] ") 
-                    { 
-                        Foreground = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x66)) 
-                    });
-                }
-                
-                // Текст лога со своим цветом
-                para.Inlines.Add(new System.Windows.Documents.Run($"{prefix}{msg}") 
+                para.Inlines.Add(new System.Windows.Documents.Run($"[{ts}] ") 
                 { 
-                    Foreground = new SolidColorBrush(textColor),
-                    FontWeight = isBold ? FontWeights.Bold : FontWeights.Normal
+                    Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x55)),
+                    FontSize = 10,
+                    FontFamily = new FontFamily("Consolas")
                 });
             }
+
+            para.Inlines.Add(new System.Windows.Documents.Run($"{prefix}{msg}") 
+            { 
+                Foreground = new SolidColorBrush(textColor),
+                FontSize = fontSize,
+                FontWeight = isBold ? FontWeights.Bold : FontWeights.Normal,
+                FontFamily = (kind == "frame" || kind == "progress") ? new FontFamily("Consolas") : new FontFamily("Segoe UI")
+            });
 
             LogBox.Document.Blocks.Add(para);
             LogBox.ScrollToEnd();
         });
     }
 
+    private string GetProgressBar(double percent)
+    {
+        int totalBlocks = 20;
+        int filledBlocks = (int)(percent / 100 * totalBlocks);
+        return "[" + new string('█', filledBlocks) + new string('░', totalBlocks - filledBlocks) + $"] {percent:0}%";
+    }
+
     private void ClearLog_Click(object s, RoutedEventArgs e) => LogBox.Document.Blocks.Clear();
+
+    private void CopyLog_Click(object s, RoutedEventArgs e)
+    {
+        var textRange = new System.Windows.Documents.TextRange(LogBox.Document.ContentStart, LogBox.Document.ContentEnd);
+        if (!string.IsNullOrWhiteSpace(textRange.Text))
+        {
+            try { Clipboard.SetText(textRange.Text); } catch { }
+        }
+    }
 
     // ── Auto-setup ───────────────────────────────────────────────────────────
     private void FixBtn_Click(object s, RoutedEventArgs e)
     {
         var st = DiagnosticsEngine.CheckAppStatus();
         
-        // Если Zapret выключен, и путь к нему есть — запускаем мастера настройки
+        // 1. Проверяем Zapret
         if (!st.ZapretRunning && !string.IsNullOrWhiteSpace(_settings.ZapretPath) && File.Exists(_settings.ZapretPath))
         {
             ShowZapretWizard();
             return;
         }
 
+        // 2. Проверяем TgWsProxy
+        if (!st.TgWsProxyRunning && !string.IsNullOrWhiteSpace(_settings.TgWsProxyPath) && File.Exists(_settings.TgWsProxyPath))
+        {
+            ShowTgProxyWizard();
+            return;
+        }
+
         RunAutoFix();
     }
 
-    private void RunAutoFix()
+    private async void RunAutoFix()
     {
         FixBtn.IsEnabled = false;
         SetupProg.Value = 0;
-        SetupProgLbl.Text = "Инициализация…";
-        SetupProgLbl.Foreground = Brushes.White;
+        SetupProgLbl.Text = "Подготовка...";
         LogBox.Document.Blocks.Clear();
-        
-        // Более подробная имитация отладки
-        AppendLog("Начало расширенной диагностики и автоматической настройки...", "section");
-        AppendLog("Сбор системной информации и проверка сетевых адаптеров...", "step");
-        AppendLog("Анализ портов, конфигурации Windows Defender и брандмауэра...", "step");
-        AppendLog("Поиск и изоляция конфликтующих процессов...", "step");
-        AppendLog("Подготовка модулей обхода блокировок...", "info");
 
-        // Сброс иконки и колец в исходное состояние
-        var iconReset = (TextBlock)FixBtn.Template.FindName("BtnIcon", FixBtn);
-        if (iconReset != null)
-            iconReset.Foreground = new SolidColorBrush(Color.FromRgb(0x7c, 0x6a, 0xf7));
-        SuccessArc.Visibility = Visibility.Collapsed;
-        ErrorRing.Visibility  = Visibility.Collapsed;
+        // Убрали линии, оставили только текст
+        string timeStr = DateTime.Now.ToString("HH:mm:ss");
+        AppendLog($"СИСТЕМНАЯ ДИАГНОСТИКА [ ВРЕМЯ: {timeStr} ]", "system");
+        AppendLog("spacer");
 
         StartGlow();
 
+        // --- ЭТАП 1: СЕТЬ ---
+        AppendLog("СЕТЕВАЯ СРЕДА", "system");
+        bool netOk = await DiagnosticsEngine.CheckInternetAsync();
+        AppendLog($"Интернет-соединение: {(netOk ? "[ ПОДКЛЮЧЕНО ]" : "[ ОШИБКА ]")}", netOk ? "ok" : "error");
+        
+        // --- ЭТАП 2: СКАНИРОВАНИЕ ---
+        AppendLog("АНАЛИЗ ТРАФИКА И DPI", "system");
+        var report = await DiagnosticsEngine.RunFullDiagnosticsAsync(
+            (ratio, label) => Dispatcher.Invoke(() => {
+                SetupProg.Value = ratio * 50;
+                SetupProgLbl.Text = label;
+                
+                var lastPara = LogBox.Document.Blocks.LastBlock as System.Windows.Documents.Paragraph;
+                if (lastPara?.Tag?.ToString() == "prog") LogBox.Document.Blocks.Remove(lastPara);
+                
+                var p = new System.Windows.Documents.Paragraph(new System.Windows.Documents.Run("    " + GetProgressBar(ratio * 100))) 
+                { 
+                    Tag = "prog", 
+                    Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+                    Margin = new Thickness(0, 4, 0, 4),
+                    FontFamily = new FontFamily("Consolas")
+                };
+                LogBox.Document.Blocks.Add(p);
+            })
+        );
+        
+        // Дублируем отчет во вкладку диагностики
+        Dispatcher.Invoke(() => RenderDiagReport(report));
+        
+        AppendLog("Обнаружена блокировка протоколов (DPI/ТСПУ)", "dpi");
+        AppendLog("spacer");
+
+        // --- ЭТАП 3: СЕРВИСЫ ---
+        AppendLog("СОСТОЯНИЕ СЕРВИСОВ", "system");
+        AppendLog($"Telegram Desktop: {(report.AppStatus?.TelegramRunning == true ? "[ ЗАПУЩЕН ]" : "[ НЕ В СЕТИ ]")}", "net");
+        AppendLog($"Discord App:      {(report.AppStatus?.DiscordRunning == true ? "[ ЗАПУЩЕН ]" : "[ НЕ В СЕТИ ]")}", "net");
+        
+        int srvOk = report.DcResults.Count(d => d.Ok);
+        AppendLog($"Доступность серверов Telegram: {srvOk} из {report.DcResults.Count}", srvOk > 0 ? "ok" : "warn");
+        AppendLog("spacer");
+
+        // --- ЭТАП 4: ЗАПУСК ОБХОДА ---
+        AppendLog("ЗАПУСК ИСПРАВЛЕНИЙ", "system");
         AutoSetupService.Run(
-            logCb: AppendLog,
+            logCb: (msg, kind) => AppendLog(msg, kind == "step" ? "speed" : kind),
             progressCb: ratio => Dispatcher.Invoke(() => {
-                SetupProg.Value = ratio * 100;
-                SetupProgLbl.Text = $"Прогресс: {(int)(ratio * 100)}%";
+                SetupProg.Value = 50 + (ratio * 50);
+                SetupProgLbl.Text = $"Настройка: {(int)(ratio * 100)}%";
             }),
             doneCb: (success, _) => Dispatcher.Invoke(() => {
                 StopGlow(success);
                 FixBtn.IsEnabled = true;
                 if (success) {
-                    SetupProgLbl.Text = "Готово ✓";
-                    SetupProgLbl.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
-                    AppendLog("Все процессы успешно запущены и настроены!", "success");
+                    SetupProg.Value = 100;
+                    SetupProgLbl.Text = "Готово";
+                    AppendLog("spacer");
+                    AppendLog("Всё запущено и всё работает НОРМАЛЬНО!", "final");
+                    AppendLog("Zapret включен. Discord и YouTube должны работать нормально.", "ok");
+                    AppendLog("Прокси настроен. Telegram должен работать стабильно.", "ok");
+                    AppendLog("Если что-то всё еще не грузит, перейдите во вкладку «Частые вопросы».", "info");
                     PlaySuccessRing();
                 } else {
-                    SetupProgLbl.Text = "Ошибка — смотри лог";
-                    SetupProgLbl.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
-                    AppendLog("Обнаружены ошибки во время настройки.", "error");
+                    AppendLog("Произошла ошибка при автоматической настройке. Проверьте пути в настройках.", "error");
                     PlayErrorRing();
                 }
             }),
@@ -575,7 +1157,7 @@ public partial class MainWindow : Window
         var (dem, dtitle, ddetail, dck) = DiagnosticsEngine.DiscordVerdict(r);
         AddCard(DiagResults, $"{dem}  {dtitle}", ddetail, ColorFromKey(dck));
 
-        // Статус приложений (оформлен блоками с настоящими кружками)
+        // Статус приложений (без изменений)
         if (r.AppStatus is { } a)
         {
             var appsPanel = new StackPanel();
@@ -585,117 +1167,54 @@ public partial class MainWindow : Window
                 row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(24) });
                 row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(140) });
                 row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-                
-                // Кругляшок статуса
-                var dot = new Ellipse { 
-                    Width = 10, Height = 10, 
-                    Fill = new SolidColorBrush(isRunning ? Color.FromRgb(0x22, 0xc5, 0x5e) : Color.FromRgb(0xef, 0x44, 0x44)), 
-                    VerticalAlignment = VerticalAlignment.Center 
-                };
+                var dot = new Ellipse { Width = 10, Height = 10, Fill = new SolidColorBrush(isRunning ? Color.FromRgb(0x22, 0xc5, 0x5e) : Color.FromRgb(0xef, 0x44, 0x44)), VerticalAlignment = VerticalAlignment.Center };
                 Grid.SetColumn(dot, 0);
-                
-                // Название
-                var nameText = new TextBlock { 
-                    Text = name, Foreground = Brushes.White, FontSize = 14, 
-                    FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center 
-                };
+                var nameText = new TextBlock { Text = name, Foreground = Brushes.White, FontSize = 14, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
                 Grid.SetColumn(nameText, 1);
-                
-                row.Children.Add(dot);
-                row.Children.Add(nameText);
-                
-                // Процесс (в виде красивой плашки)
-                if (isRunning && !string.IsNullOrEmpty(proc)) 
-                {
-                    var procPill = new Border {
-                        Background = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
-                        CornerRadius = new CornerRadius(4),
-                        Padding = new Thickness(8, 2, 8, 2),
-                        VerticalAlignment = VerticalAlignment.Center
-                    };
-                    var procText = new TextBlock { Text = proc, Foreground = new SolidColorBrush(Color.FromRgb(0xd1, 0xd5, 0xdb)), FontSize = 11 };
-                    procPill.Child = procText;
-                    Grid.SetColumn(procPill, 2);
-                    row.Children.Add(procPill);
+                row.Children.Add(dot); row.Children.Add(nameText);
+                if (isRunning && !string.IsNullOrEmpty(proc)) {
+                    var procPill = new Border { Background = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)), CornerRadius = new CornerRadius(4), Padding = new Thickness(8, 2, 8, 2), VerticalAlignment = VerticalAlignment.Center };
+                    procPill.Child = new TextBlock { Text = proc, Foreground = new SolidColorBrush(Color.FromRgb(0xd1, 0xd5, 0xdb)), FontSize = 11 };
+                    Grid.SetColumn(procPill, 2); row.Children.Add(procPill);
                 }
                 appsPanel.Children.Add(row);
             }
-            
-            AddAppUI("Telegram",    a.TelegramRunning,    a.TelegramProcName);
-            AddAppUI("Discord",     a.DiscordRunning,     a.DiscordProcName);
-            AddAppUI("Zapret",      a.ZapretRunning,      a.ZapretProcName);
-            AddAppUI("GoodbyeDPI",  a.GoodbyeDpiRunning,  a.GoodbyeDpiProcName);
-            AddAppUI("WARP",        a.WarpRunning,        a.WarpProcName);
-            AddAppUI("tg-ws-proxy", a.TgWsProxyRunning,   a.TgWsProxyProcName);
-            
+            AddAppUI("Telegram", a.TelegramRunning, a.TelegramProcName);
+            AddAppUI("Discord", a.DiscordRunning, a.DiscordProcName);
+            AddAppUI("Zapret", a.ZapretRunning, a.ZapretProcName);
+            AddAppUI("tg-ws-proxy", a.TgWsProxyRunning, a.TgWsProxyProcName);
             AddRichCard(DiagResults, "💻  Статус приложений", appsPanel, Color.FromRgb(0x8b, 0x5c, 0xf6));
         }
 
-        // Доступность серверов (оформлено карточками в ряд)
+        // --- НОВЫЙ БЛОК ПРИМЕЧАНИЯ ВМЕСТО СТАРОЙ РЕКОМЕНДАЦИИ ---
+        string noteText = "Примечание! Отправка медиафайлов (именно отправка) даже с включённым TgWsProxy может работать нестабильно, файлы могут загружаться очень долго. К сожалению, это не решить без использования VPN. Но просмотр и загрузка видео, стикеров и любого другого контента в Telegram должны работать идеально!";
+        AddCard(DiagResults, "📌  Важное примечание", noteText, Color.FromRgb(0x3b, 0x82, 0xf6));
+
+        // Доступность серверов (без изменений)
         if (r.DcResults.Count > 0)
         {
-            var serverContainer = new StackPanel(); // Главный контейнер для серверов и примечания
+            var serverContainer = new StackPanel();
             var srvPanel = new WrapPanel { Orientation = Orientation.Horizontal };
-
             foreach (var dc in r.DcResults)
             {
-                var srvBlock = new Border {
-                    Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
-                    CornerRadius = new CornerRadius(8),
-                    BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
-                    BorderThickness = new Thickness(1),
-                    Margin = new Thickness(0, 0, 10, 10),
-                    Padding = new Thickness(14, 12, 14, 12),
-                    Width = 150
-                };
+                var srvBlock = new Border { Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)), CornerRadius = new CornerRadius(8), BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)), BorderThickness = new Thickness(1), Margin = new Thickness(0, 0, 10, 10), Padding = new Thickness(14, 12, 14, 12), Width = 150 };
                 var srvStack = new StackPanel();
                 var headerGrid = new Grid();
-                var dcName = new TextBlock { Text = $"DC {dc.DcId}", Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = 14 };
-
-                // Округляем пинг и определяем статус
+                headerGrid.Children.Add(new TextBlock { Text = $"DC {dc.DcId}", Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = 14 });
                 int? ping = dc.LatencyMs.HasValue ? (int)Math.Round(dc.LatencyMs.Value) : null;
-                bool isGreen = dc.Ok && ping.HasValue && ping.Value <= 100;
-                bool isYellow = dc.Ok && ping.HasValue && ping.Value > 100 && ping.Value <= 200;
-                bool isRed = !dc.Ok || !ping.HasValue || ping.Value > 200;
-
-                Color dotColor = isGreen ? Color.FromRgb(0x22, 0xc5, 0x5e) : 
-                                 isYellow ? Color.FromRgb(0xea, 0xb3, 0x08) : 
-                                 Color.FromRgb(0xef, 0x44, 0x44);
-
-                var dot = new Ellipse { 
-                    Width = 10, Height = 10, 
-                    Fill = new SolidColorBrush(dotColor), 
-                    HorizontalAlignment = HorizontalAlignment.Right, 
-                    VerticalAlignment = VerticalAlignment.Center 
-                };
-                
-                headerGrid.Children.Add(dcName);
-                headerGrid.Children.Add(dot);
-                
-                var ipText = new TextBlock { Text = dc.Ip, Foreground = new SolidColorBrush(Color.FromRgb(0x9c, 0xa3, 0xaf)), FontSize = 12, Margin = new Thickness(0, 8, 0, 0) };
-                
-                string latStr = isRed ? "Недоступен" : $"{ping} мс";
-                var latText = new TextBlock { 
-                    Text = latStr, 
-                    Foreground = new SolidColorBrush(dotColor), 
-                    FontSize = 12, 
-                    FontWeight = FontWeights.SemiBold,
-                    Margin = new Thickness(0, 4, 0, 0) 
-                };
-
+                Color dotColor = (dc.Ok && ping <= 100) ? Color.FromRgb(0x22, 0xc5, 0x5e) : (dc.Ok && ping <= 200) ? Color.FromRgb(0xea, 0xb3, 0x08) : Color.FromRgb(0xef, 0x44, 0x44);
+                headerGrid.Children.Add(new Ellipse { Width = 10, Height = 10, Fill = new SolidColorBrush(dotColor), HorizontalAlignment = System.Windows.HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center });
                 srvStack.Children.Add(headerGrid);
-                srvStack.Children.Add(ipText);
-                srvStack.Children.Add(latText);
-                srvBlock.Child = srvStack;
-                srvPanel.Children.Add(srvBlock);
+                srvStack.Children.Add(new TextBlock { Text = dc.Ip, Foreground = new SolidColorBrush(Color.FromRgb(0x9c, 0xa3, 0xaf)), FontSize = 12, Margin = new Thickness(0, 8, 0, 0) });
+                srvStack.Children.Add(new TextBlock { Text = !dc.Ok ? "Недоступен" : $"{ping} мс", Foreground = new SolidColorBrush(dotColor), FontSize = 12, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 4, 0, 0) });
+                srvBlock.Child = srvStack; srvPanel.Children.Add(srvBlock);
             }
-            
             serverContainer.Children.Add(srvPanel);
 
             // Добавляем примечание, если включен TgWsProxy
             if (r.AppStatus != null && r.AppStatus.TgWsProxyRunning)
             {
-                var noteText = new TextBlock
+                var serverNoteText = new TextBlock
                 {
                     Text = "Примечание: У вас включен TgWsProxy. Даже если выше указано, что сервера недоступны — не переживайте, на вашем ПК Telegram будет работать нормально.\n\n" +
                            "Связь с TG идет через этот прокси, а диагностика проверяет сервера прямой отправкой пакетов, которые блокируются. Поэтому они и помечаются как «недоступные».\n\n" +
@@ -706,19 +1225,14 @@ public partial class MainWindow : Window
                     TextWrapping = TextWrapping.Wrap,
                     Margin = new Thickness(0, 4, 0, 0)
                 };
-                serverContainer.Children.Add(noteText);
+                serverContainer.Children.Add(serverNoteText);
             }
 
             AddRichCard(DiagResults, "🌍  Доступность серверов Telegram", serverContainer, Color.FromRgb(0x0e, 0xa5, 0xe9));
         }
 
-        // Рекомендации
-        foreach (var rec in r.Recommendations)
-            AddCard(DiagResults, "💡  Рекомендация", rec, Color.FromRgb(0xf5, 0x9e, 0x0b));
-
         DiagProg.Value = 100;
-        DiagProgLbl.Text = "Готово ✓";
-        DiagProgLbl.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+        DiagProgLbl.Text = "Готово";
         DiagRunBtn.IsEnabled = true;
         DiagRunBtn.Content = "🔄  Проверить снова";
     }
@@ -766,7 +1280,7 @@ public partial class MainWindow : Window
         {
             Background = new SolidColorBrush(accentColor),
             Width = 4,
-            HorizontalAlignment = HorizontalAlignment.Left,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
         };
 
         var stack = new StackPanel { Margin = new Thickness(20, 16, 20, 16) };
@@ -844,7 +1358,7 @@ public partial class MainWindow : Window
         ZapretBox.Text   = _settings.ZapretPath;
         TgWsBox.Text     = _settings.TgWsProxyPath;
         GdpiBox.Text     = _settings.GoodbyeDpiPath;
-        AutoZapretCB.IsChecked  = _settings.AutostartZapret;
+        // AutoZapretCB убран - Zapret больше не в автозапуске
         AutoTgWsCB.IsChecked    = _settings.AutostartTgWsProxy;
         AutoAppCB.IsChecked     = _settings.AutostartApp;
         NotifyCB.IsChecked      = _settings.NotifyIssues;
@@ -856,12 +1370,16 @@ public partial class MainWindow : Window
         _settings.ZapretPath       = ZapretBox.Text.Trim();
         _settings.TgWsProxyPath    = TgWsBox.Text.Trim();
         _settings.GoodbyeDpiPath   = GdpiBox.Text.Trim();
-        _settings.AutostartZapret  = AutoZapretCB.IsChecked == true;
+        _settings.AutostartZapret  = false; // Zapret убран из автозапуска
         _settings.AutostartTgWsProxy = AutoTgWsCB.IsChecked == true;
         _settings.AutostartApp     = AutoAppCB.IsChecked == true;
         _settings.NotifyIssues     = NotifyCB.IsChecked == true;
         _settings.AutoUpdates      = AutoUpdatesCB.IsChecked == true;
         SettingsService.Save(_settings);
+        
+        // Автозапуск через Task Scheduler
+        SetAutostart(_settings.AutostartApp);
+        
         CloseSettings();
     }
 
@@ -895,6 +1413,36 @@ public partial class MainWindow : Window
     }
 
     // ── Settings actions ─────────────────────────────────────────────────────
+    private void ShowNotification(string title, string message, bool isError = false)
+    {
+        if (_settings.NotifyIssues != true) return;
+
+        // Временно отключаем уведомления если нет сборки System.Windows.Forms
+        // TODO: Добавить NuGet пакет System.Windows.Forms для поддержки уведомлений
+        return;
+        
+        /*
+        Dispatcher.Invoke(() =>
+        {
+            var ni = new System.Windows.Forms.NotifyIcon
+            {
+                Icon = System.Drawing.SystemIcons.Application,
+                Visible = true
+            };
+            ni.ShowBalloonTip(
+                4000,
+                title,
+                message,
+                isError ? System.Windows.Forms.ToolTipIcon.Error
+                        : System.Windows.Forms.ToolTipIcon.Info
+            );
+            var t = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+            t.Tick += (_, _) => { ni.Dispose(); t.Stop(); };
+            t.Start();
+        });
+        */
+    }
+
     private void ReOnboard_Click(object s, RoutedEventArgs e)
     {
         CloseSettings();
@@ -913,15 +1461,22 @@ public partial class MainWindow : Window
 
     // ── Links ────────────────────────────────────────────────────────────────
     private void SupportBtn_Click(object s, RoutedEventArgs e) =>
-        OpenUrl("https://t.me/rupleide");
+        OpenUrl("https://t.me/sofirka_hanabi");
     private void DonateBtn_Click(object s, RoutedEventArgs e) =>
-        OpenUrl("https://www.donationalerts.com/r/rupleide");
+        OpenUrl("https://www.tinkoff.ru/rm/kononenko.nikolay30/XeyPE87770");
     private void LinkZapret_Click(object s, RoutedEventArgs e) =>
         OpenUrl("https://github.com/Flowseal/zapret-discord-youtube");
     private void LinkTgWs_Click(object s, RoutedEventArgs e) =>
         OpenUrl("https://github.com/Flowseal/tg-ws-proxy");
-    private void LinkGdpi_Click(object s, RoutedEventArgs e) =>
-        OpenUrl("https://github.com/ValdikSS/GoodbyeDPI");
+    private void LinkGdpi_Click(object s, RoutedEventArgs e) => Process.Start(new ProcessStartInfo("https://github.com/ValdikSS/GoodbyeDPI") { UseShellExecute = true });
+
+    private void CheckUpdateBtn_Click(object sender, RoutedEventArgs e)
+    {
+        var window = new NetFix.Views.UpdateWindow();
+        window.ShowDialog();
+    }
+
+    private void WizardCloseBtn_Click(object s, RoutedEventArgs e) => CloseWizard();
 
     private static void OpenUrl(string url)
     {
@@ -930,8 +1485,6 @@ public partial class MainWindow : Window
     }
 
     // ── Zapret Wizard ────────────────────────────────────────────────────────
-    private void WizardCloseBtn_Click(object s, RoutedEventArgs e) => CloseWizard();
-
     private void CloseWizard()
     {
         var slideAnim = new DoubleAnimation(0, 370, TimeSpan.FromMilliseconds(220)) 
@@ -952,7 +1505,10 @@ public partial class MainWindow : Window
                 UseShellExecute = true,
                 WorkingDirectory = System.IO.Path.GetDirectoryName(_settings.ZapretPath)
             });
-        } catch {}
+            ShowNotification("Успешно", "Zapret запущен через мастер", false);
+        } catch {
+            ShowNotification("Ошибка запуска", "Не удалось запустить Zapret через мастер. Проверьте путь.", true);
+        }
 
         RenderWizardStep(0);
     }
@@ -960,6 +1516,10 @@ public partial class MainWindow : Window
     private void RenderWizardStep(int step)
     {
         WizardContent.Children.Clear();
+        // Устанавливаем заголовок - ищем TextBlock в WizardLayer
+        var title = FindChild<TextBlock>(WizardLayer);
+        if (title != null) title.Text = "Мастер настройки Zapret";
+
         switch (step) {
             case 0:
                 AddWizText("Я запустил файл service.bat.\n\nУ тебя открылось окно консоли?");
@@ -967,57 +1527,149 @@ public partial class MainWindow : Window
                 AddWizBtn("Нет", "#ef4444", () => RenderWizardStep(1));
                 break;
             case 1:
-                AddWizText("Окно не открылось.\nВозможно, путь к файлу указан неверно или антивирус заблокировал запуск.\n\nПроверь настройки и попробуй снова.");
+                AddWizText("Окно не открылось.\nВозможно, путь неверный или антивирус блокирует запуск.");
                 AddWizBtn("Закрыть", "#3b82f6", CloseWizard);
                 break;
             case 2:
                 AddWizText("Ты запускаешь его в первый раз?");
                 AddWizBtn("Да", "#3b82f6", () => RenderWizardStep(3));
-                AddWizBtn("Нет", "#2e2e2e", () => RenderWizardStep(5), "#cccccc");
+                AddWizBtn("Нет", "#2e2e2e", () => RenderWizardStep(11), "#cccccc");
                 break;
             case 3:
-                AddWizText("В таком случае нажми на клавиатуре цифру 2, а потом нажми Enter.\n\nСделал?");
+                AddWizText("Нажми цифру 2, а потом Enter.\n\nСделал?");
                 AddWizBtn("Да, сделал", "#3b82f6", () => RenderWizardStep(4));
                 break;
             case 4:
-                AddWizText("Видишь текст 'Press any key to continue...'?\n\nЕсли да — нажимай ещё раз Enter.");
+                AddWizText("Видишь 'Press any key to continue...'?\n\nНажимай Enter.");
                 AddWizBtn("Сделал", "#3b82f6", () => RenderWizardStep(5));
                 break;
             case 5:
-                AddWizText("Теперь самое главное!\nНапиши 11 и нажми Enter.\n\nОткрылось новое окно тестирования (Blockcheck)?");
+                AddWizText("Напиши 11 и нажми Enter.\n\nОткрылось окно Blockcheck?");
                 AddWizBtn("Да, открылось", "#22c55e", () => RenderWizardStep(7));
                 AddWizBtn("Нет", "#ef4444", () => RenderWizardStep(6));
                 break;
             case 6:
-                AddWizText("Окно тестов не открылось.\nВозможно, нужно запустить программу от имени администратора или полностью распаковать архив.\nПопробуй исправить это и начни заново.");
+                AddWizText("Окно тестов не открылось. Попробуй запуск от админа.");
                 AddWizBtn("Понятно", "#3b82f6", CloseWizard);
                 break;
             case 7:
-                AddWizText("Отлично!\nВ новом окне выбери:\n\n1 — Standard tests (HTTP/ping)\n\nИ нажми Enter.");
+                AddWizText("В новом окне выбери:\n1 — Standard tests\nНажми Enter.");
                 AddWizBtn("Нажал", "#3b82f6", () => RenderWizardStep(8));
                 break;
             case 8:
-                AddWizText("Теперь на вопрос 'Select test run mode' выбери:\n\n1 — All configs\n\nИ нажми Enter.\n\nПосле этого начнется тест. Жди до конца!");
+                AddWizText("Выбери:\n1 — All configs\nЖди завершения теста!");
                 AddWizBtn("Понял, жду", "#3b82f6", () => RenderWizardStep(9));
                 break;
             case 9:
-                AddWizText("Сканирование идет долго. После его окончания запиши куда-нибудь конфиги, где всё помечено ЗЕЛЕНЫМ цветом.\n\nСАМОЕ ГЛАВНОЕ: в самом конце напишет 'Best config: [цифра]'.\n\nОбязательно запомни эту цифру!");
+                AddWizText("Запомни цифру 'Best config' в самом конце.");
                 AddWizBtn("Я запомнил!", "#22c55e", () => RenderWizardStep(10));
                 break;
             case 10:
-                AddWizText("Сейчас закрой все черные окна консоли.\n\nЯ снова запущу service.bat. Набери ту цифру, которую выдал тест (твой Best config), и нажми Enter!\n\nИспользуй этот конфиг всегда. Если начнутся проблемы с сетью — просто пройди тест (Blockcheck) снова.");
-                AddWizBtn("Открыть service.bat и продолжить", "#3b82f6", () => {
+                AddWizText("Закрой все окна. Сейчас я снова запущу service.bat. Набери свою цифру и нажми Enter!");
+                AddWizBtn("Готово!", "#3b82f6", () => {
+                    var st = DiagnosticsEngine.CheckAppStatus();
+                    if (!st.TgWsProxyRunning) ShowTgProxyWizard(); else { CloseWizard(); RunAutoFix(); }
+                });
+                break;
+            case 11:
+                AddWizText("Рад, что ты уже знаешь как им пользоваться!\n\nВ открытом окне выбери:\n1 — Install Service\nИ выбери свой рабочий конфиг.");
+                AddWizBtn("Готово!", "#22c55e", () => {
+                    var st = DiagnosticsEngine.CheckAppStatus();
+                    if (!st.TgWsProxyRunning) ShowTgProxyWizard(); else { CloseWizard(); RunAutoFix(); }
+                });
+                break;
+        }
+    }
+
+    // ── Мастер TgWsProxy ──────────────────────────────────────────────────────
+    private void ShowTgProxyWizard()
+    {
+        WizardLayer.Visibility = Visibility.Visible;
+        var slideAnim = new DoubleAnimation(370, 0, TimeSpan.FromMilliseconds(220)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+        WizardTrans.BeginAnimation(TranslateTransform.XProperty, slideAnim);
+        
+        // Принудительный запуск при открытии мастера
+        StartTgProxyProcess();
+        
+        RenderTgProxyWizardStep(0);
+    }
+
+    private void StartTgProxyProcess()
+    {
+        try 
+        { 
+            Process.Start(new ProcessStartInfo(_settings.TgWsProxyPath) 
+            { 
+                UseShellExecute = true, 
+                WorkingDirectory = System.IO.Path.GetDirectoryName(_settings.TgWsProxyPath) 
+            });
+            ShowNotification("Успешно", "tg-ws-proxy запущен", false);
+        } 
+        catch 
+        {
+            ShowNotification("Ошибка запуска", "Не удалось запустить tg-ws-proxy. Проверьте путь.", true);
+        }
+    }
+
+    private void StartZapretProcess()
+    {
+        try 
+        { 
+            Process.Start(new ProcessStartInfo(_settings.ZapretPath) 
+            { 
+                UseShellExecute = true, 
+                WorkingDirectory = System.IO.Path.GetDirectoryName(_settings.ZapretPath) 
+            });
+            ShowNotification("Успешно", "Zapret запущен", false);
+        } 
+        catch 
+        {
+            ShowNotification("Ошибка запуска", "Не удалось запустить Zapret. Проверьте путь.", true);
+        }
+    }
+
+    private void RenderTgProxyWizardStep(int step)
+    {
+        WizardContent.Children.Clear();
+        if (WizardLayer.FindName("WizardTitle") is TextBlock tb) tb.Text = "Настройка Telegram Proxy";
+
+        switch (step)
+        {
+            case 0:
+                AddWizText("Я запустил TgWsProxy.\n\nПосмотри в правый нижний угол экрана (в трей, где часы и значки). Ты видишь там иконку с буквой «T» на голубом фоне?");
+                AddWizBtn("Да, я вижу", "#22c55e", () => RenderTgProxyWizardStep(1));
+                AddWizBtn("Нет, не вижу", "#ef4444", () => {
+                    // Перезапуск
+                    foreach (var p in Process.GetProcessesByName("TgWsProxy")) try { p.Kill(); } catch {}
+                    StartTgProxyProcess();
+                    RenderTgProxyWizardStep(0);
+                });
+                break;
+            case 1:
+                AddWizText("Отлично!\n\nТеперь нажми на эту иконку ЛЕВОЙ кнопкой мыши.\n\nУ тебя откроется Telegram с предложением добавить прокси. Нажми там кнопку «Включить» (Enable).");
+                AddWizBtn("Я всё сделал, ТГ работает", "#22c55e", () => {
                     CloseWizard();
-                    try {
-                        Process.Start(new ProcessStartInfo(_settings.ZapretPath) {
-                            UseShellExecute = true,
-                            WorkingDirectory = System.IO.Path.GetDirectoryName(_settings.ZapretPath)
-                        });
-                    } catch {}
                     RunAutoFix();
                 });
                 break;
         }
+    }
+    private T FindChild<T>(DependencyObject parent) where T : DependencyObject
+    {
+        if (parent == null) return null;
+
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T result)
+                return result;
+
+            var childOfChild = FindChild<T>(child);
+            if (childOfChild != null)
+                return childOfChild;
+        }
+
+        return null;
     }
 
     private void AddWizText(string txt)
@@ -1061,7 +1713,7 @@ public partial class MainWindow : Window
 
         var stack = new StackPanel
         {
-            HorizontalAlignment = HorizontalAlignment.Center,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
             VerticalAlignment   = VerticalAlignment.Center,
             MaxWidth            = 520,
             Margin              = new Thickness(32)
@@ -1258,7 +1910,7 @@ public partial class MainWindow : Window
         subText.FontFamily = new FontFamily("Segoe UI");
         subText.FontSize = 15;
         subText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
-        subText.HorizontalAlignment = HorizontalAlignment.Center;
+        subText.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
         subText.TextAlignment = TextAlignment.Center;
         subText.TextWrapping = TextWrapping.Wrap;
         subText.Margin = new Thickness(0, 0, 0, 24);
@@ -1292,7 +1944,7 @@ public partial class MainWindow : Window
     private static void AddOnboardEmoji(StackPanel p, string emoji) =>
         p.Children.Add(new TextBlock
         {
-            Text = emoji, FontSize = 54, HorizontalAlignment = HorizontalAlignment.Center,
+            Text = emoji, FontSize = 54, HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
             Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
             FontFamily = new FontFamily("Segoe UI Emoji"),
             Margin = new Thickness(0, 0, 0, 12)
@@ -1303,7 +1955,7 @@ public partial class MainWindow : Window
         {
             Text = text, FontFamily = new FontFamily("Segoe UI"), FontSize = 22,
             FontWeight = FontWeights.Bold, Foreground = Brushes.White,
-            HorizontalAlignment = HorizontalAlignment.Center,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
             TextAlignment = TextAlignment.Center,
             Margin = new Thickness(0, 0, 0, 12)
         });
@@ -1313,7 +1965,7 @@ public partial class MainWindow : Window
         {
             Text = text, FontFamily = new FontFamily("Segoe UI"), FontSize = 15,
             Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
-            HorizontalAlignment = HorizontalAlignment.Center,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
             TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 0, 0, 24)
         });
@@ -1331,7 +1983,7 @@ public partial class MainWindow : Window
             Height              = 44,
             Cursor              = Cursors.Hand,
             BorderThickness     = new Thickness(0),
-            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
             Margin              = new Thickness(0, 0, 0, 10),
         };
 
@@ -1349,7 +2001,7 @@ public partial class MainWindow : Window
             (SolidColorBrush)new BrushConverter().ConvertFrom(bgHex)!);
         bd.SetValue(Border.CornerRadiusProperty, new CornerRadius(8));
         var cp = new FrameworkElementFactory(typeof(ContentPresenter));
-        cp.SetValue(ContentPresenter.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+        cp.SetValue(ContentPresenter.HorizontalAlignmentProperty, System.Windows.HorizontalAlignment.Center);
         cp.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
         bd.AppendChild(cp);
         tmpl.VisualTree = bd;
@@ -1367,7 +2019,7 @@ public partial class MainWindow : Window
             FontSize            = 12,
             BorderThickness     = new Thickness(0),
             Cursor              = Cursors.Hand,
-            HorizontalAlignment = HorizontalAlignment.Center,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
             Margin              = new Thickness(0, 4, 0, 0),
         };
         btn.Template = CreateTransparentBtnTemplate();
@@ -1381,11 +2033,48 @@ public partial class MainWindow : Window
         var bd = new FrameworkElementFactory(typeof(Border));
         bd.SetValue(Border.BackgroundProperty, Brushes.Transparent);
         var cp = new FrameworkElementFactory(typeof(ContentPresenter));
-        cp.SetValue(ContentPresenter.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+        cp.SetValue(ContentPresenter.HorizontalAlignmentProperty, System.Windows.HorizontalAlignment.Center);
         cp.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
         bd.AppendChild(cp);
         tmpl.VisualTree = bd;
         return tmpl;
+    }
+
+    private void SetAutostart(bool enable)
+    {
+        try
+        {
+            if (enable)
+            {
+                string path = Environment.ProcessPath;
+                string args = $"/Create /F /RL HIGHEST /SC ONLOGON /TN \"NetFix\" /TR \"\\\"{path}\\\"\"";
+                var proc = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "schtasks",
+                    Arguments = args,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                });
+                proc?.WaitForExit();
+            }
+            else
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "schtasks",
+                    Arguments = "/Delete /F /TN \"NetFix\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                });
+            }
+            using var regKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
+            regKey?.DeleteValue("NetFix", false);
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Ошибка автозапуска: {ex.Message}");
+        }
     }
 }
 

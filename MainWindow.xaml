@@ -10,7 +10,8 @@
 
     <WindowChrome.WindowChrome>
         <WindowChrome ResizeBorderThickness="5" CaptionHeight="0"
-                      CornerRadius="0" GlassFrameThickness="0"/>
+                      CornerRadius="0" GlassFrameThickness="0"
+                      UseAeroCaptionButtons="False"/>
     </WindowChrome.WindowChrome>
 
     <Window.Resources>
@@ -40,17 +41,8 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="bd" Background="{TemplateBinding Background}"
-                                CornerRadius="6" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#2e2e2e"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#252525"/>
-                            </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.45"/>
                             </Trigger>
@@ -346,7 +338,9 @@
 
         <!-- ═══ SCROLLBAR (minimal) ═══ -->
         <Style TargetType="ScrollBar">
-            <Setter Property="Width" Value="8"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="Width" Value="10"/>
+            <!-- Даем невидимую зону для удобного клика мышкой -->
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -357,7 +351,8 @@
                                     <Thumb>
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
-                                                <Border Background="#666666" CornerRadius="3" Margin="2,0"/>
+                                                <!-- Добавлены отступы сверху и снизу (Margin="0,4,2,4"), чтобы края не обрезались и были закругленными -->
+                                                <Border Background="#333333" CornerRadius="5" Width="5" HorizontalAlignment="Right" Margin="0,4,2,4"/>
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>
@@ -382,9 +377,12 @@
     <Border Background="#161616" x:Name="RootBorder" CornerRadius="12" BorderBrush="#333333" BorderThickness="1">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="54"/>  <!-- Header  -->
-                <RowDefinition Height="*"/>   <!-- Content -->
-                <RowDefinition Height="42"/>  <!-- Footer  -->
+                <RowDefinition Height="54"/>
+                <!-- Header  -->
+                <RowDefinition Height="*"/>
+                <!-- Content -->
+                <RowDefinition Height="42"/>
+                <!-- Footer  -->
             </Grid.RowDefinitions>
 
             <!-- ══════════════════ HEADER ══════════════════ -->
@@ -403,7 +401,7 @@
                                    FontWeight="Bold" Foreground="White"/>
                         <TextBlock Text="  by rupleide" FontFamily="Segoe UI" FontSize="11"
                                    Foreground="#888888" VerticalAlignment="Center" Margin="0,0,15,0"/>
-                        
+
                         <!-- Net Status -->
                         <Ellipse x:Name="NetDot" Width="8" Height="8" Fill="#888888" VerticalAlignment="Center"/>
                         <TextBlock x:Name="NetLbl" Text="Сеть" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
@@ -413,12 +411,12 @@
                         <Ellipse x:Name="VpnDot" Width="8" Height="8" Fill="#888888" VerticalAlignment="Center"/>
                         <TextBlock Text="VPN" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
                                    Foreground="#888888" VerticalAlignment="Center" Margin="5,0,15,0"/>
-                        
+
                         <!-- Zapret Status -->
                         <Ellipse x:Name="ZapretDot" Width="8" Height="8" Fill="#888888" VerticalAlignment="Center"/>
                         <TextBlock Text="Zapret" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
                                    Foreground="#888888" VerticalAlignment="Center" Margin="5,0,15,0"/>
-                        
+
                         <!-- TgWsProxy Status -->
                         <Ellipse x:Name="TgWsDot" Width="8" Height="8" Fill="#888888" VerticalAlignment="Center"/>
                         <TextBlock Text="TgWsProxy" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
@@ -427,22 +425,30 @@
 
                     <!-- Nav + window controls -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button x:Name="FaqNavBtn" Content="Частые вопросы"
-                                Style="{StaticResource FlatBtn}" Foreground="#888888"
-                                WindowChrome.IsHitTestVisibleInChrome="True"
-                                Click="FaqNavBtn_Click"/>
 
-                        <Button x:Name="DiagNavBtn" Content="Диагностика"
-                                Style="{StaticResource FlatBtn}" Foreground="#888888"
-                                WindowChrome.IsHitTestVisibleInChrome="True"
-                                Click="DiagNavBtn_Click"/>
+                        <Button x:Name="ServicesBtn" Content="⚡  Сервисы"
+        Style="{StaticResource FlatBtn}"
+        Foreground="#888888" FontSize="13"
+        Padding="12,6" Margin="0,0,10,0"
+        WindowChrome.IsHitTestVisibleInChrome="True"
+        Click="ServicesBtn_Click"/>
+<Button x:Name="FaqNavBtn" Content="Частые вопросы"
+        Style="{StaticResource FlatBtn}" Foreground="#888888"
+        Padding="12,6" Margin="0,0,10,0"
+        WindowChrome.IsHitTestVisibleInChrome="True"
+        Click="FaqNavBtn_Click"/>
+<Button x:Name="DiagNavBtn" Content="Диагностика"
+        Style="{StaticResource FlatBtn}" Foreground="#888888"
+        Padding="12,6" Margin="0,0,10,0"
+        WindowChrome.IsHitTestVisibleInChrome="True"
+        Click="DiagNavBtn_Click"/>
 
                         <Button Style="{StaticResource FlatBtn}"
                                 Width="36" Padding="0"
                                 WindowChrome.IsHitTestVisibleInChrome="True"
                                 Click="SettingsBtn_Click" Margin="4,0,0,0">
                             <Path Width="16" Height="16" Stretch="Uniform" 
-                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
                                   Data="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
                         </Button>
 
@@ -590,29 +596,28 @@
                         <!-- Log header -->
                         <Grid Margin="0,16,0,0">
                             <TextBlock Text="Лог" FontFamily="Segoe UI" FontSize="13"
-                                       FontWeight="Bold" Foreground="#888888"/>
-                            <Button Content="Очистить" HorizontalAlignment="Right"
-                                    Style="{StaticResource FlatBtn}" FontSize="11"
-                                    Height="24" Padding="8,2"
-                                    WindowChrome.IsHitTestVisibleInChrome="True"
-                                    Click="ClearLog_Click"/>
+                                       FontWeight="Bold" Foreground="#888888" VerticalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="Скопировать" Style="{StaticResource FlatBtn}" FontSize="11"
+                                        Height="24" Padding="8,2" Margin="0,0,8,0"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="CopyLog_Click"/>
+                                <Button Content="Очистить" Style="{StaticResource FlatBtn}" FontSize="11"
+                                        Height="24" Padding="8,2"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="ClearLog_Click"/>
+                            </StackPanel>
                         </Grid>
 
                         <!-- Log box -->
                         <RichTextBox x:Name="LogBox" Style="{StaticResource LogBox}"
-                                     Height="200" Margin="0,8,0,0">
+                                     Height="270" Margin="0,8,0,16">
                             <FlowDocument PagePadding="0"/>
                         </RichTextBox>
-
-                        <!-- Diag link -->
-                        <Button Content="🔍  Расширенная диагностика"
-                                HorizontalAlignment="Left" Margin="0,16,0,0"
-                                Style="{StaticResource OutlineBtn}"
-                                WindowChrome.IsHitTestVisibleInChrome="True"
-                                Click="DiagNavBtn_Click"/>
                     </StackPanel>
                 </ScrollViewer>
 
+                <!-- ── FAQ PAGE ── -->
                 <!-- ── FAQ PAGE ── -->
                 <Grid x:Name="FaqPage" Visibility="Collapsed">
                     <Grid.RowDefinitions>
@@ -623,10 +628,10 @@
 
                     <Grid Grid.Row="0" Margin="32,20,32,0">
                         <StackPanel Orientation="Horizontal">
-                            <Button Content="← Назад" Style="{StaticResource BackBtn}"
+                            <Button x:Name="FaqBackBtn" Content="← Назад" Style="{StaticResource BackBtn}"
                                     WindowChrome.IsHitTestVisibleInChrome="True"
-                                    Click="BackFromFaq_Click"/>
-                            <TextBlock Text="Частые вопросы" FontFamily="Segoe UI" FontSize="18"
+                                    Click="FaqBackBtn_Click"/>
+                            <TextBlock x:Name="FaqHeaderTitle" Text="Частые вопросы" FontFamily="Segoe UI" FontSize="18"
                                        FontWeight="Bold" Foreground="White"
                                        VerticalAlignment="Center" Margin="16,0,0,0"/>
                         </StackPanel>
@@ -635,7 +640,7 @@
                     <Border Grid.Row="1" Height="1" Background="#333333" Margin="32,14,32,0"/>
 
                     <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="32,14,32,0">
-                        <StackPanel x:Name="FaqList"/>
+                        <StackPanel x:Name="FaqContainer" Margin="0,0,0,20"/>
                     </ScrollViewer>
                 </Grid>
 
@@ -670,9 +675,9 @@
                                     Style="{StaticResource AccentBtn}" HorizontalAlignment="Left"
                                     WindowChrome.IsHitTestVisibleInChrome="True"
                                     Click="SolutionAutoFixBtn_Click" Margin="0,0,0,24"/>
-                            
+
                             <Border Height="1" Background="#333333" Margin="0,0,0,24"/>
-                            
+
                             <!-- Manual -->
                             <TextBlock Text="Ручное решение" FontFamily="Segoe UI" FontSize="15"
                                        FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
@@ -749,6 +754,7 @@
                     <Button Content="☕ Поддержать разработку" HorizontalAlignment="Right"
                             Style="{StaticResource FlatBtn}" FontSize="11"
                             WindowChrome.IsHitTestVisibleInChrome="True"
+                            VerticalAlignment="Center"
                             Click="DonateBtn_Click"/>
                 </Grid>
             </Border>
@@ -795,7 +801,10 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="38"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="ZapretBox" Style="{StaticResource InputBox}" Height="32"/>
+                                    <TextBox x:Name="ZapretBox" Style="{StaticResource InputBox}" Height="32"
+         HorizontalScrollBarVisibility="Hidden"
+         TextAlignment="Left"
+         Padding="8,0,8,0"/>
                                     <Button Grid.Column="1" Content="…" Style="{StaticResource OutlineBtn}"
                                             Height="32" Padding="0" Margin="4,0,0,0" FontSize="14"
                                             WindowChrome.IsHitTestVisibleInChrome="True"
@@ -810,7 +819,10 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="38"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="TgWsBox" Style="{StaticResource InputBox}" Height="32"/>
+                                    <TextBox x:Name="TgWsBox" Style="{StaticResource InputBox}" Height="32"
+         HorizontalScrollBarVisibility="Hidden"
+         TextAlignment="Left"
+         Padding="8,0,8,0"/>
                                     <Button Grid.Column="1" Content="…" Style="{StaticResource OutlineBtn}"
                                             Height="32" Padding="0" Margin="4,0,0,0" FontSize="14"
                                             WindowChrome.IsHitTestVisibleInChrome="True"
@@ -825,7 +837,10 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="38"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="GdpiBox" Style="{StaticResource InputBox}" Height="32"/>
+                                    <TextBox x:Name="GdpiBox" Style="{StaticResource InputBox}" Height="32"
+         HorizontalScrollBarVisibility="Hidden"
+         TextAlignment="Left"
+         Padding="8,0,8,0"/>
                                     <Button Grid.Column="1" Content="…" Style="{StaticResource OutlineBtn}"
                                             Height="32" Padding="0" Margin="4,0,0,0" FontSize="14"
                                             WindowChrome.IsHitTestVisibleInChrome="True"
@@ -836,12 +851,10 @@
                                 <TextBlock Text="АВТОЗАПУСК" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
 
-                                <CheckBox x:Name="AutoZapretCB" Style="{StaticResource Toggle}"
-                                          Content="Zapret при старте" Margin="0,0,0,10"/>
                                 <CheckBox x:Name="AutoTgWsCB" Style="{StaticResource Toggle}"
-                                          Content="tg-ws-proxy при старте" Margin="0,0,0,10"/>
+                                          Content="tg-ws-proxy в автозапуск Windows" Margin="0,0,0,10"/>
                                 <CheckBox x:Name="AutoAppCB" Style="{StaticResource Toggle}"
-                                          Content="NetFix в автозагрузку" Margin="0,0,0,20"/>
+                                          Content="NetFix в автозапуск Windows" Margin="0,0,0,20"/>
 
                                 <Border Height="1" Background="#333333" Margin="0,0,0,16"/>
                                 <TextBlock Text="ПРОЧЕЕ" FontFamily="Segoe UI" FontSize="11"
@@ -852,6 +865,11 @@
                                 <CheckBox x:Name="AutoUpdatesCB" Style="{StaticResource Toggle}"
                                           Content="Автоматические обновления" Margin="0,0,0,20"/>
 
+                                <Button Content="Проверить обновления" Style="{StaticResource OutlineBtn}"
+                                        HorizontalAlignment="Stretch" Padding="12,8" Margin="0,0,0,20"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="CheckUpdateBtn_Click"/>
+
                                 <Button Content="Сохранить" Style="{StaticResource AccentBtn}"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
                                         Click="SaveSettings_Click"/>
@@ -861,15 +879,28 @@
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,10"/>
                                 <TextBlock Text="Нравится, как всё работает? Ты можешь поддержать разработку! В планах — реализовать такое же приложение на телефон с полным функционалом, потому что на мобилках сейчас такая же беда с интернетом.&#x0a;Если хочешь помочь финансово — жми на кнопку ниже. А если ты шаришь в коде и хочешь вписаться в разработку напрямую — пиши мне в личку, обсудим."
                                            Foreground="#f0f0f0" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
-                                
+
                                 <Button Content="☕ Задонатить / Поддержать"
                                         Style="{StaticResource AccentBtn}" HorizontalAlignment="Stretch" Padding="12,8" Margin="0,0,0,6"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
                                         Click="DonateBtn_Click"/>
-                                <Button Content="✉ Написать в Aygram / TG"
+                                <Button Content="✉ Написать в телеграм"
                                         Style="{StaticResource OutlineBtn}" HorizontalAlignment="Stretch" Padding="12,8" Margin="0,0,0,16" Foreground="#f0f0f0"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
                                         Click="SupportBtn_Click"/>
+
+                                <Border Height="1" Background="#333333" Margin="0,20"/>
+                                <TextBlock Text="О ПРИЛОЖЕНИИ" FontFamily="Segoe UI" FontSize="11"
+                                           Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
+                                <TextBlock TextWrapping="Wrap" FontFamily="Segoe UI" FontSize="12"
+                                           Foreground="#f0f0f0" Margin="0,0,0,8"
+                                           Text="NetFix создан rupleide как удобная оболочка для настройки интернета на Windows. Интерфейс, логика приложения, кнопки и весь дизайн — авторская работа."/>
+                                <TextBlock TextWrapping="Wrap" FontFamily="Segoe UI" FontSize="12"
+                                           Foreground="#f0f0f0" Margin="0,0,0,8"
+                                           Text="Zapret и tg-ws-proxy — инструменты разработчика Flowseal. Я не претендую на авторство этих утилит и лишь использую их как основу. Вся заслуга по обходу блокировок принадлежит ему."/>
+                                <TextBlock TextWrapping="Wrap" FontFamily="Segoe UI" FontSize="12"
+                                           Foreground="#f0f0f0" Margin="0,0,0,0"
+                                           Text="Цель NetFix — сделать настройку простой и понятной для любого пользователя."/>
 
                                 <Border Height="1" Background="#333333" Margin="0,20"/>
                                 <TextBlock Text="ССЫЛКИ" FontFamily="Segoe UI" FontSize="11"
@@ -947,6 +978,127 @@
                     <ContentControl x:Name="OnboardContent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                 </Grid>
             </Border>
+
+            <!-- ══════════════════ SERVICES PANEL ══════════════════ -->
+            <Grid Grid.Row="0" Grid.RowSpan="3" x:Name="ServicesLayer"
+                  Visibility="Collapsed" Panel.ZIndex="14">
+                <Rectangle Fill="Black" Opacity="0.4"
+                           MouseLeftButtonDown="ServicesBackdrop_Click"/>
+                <Border x:Name="ServicesPanel" Width="300"
+                        HorizontalAlignment="Right"
+                        Background="#1e1e1e" CornerRadius="12,0,0,12"
+                        BorderBrush="#333333" BorderThickness="1,0,0,0">
+                    <Border.RenderTransform>
+                        <TranslateTransform x:Name="ServicesTrans" X="300"/>
+                    </Border.RenderTransform>
+                    <DockPanel>
+
+                        <!-- Заголовок -->
+                        <Border DockPanel.Dock="Top" Height="54"
+                                BorderBrush="#333333" BorderThickness="0,0,0,1">
+                            <Grid Margin="20,0">
+                                <TextBlock Text="Управление сервисами"
+                                           FontFamily="Segoe UI" FontSize="15"
+                                           FontWeight="Bold" Foreground="White"
+                                           VerticalAlignment="Center"/>
+                                <Button Content="✕" HorizontalAlignment="Right"
+                                        Style="{StaticResource FlatBtn}"
+                                        FontSize="14" Padding="0" Width="34"
+                                        Click="ServicesCloseBtn_Click"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Контент -->
+                        <StackPanel Margin="20,20,20,24">
+
+                            <!-- Zapret -->
+                            <Border Background="#252525" CornerRadius="12"
+                                    BorderBrush="#333333" BorderThickness="1"
+                                    Padding="16,14" Margin="0,0,0,10">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="38" Height="38" CornerRadius="10"
+                                            Background="#1a2a3a" Margin="0,0,12,0"
+                                            VerticalAlignment="Center">
+                                        <TextBlock Text="Z" FontFamily="Segoe UI"
+                                                   FontSize="17" FontWeight="Bold"
+                                                   Foreground="#3b82f6"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="Zapret"
+                                                   FontFamily="Segoe UI" FontSize="13"
+                                                   FontWeight="SemiBold" Foreground="White"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                            <Ellipse x:Name="ZapretDot2" Width="6" Height="6"
+                                                     Fill="#888888" VerticalAlignment="Center"
+                                                     Margin="0,0,5,0"/>
+                                            <TextBlock x:Name="ZapretStatusLbl"
+                                                       Text="Не запущен"
+                                                       FontFamily="Segoe UI" FontSize="11"
+                                                       Foreground="#888888"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <Button x:Name="ZapretToggleBtn" Grid.Column="2"
+                                            Content="▶  Запустить"
+                                            Style="{StaticResource AccentBtn}"
+                                            Padding="12,7" FontSize="12"
+                                            WindowChrome.IsHitTestVisibleInChrome="True"
+                                            Click="ZapretToggle_Click"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- tg-ws-proxy -->
+                            <Border Background="#252525" CornerRadius="12"
+                                    BorderBrush="#333333" BorderThickness="1"
+                                    Padding="16,14">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="38" Height="38" CornerRadius="10"
+                                            Background="#1a2a3a" Margin="0,0,12,0"
+                                            VerticalAlignment="Center">
+                                        <TextBlock Text="T" FontFamily="Segoe UI"
+                                                   FontSize="17" FontWeight="Bold"
+                                                   Foreground="#3b82f6"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="tg-ws-proxy"
+                                                   FontFamily="Segoe UI" FontSize="13"
+                                                   FontWeight="SemiBold" Foreground="White"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                            <Ellipse x:Name="TgWsDot2" Width="6" Height="6"
+                                                     Fill="#888888" VerticalAlignment="Center"
+                                                     Margin="0,0,5,0"/>
+                                            <TextBlock x:Name="TgWsStatusLbl"
+                                                       Text="Не запущен"
+                                                       FontFamily="Segoe UI" FontSize="11"
+                                                       Foreground="#888888"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <Button x:Name="TgWsToggleBtn" Grid.Column="2"
+                                            Content="▶  Запустить"
+                                            Style="{StaticResource AccentBtn}"
+                                            Padding="12,7" FontSize="12"
+                                            WindowChrome.IsHitTestVisibleInChrome="True"
+                                            Click="TgWsToggle_Click"/>
+                                </Grid>
+                            </Border>
+
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+            </Grid>
         </Grid>
     </Border>
 </Window>
