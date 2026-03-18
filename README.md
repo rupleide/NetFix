@@ -48,7 +48,7 @@
 
   <br/>
 
-  <img src="Assets/Screenshots/Diagnosis.png" width="800" alt="Диагностика"/>
+  <img src="Assets/Screenshots/Servers.png" width="800" alt="Диагностика"/>
   <p><i><b>Расширенная диагностика:</b> Уникальная функция, которая проверяет пинг и доступность каждого дата-центра Telegram (DC1-DC5). Вы сразу увидите, где именно "затык" в сети.</i></p>
 
   <br/>
