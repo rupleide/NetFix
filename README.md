@@ -7,7 +7,7 @@
   
   [![Release](https://img.shields.io/github/v/release/rupleide/NetFix?style=flat-square&color=3b82f6)](https://github.com/rupleide/NetFix/releases/latest)
   [![Downloads](https://img.shields.io/github/downloads/rupleide/NetFix/total?style=flat-square&color=22c55e)](https://github.com/rupleide/NetFix/releases)
-  [![License](https://img.shields.io/github/license/rupleide/NetFix?style=flat-square&color=888888)](LICENSE)
+  [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 </div>
 
 ---
