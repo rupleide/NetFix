@@ -633,9 +633,11 @@ public partial class MainWindow : Window
         var card = new Border
         {
             Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
-            CornerRadius = new CornerRadius(10),
-            Margin = new Thickness(0, 0, 0, 10),
-            Padding = new Thickness(16)
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x2e, 0x2e, 0x2e)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(12),
+            Margin = new Thickness(0, 0, 0, 12),
+            Padding = new Thickness(20, 16, 20, 16)
         };
         
         var grid = new Grid();
@@ -647,7 +649,8 @@ public partial class MainWindow : Window
             Text = title,
             FontFamily = new FontFamily("Segoe UI"),
             FontSize = 14,
-            Foreground = Brushes.White,
+            FontWeight = FontWeights.Medium,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xf0, 0xf0, 0xf0)),
             VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 0, 16, 0)
@@ -658,7 +661,8 @@ public partial class MainWindow : Window
         {
             Content = "Исправить",
             Style = (Style)FindResource("AccentBtn"),
-            Padding = new Thickness(16, 6, 16, 6)
+            Padding = new Thickness(16, 8, 16, 8),
+            FontSize = 13
         };
         Grid.SetColumn(btn, 1);
         
