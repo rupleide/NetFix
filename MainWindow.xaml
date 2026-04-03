@@ -910,11 +910,13 @@
                                         <TextBlock TextWrapping="Wrap" FontFamily="Segoe UI" FontSize="12"
                                                    Foreground="#f0f0f0" Margin="0,0,0,10"
                                                    Text="Я создал канал специально для этого проекта. Там я публикую новые найденные обходы, сообщаю о важных обновлениях Zapret, TgWsProxy и самого NetFix. Планирую активно развивать его — советую подписаться, чтобы не пропустить ничего важного."/>
-                                        <Button Content="📱 Открыть канал @NetFixRuBi"
+                                        <Button x:Name="TelegramChannelBtn" Content="📱 Открыть канал @NetFixRuBi"
                                                 Style="{StaticResource AccentBtn}" HorizontalAlignment="Stretch"
                                                 Background="#22c55e" Padding="12,8"
                                                 WindowChrome.IsHitTestVisibleInChrome="True"
-                                                Click="OpenTelegramChannel_Click"/>
+                                                Click="OpenTelegramChannel_Click"
+                                                MouseEnter="TelegramChannelBtn_MouseEnter"
+                                                MouseLeave="TelegramChannelBtn_MouseLeave"/>
                                     </StackPanel>
                                 </Border>
 

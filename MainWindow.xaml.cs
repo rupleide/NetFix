@@ -1676,6 +1676,18 @@ public partial class MainWindow : Window
         window.ShowDialog();
     }
 
+    private void TelegramChannelBtn_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (sender is Button btn)
+            btn.Background = new SolidColorBrush(Color.FromRgb(0x1e, 0xa3, 0x4d)); // Темнее зеленый
+    }
+
+    private void TelegramChannelBtn_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (sender is Button btn)
+            btn.Background = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)); // Обычный зеленый
+    }
+
     private void WizardCloseBtn_Click(object s, RoutedEventArgs e) => CloseWizard();
 
     private static void OpenUrl(string url)
