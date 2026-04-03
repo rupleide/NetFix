@@ -1651,6 +1651,25 @@ public partial class MainWindow : Window
         OpenUrl("https://github.com/Flowseal/tg-ws-proxy");
     private void LinkGdpi_Click(object s, RoutedEventArgs e) => Process.Start(new ProcessStartInfo("https://github.com/ValdikSS/GoodbyeDPI") { UseShellExecute = true });
 
+    private void OpenTelegramChannel_Click(object s, RoutedEventArgs e)
+    {
+        try {
+            // Пробуем открыть напрямую в Telegram
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo {
+                FileName = "tg://resolve?domain=NetFixRuBi",
+                UseShellExecute = true
+            });
+        } catch {
+            // Если не получилось, открываем через браузер
+            try {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo {
+                    FileName = "https://t.me/NetFixRuBi",
+                    UseShellExecute = true
+                });
+            } catch { }
+        }
+    }
+
     private void CheckUpdateBtn_Click(object sender, RoutedEventArgs e)
     {
         var window = new NetFix.Views.UpdateWindow();

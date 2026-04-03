@@ -949,6 +949,24 @@
                                         Click="LinkGdpi_Click"/>
 
                                 <Border Height="1" Background="#333333" Margin="0,16"/>
+                                <TextBlock Text="📢 TELEGRAM-КАНАЛ ПРОЕКТА" FontFamily="Segoe UI" FontSize="11"
+                                           Foreground="#888888" FontWeight="Bold" Margin="0,0,0,10"/>
+                                
+                                <Border Background="#1a2e1a" BorderBrush="#22c55e" BorderThickness="2,0,0,0"
+                                        CornerRadius="8" Padding="14" Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <TextBlock TextWrapping="Wrap" FontFamily="Segoe UI" FontSize="12"
+                                                   Foreground="#f0f0f0" Margin="0,0,0,10"
+                                                   Text="Я создал канал специально для этого проекта. Там я публикую новые найденные обходы, сообщаю о важных обновлениях Zapret, TgWsProxy и самого NetFix. Планирую активно развивать его — советую подписаться, чтобы не пропустить ничего важного."/>
+                                        <Button Content="📱 Открыть канал @NetFixRuBi"
+                                                Style="{StaticResource AccentBtn}" HorizontalAlignment="Stretch"
+                                                Background="#22c55e" Padding="12,8"
+                                                WindowChrome.IsHitTestVisibleInChrome="True"
+                                                Click="OpenTelegramChannel_Click"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Height="1" Background="#333333" Margin="0,4"/>
                                 <TextBlock Text="СБРОС" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
                                 <Button Content="↩ Пройти онбординг заново"
