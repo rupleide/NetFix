@@ -193,7 +193,7 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Grid>
-                            <!-- Тёмный ореол , строго в границах 170x170 -->
+                            <!-- Тёмный ореол, строго в границах 170x170 -->
                             <Border x:Name="outerRing"
                                     CornerRadius="85"
                                     Background="#0a0a18"/>
@@ -531,13 +531,13 @@
                                    HorizontalAlignment="Center"
                                    TextAlignment="Center"
                                    Margin="0,0,0,4"/>
-                        <TextBlock Text="Одна кнопка , скачает, настроит и запустит всё необходимое."
+                        <TextBlock Text="Одна кнопка, скачает, настроит и запустит всё необходимое."
                                    FontFamily="Segoe UI" FontSize="13" Foreground="#888888"
                                    HorizontalAlignment="Center"
                                    TextAlignment="Center"
                                    Margin="0,0,0,24"/>
 
-                        <!-- Round power button , enhanced animation system -->
+                        <!-- Round power button, enhanced animation system -->
                         <Grid HorizontalAlignment="Center" Width="200" Height="200" Margin="0,0,0,8">
 
                             <Button x:Name="FixBtn" Content=""
@@ -805,7 +805,7 @@
             <!-- ══════════════════ FOOTER ══════════════════ -->
             <Border Grid.Row="2" Background="#1e1e1e" CornerRadius="0,0,11,11">
                 <Grid Margin="18,0,12,0">
-                    <TextBlock Text="by RuBi , rupleide" FontFamily="Segoe UI" FontSize="11"
+                    <TextBlock Text="by RuBi, rupleide" FontFamily="Segoe UI" FontSize="11"
                                Foreground="#888888" VerticalAlignment="Center"/>
                     <Button Content="☕ Поддержать разработку" HorizontalAlignment="Right"
                             Style="{StaticResource FlatBtn}" FontSize="11"
@@ -939,7 +939,7 @@
                                     <StackPanel>
                                         <TextBlock TextWrapping="Wrap" FontFamily="Segoe UI" FontSize="12"
                                                    Foreground="#f0f0f0" Margin="0,0,0,10"
-                                                   Text="Я создал канал специально для этого проекта. Там я публикую новые найденные обходы, сообщаю о важных обновлениях Zapret, TgWsProxy и самого NetFix. Планирую активно развивать его , советую подписаться, чтобы не пропустить ничего важного."/>
+                                                   Text="Я создал канал специально для этого проекта. Там я публикую новые найденные обходы, сообщаю о важных обновлениях Zapret, TgWsProxy и самого NetFix. Планирую активно развивать его, советую подписаться, чтобы не пропустить ничего важного."/>
                                         <Button Content="📱 Открыть канал @NetFixRuBi"
                                                 Style="{StaticResource GreenAccentBtn}" HorizontalAlignment="Stretch"
                                                 Padding="12,8"
@@ -951,7 +951,7 @@
                                 <Border Height="1" Background="#333333" Margin="0,4"/>
                                 <TextBlock Text="🚀 БУДУЩЕЕ ПРОЕКТА И ПОДДЕРЖКА" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,10"/>
-                                <TextBlock Text="Нравится, как всё работает? Ты можешь поддержать разработку! В планах , реализовать такое же приложение на телефон с полным функционалом, потому что на мобилках сейчас такая же беда с интернетом.&#x0a;Если хочешь помочь финансово , жми на кнопку ниже. А если ты шаришь в коде и хочешь вписаться в разработку напрямую , пиши мне в личку, обсудим."
+                                <TextBlock Text="Нравится, как всё работает? Ты можешь поддержать разработку! В планах, реализовать такое же приложение на телефон с полным функционалом, потому что на мобилках сейчас такая же беда с интернетом.&#x0a;Если хочешь помочь финансово, жми на кнопку ниже. А если ты шаришь в коде и хочешь вписаться в разработку напрямую, пиши мне в личку, обсудим."
                                            Foreground="#f0f0f0" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
 
                                 <Button Content="☕ Задонатить / Поддержать"
@@ -968,13 +968,13 @@
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
                                 <TextBlock TextWrapping="Wrap" FontFamily="Segoe UI" FontSize="12"
                                            Foreground="#f0f0f0" Margin="0,0,0,8"
-                                           Text="NetFix создан rupleide как удобная оболочка для настройки интернета на Windows. Интерфейс, логика приложения, кнопки и весь дизайн , авторская работа."/>
+                                           Text="NetFix создан rupleide как удобная оболочка для настройки интернета на Windows. Интерфейс, логика приложения, кнопки и весь дизайн, авторская работа."/>
                                 <TextBlock TextWrapping="Wrap" FontFamily="Segoe UI" FontSize="12"
                                            Foreground="#f0f0f0" Margin="0,0,0,8"
-                                           Text="Zapret и tg-ws-proxy , инструменты разработчика Flowseal. Я не претендую на авторство этих утилит и лишь использую их как основу. Вся заслуга по обходу блокировок принадлежит ему."/>
+                                           Text="Zapret и tg-ws-proxy, инструменты разработчика Flowseal. Я не претендую на авторство этих утилит и лишь использую их как основу. Вся заслуга по обходу блокировок принадлежит ему."/>
                                 <TextBlock TextWrapping="Wrap" FontFamily="Segoe UI" FontSize="12"
                                            Foreground="#f0f0f0" Margin="0,0,0,0"
-                                           Text="Цель NetFix , сделать настройку простой и понятной для любого пользователя."/>
+                                           Text="Цель NetFix, сделать настройку простой и понятной для любого пользователя."/>
 
                                 <Border Height="1" Background="#333333" Margin="0,20"/>
                                 <TextBlock Text="ССЫЛКИ" FontFamily="Segoe UI" FontSize="11"
