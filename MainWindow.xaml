@@ -531,7 +531,7 @@
                                    HorizontalAlignment="Center"
                                    TextAlignment="Center"
                                    Margin="0,0,0,4"/>
-                        <TextBlock Text="Одна кнопка, скачает, настроит и запустит всё необходимое."
+                        <TextBlock Text="Одна кнопка - скачает, настроит и запустит всё необходимое."
                                    FontFamily="Segoe UI" FontSize="13" Foreground="#888888"
                                    HorizontalAlignment="Center"
                                    TextAlignment="Center"
@@ -995,6 +995,11 @@
                                         FontSize="12" Padding="0,4"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
                                         Click="LinkGdpi_Click"/>
+                                <Button Content="↗ Telegram-канал @NetFixRuBi" HorizontalAlignment="Left"
+                                        Style="{StaticResource FlatBtn}" Foreground="#22c55e"
+                                        FontSize="12" Padding="0,4"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="OpenTelegramChannel_Click"/>
 
                                 <Border Height="1" Background="#333333" Margin="0,16"/>
                                 <TextBlock Text="СБРОС" FontFamily="Segoe UI" FontSize="11"
