@@ -21,7 +21,7 @@ Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 Source: "C:\Users\rubi\Desktop\NetFix\bin\x64\Release\net8.0-windows\NetFix.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\rubi\Desktop\NetFix\bin\x64\Release\net8.0-windows\NetFix.runtimeconfig.json"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\rubi\Desktop\NetFix\bin\x64\Release\net8.0-windows\*.dll"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
-Source: "C:\Users\rubi\Downloads\dotnet-runtime-8.0.25-win-x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
+; Source: "C:\Users\rubi\Downloads\dotnet-runtime-8.0.25-win-x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
 [Icons]
 Name: "{group}\NetFix"; Filename: "{app}\NetFix.exe"
