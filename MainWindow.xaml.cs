@@ -515,16 +515,10 @@ public partial class MainWindow : Window
         
         var mainCard = new Border {
             Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            BorderThickness = new Thickness(0, 3, 0, 0),
             CornerRadius = new CornerRadius(12),
             Padding = new Thickness(24),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
-            BorderThickness = new Thickness(1)
-        };
-
-        var accent = new Border {
-            Height = 3, CornerRadius = new CornerRadius(12, 12, 0, 0),
-            Background = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
-            Margin = new Thickness(-1, -1, -1, 0) // перекрывает верхний край
         };
 
         var stack = new StackPanel();
@@ -546,10 +540,7 @@ public partial class MainWindow : Window
             LineHeight = 24 
         });
 
-        var outerStack = new StackPanel();
-        outerStack.Children.Add(accent);
-        outerStack.Children.Add(stack);
-        mainCard.Child = outerStack;
+        mainCard.Child = stack;
         FaqContainer.Children.Add(mainCard);
 
         // Создаем кнопку-контейнер
