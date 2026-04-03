@@ -468,13 +468,13 @@ public static class DiagnosticsEngine
 
         if (r.UdpResult?.Blocked == true)
             recs.Add(bypass
-                ? $"🎮  Discord UDP: заблокирован, НО {BypassList()} активен — Discord работает! 🎉"
-                : "🎮  Discord UDP заблокирован — голосовые каналы пострадают\n" +
+                ? $"🎮  Discord UDP: заблокирован, НО {BypassList()} активен , Discord работает! 🎉"
+                : "🎮  Discord UDP заблокирован , голосовые каналы пострадают\n" +
                   "    1) Zapret: github.com/Flowseal/zapret-discord-youtube\n" +
                   "    2) Discord → Параметры → Голос → TCP (+ ~150ms lag)\n" +
-                  "    3) Cloudflare WARP: 1.1.1.1  — бесплатно");
+                  "    3) Cloudflare WARP: 1.1.1.1  , бесплатно");
         else
-            recs.Add("🎮  Discord UDP: доступен ✓ — голос работает без дополнительных настроек.");
+            recs.Add("🎮  Discord UDP: доступен ✓ , голос работает без дополнительных настроек.");
 
         if (!blocks.Any(b => b != BlockType.None) && recs.Count <= 1)
             recs.Insert(0, "✅  Серьёзных блокировок не обнаружено. Telegram и Discord работают напрямую.");
@@ -493,7 +493,7 @@ public static class DiagnosticsEngine
 
         if (app?.TgWsProxyRunning == true)
             return ("🟢", "tg-ws-proxy активен",
-                "Telegram скорее всего работает нормально.\nПинг может быть высоким — это ожидаемо.", "green");
+                "Telegram скорее всего работает нормально.\nПинг может быть высоким , это ожидаемо.", "green");
 
         if (!pingOk && dcOk == 0)
             return ("🔴", "Интернета нет", "Ни один сервер не отвечает. Проверь Wi-Fi или кабель.", "red");
@@ -514,7 +514,7 @@ public static class DiagnosticsEngine
         if (dcOk >= Math.Max(dcTot / 2, 1))
             return ("🟢", "Telegram работает нормально", "Серверы отвечают быстро.", "green");
 
-        return ("🟡", "Ситуация неоднозначная", "Часть проверок прошла, часть — нет. Смотри детали.", "yellow");
+        return ("🟡", "Ситуация неоднозначная", "Часть проверок прошла, часть , нет. Смотри детали.", "yellow");
     }
 
     public static (string emoji, string title, string detail, string color) DiscordVerdict(DiagReport r)

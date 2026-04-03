@@ -70,7 +70,7 @@ public partial class UpdateWindow : Window
     {
         StopIndeterminateAnimation();
         _downloadUrl = downloadUrl;
-        StatusText.Text = $"🚀  Доступна новая версия — {newVersion}";
+        StatusText.Text = $"🚀  Доступна новая версия , {newVersion}";
         StatusText.Foreground = Brush("#f0f0f0");
         SetProgressBar(BarWidth, "#3b82f6");
         PrimaryBtn.Content = "Установить";
@@ -90,11 +90,11 @@ public partial class UpdateWindow : Window
 
             var (hasUpdate, newVersion, downloadUrl, error) = await UpdateService.CheckAsync();
 
-            // Если есть ошибка — показываем в окне
+            // Если есть ошибка , показываем в окне
             if (!string.IsNullOrEmpty(error))
             {
                 StatusText.Text = $"⚠️ {error}";
-                // не возвращаемся — идём на следующую попытку
+                // не возвращаемся , идём на следующую попытку
                 if (attempt < maxAttempts)
                 {
                     await Task.Delay(1500);
