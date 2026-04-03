@@ -1737,6 +1737,8 @@ public partial class MainWindow : Window
             case 12: BuildOnboardTgWsMove(stack); break;
             case 13: BuildOnboardTgWsSelectExe(stack); break;
             case 15: BuildOnboardDone(stack); break;
+            case 16: BuildOnboardAutoDownload(stack); break;
+            case 17: BuildOnboardManualStart(stack); break;
         }
 
         OnboardContent.Content = grid;
@@ -1770,8 +1772,10 @@ public partial class MainWindow : Window
 
     private void BuildOnboard3(StackPanel p)
     {
-        AddOnboardSub(p, "Для работы приложения вам нужно скачать следующие компоненты:");
-        AddOnboardBtn(p, "Погнали", "#3b82f6", () => ShowOnboardScreen(4));
+        AddOnboardTitle(p, "Способ установки");
+        AddOnboardSub(p, "Как вы хотите установить компоненты для обхода блокировок?\nПрограмма может сделать всё автоматически примерно за 15 секунд.");
+        AddOnboardBtn(p, "🚀 Автоматическая установка (15 сек)", "#22c55e", () => ShowOnboardScreen(16));
+        AddOnboardBtn(p, "⚙️ Ручная установка", "#2e2e2e", () => ShowOnboardScreen(17), foreground: "#888888");
     }
 
     private void BuildOnboardZapretChoice(StackPanel p)
@@ -1937,6 +1941,117 @@ public partial class MainWindow : Window
             OnboardLayer.Visibility = Visibility.Collapsed;
             CheckInternetOnStart();
             StartActiveAppsMonitor();
+        });
+    }
+
+    private void BuildOnboardManualStart(StackPanel p)
+    {
+        AddOnboardSub(p, "Для работы приложения вам нужно скачать следующие компоненты:");
+        AddOnboardBtn(p, "Погнали", "#3b82f6", () => ShowOnboardScreen(4));
+    }
+
+    private void BuildOnboardAutoDownload(StackPanel p)
+    {
+        AddOnboardEmoji(p, "⏳");
+        AddOnboardTitle(p, "Автоматическая установка");
+        AddOnboardSub(p, "Подождите, скачиваем и настраиваем нужные компоненты.\nЭто займет не больше минуты.");
+        
+        var logCard = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(10),
+            Margin = new Thickness(0, 5, 0, 15),
+            Padding = new Thickness(2)
+        };
+        
+        var logBox = new System.Windows.Controls.RichTextBox
+        {
+            Background = Brushes.Transparent,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xaa, 0xaa, 0xaa)),
+            BorderThickness = new Thickness(0),
+            FontFamily = new FontFamily("Consolas"),
+            FontSize = 12,
+            Height = 160,
+            IsReadOnly = true,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        logBox.Document.PagePadding = new Thickness(12);
+        logCard.Child = logBox;
+        p.Children.Add(logCard);
+
+        var progBar = new System.Windows.Controls.ProgressBar
+        {
+            Value = 0,
+            Maximum = 100,
+            Height = 6,
+            Margin = new Thickness(0, 0, 0, 8),
+            Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            Background = new SolidColorBrush(Color.FromRgb(0x2e, 0x2e, 0x2e)),
+            BorderThickness = new Thickness(0)
+        };
+        progBar.SetResourceReference(FrameworkElement.StyleProperty, typeof(System.Windows.Controls.ProgressBar));
+        p.Children.Add(progBar);
+
+        var progText = new TextBlock 
+        { 
+            Text = "Подготовка...", 
+            Foreground = Brushes.White, 
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 13,
+            FontWeight = FontWeights.Medium,
+            Margin = new Thickness(0, 0, 0, 20)
+        };
+        p.Children.Add(progText);
+
+        void AppendLog(string msg)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                var para = new System.Windows.Documents.Paragraph { Margin = new Thickness(0, 1, 0, 1) };
+                para.Inlines.Add(new System.Windows.Documents.Run(msg));
+                logBox.Document.Blocks.Add(para);
+                logBox.ScrollToEnd();
+            });
+        }
+
+        var actionsPanel = new StackPanel();
+        p.Children.Add(actionsPanel);
+
+        Task.Run(async () => 
+        {
+            bool success = await AutoDownloadService.AutoInstallAllAsync(
+                msg => AppendLog(msg),
+                prog => Dispatcher.Invoke(() => 
+                {
+                    progBar.Value = prog * 100;
+                    progText.Text = $"Загрузка... {(int)(prog * 100)}%";
+                }),
+                err => AppendLog("ОШИБКА: " + err)
+            );
+
+            Dispatcher.Invoke(() => 
+            {
+                if (success)
+                {
+                    progBar.Value = 100;
+                    progBar.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+                    progText.Text = "Всё готово!";
+                    progText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+                    
+                    AddOnboardBtn(actionsPanel, "Далее", "#3b82f6", () => ShowOnboardScreen(15));
+                }
+                else
+                {
+                    progBar.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
+                    progText.Text = "Ошибка установки";
+                    progText.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
+                    
+                    AddOnboardBtn(actionsPanel, "Попробовать вручную", "#ef4444", () => ShowOnboardScreen(17));
+                }
+            });
         });
     }
 
