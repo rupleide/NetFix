@@ -541,11 +541,20 @@ public partial class MainWindow : Window
         };
         linkBtn.Click += (s, e) => {
             try {
+                // Пробуем открыть напрямую в Telegram
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo {
-                    FileName = "https://t.me/NetFixRuBi",
+                    FileName = "tg://resolve?domain=NetFixRuBi",
                     UseShellExecute = true
                 });
-            } catch { }
+            } catch {
+                // Если не получилось, открываем через браузер
+                try {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo {
+                        FileName = "https://t.me/NetFixRuBi",
+                        UseShellExecute = true
+                    });
+                } catch { }
+            }
         };
         stack.Children.Add(linkBtn);
 
