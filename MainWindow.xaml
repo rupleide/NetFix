@@ -990,13 +990,13 @@
                                         FontSize="12" Padding="0,4"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
                                         Click="LinkTgWs_Click"/>
-                                <Button Content="↗ GoodbyeDPI на GitHub" HorizontalAlignment="Left"
+                                <Button Content="↗ NetFix на GitHub" HorizontalAlignment="Left"
                                         Style="{StaticResource FlatBtn}" Foreground="#3b82f6"
                                         FontSize="12" Padding="0,4"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
-                                        Click="LinkGdpi_Click"/>
+                                        Click="LinkNetFix_Click"/>
                                 <Button Content="↗ Telegram-канал @NetFixRuBi" HorizontalAlignment="Left"
-                                        Style="{StaticResource FlatBtn}" Foreground="#22c55e"
+                                        Style="{StaticResource FlatBtn}" Foreground="#3b82f6"
                                         FontSize="12" Padding="0,4"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
                                         Click="OpenTelegramChannel_Click"/>
