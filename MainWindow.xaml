@@ -38,6 +38,7 @@
             <Setter Property="FontSize"     Value="13"/>
             <Setter Property="Cursor"       Value="Hand"/>
             <Setter Property="Padding"      Value="12,6"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -61,6 +62,7 @@
             <Setter Property="FontSize"     Value="13"/>
             <Setter Property="Cursor"       Value="Hand"/>
             <Setter Property="Padding"      Value="20,8"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
