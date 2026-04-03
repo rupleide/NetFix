@@ -1649,7 +1649,8 @@ public partial class MainWindow : Window
         OpenUrl("https://github.com/Flowseal/zapret-discord-youtube");
     private void LinkTgWs_Click(object s, RoutedEventArgs e) =>
         OpenUrl("https://github.com/Flowseal/tg-ws-proxy");
-    private void LinkGdpi_Click(object s, RoutedEventArgs e) => Process.Start(new ProcessStartInfo("https://github.com/ValdikSS/GoodbyeDPI") { UseShellExecute = true });
+    private void LinkNetFix_Click(object s, RoutedEventArgs e) =>
+        OpenUrl("https://github.com/rupleide/NetFix");
 
     private void OpenTelegramChannel_Click(object s, RoutedEventArgs e)
     {
