@@ -99,6 +99,36 @@
             </Setter>
         </Style>
 
+        <!-- ═══ GREEN ACCENT BUTTON ═══ -->
+        <Style x:Key="GreenAccentBtn" TargetType="Button">
+            <Setter Property="Background"   Value="#22c55e"/>
+            <Setter Property="Foreground"   Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontFamily"   Value="Segoe UI"/>
+            <Setter Property="FontSize"     Value="13"/>
+            <Setter Property="Cursor"       Value="Hand"/>
+            <Setter Property="Padding"      Value="20,8"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#1ea34d"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- ═══ OUTLINE BUTTON ═══ -->
         <Style x:Key="OutlineBtn" TargetType="Button" BasedOn="{StaticResource FlatBtn}">
             <Setter Property="Template">
@@ -910,13 +940,11 @@
                                         <TextBlock TextWrapping="Wrap" FontFamily="Segoe UI" FontSize="12"
                                                    Foreground="#f0f0f0" Margin="0,0,0,10"
                                                    Text="Я создал канал специально для этого проекта. Там я публикую новые найденные обходы, сообщаю о важных обновлениях Zapret, TgWsProxy и самого NetFix. Планирую активно развивать его — советую подписаться, чтобы не пропустить ничего важного."/>
-                                        <Button x:Name="TelegramChannelBtn" Content="📱 Открыть канал @NetFixRuBi"
-                                                Style="{StaticResource AccentBtn}" HorizontalAlignment="Stretch"
-                                                Background="#22c55e" Padding="12,8"
+                                        <Button Content="📱 Открыть канал @NetFixRuBi"
+                                                Style="{StaticResource GreenAccentBtn}" HorizontalAlignment="Stretch"
+                                                Padding="12,8"
                                                 WindowChrome.IsHitTestVisibleInChrome="True"
-                                                Click="OpenTelegramChannel_Click"
-                                                MouseEnter="TelegramChannelBtn_MouseEnter"
-                                                MouseLeave="TelegramChannelBtn_MouseLeave"/>
+                                                Click="OpenTelegramChannel_Click"/>
                                     </StackPanel>
                                 </Border>
 
