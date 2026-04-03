@@ -42,6 +42,22 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
+                        <ContentPresenter/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ═══ FLAT BUTTON CENTERED ═══ -->
+        <Style x:Key="FlatBtnCentered" TargetType="Button" BasedOn="{StaticResource FlatBtn}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsEnabled" Value="False">
@@ -782,7 +798,7 @@
                                 <TextBlock Text="Настройки" FontFamily="Segoe UI" FontSize="15"
                                            FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
                                 <Button Content="✕" HorizontalAlignment="Right"
-                                        Style="{StaticResource FlatBtn}" FontSize="14" Padding="0" Width="34"
+                                        Style="{StaticResource FlatBtnCentered}" FontSize="14" Padding="0" Width="34"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
                                         Click="SettingsCloseBtn_Click"/>
                             </Grid>
