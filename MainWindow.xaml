@@ -699,9 +699,13 @@
                             <!-- Manual -->
                             <TextBlock Text="Ручное решение" FontFamily="Segoe UI" FontSize="15"
                                        FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
-                            <TextBlock x:Name="SolutionManualText" Text="..."
-                                       FontFamily="Segoe UI" FontSize="13" Foreground="#f0f0f0"
-                                       TextWrapping="Wrap"/>
+                            
+                            <Border Background="#1e1e1e" BorderBrush="#3b82f6" BorderThickness="2,0,0,0"
+                                    CornerRadius="6" Padding="16" Margin="0,0,0,0">
+                                <TextBlock x:Name="SolutionManualText" Text="..."
+                                           FontFamily="Segoe UI" FontSize="13" Foreground="#cccccc"
+                                           TextWrapping="Wrap" LineHeight="20"/>
+                            </Border>
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>
