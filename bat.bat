@@ -1,1 +1,0 @@
-xcopy "C:\Users\rubi\Desktop\NetFix" "C:\Users\rubi\Desktop\NetFix_Backups\Backup_%date%_%time:~0,2%-%time:~3,2%" /E /I /Y
