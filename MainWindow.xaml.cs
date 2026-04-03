@@ -514,7 +514,7 @@ public partial class MainWindow : Window
         FaqContainer.Children.Clear();
         
         var mainCard = new Border {
-            Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
+            Background = new SolidColorBrush(Color.FromRgb(0x1c, 0x1c, 0x1c)),
             BorderBrush = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
             BorderThickness = new Thickness(0, 3, 0, 0),
             CornerRadius = new CornerRadius(12),
