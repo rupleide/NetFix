@@ -257,6 +257,9 @@ public partial class MainWindow : Window
         AddCategoryCard("Discord", "Обновление и голосовые каналы", "🎮", Color.FromRgb(0x8b, 0x5c, 0xf6));
         AddCategoryCard("Общее", "YouTube, Zapret и сетевые ошибки", "⚙️", Color.FromRgb(0x22, 0xc5, 0x5e));
         
+        // Добавляем специальную карточку для Android
+        AddAndroidCard();
+        
         // Добавляем блок с обращением для помощи
         var helpCard = new Border {
             Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
@@ -413,6 +416,180 @@ public partial class MainWindow : Window
         
         btn.Click += (s, e) => ShowFaqQuestions(title);
         FaqContainer.Children.Add(btn);
+    }
+
+    private void AddAndroidCard()
+    {
+        var btn = new Button { 
+            Style = (Style)FindResource("FlatBtn"), 
+            Padding = new Thickness(0),
+            Height = double.NaN,
+            HorizontalContentAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Stretch,
+            Margin = new Thickness(0, 12, 0, 0)
+        };
+        
+        var card = new Border { 
+            Background = new SolidColorBrush(Color.FromRgb(0x1a, 0x2e, 0x1a)),
+            CornerRadius = new CornerRadius(0, 12, 12, 0),
+            Padding = new Thickness(20, 18, 20, 18),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
+            BorderThickness = new Thickness(4, 0, 0, 0)
+        };
+
+        var stack = new StackPanel();
+        
+        var headerStack = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 8) };
+        headerStack.Children.Add(new TextBlock { 
+            Text = "🔥 НОВИНКА", 
+            FontSize = 11, 
+            FontWeight = FontWeights.Bold, 
+            Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
+            Background = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)) { Opacity = 0.2 },
+            Padding = new Thickness(8, 3, 8, 3),
+            Margin = new Thickness(0, 0, 0, 0)
+        });
+        stack.Children.Add(headerStack);
+        
+        stack.Children.Add(new TextBlock { 
+            Text = "📱 TgWsProxy на Android!", 
+            FontSize = 18, 
+            FontWeight = FontWeights.Bold, 
+            Foreground = Brushes.White,
+            Margin = new Thickness(0, 0, 0, 6)
+        });
+        
+        stack.Children.Add(new TextBlock { 
+            Text = "Telegram будет работать на телефоне без VPN", 
+            FontSize = 14, 
+            Foreground = new SolidColorBrush(Color.FromRgb(0xaa, 0xdd, 0xaa)),
+            Margin = new Thickness(0, 0, 0, 12)
+        });
+        
+        var arrowText = new TextBlock { 
+            Text = "Узнать подробнее →", 
+            FontSize = 13, 
+            FontWeight = FontWeights.Medium,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e))
+        };
+        stack.Children.Add(arrowText);
+
+        card.Child = stack;
+        btn.Content = card;
+        
+        btn.MouseEnter += (s, e) => {
+            var borderElement = (Border)btn.Content;
+            borderElement.Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x36, 0x1e));
+        };
+        btn.MouseLeave += (s, e) => {
+            var borderElement = (Border)btn.Content;
+            borderElement.Background = new SolidColorBrush(Color.FromRgb(0x1a, 0x2e, 0x1a));
+        };
+        
+        btn.Click += (s, e) => ShowAndroidInfo();
+        FaqContainer.Children.Add(btn);
+    }
+
+    private void ShowAndroidInfo()
+    {
+        FaqHeaderTitle.Text = "Android решение";
+        FaqContainer.Children.Clear();
+        
+        var mainCard = new Border {
+            Background = new SolidColorBrush(Color.FromRgb(0x1c, 0x1c, 0x1c)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
+            BorderThickness = new Thickness(0, 3, 0, 0),
+            CornerRadius = new CornerRadius(12),
+            Padding = new Thickness(24),
+        };
+
+        var stack = new StackPanel();
+        
+        stack.Children.Add(new TextBlock { 
+            Text = "📱 TgWsProxy на Android", 
+            FontSize = 19, 
+            FontWeight = FontWeights.Bold, 
+            Foreground = Brushes.White, 
+            TextWrapping = TextWrapping.Wrap, 
+            Margin = new Thickness(0, 0, 0, 18) 
+        });
+
+        var infoText = "🚀 Новый способ обхода блокировок Telegram на Android\n\n" +
+            "Пока NetFix Mobile находится в разработке, делюсь рабочим решением от стороннего разработчика LemoLev. " +
+            "Это отличный вариант для тех, кто устал от VPN и хочет стабильной работы Telegram через прокси.\n\n" +
+            "⚠️ Важное уточнение: Этот метод — «домашнее» решение. Прокси не работает на мобильном интернете. " +
+            "Но если вы подключены к Wi-Fi или кто-то раздает вам интернет — всё должно работать.\n\n" +
+            "📖 Полная инструкция по установке и настройке, а также APK-файл доступны в моём Telegram-канале. " +
+            "Там всё очень подробно расписано, шаг за шагом.\n\n" +
+            "💬 Переходите в канал для получения инструкции и файла:";
+
+        stack.Children.Add(new TextBlock { 
+            Text = infoText, 
+            FontSize = 15, 
+            Foreground = new SolidColorBrush(Color.FromRgb(0xdd, 0xdd, 0xdd)), 
+            TextWrapping = TextWrapping.Wrap, 
+            LineHeight = 24,
+            Margin = new Thickness(0, 0, 0, 16)
+        });
+
+        var linkBtn = new Button {
+            Content = "🔗 Открыть Telegram-канал @NetFixRuBi",
+            Style = (Style)FindResource("AccentBtn"),
+            Background = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+            Margin = new Thickness(0, 0, 0, 0)
+        };
+        linkBtn.Click += (s, e) => {
+            try {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo {
+                    FileName = "https://t.me/NetFixRuBi",
+                    UseShellExecute = true
+                });
+            } catch { }
+        };
+        stack.Children.Add(linkBtn);
+
+        mainCard.Child = stack;
+        FaqContainer.Children.Add(mainCard);
+
+        // Кнопка назад
+        var btnContainer = new Button {
+            Style = (Style)FindResource("FlatBtn"),
+            Padding = new Thickness(0),
+            Height = double.NaN,
+            HorizontalContentAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Stretch,
+            Margin = new Thickness(0, 24, 0, 0)
+        };
+
+        var backBtn = new Border {
+            CornerRadius = new CornerRadius(20),
+            Background = new SolidColorBrush(Color.FromRgb(0x1a, 0x33, 0x56)),
+            Padding = new Thickness(20, 10, 20, 10),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+        };
+        
+        backBtn.Child = new TextBlock {
+            Text = "← Вернуться к FAQ",
+            Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            FontSize = 14,
+            FontWeight = FontWeights.Medium,
+            IsHitTestVisible = false
+        };
+        
+        btnContainer.Content = backBtn;
+        
+        btnContainer.MouseEnter += (s, e) => {
+            var border = (Border)btnContainer.Content;
+            border.Background = new SolidColorBrush(Color.FromRgb(0x1f, 0x3d, 0x66));
+        };
+        btnContainer.MouseLeave += (s, e) => {
+            var border = (Border)btnContainer.Content;
+            border.Background = new SolidColorBrush(Color.FromRgb(0x1a, 0x33, 0x56));
+        };
+        
+        btnContainer.Click += (s, e) => ShowFaqCategories();
+        FaqContainer.Children.Add(btnContainer);
     }
 
     private void ShowFaqQuestions(string category)
