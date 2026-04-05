@@ -492,7 +492,7 @@ public partial class MainWindow : Window
         
         var headerStack = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 8) };
         headerStack.Children.Add(new TextBlock { 
-            Text = "🔥 НОВИНКА", 
+            Text = "НОВИНКА", 
             FontSize = 11, 
             FontWeight = FontWeights.Bold, 
             Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
