@@ -1538,7 +1538,6 @@ public partial class MainWindow : Window
     {
         ZapretBox.Text   = _settings.ZapretPath;
         TgWsBox.Text     = _settings.TgWsProxyPath;
-        GdpiBox.Text     = _settings.GoodbyeDpiPath;
         // AutoZapretCB убран - Zapret больше не в автозапуске
         AutoTgWsCB.IsChecked    = _settings.AutostartTgWsProxy;
         AutoAppCB.IsChecked     = _settings.AutostartApp;
@@ -1550,7 +1549,6 @@ public partial class MainWindow : Window
     {
         _settings.ZapretPath       = ZapretBox.Text.Trim();
         _settings.TgWsProxyPath    = TgWsBox.Text.Trim();
-        _settings.GoodbyeDpiPath   = GdpiBox.Text.Trim();
         _settings.AutostartZapret  = false; // Zapret убран из автозапуска
         _settings.AutostartTgWsProxy = AutoTgWsCB.IsChecked == true;
         _settings.AutostartApp     = AutoAppCB.IsChecked == true;
@@ -1585,12 +1583,6 @@ public partial class MainWindow : Window
     {
         var p = BrowseExe("Выберите tg-ws-proxy");
         if (p != null) TgWsBox.Text = p;
-    }
-
-    private void BrowseGdpi_Click(object s, RoutedEventArgs e)
-    {
-        var p = BrowseExe("Выберите GoodbyeDPI");
-        if (p != null) GdpiBox.Text = p;
     }
 
     // ── Settings actions ─────────────────────────────────────────────────────

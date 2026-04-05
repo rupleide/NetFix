@@ -99,7 +99,6 @@ public class AppSettings
 {
     public string ZapretPath { get; set; } = "";
     public string TgWsProxyPath { get; set; } = "";
-    public string GoodbyeDpiPath { get; set; } = "";
     public bool AutostartZapret { get; set; } = false;
     public bool AutostartTgWsProxy { get; set; } = false;
     public bool AutostartApp { get; set; } = false;

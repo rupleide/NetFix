@@ -870,7 +870,7 @@
                                 <!-- tg-ws-proxy -->
                                 <TextBlock Text="tg-ws-proxy (.exe)" FontSize="12"
                                            Foreground="#f0f0f0" Margin="0,0,0,4"/>
-                                <Grid Margin="0,0,0,14">
+                                <Grid Margin="0,0,0,20">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="38"/>
@@ -883,24 +883,6 @@
                                             Height="32" Padding="0" Margin="4,0,0,0" FontSize="14"
                                             WindowChrome.IsHitTestVisibleInChrome="True"
                                             Click="BrowseTgWs_Click"/>
-                                </Grid>
-
-                                <!-- GoodbyeDPI -->
-                                <TextBlock Text="GoodbyeDPI (.exe)" FontSize="12"
-                                           Foreground="#f0f0f0" Margin="0,0,0,4"/>
-                                <Grid Margin="0,0,0,20">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="38"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="GdpiBox" Style="{StaticResource InputBox}" Height="32"
-         HorizontalScrollBarVisibility="Hidden"
-         TextAlignment="Left"
-         Padding="8,0,8,0"/>
-                                    <Button Grid.Column="1" Content="…" Style="{StaticResource OutlineBtn}"
-                                            Height="32" Padding="0" Margin="4,0,0,0" FontSize="14"
-                                            WindowChrome.IsHitTestVisibleInChrome="True"
-                                            Click="BrowseGdpi_Click"/>
                                 </Grid>
 
                                 <Border Height="1" Background="#333333" Margin="0,0,0,16"/>
