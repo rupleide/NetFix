@@ -253,9 +253,9 @@ public partial class MainWindow : Window
         FaqHeaderTitle.Text = "Частые вопросы";
         FaqContainer.Children.Clear();
 
-        AddCategoryCard("Telegram", "Настройка прокси и загрузка медиа", "T", Color.FromRgb(0x3b, 0x82, 0xf6));
-        AddCategoryCard("Discord", "Обновление и голосовые каналы", "D", Color.FromRgb(0x8b, 0x5c, 0xf6));
-        AddCategoryCard("Общее", "YouTube, Zapret и сетевые ошибки", "?", Color.FromRgb(0x22, 0xc5, 0x5e));
+        AddCategoryCard("Telegram", "Настройка прокси и загрузка медиа", "TelegramIcon", Color.FromRgb(0x3b, 0x82, 0xf6));
+        AddCategoryCard("Discord", "Обновление и голосовые каналы", "MessageIcon", Color.FromRgb(0x8b, 0x5c, 0xf6));
+        AddCategoryCard("Общее", "YouTube, Zapret и сетевые ошибки", "SettingsIcon", Color.FromRgb(0x22, 0xc5, 0x5e));
         
         // Добавляем специальную карточку для Android
         AddAndroidCard();
@@ -349,7 +349,7 @@ public partial class MainWindow : Window
         FaqContainer.Children.Add(helpCard);
     }
 
-    private void AddCategoryCard(string title, string desc, string emoji, Color accent)
+    private void AddCategoryCard(string title, string desc, string iconKey, Color accent)
     {
         var btn = new Button { 
             Style = (Style)FindResource("FlatBtn"), 
@@ -378,7 +378,27 @@ public partial class MainWindow : Window
             Margin = new Thickness(0, 0, 16, 0),
             VerticalAlignment = VerticalAlignment.Center
         };
-        iconBg.Child = new TextBlock { Text = emoji, FontSize = 20, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = System.Windows.HorizontalAlignment.Center };
+        
+        // Create vector icon instead of emoji
+        var iconPath = new System.Windows.Shapes.Path
+        {
+            Data = (PathGeometry)System.Windows.Application.Current.FindResource(iconKey),
+            Width = 20,
+            Height = 20,
+            Stretch = Stretch.Uniform,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+        };
+        
+        if (iconKey == "TelegramIcon" || iconKey == "MessageIcon")
+            iconPath.Fill = new SolidColorBrush(accent);
+        else
+        {
+            iconPath.Stroke = new SolidColorBrush(accent);
+            iconPath.StrokeThickness = 2;
+        }
+        
+        iconBg.Child = iconPath;
 
         var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
         stack.Children.Add(new TextBlock { Text = title, FontSize = 17, FontWeight = FontWeights.Bold, Foreground = Brushes.White });
@@ -1368,12 +1388,12 @@ public partial class MainWindow : Window
             AddAppUI("Discord", a.DiscordRunning, a.DiscordProcName);
             AddAppUI("Zapret", a.ZapretRunning, a.ZapretProcName);
             AddAppUI("tg-ws-proxy", a.TgWsProxyRunning, a.TgWsProxyProcName);
-            AddRichCard(DiagResults, "💻  Статус приложений", appsPanel, Color.FromRgb(0x8b, 0x5c, 0xf6));
+            AddRichCard(DiagResults, "Статус приложений", appsPanel, Color.FromRgb(0x8b, 0x5c, 0xf6));
         }
 
         // --- НОВЫЙ БЛОК ПРИМЕЧАНИЯ ВМЕСТО СТАРОЙ РЕКОМЕНДАЦИИ ---
         string noteText = "Примечание! Отправка медиафайлов (именно отправка) даже с включённым TgWsProxy может работать нестабильно, файлы могут загружаться очень долго. К сожалению, это не решить без использования VPN. Но просмотр и загрузка видео, стикеров и любого другого контента в Telegram должны работать идеально!";
-        AddCard(DiagResults, "📌  Важное примечание", noteText, Color.FromRgb(0x3b, 0x82, 0xf6));
+        AddCard(DiagResults, "Важное примечание", noteText, Color.FromRgb(0x3b, 0x82, 0xf6));
 
         // Доступность серверов (без изменений)
         if (r.DcResults.Count > 0)
@@ -1413,13 +1433,13 @@ public partial class MainWindow : Window
                 serverContainer.Children.Add(serverNoteText);
             }
 
-            AddRichCard(DiagResults, "🌍  Доступность серверов Telegram", serverContainer, Color.FromRgb(0x0e, 0xa5, 0xe9));
+            AddRichCard(DiagResults, "Доступность серверов Telegram", serverContainer, Color.FromRgb(0x0e, 0xa5, 0xe9));
         }
 
         DiagProg.Value = 100;
         DiagProgLbl.Text = "Готово";
         DiagRunBtn.IsEnabled = true;
-        DiagRunBtn.Content = "🔄  Проверить снова";
+        DiagRunBtn.Content = CreateButtonContentWithIcon("RefreshIcon", "Проверить снова", Brushes.White);
     }
 
     private Color ColorFromKey(string ck) => ck switch
