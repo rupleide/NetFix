@@ -36,10 +36,10 @@
         <PathGeometry x:Key="BoltIcon">M13,2 L3,14 L10,14 L9,22 L19,10 L12,10 Z</PathGeometry>
         
         <!-- Search/Magnifier Icon -->
-        <PathGeometry x:Key="SearchIcon">M11,4 A7,7 0 1,1 4,11 A7,7 0 1,1 11,4 M18,18 L22,22</PathGeometry>
+        <PathGeometry x:Key="SearchIcon">M10,10 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 M14,14 L20,20</PathGeometry>
         
         <!-- Coffee/Cup Icon -->
-        <PathGeometry x:Key="CoffeeIcon">M6,3 L6,8 A4,4 0 0,0 14,8 L14,3 M16,6 L18,6 A2,2 0 0,1 18,10 L16,10 M4,13 L16,13</PathGeometry>
+        <PathGeometry x:Key="CoffeeIcon">M4,8 L4,14 A4,4 0 0,0 12,14 L12,8 Z M4,8 L12,8 M16,10 A2,2 0 0,1 16,14</PathGeometry>
         
         <!-- Close/X Icon -->
         <PathGeometry x:Key="CloseIcon">M6,6 L18,18 M18,6 L6,18</PathGeometry>
