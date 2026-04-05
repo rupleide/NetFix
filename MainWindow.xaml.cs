@@ -380,25 +380,41 @@ public partial class MainWindow : Window
         };
         
         // Create vector icon instead of emoji
-        var iconPath = new System.Windows.Shapes.Path
+        try
         {
-            Data = (PathGeometry)System.Windows.Application.Current.FindResource(iconKey),
-            Width = 20,
-            Height = 20,
-            Stretch = Stretch.Uniform,
-            VerticalAlignment = VerticalAlignment.Center,
-            HorizontalAlignment = System.Windows.HorizontalAlignment.Center
-        };
-        
-        if (iconKey == "TelegramIcon" || iconKey == "MessageIcon")
-            iconPath.Fill = new SolidColorBrush(accent);
-        else
-        {
-            iconPath.Stroke = new SolidColorBrush(accent);
-            iconPath.StrokeThickness = 2;
+            var iconPath = new System.Windows.Shapes.Path
+            {
+                Data = (PathGeometry)System.Windows.Application.Current.FindResource(iconKey),
+                Width = 20,
+                Height = 20,
+                Stretch = Stretch.Uniform,
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+            };
+            
+            if (iconKey == "TelegramIcon" || iconKey == "MessageIcon")
+                iconPath.Fill = new SolidColorBrush(accent);
+            else
+            {
+                iconPath.Stroke = new SolidColorBrush(accent);
+                iconPath.StrokeThickness = 2;
+            }
+            
+            iconBg.Child = iconPath;
         }
-        
-        iconBg.Child = iconPath;
+        catch
+        {
+            // Fallback to text if icon not found
+            iconBg.Child = new TextBlock 
+            { 
+                Text = iconKey.Substring(0, 1), 
+                FontSize = 20, 
+                FontWeight = FontWeights.Bold,
+                VerticalAlignment = VerticalAlignment.Center, 
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                Foreground = new SolidColorBrush(accent)
+            };
+        }
 
         var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
         stack.Children.Add(new TextBlock { Text = title, FontSize = 17, FontWeight = FontWeights.Bold, Foreground = Brushes.White });
