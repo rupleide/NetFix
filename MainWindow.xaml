@@ -808,7 +808,7 @@
                     <Button Content="☕ Поддержать разработку" HorizontalAlignment="Right"
                             Style="{StaticResource FlatBtn}" FontSize="11"
                             WindowChrome.IsHitTestVisibleInChrome="True"
-                            VerticalAlignment="Center" Margin="0,0,0,2"
+                            VerticalAlignment="Center" Margin="0,-3,0,0"
                             Click="DonateBtn_Click"/>
                 </Grid>
             </Border>
