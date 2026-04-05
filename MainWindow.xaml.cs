@@ -254,7 +254,7 @@ public partial class MainWindow : Window
         FaqContainer.Children.Clear();
 
         AddCategoryCard("Telegram", "Настройка прокси и загрузка медиа", "TelegramIcon", Color.FromRgb(0x3b, 0x82, 0xf6));
-        AddCategoryCard("Discord", "Обновление и голосовые каналы", "MessageIcon", Color.FromRgb(0x8b, 0x5c, 0xf6));
+        AddCategoryCard("Discord", "Обновление и голосовые каналы", "DiscordIcon", Color.FromRgb(0x8b, 0x5c, 0xf6));
         AddCategoryCard("Общее", "YouTube, Zapret и сетевые ошибки", "SettingsIcon", Color.FromRgb(0x22, 0xc5, 0x5e));
         
         // Добавляем специальную карточку для Android
@@ -392,7 +392,7 @@ public partial class MainWindow : Window
                 HorizontalAlignment = System.Windows.HorizontalAlignment.Center
             };
             
-            if (iconKey == "TelegramIcon" || iconKey == "MessageIcon")
+            if (iconKey == "TelegramIcon" || iconKey == "DiscordIcon")
                 iconPath.Fill = new SolidColorBrush(accent);
             else
             {
