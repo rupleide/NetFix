@@ -491,6 +491,20 @@ public partial class MainWindow : Window
         var stack = new StackPanel();
         
         var headerStack = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 8) };
+        
+        // Add fire icon
+        var fireIcon = new System.Windows.Shapes.Path
+        {
+            Data = Geometry.Parse("M12,23 C7,23 3,19 3,14 C3,10 5,7 7,5 C7,8 9,10 12,10 C12,7 14,5 16,3 C17,6 19,9 19,14 C19,19 15,23 12,23 M12,17 C10,17 9,16 9,14 C9,12 10,11 12,11 C12,13 13,14 14,14 C14,12 13,11 13,9 C15,10 16,12 16,14 C16,16 14,17 12,17"),
+            Fill = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
+            Width = 12,
+            Height = 12,
+            Stretch = Stretch.Uniform,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(8, 0, 4, 0)
+        };
+        headerStack.Children.Add(fireIcon);
+        
         headerStack.Children.Add(new TextBlock { 
             Text = "НОВИНКА", 
             FontSize = 11, 
