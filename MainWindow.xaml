@@ -1061,8 +1061,9 @@
                                            FontWeight="Bold" Foreground="White"
                                            VerticalAlignment="Center"/>
                                 <Button Content="✕" HorizontalAlignment="Right"
-                                        Style="{StaticResource FlatBtn}"
+                                        Style="{StaticResource FlatBtnCentered}"
                                         FontSize="14" Padding="0" Width="34"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
                                         Click="ServicesCloseBtn_Click"/>
                             </Grid>
                         </Border>
