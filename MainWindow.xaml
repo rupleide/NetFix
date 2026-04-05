@@ -805,8 +805,6 @@
             <!-- ══════════════════ FOOTER ══════════════════ -->
             <Border Grid.Row="2" Background="#1e1e1e" CornerRadius="0,0,11,11">
                 <Grid Margin="18,0,12,0">
-                    <TextBlock Text="by RuBi, rupleide" FontFamily="Segoe UI" FontSize="11"
-                               Foreground="#888888" VerticalAlignment="Center"/>
                     <Button Content="☕ Поддержать разработку" HorizontalAlignment="Right"
                             Style="{StaticResource FlatBtn}" FontSize="11"
                             WindowChrome.IsHitTestVisibleInChrome="True"
