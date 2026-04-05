@@ -402,8 +402,11 @@ public partial class MainWindow : Window
             
             iconBg.Child = iconPath;
         }
-        catch
+        catch (Exception ex)
         {
+            // Show error in console for debugging
+            System.Diagnostics.Debug.WriteLine($"Failed to load icon '{iconKey}': {ex.Message}");
+            
             // Fallback to text if icon not found
             iconBg.Child = new TextBlock 
             { 
