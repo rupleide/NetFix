@@ -380,66 +380,55 @@ public partial class MainWindow : Window
         };
         
         // Create vector icon directly without FindResource
-        try
+        Geometry geometry = null;
+        
+        // Create geometry based on icon key
+        switch (iconKey)
         {
-            PathGeometry geometry = null;
-            
-            // Create geometry based on icon key
-            switch (iconKey)
-            {
-                case "TelegramIcon":
-                    geometry = Geometry.Parse("M2,21 L23,12 L2,3 L2,10 L17,12 L2,14 Z") as PathGeometry;
-                    break;
-                case "DiscordIcon":
-                    geometry = Geometry.Parse("M20,2 L4,2 A2,2 0 0,0 2,4 L2,22 L6,18 L20,18 A2,2 0 0,0 22,16 L22,4 A2,2 0 0,0 20,2 M8,11 A1.5,1.5 0 1,1 8,8 A1.5,1.5 0 1,1 8,11 M16,11 A1.5,1.5 0 1,1 16,8 A1.5,1.5 0 1,1 16,11") as PathGeometry;
-                    break;
-                case "SettingsIcon":
-                    geometry = Geometry.Parse("M12,8 A4,4 0 1,1 12,16 A4,4 0 1,1 12,8 M12,2 L12,6 M12,18 L12,22 M4.93,4.93 L7.76,7.76 M16.24,16.24 L19.07,19.07 M2,12 L6,12 M18,12 L22,12 M4.93,19.07 L7.76,16.24 M16.24,7.76 L19.07,4.93") as PathGeometry;
-                    break;
-            }
-            
-            if (geometry != null)
-            {
-                var iconPath = new System.Windows.Shapes.Path
-                {
-                    Data = geometry,
-                    Width = 20,
-                    Height = 20,
-                    Stretch = Stretch.Uniform,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+            case "TelegramIcon":
+                geometry = Geometry.Parse("M2,21 L23,12 L2,3 L2,10 L17,12 L2,14 Z");
+                break;
+            case "DiscordIcon":
+                geometry = Geometry.Parse("M20,2 L4,2 A2,2 0 0,0 2,4 L2,22 L6,18 L20,18 A2,2 0 0,0 22,16 L22,4 A2,2 0 0,0 20,2 M8,11 A1.5,1.5 0 1,1 8,8 A1.5,1.5 0 1,1 8,11 M16,11 A1.5,1.5 0 1,1 16,8 A1.5,1.5 0 1,1 16,11");
+                break;
+            case "SettingsIcon":
+                geometry = Geometry.Parse("M12,8 A4,4 0 1,1 12,16 A4,4 0 1,1 12,8 M12,2 L12,6 M12,18 L12,22 M4.93,4.93 L7.76,7.76 M16.24,16.24 L19.07,19.07 M2,12 L6,12 M18,12 L22,12 M4.93,19.07 L7.76,16.24 M16.24,7.76 L19.07,4.93");
+                break;
+            default:
+                // Fallback to text
+                iconBg.Child = new TextBlock 
+                { 
+                    Text = iconKey.Substring(0, 1), 
+                    FontSize = 20, 
+                    FontWeight = FontWeights.Bold,
+                    VerticalAlignment = VerticalAlignment.Center, 
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                    Foreground = new SolidColorBrush(accent)
                 };
-                
-                if (iconKey == "TelegramIcon" || iconKey == "DiscordIcon")
-                    iconPath.Fill = new SolidColorBrush(accent);
-                else
-                {
-                    iconPath.Stroke = new SolidColorBrush(accent);
-                    iconPath.StrokeThickness = 2;
-                }
-                
-                iconBg.Child = iconPath;
-            }
+                break;
+        }
+        
+        if (geometry != null)
+        {
+            var iconPath = new System.Windows.Shapes.Path
+            {
+                Data = geometry,
+                Width = 20,
+                Height = 20,
+                Stretch = Stretch.Uniform,
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+            };
+            
+            if (iconKey == "TelegramIcon" || iconKey == "DiscordIcon")
+                iconPath.Fill = new SolidColorBrush(accent);
             else
             {
-                throw new Exception("Geometry is null");
+                iconPath.Stroke = new SolidColorBrush(accent);
+                iconPath.StrokeThickness = 2;
             }
-        }
-        catch (Exception ex)
-        {
-            // Show error in console for debugging
-            System.Diagnostics.Debug.WriteLine($"Failed to load icon '{iconKey}': {ex.Message}");
             
-            // Fallback to text if icon not found
-            iconBg.Child = new TextBlock 
-            { 
-                Text = iconKey.Substring(0, 1), 
-                FontSize = 20, 
-                FontWeight = FontWeights.Bold,
-                VerticalAlignment = VerticalAlignment.Center, 
-                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
-                Foreground = new SolidColorBrush(accent)
-            };
+            iconBg.Child = iconPath;
         }
 
         var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
