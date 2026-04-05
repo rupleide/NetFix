@@ -28,6 +28,43 @@
         <SolidColorBrush x:Key="YellowBrush"  Color="#eab308"/>
         <SolidColorBrush x:Key="RedBrush"     Color="#ef4444"/>
 
+        <!-- ═══ VECTOR ICONS ═══ -->
+        <!-- Power Icon -->
+        <PathGeometry x:Key="PowerIcon">M12,2 L12,12 M8,4 A6,6 0 1,0 16,4</PathGeometry>
+        
+        <!-- Lightning/Bolt Icon -->
+        <PathGeometry x:Key="BoltIcon">M13,2 L3,14 L10,14 L9,22 L19,10 L12,10 Z</PathGeometry>
+        
+        <!-- Search/Magnifier Icon -->
+        <PathGeometry x:Key="SearchIcon">M11,4 A7,7 0 1,1 4,11 A7,7 0 1,1 11,4 M18,18 L22,22</PathGeometry>
+        
+        <!-- Coffee/Cup Icon -->
+        <PathGeometry x:Key="CoffeeIcon">M6,3 L6,8 A4,4 0 0,0 14,8 L14,3 M16,6 L18,6 A2,2 0 0,1 18,10 L16,10 M4,13 L16,13</PathGeometry>
+        
+        <!-- Close/X Icon -->
+        <PathGeometry x:Key="CloseIcon">M6,6 L18,18 M18,6 L6,18</PathGeometry>
+        
+        <!-- Play Icon -->
+        <PathGeometry x:Key="PlayIcon">M8,5 L8,19 L19,12 Z</PathGeometry>
+        
+        <!-- Settings/Gear Icon -->
+        <PathGeometry x:Key="SettingsIcon">M12,8 A4,4 0 1,1 12,16 A4,4 0 1,1 12,8 M12,2 L12,6 M12,18 L12,22 M4.93,4.93 L7.76,7.76 M16.24,16.24 L19.07,19.07 M2,12 L6,12 M18,12 L22,12 M4.93,19.07 L7.76,16.24 M16.24,7.76 L19.07,4.93</PathGeometry>
+        
+        <!-- Arrow Left Icon -->
+        <PathGeometry x:Key="ArrowLeftIcon">M19,12 L5,12 M12,19 L5,12 L12,5</PathGeometry>
+        
+        <!-- Arrow Up Right Icon -->
+        <PathGeometry x:Key="ArrowUpRightIcon">M7,17 L17,7 M17,17 L17,7 L7,7</PathGeometry>
+        
+        <!-- Phone Icon -->
+        <PathGeometry x:Key="PhoneIcon">M6,2 L10,2 A2,2 0 0,1 12,4 L12,20 A2,2 0 0,1 10,22 L6,22 A2,2 0 0,1 4,20 L4,4 A2,2 0 0,1 6,2 M8,19 A1,1 0 1,0 8,19</PathGeometry>
+        
+        <!-- Mail Icon -->
+        <PathGeometry x:Key="MailIcon">M4,4 L20,4 L20,18 L4,18 Z M4,4 L12,12 L20,4</PathGeometry>
+        
+        <!-- Refresh/Reload Icon -->
+        <PathGeometry x:Key="RefreshIcon">M4,12 A8,8 0 1,1 12,4 L12,2 M12,2 L9,5 L15,5</PathGeometry>
+
         <!-- ═══ FLAT BUTTON ═══ -->
         <Style x:Key="FlatBtn" TargetType="Button">
             <Setter Property="Background"   Value="Transparent"/>
@@ -474,12 +511,22 @@
                     <!-- Nav + window controls -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
 
-                        <Button x:Name="ServicesBtn" Content="⚡  Сервисы"
+                        <Button x:Name="ServicesBtn"
         Style="{StaticResource FlatBtn}"
         Foreground="#888888" FontSize="13"
         Padding="12,6" Margin="0,0,10,0"
         WindowChrome.IsHitTestVisibleInChrome="True"
-        Click="ServicesBtn_Click"/>
+        Click="ServicesBtn_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource BoltIcon}" 
+                                      Fill="#888888"
+                                      Width="14" Height="14"
+                                      Stretch="Uniform"
+                                      Margin="0,0,6,0"
+                                      VerticalAlignment="Center"/>
+                                <TextBlock Text="Сервисы" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
 <Button x:Name="FaqNavBtn" Content="Частые вопросы"
         Style="{StaticResource FlatBtn}" Foreground="#888888"
         Padding="12,6" Margin="0,0,10,0"
@@ -509,10 +556,17 @@
                                 Width="34" Padding="0" FontSize="14"
                                 WindowChrome.IsHitTestVisibleInChrome="True"
                                 Click="MinBtn_Click" Margin="10,0,0,0"/>
-                        <Button Content="✕" Style="{StaticResource CloseBtn}"
-                                Width="34" Padding="0" FontSize="13"
+                        <Button Style="{StaticResource CloseBtn}"
+                                Width="34" Padding="0"
                                 WindowChrome.IsHitTestVisibleInChrome="True"
-                                Click="CloseBtn_Click"/>
+                                Click="CloseBtn_Click">
+                            <Path Data="{StaticResource CloseIcon}" 
+                                  Stroke="White"
+                                  StrokeThickness="2"
+                                  StrokeLineCap="Round"
+                                  Width="12" Height="12"
+                                  Stretch="Uniform"/>
+                        </Button>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -525,7 +579,7 @@
                     <StackPanel Margin="32,24,32,24">
 
                         <!-- Title -->
-                        <TextBlock Text="⚡  Починить Telegram и Discord"
+                        <TextBlock Text="Починить Telegram и Discord"
                                    FontFamily="Segoe UI" FontSize="22" FontWeight="Bold"
                                    Foreground="White"
                                    HorizontalAlignment="Center"
@@ -540,10 +594,18 @@
                         <!-- Round power button, enhanced animation system -->
                         <Grid HorizontalAlignment="Center" Width="200" Height="200" Margin="0,0,0,8">
 
-                            <Button x:Name="FixBtn" Content=""
+                            <Button x:Name="FixBtn"
                                     Style="{StaticResource BigBtn}"
                                     WindowChrome.IsHitTestVisibleInChrome="True"
-                                    Click="FixBtn_Click"/>
+                                    Click="FixBtn_Click">
+                                <Path Data="{StaticResource PowerIcon}" 
+                                      Stroke="White" 
+                                      StrokeThickness="3" 
+                                      StrokeLineCap="Round"
+                                      StrokeLineJoin="Round"
+                                      Width="32" Height="32"
+                                      Stretch="Uniform"/>
+                            </Button>
 
                             <!-- Idle: статические кольца -->
                             <Ellipse x:Name="IdleRingOuter" Width="188" Height="188"
@@ -680,9 +742,21 @@
 
                     <Grid Grid.Row="0" Margin="32,20,32,0">
                         <StackPanel Orientation="Horizontal">
-                            <Button x:Name="FaqBackBtn" Content="← Назад" Style="{StaticResource BackBtn}"
+                            <Button x:Name="FaqBackBtn" Style="{StaticResource BackBtn}"
                                     WindowChrome.IsHitTestVisibleInChrome="True"
-                                    Click="FaqBackBtn_Click"/>
+                                    Click="FaqBackBtn_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource ArrowLeftIcon}" 
+                                          Stroke="#888888"
+                                          StrokeThickness="2"
+                                          StrokeLineCap="Round"
+                                          Width="14" Height="14"
+                                          Stretch="Uniform"
+                                          Margin="0,0,6,0"
+                                          VerticalAlignment="Center"/>
+                                    <TextBlock Text="Назад" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                             <TextBlock x:Name="FaqHeaderTitle" Text="Частые вопросы" FontFamily="Segoe UI" FontSize="18"
                                        FontWeight="Bold" Foreground="White"
                                        VerticalAlignment="Center" Margin="16,0,0,0"/>
@@ -707,9 +781,21 @@
                     <!-- Title bar -->
                     <Grid Grid.Row="0" Margin="32,20,32,0">
                         <StackPanel Orientation="Horizontal">
-                            <Button Content="← Назад" Style="{StaticResource BackBtn}"
+                            <Button Style="{StaticResource BackBtn}"
                                     WindowChrome.IsHitTestVisibleInChrome="True"
-                                    Click="BackFromSolution_Click"/>
+                                    Click="BackFromSolution_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource ArrowLeftIcon}" 
+                                          Stroke="#888888"
+                                          StrokeThickness="2"
+                                          StrokeLineCap="Round"
+                                          Width="14" Height="14"
+                                          Stretch="Uniform"
+                                          Margin="0,0,6,0"
+                                          VerticalAlignment="Center"/>
+                                    <TextBlock Text="Назад" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                             <TextBlock x:Name="SolutionTitle" Text="Решение проблемы" FontFamily="Segoe UI" FontSize="18"
                                        FontWeight="Bold" Foreground="White"
                                        VerticalAlignment="Center" Margin="16,0,0,0"/>
@@ -723,10 +809,20 @@
                             <!-- Auto -->
                             <TextBlock Text="Автоматическое решение" FontFamily="Segoe UI" FontSize="15"
                                        FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
-                            <Button x:Name="SolutionAutoFixBtn" Content="⚡ Исправить в один клик"
+                            <Button x:Name="SolutionAutoFixBtn"
                                     Style="{StaticResource AccentBtn}" HorizontalAlignment="Left"
                                     WindowChrome.IsHitTestVisibleInChrome="True"
-                                    Click="SolutionAutoFixBtn_Click" Margin="0,0,0,24"/>
+                                    Click="SolutionAutoFixBtn_Click" Margin="0,0,0,24">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource BoltIcon}" 
+                                          Fill="White"
+                                          Width="16" Height="16"
+                                          Stretch="Uniform"
+                                          Margin="0,0,8,0"
+                                          VerticalAlignment="Center"/>
+                                    <TextBlock Text="Исправить в один клик" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
 
                             <Border Height="1" Background="#333333" Margin="0,0,0,24"/>
 
@@ -756,9 +852,21 @@
                     <!-- Title bar -->
                     <Grid Grid.Row="0" Margin="32,20,32,0">
                         <StackPanel Orientation="Horizontal">
-                            <Button Content="← Назад" Style="{StaticResource BackBtn}"
+                            <Button Style="{StaticResource BackBtn}"
                                     WindowChrome.IsHitTestVisibleInChrome="True"
-                                    Click="BackBtn_Click"/>
+                                    Click="BackBtn_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource ArrowLeftIcon}" 
+                                          Stroke="#888888"
+                                          StrokeThickness="2"
+                                          StrokeLineCap="Round"
+                                          Width="14" Height="14"
+                                          Stretch="Uniform"
+                                          Margin="0,0,6,0"
+                                          VerticalAlignment="Center"/>
+                                    <TextBlock Text="Назад" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                             <TextBlock Text="Диагностика" FontFamily="Segoe UI" FontSize="18"
                                        FontWeight="Bold" Foreground="White"
                                        VerticalAlignment="Center" Margin="16,0,0,0"/>
@@ -767,10 +875,22 @@
 
                     <!-- Run button + progress -->
                     <StackPanel Grid.Row="1" Margin="32,14,32,0">
-                        <Button x:Name="DiagRunBtn" Content="🔍  Запустить проверку"
+                        <Button x:Name="DiagRunBtn"
                                 Style="{StaticResource AccentBtn}" HorizontalAlignment="Left"
                                 WindowChrome.IsHitTestVisibleInChrome="True"
-                                Click="DiagRunBtn_Click"/>
+                                Click="DiagRunBtn_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource SearchIcon}" 
+                                      Stroke="White"
+                                      StrokeThickness="2"
+                                      StrokeLineCap="Round"
+                                      Width="16" Height="16"
+                                      Stretch="Uniform"
+                                      Margin="0,0,8,0"
+                                      VerticalAlignment="Center"/>
+                                <TextBlock Text="Запустить проверку" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                         <ProgressBar x:Name="DiagProg" Value="0" Maximum="100" Margin="0,12,0,0"/>
                         <TextBlock x:Name="DiagProgLbl" Text="" FontSize="12"
                                    Foreground="#888888" Margin="0,5,0,0"/>
@@ -805,11 +925,23 @@
             <!-- ══════════════════ FOOTER ══════════════════ -->
             <Border Grid.Row="2" Background="#1e1e1e" CornerRadius="0,0,11,11">
                 <Grid Margin="18,0,12,0">
-                    <Button Content="☕ Поддержать разработку" HorizontalAlignment="Right"
+                    <Button HorizontalAlignment="Right"
                             Style="{StaticResource FlatBtn}" FontSize="11"
                             WindowChrome.IsHitTestVisibleInChrome="True"
                             VerticalAlignment="Center" Margin="0,-3,0,0"
-                            Click="DonateBtn_Click"/>
+                            Click="DonateBtn_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource CoffeeIcon}" 
+                                  Stroke="#888888"
+                                  StrokeThickness="1.5"
+                                  StrokeLineCap="Round"
+                                  Width="12" Height="12"
+                                  Stretch="Uniform"
+                                  Margin="0,0,6,0"
+                                  VerticalAlignment="Center"/>
+                            <TextBlock Text="Поддержать разработку" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
                 </Grid>
             </Border>
 
@@ -833,10 +965,17 @@
                             <Grid Margin="20,0">
                                 <TextBlock Text="Настройки" FontFamily="Segoe UI" FontSize="15"
                                            FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
-                                <Button Content="✕" HorizontalAlignment="Right"
-                                        Style="{StaticResource FlatBtnCentered}" FontSize="14" Padding="0" Width="34"
+                                <Button HorizontalAlignment="Right"
+                                        Style="{StaticResource FlatBtnCentered}" Padding="0" Width="34"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
-                                        Click="SettingsCloseBtn_Click"/>
+                                        Click="SettingsCloseBtn_Click">
+                                    <Path Data="{StaticResource CloseIcon}" 
+                                          Stroke="#888888"
+                                          StrokeThickness="2"
+                                          StrokeLineCap="Round"
+                                          Width="12" Height="12"
+                                          Stretch="Uniform"/>
+                                </Button>
                             </Grid>
                         </Border>
 
@@ -911,7 +1050,7 @@
                                         Click="SaveSettings_Click"/>
 
                                 <Border Height="1" Background="#333333" Margin="0,20"/>
-                                <TextBlock Text="📢 TELEGRAM-КАНАЛ ПРОЕКТА" FontFamily="Segoe UI" FontSize="11"
+                                <TextBlock Text="TELEGRAM-КАНАЛ ПРОЕКТА" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,10"/>
                                 
                                 <Border Background="#1a2e1a" BorderBrush="#22c55e" BorderThickness="2,0,0,0"
@@ -920,28 +1059,61 @@
                                         <TextBlock TextWrapping="Wrap" FontFamily="Segoe UI" FontSize="12"
                                                    Foreground="#f0f0f0" Margin="0,0,0,10"
                                                    Text="Я создал канал специально для этого проекта. Там я публикую новые найденные обходы, сообщаю о важных обновлениях Zapret, TgWsProxy и самого NetFix. Планирую активно развивать его, советую подписаться, чтобы не пропустить ничего важного."/>
-                                        <Button Content="📱 Открыть канал @NetFixRuBi"
-                                                Style="{StaticResource GreenAccentBtn}" HorizontalAlignment="Stretch"
+                                        <Button Style="{StaticResource GreenAccentBtn}" HorizontalAlignment="Stretch"
                                                 Padding="12,8"
                                                 WindowChrome.IsHitTestVisibleInChrome="True"
-                                                Click="OpenTelegramChannel_Click"/>
+                                                Click="OpenTelegramChannel_Click">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                <Path Data="{StaticResource PhoneIcon}" 
+                                                      Stroke="White"
+                                                      StrokeThickness="2"
+                                                      StrokeLineCap="Round"
+                                                      Width="14" Height="14"
+                                                      Stretch="Uniform"
+                                                      Margin="0,0,8,0"
+                                                      VerticalAlignment="Center"/>
+                                                <TextBlock Text="Открыть канал @NetFixRuBi" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
                                     </StackPanel>
                                 </Border>
 
                                 <Border Height="1" Background="#333333" Margin="0,4"/>
-                                <TextBlock Text="🚀 БУДУЩЕЕ ПРОЕКТА И ПОДДЕРЖКА" FontFamily="Segoe UI" FontSize="11"
+                                <TextBlock Text="БУДУЩЕЕ ПРОЕКТА И ПОДДЕРЖКА" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,10"/>
                                 <TextBlock Text="Нравится, как всё работает? Ты можешь поддержать разработку! В планах, реализовать такое же приложение на телефон с полным функционалом, потому что на мобилках сейчас такая же беда с интернетом.&#x0a;Если хочешь помочь финансово, жми на кнопку ниже. А если ты шаришь в коде и хочешь вписаться в разработку напрямую, пиши мне в личку, обсудим."
                                            Foreground="#f0f0f0" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
 
-                                <Button Content="☕ Задонатить / Поддержать"
-                                        Style="{StaticResource AccentBtn}" HorizontalAlignment="Stretch" Padding="12,8" Margin="0,0,0,6"
+                                <Button Style="{StaticResource AccentBtn}" HorizontalAlignment="Stretch" Padding="12,8" Margin="0,0,0,6"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
-                                        Click="DonateBtn_Click"/>
-                                <Button Content="✉ Написать в телеграм"
-                                        Style="{StaticResource OutlineBtn}" HorizontalAlignment="Stretch" Padding="12,8" Margin="0,0,0,16" Foreground="#f0f0f0"
+                                        Click="DonateBtn_Click">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <Path Data="{StaticResource CoffeeIcon}" 
+                                              Stroke="White"
+                                              StrokeThickness="2"
+                                              StrokeLineCap="Round"
+                                              Width="14" Height="14"
+                                              Stretch="Uniform"
+                                              Margin="0,0,8,0"
+                                              VerticalAlignment="Center"/>
+                                        <TextBlock Text="Задонатить / Поддержать" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Style="{StaticResource OutlineBtn}" HorizontalAlignment="Stretch" Padding="12,8" Margin="0,0,0,16" Foreground="#f0f0f0"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
-                                        Click="SupportBtn_Click"/>
+                                        Click="SupportBtn_Click">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <Path Data="{StaticResource MailIcon}" 
+                                              Stroke="#f0f0f0"
+                                              StrokeThickness="2"
+                                              StrokeLineCap="Round"
+                                              Width="14" Height="14"
+                                              Stretch="Uniform"
+                                              Margin="0,0,8,0"
+                                              VerticalAlignment="Center"/>
+                                        <TextBlock Text="Написать в телеграм" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
 
                                 <Border Height="1" Background="#333333" Margin="0,20"/>
                                 <TextBlock Text="О ПРИЛОЖЕНИИ" FontFamily="Segoe UI" FontSize="11"
@@ -960,35 +1132,94 @@
                                 <TextBlock Text="ССЫЛКИ" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,10"/>
 
-                                <Button Content="↗ Zapret на GitHub" HorizontalAlignment="Left"
+                                <Button HorizontalAlignment="Left"
                                         Style="{StaticResource FlatBtn}" Foreground="#3b82f6"
                                         FontSize="12" Padding="0,4"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
-                                        Click="LinkZapret_Click"/>
-                                <Button Content="↗ tg-ws-proxy на GitHub" HorizontalAlignment="Left"
+                                        Click="LinkZapret_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource ArrowUpRightIcon}" 
+                                              Stroke="#3b82f6"
+                                              StrokeThickness="2"
+                                              StrokeLineCap="Round"
+                                              Width="12" Height="12"
+                                              Stretch="Uniform"
+                                              Margin="0,0,6,0"
+                                              VerticalAlignment="Center"/>
+                                        <TextBlock Text="Zapret на GitHub" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button HorizontalAlignment="Left"
                                         Style="{StaticResource FlatBtn}" Foreground="#3b82f6"
                                         FontSize="12" Padding="0,4"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
-                                        Click="LinkTgWs_Click"/>
-                                <Button Content="↗ NetFix на GitHub" HorizontalAlignment="Left"
+                                        Click="LinkTgWs_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource ArrowUpRightIcon}" 
+                                              Stroke="#3b82f6"
+                                              StrokeThickness="2"
+                                              StrokeLineCap="Round"
+                                              Width="12" Height="12"
+                                              Stretch="Uniform"
+                                              Margin="0,0,6,0"
+                                              VerticalAlignment="Center"/>
+                                        <TextBlock Text="tg-ws-proxy на GitHub" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button HorizontalAlignment="Left"
                                         Style="{StaticResource FlatBtn}" Foreground="#3b82f6"
                                         FontSize="12" Padding="0,4"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
-                                        Click="LinkNetFix_Click"/>
-                                <Button Content="↗ Telegram-канал @NetFixRuBi" HorizontalAlignment="Left"
+                                        Click="LinkNetFix_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource ArrowUpRightIcon}" 
+                                              Stroke="#3b82f6"
+                                              StrokeThickness="2"
+                                              StrokeLineCap="Round"
+                                              Width="12" Height="12"
+                                              Stretch="Uniform"
+                                              Margin="0,0,6,0"
+                                              VerticalAlignment="Center"/>
+                                        <TextBlock Text="NetFix на GitHub" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button HorizontalAlignment="Left"
                                         Style="{StaticResource FlatBtn}" Foreground="#3b82f6"
                                         FontSize="12" Padding="0,4"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
-                                        Click="OpenTelegramChannel_Click"/>
+                                        Click="OpenTelegramChannel_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource ArrowUpRightIcon}" 
+                                              Stroke="#3b82f6"
+                                              StrokeThickness="2"
+                                              StrokeLineCap="Round"
+                                              Width="12" Height="12"
+                                              Stretch="Uniform"
+                                              Margin="0,0,6,0"
+                                              VerticalAlignment="Center"/>
+                                        <TextBlock Text="Telegram-канал @NetFixRuBi" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
 
                                 <Border Height="1" Background="#333333" Margin="0,16"/>
                                 <TextBlock Text="СБРОС" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
-                                <Button Content="↩ Пройти онбординг заново"
-                                        Style="{StaticResource OutlineBtn}" HorizontalAlignment="Stretch"
+                                <Button Style="{StaticResource OutlineBtn}" HorizontalAlignment="Stretch"
                                         Padding="12,8" Margin="0,0,0,6" Foreground="#888888"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
-                                        Click="ReOnboard_Click"/>
+                                        Click="ReOnboard_Click">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <Path Data="{StaticResource RefreshIcon}" 
+                                              Stroke="#888888"
+                                              StrokeThickness="2"
+                                              StrokeLineCap="Round"
+                                              Width="14" Height="14"
+                                              Stretch="Uniform"
+                                              Margin="0,0,8,0"
+                                              VerticalAlignment="Center"/>
+                                        <TextBlock Text="Пройти онбординг заново" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
                                 <Button Content="Сбросить все настройки"
                                         Style="{StaticResource OutlineBtn}" HorizontalAlignment="Stretch"
                                         Padding="12,8" Foreground="#ef4444"
@@ -1014,11 +1245,18 @@
                             <Grid Margin="20,0">
                                 <TextBlock Text="Мастер настройки Zapret" FontFamily="Segoe UI" FontSize="15"
                                            FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
-                                <Button Content="✕" HorizontalAlignment="Right"
-                                        Style="{StaticResource FlatBtnCentered}" FontSize="14" Padding="0" Width="34" Height="34"
+                                <Button HorizontalAlignment="Right"
+                                        Style="{StaticResource FlatBtnCentered}" Padding="0" Width="34" Height="34"
                                         VerticalAlignment="Center"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
-                                        Click="WizardCloseBtn_Click"/>
+                                        Click="WizardCloseBtn_Click">
+                                    <Path Data="{StaticResource CloseIcon}" 
+                                          Stroke="#888888"
+                                          StrokeThickness="2"
+                                          StrokeLineCap="Round"
+                                          Width="12" Height="12"
+                                          Stretch="Uniform"/>
+                                </Button>
                             </Grid>
                         </Border>
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -1062,12 +1300,19 @@
                                            FontFamily="Segoe UI" FontSize="15"
                                            FontWeight="Bold" Foreground="White"
                                            VerticalAlignment="Center"/>
-                                <Button Content="✕" HorizontalAlignment="Right"
+                                <Button HorizontalAlignment="Right"
                                         Style="{StaticResource FlatBtnCentered}"
-                                        FontSize="14" Padding="0" Width="34" Height="34"
+                                        Padding="0" Width="34" Height="34"
                                         VerticalAlignment="Center"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
-                                        Click="ServicesCloseBtn_Click"/>
+                                        Click="ServicesCloseBtn_Click">
+                                    <Path Data="{StaticResource CloseIcon}" 
+                                          Stroke="#888888"
+                                          StrokeThickness="2"
+                                          StrokeLineCap="Round"
+                                          Width="12" Height="12"
+                                          Stretch="Uniform"/>
+                                </Button>
                             </Grid>
                         </Border>
 
@@ -1108,11 +1353,20 @@
                                         </StackPanel>
                                     </StackPanel>
                                     <Button x:Name="ZapretToggleBtn" Grid.Column="2"
-                                            Content="▶  Запустить"
                                             Style="{StaticResource AccentBtn}"
                                             Padding="12,7" FontSize="12"
                                             WindowChrome.IsHitTestVisibleInChrome="True"
-                                            Click="ZapretToggle_Click"/>
+                                            Click="ZapretToggle_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource PlayIcon}" 
+                                                  Fill="White"
+                                                  Width="12" Height="12"
+                                                  Stretch="Uniform"
+                                                  Margin="0,0,6,0"
+                                                  VerticalAlignment="Center"/>
+                                            <TextBlock Text="Запустить" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
                                 </Grid>
                             </Border>
 
@@ -1150,11 +1404,20 @@
                                         </StackPanel>
                                     </StackPanel>
                                     <Button x:Name="TgWsToggleBtn" Grid.Column="2"
-                                            Content="▶  Запустить"
                                             Style="{StaticResource AccentBtn}"
                                             Padding="12,7" FontSize="12"
                                             WindowChrome.IsHitTestVisibleInChrome="True"
-                                            Click="TgWsToggle_Click"/>
+                                            Click="TgWsToggle_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource PlayIcon}" 
+                                                  Fill="White"
+                                                  Width="12" Height="12"
+                                                  Stretch="Uniform"
+                                                  Margin="0,0,6,0"
+                                                  VerticalAlignment="Center"/>
+                                            <TextBlock Text="Запустить" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
                                 </Grid>
                             </Border>
 
