@@ -492,28 +492,39 @@ public partial class MainWindow : Window
         
         var headerStack = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 8) };
         
-        // Add fire icon
+        // Create badge with fire icon and text inside
+        var badge = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)) { Opacity = 0.2 },
+            CornerRadius = new CornerRadius(4),
+            Padding = new Thickness(8, 3, 8, 3)
+        };
+        
+        var badgeContent = new StackPanel { Orientation = Orientation.Horizontal };
+        
+        // Add fire icon inside badge
         var fireIcon = new System.Windows.Shapes.Path
         {
-            Data = Geometry.Parse("M12,23 C7,23 3,19 3,14 C3,10 5,7 7,5 C7,8 9,10 12,10 C12,7 14,5 16,3 C17,6 19,9 19,14 C19,19 15,23 12,23 M12,17 C10,17 9,16 9,14 C9,12 10,11 12,11 C12,13 13,14 14,14 C14,12 13,11 13,9 C15,10 16,12 16,14 C16,16 14,17 12,17"),
+            Data = Geometry.Parse("M12,2 L10,8 L12,10 L14,8 Z M8,10 L10,14 L12,12 L10,10 Z M14,10 L12,12 L14,14 L16,10 Z M12,14 L10,18 L12,22 L14,18 Z"),
             Fill = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
-            Width = 12,
-            Height = 12,
+            Width = 10,
+            Height = 10,
             Stretch = Stretch.Uniform,
             VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(8, 0, 4, 0)
+            Margin = new Thickness(0, 0, 4, 0)
         };
-        headerStack.Children.Add(fireIcon);
+        badgeContent.Children.Add(fireIcon);
         
-        headerStack.Children.Add(new TextBlock { 
+        badgeContent.Children.Add(new TextBlock { 
             Text = "НОВИНКА", 
             FontSize = 11, 
             FontWeight = FontWeights.Bold, 
             Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
-            Background = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)) { Opacity = 0.2 },
-            Padding = new Thickness(8, 3, 8, 3),
-            Margin = new Thickness(0, 0, 0, 0)
+            VerticalAlignment = VerticalAlignment.Center
         });
+        
+        badge.Child = badgeContent;
+        headerStack.Children.Add(badge);
         stack.Children.Add(headerStack);
         
         stack.Children.Add(new TextBlock { 
