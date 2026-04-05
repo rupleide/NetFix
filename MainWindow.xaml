@@ -1015,7 +1015,9 @@
                                 <TextBlock Text="Мастер настройки Zapret" FontFamily="Segoe UI" FontSize="15"
                                            FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
                                 <Button Content="✕" HorizontalAlignment="Right"
-                                        Style="{StaticResource FlatBtn}" FontSize="14" Padding="0" Width="34"
+                                        Style="{StaticResource FlatBtnCentered}" FontSize="14" Padding="0" Width="34" Height="34"
+                                        VerticalAlignment="Center"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
                                         Click="WizardCloseBtn_Click"/>
                             </Grid>
                         </Border>
