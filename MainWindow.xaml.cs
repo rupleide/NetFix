@@ -253,9 +253,9 @@ public partial class MainWindow : Window
         FaqHeaderTitle.Text = "Частые вопросы";
         FaqContainer.Children.Clear();
 
-        AddCategoryCard("Telegram", "Настройка прокси и загрузка медиа", "🚀", Color.FromRgb(0x3b, 0x82, 0xf6));
-        AddCategoryCard("Discord", "Обновление и голосовые каналы", "🎮", Color.FromRgb(0x8b, 0x5c, 0xf6));
-        AddCategoryCard("Общее", "YouTube, Zapret и сетевые ошибки", "⚙️", Color.FromRgb(0x22, 0xc5, 0x5e));
+        AddCategoryCard("Telegram", "Настройка прокси и загрузка медиа", "T", Color.FromRgb(0x3b, 0x82, 0xf6));
+        AddCategoryCard("Discord", "Обновление и голосовые каналы", "D", Color.FromRgb(0x8b, 0x5c, 0xf6));
+        AddCategoryCard("Общее", "YouTube, Zapret и сетевые ошибки", "?", Color.FromRgb(0x22, 0xc5, 0x5e));
         
         // Добавляем специальную карточку для Android
         AddAndroidCard();
@@ -272,7 +272,7 @@ public partial class MainWindow : Window
         
         var helpStack = new StackPanel();
         helpStack.Children.Add(new TextBlock { 
-            Text = "❓ Не нашли решение своей проблемы?", 
+            Text = "Не нашли решение своей проблемы?", 
             FontSize = 16, 
             FontWeight = FontWeights.Bold, 
             Foreground = Brushes.White,
@@ -452,7 +452,7 @@ public partial class MainWindow : Window
         stack.Children.Add(headerStack);
         
         stack.Children.Add(new TextBlock { 
-            Text = "📱 TgWsProxy на Android!", 
+            Text = "TgWsProxy на Android!", 
             FontSize = 18, 
             FontWeight = FontWeights.Bold, 
             Foreground = Brushes.White,
@@ -506,7 +506,7 @@ public partial class MainWindow : Window
         var stack = new StackPanel();
         
         stack.Children.Add(new TextBlock { 
-            Text = "📱 TgWsProxy на Android", 
+            Text = "TgWsProxy на Android", 
             FontSize = 19, 
             FontWeight = FontWeights.Bold, 
             Foreground = Brushes.White, 
@@ -514,14 +514,14 @@ public partial class MainWindow : Window
             Margin = new Thickness(0, 0, 0, 18) 
         });
 
-        var infoText = "🚀 Новый способ обхода блокировок Telegram на Android\n\n" +
+        var infoText = "Новый способ обхода блокировок Telegram на Android\n\n" +
             "Пока NetFix Mobile находится в разработке, делюсь рабочим решением от стороннего разработчика LemoLev. " +
             "Это отличный вариант для тех, кто устал от VPN и хочет стабильной работы Telegram через прокси.\n\n" +
-            "⚠️ Важное уточнение: Этот метод, «домашнее» решение. Прокси не работает на мобильном интернете. " +
+            "Важное уточнение: Этот метод, «домашнее» решение. Прокси не работает на мобильном интернете. " +
             "Но если вы подключены к Wi-Fi или кто-то раздает вам интернет, всё должно работать.\n\n" +
-            "📖 Полная инструкция по установке и настройке, а также APK-файл доступны в моём Telegram-канале. " +
+            "Полная инструкция по установке и настройке, а также APK-файл доступны в моём Telegram-канале. " +
             "Там всё очень подробно расписано, шаг за шагом.\n\n" +
-            "💬 Переходите в канал для получения инструкции и файла:";
+            "Переходите в канал для получения инструкции и файла:";
 
         stack.Children.Add(new TextBlock { 
             Text = infoText, 
@@ -847,7 +847,7 @@ public partial class MainWindow : Window
         {
             SolutionTitle.Text = title;
             SolutionManualText.Text = manualText;
-            SolutionAutoFixBtn.Content = $"⚡ {autoBtnText}";
+            SolutionAutoFixBtn.Content = CreateButtonContentWithIcon("BoltIcon", autoBtnText, Brushes.White);
             
             FaqPage.Visibility = Visibility.Collapsed;
             SolutionPage.Visibility = Visibility.Visible;
@@ -926,7 +926,9 @@ public partial class MainWindow : Window
                 ZapretDot2.Fill = st.ZapretRunning ? greenBrush : grayBrush;
                 ZapretStatusLbl.Text = st.ZapretRunning ? "Запущен" : "Не запущен";
                 ZapretStatusLbl.Foreground = st.ZapretRunning ? greenBrush : grayBrush;
-                ZapretToggleBtn.Content = st.ZapretRunning ? "■  Закрыть" : "▶  Запустить";
+                ZapretToggleBtn.Content = st.ZapretRunning 
+                    ? "■  Закрыть" 
+                    : CreateButtonContentWithIcon("PlayIcon", "Запустить", Brushes.White);
                 ZapretToggleBtn.Background = st.ZapretRunning
                     ? new SolidColorBrush(Color.FromRgb(0x3d, 0x1a, 0x1a))
                     : new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6));
@@ -935,7 +937,9 @@ public partial class MainWindow : Window
                 TgWsDot2.Fill = st.TgWsProxyRunning ? greenBrush : grayBrush;
                 TgWsStatusLbl.Text = st.TgWsProxyRunning ? "Запущен" : "Не запущен";
                 TgWsStatusLbl.Foreground = st.TgWsProxyRunning ? greenBrush : grayBrush;
-                TgWsToggleBtn.Content = st.TgWsProxyRunning ? "■  Закрыть" : "▶  Запустить";
+                TgWsToggleBtn.Content = st.TgWsProxyRunning 
+                    ? "■  Закрыть" 
+                    : CreateButtonContentWithIcon("PlayIcon", "Запустить", Brushes.White);
                 TgWsToggleBtn.Background = st.TgWsProxyRunning
                     ? new SolidColorBrush(Color.FromRgb(0x3d, 0x1a, 0x1a))
                     : new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6));
@@ -1022,20 +1026,20 @@ public partial class MainWindow : Window
                     prefix = "[#] ";
                     isBold = true;
                     break;
-                case "net": prefix = "📡 "; break;
-                case "speed": prefix = "⚡ "; break;
-                case "dpi": prefix = "🛡️ "; break;
+                case "net": prefix = "[NET] "; break;
+                case "speed": prefix = "[SPEED] "; break;
+                case "dpi": prefix = "[DPI] "; break;
                 case "ok":
                     textColor = Color.FromRgb(0x22, 0xc5, 0x5e);
-                    prefix = "✅ ";
+                    prefix = "[OK] ";
                     break;
                 case "warn":
                     textColor = Color.FromRgb(0xea, 0xb3, 0x08);
-                    prefix = "⚠️ ";
+                    prefix = "[WARN] ";
                     break;
                 case "error":
                     textColor = Color.FromRgb(0xef, 0x44, 0x44);
-                    prefix = "❌ ";
+                    prefix = "[ERROR] ";
                     break;
                 case "final":
                     textColor = Color.FromRgb(0x22, 0xc5, 0x5e);
@@ -1967,8 +1971,8 @@ public partial class MainWindow : Window
     {
         AddOnboardTitle(p, "Способ установки");
         AddOnboardSub(p, "Как вы хотите установить компоненты для обхода блокировок?\nПрограмма может сделать всё автоматически примерно за 15 секунд.");
-        AddOnboardBtn(p, "🚀 Автоматическая установка (15 сек)", "#22c55e", () => ShowOnboardScreen(16));
-        AddOnboardBtn(p, "⚙️ Ручная установка", "#2e2e2e", () => ShowOnboardScreen(17), foreground: "#888888");
+        AddOnboardBtn(p, "Автоматическая установка (15 сек)", "#22c55e", () => ShowOnboardScreen(16));
+        AddOnboardBtn(p, "Ручная установка", "#2e2e2e", () => ShowOnboardScreen(17), foreground: "#888888");
     }
 
     private void BuildOnboardZapretChoice(StackPanel p)
@@ -2040,7 +2044,6 @@ public partial class MainWindow : Window
 
     private void BuildOnboardZapretSuccess(StackPanel p)
     {
-        AddOnboardEmoji(p, "🎉");
         AddOnboardTitle(p, "Ты молодец!");
         AddOnboardSub(p, "Надеюсь, ты сделал всё правильно.");
         AddOnboardBtn(p, "Далее", "#3b82f6", () => ShowOnboardScreen(10));
@@ -2100,7 +2103,6 @@ public partial class MainWindow : Window
 
     private void BuildOnboardDone(StackPanel p)
     {
-        AddOnboardEmoji(p, "✅");
         AddOnboardTitle(p, "Всё готово!");
         
         var subText = new TextBlock();
@@ -2145,7 +2147,6 @@ public partial class MainWindow : Window
 
     private void BuildOnboardAutoDownload(StackPanel p)
     {
-        AddOnboardEmoji(p, "⏳");
         AddOnboardTitle(p, "Автоматическая установка");
         AddOnboardSub(p, "Подождите, скачиваем и настраиваем нужные компоненты.\nЭто займет не больше минуты.");
         
@@ -2383,6 +2384,39 @@ public partial class MainWindow : Window
         {
             System.Windows.MessageBox.Show($"Ошибка автозапуска: {ex.Message}");
         }
+    }
+
+    // ── Helper: Create button content with icon ────────────────────────────────────
+    private static object CreateButtonContentWithIcon(string iconKey, string text, Brush iconBrush)
+    {
+        var stack = new StackPanel { Orientation = Orientation.Horizontal };
+        
+        var path = new System.Windows.Shapes.Path
+        {
+            Data = (PathGeometry)System.Windows.Application.Current.FindResource(iconKey),
+            Width = 12,
+            Height = 12,
+            Stretch = Stretch.Uniform,
+            Margin = new Thickness(0, 0, 6, 0),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        if (iconKey == "PlayIcon")
+            path.Fill = iconBrush;
+        else
+            path.Stroke = iconBrush;
+
+        if (iconKey != "PlayIcon")
+            path.StrokeThickness = 2;
+
+        stack.Children.Add(path);
+        stack.Children.Add(new TextBlock 
+        { 
+            Text = text, 
+            VerticalAlignment = VerticalAlignment.Center 
+        });
+
+        return stack;
     }
 }
 
