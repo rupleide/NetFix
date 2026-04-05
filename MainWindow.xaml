@@ -429,7 +429,7 @@
                 <!-- Header  -->
                 <RowDefinition Height="*"/>
                 <!-- Content -->
-                <RowDefinition Height="42"/>
+                <RowDefinition Height="32"/>
                 <!-- Footer  -->
             </Grid.RowDefinitions>
 
