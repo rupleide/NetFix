@@ -563,7 +563,7 @@
                             <Path Data="{StaticResource CloseIcon}" 
                                   Stroke="White"
                                   StrokeThickness="2"
-                                  StrokeLineCap="Round"
+                                  
                                   Width="12" Height="12"
                                   Stretch="Uniform"/>
                         </Button>
@@ -601,8 +601,6 @@
                                 <Path Data="{StaticResource PowerIcon}" 
                                       Stroke="White" 
                                       StrokeThickness="3" 
-                                      StrokeLineCap="Round"
-                                      StrokeLineJoin="Round"
                                       Width="32" Height="32"
                                       Stretch="Uniform"/>
                             </Button>
@@ -749,7 +747,7 @@
                                     <Path Data="{StaticResource ArrowLeftIcon}" 
                                           Stroke="#888888"
                                           StrokeThickness="2"
-                                          StrokeLineCap="Round"
+                                          
                                           Width="14" Height="14"
                                           Stretch="Uniform"
                                           Margin="0,0,6,0"
@@ -788,7 +786,7 @@
                                     <Path Data="{StaticResource ArrowLeftIcon}" 
                                           Stroke="#888888"
                                           StrokeThickness="2"
-                                          StrokeLineCap="Round"
+                                          
                                           Width="14" Height="14"
                                           Stretch="Uniform"
                                           Margin="0,0,6,0"
@@ -859,7 +857,7 @@
                                     <Path Data="{StaticResource ArrowLeftIcon}" 
                                           Stroke="#888888"
                                           StrokeThickness="2"
-                                          StrokeLineCap="Round"
+                                          
                                           Width="14" Height="14"
                                           Stretch="Uniform"
                                           Margin="0,0,6,0"
@@ -883,7 +881,7 @@
                                 <Path Data="{StaticResource SearchIcon}" 
                                       Stroke="White"
                                       StrokeThickness="2"
-                                      StrokeLineCap="Round"
+                                      
                                       Width="16" Height="16"
                                       Stretch="Uniform"
                                       Margin="0,0,8,0"
@@ -934,7 +932,7 @@
                             <Path Data="{StaticResource CoffeeIcon}" 
                                   Stroke="#888888"
                                   StrokeThickness="1.5"
-                                  StrokeLineCap="Round"
+                                  
                                   Width="12" Height="12"
                                   Stretch="Uniform"
                                   Margin="0,0,6,0"
@@ -972,7 +970,7 @@
                                     <Path Data="{StaticResource CloseIcon}" 
                                           Stroke="#888888"
                                           StrokeThickness="2"
-                                          StrokeLineCap="Round"
+                                          
                                           Width="12" Height="12"
                                           Stretch="Uniform"/>
                                 </Button>
@@ -1067,7 +1065,7 @@
                                                 <Path Data="{StaticResource PhoneIcon}" 
                                                       Stroke="White"
                                                       StrokeThickness="2"
-                                                      StrokeLineCap="Round"
+                                                      
                                                       Width="14" Height="14"
                                                       Stretch="Uniform"
                                                       Margin="0,0,8,0"
@@ -1091,7 +1089,7 @@
                                         <Path Data="{StaticResource CoffeeIcon}" 
                                               Stroke="White"
                                               StrokeThickness="2"
-                                              StrokeLineCap="Round"
+                                              
                                               Width="14" Height="14"
                                               Stretch="Uniform"
                                               Margin="0,0,8,0"
@@ -1106,7 +1104,7 @@
                                         <Path Data="{StaticResource MailIcon}" 
                                               Stroke="#f0f0f0"
                                               StrokeThickness="2"
-                                              StrokeLineCap="Round"
+                                              
                                               Width="14" Height="14"
                                               Stretch="Uniform"
                                               Margin="0,0,8,0"
@@ -1141,7 +1139,7 @@
                                         <Path Data="{StaticResource ArrowUpRightIcon}" 
                                               Stroke="#3b82f6"
                                               StrokeThickness="2"
-                                              StrokeLineCap="Round"
+                                              
                                               Width="12" Height="12"
                                               Stretch="Uniform"
                                               Margin="0,0,6,0"
@@ -1158,7 +1156,7 @@
                                         <Path Data="{StaticResource ArrowUpRightIcon}" 
                                               Stroke="#3b82f6"
                                               StrokeThickness="2"
-                                              StrokeLineCap="Round"
+                                              
                                               Width="12" Height="12"
                                               Stretch="Uniform"
                                               Margin="0,0,6,0"
@@ -1175,7 +1173,7 @@
                                         <Path Data="{StaticResource ArrowUpRightIcon}" 
                                               Stroke="#3b82f6"
                                               StrokeThickness="2"
-                                              StrokeLineCap="Round"
+                                              
                                               Width="12" Height="12"
                                               Stretch="Uniform"
                                               Margin="0,0,6,0"
@@ -1192,7 +1190,7 @@
                                         <Path Data="{StaticResource ArrowUpRightIcon}" 
                                               Stroke="#3b82f6"
                                               StrokeThickness="2"
-                                              StrokeLineCap="Round"
+                                              
                                               Width="12" Height="12"
                                               Stretch="Uniform"
                                               Margin="0,0,6,0"
@@ -1212,7 +1210,7 @@
                                         <Path Data="{StaticResource RefreshIcon}" 
                                               Stroke="#888888"
                                               StrokeThickness="2"
-                                              StrokeLineCap="Round"
+                                              
                                               Width="14" Height="14"
                                               Stretch="Uniform"
                                               Margin="0,0,8,0"
@@ -1253,7 +1251,7 @@
                                     <Path Data="{StaticResource CloseIcon}" 
                                           Stroke="#888888"
                                           StrokeThickness="2"
-                                          StrokeLineCap="Round"
+                                          
                                           Width="12" Height="12"
                                           Stretch="Uniform"/>
                                 </Button>
@@ -1309,7 +1307,7 @@
                                     <Path Data="{StaticResource CloseIcon}" 
                                           Stroke="#888888"
                                           StrokeThickness="2"
-                                          StrokeLineCap="Round"
+                                          
                                           Width="12" Height="12"
                                           Stretch="Uniform"/>
                                 </Button>
