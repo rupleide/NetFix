@@ -28,7 +28,7 @@
                                     <Thumb>
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
-                                                <Border Background="#3a3a3a" CornerRadius="4" Width="4" HorizontalAlignment="Right" Margin="0,4,2,4"/>
+                                                <Border Background="#3a3a3a" CornerRadius="4" Width="4" HorizontalAlignment="Right" Margin="0,4,8,4"/>
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>

@@ -609,13 +609,30 @@ public partial class ZapretConfigWindow : Window
         headerGrid.Children.Add(badge);
         ConfigListPanel.Children.Add(headerGrid);
 
-        var currentLabel = new TextBlock
+        var currentLabel = new StackPanel
         {
-            Text = $"Активный: {_cache.CurrentConfig}",
-            FontSize = 11,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58)),
+            Orientation = System.Windows.Controls.Orientation.Horizontal,
             Margin = new Thickness(0, 2, 0, 14)
         };
+        
+        var activeText = new TextBlock
+        {
+            Text = "Активный конфиг: ",
+            FontSize = 13,
+            Foreground = Brushes.White,
+            FontWeight = FontWeights.SemiBold
+        };
+        
+        var configNameText = new TextBlock
+        {
+            Text = _cache.CurrentConfig,
+            FontSize = 13,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
+            FontWeight = FontWeights.SemiBold
+        };
+        
+        currentLabel.Children.Add(activeText);
+        currentLabel.Children.Add(configNameText);
         ConfigListPanel.Children.Add(currentLabel);
 
         // Список конфигов
