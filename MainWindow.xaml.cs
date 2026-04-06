@@ -288,13 +288,14 @@ public partial class MainWindow : Window
             // Обновить отображение выбранного конфига после закрытия окна
             UpdateSelectedConfigDisplay();
             
-            Console.WriteLine("[MainWindow] Waiting 2500ms before updating status");
-            // Подождать чтобы Windows сервис успел запуститься и процесс winws.exe появился в списке процессов
-            await Task.Delay(2500);
-            
-            Console.WriteLine("[MainWindow] Calling UpdateActiveApps");
-            // Обновить статус приложений (кнопка "Запустить" изменится на "Закрыть" если сервис запущен)
-            UpdateActiveApps();
+            // Проверить был ли применен конфиг (если окно закрылось успешно)
+            var updatedCache = ZapretConfigService.LoadCache();
+            if (updatedCache != null && !string.IsNullOrEmpty(updatedCache.CurrentConfig))
+            {
+                Console.WriteLine("[MainWindow] Config was applied, triggering ZapretToggle_Click to start service");
+                // Вызвать метод запуска сервиса
+                ZapretToggle_Click(this, new RoutedEventArgs());
+            }
             
             Console.WriteLine("[MainWindow] SelectConfigBtn_Click finished");
         }
