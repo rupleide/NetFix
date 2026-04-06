@@ -2486,9 +2486,23 @@ public partial class MainWindow : Window
     {
         var stack = new StackPanel { Orientation = Orientation.Horizontal };
         
+        var geometry = System.Windows.Application.Current.TryFindResource(iconKey) as PathGeometry;
+        
+        // Fallback если ресурс не найден
+        if (geometry == null && iconKey == "RefreshIcon")
+        {
+            geometry = Geometry.Parse("M21,11c-0.6,0-1,0.4-1,1c0,2.9-1.5,5.5-4,6.9c-3.8,2.2-8.7,0.9-10.9-2.9C2.9,12.2,4.2,7.3,8,5.1c3.3-1.9,7.3-1.2,9.8,1.4h-2.4c-0.6,0-1,0.4-1,1s0.4,1,1,1h4.5c0.6,0,1-0.4,1-1V3c0-0.6-0.4-1-1-1s-1,0.4-1,1v1.8C17,3,14.6,2,12,2C6.5,2,2,6.5,2,12s4.5,10,10,10c5.5,0,10-4.5,10-10C22,11.4,21.6,11,21,11z") as PathGeometry;
+        }
+        
+        if (geometry == null)
+        {
+            // Если всё равно null, просто вернём текст без иконки
+            return new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center };
+        }
+        
         var path = new System.Windows.Shapes.Path
         {
-            Data = (PathGeometry)System.Windows.Application.Current.FindResource(iconKey),
+            Data = geometry,
             Width = 12,
             Height = 12,
             Stretch = Stretch.Uniform,
