@@ -771,10 +771,13 @@ public class ZapretConfigService
             Console.WriteLine($"[CreateService] exePath: {exePath}");
             Console.WriteLine($"[CreateService] args: {args}");
             
+            // Формируем binPath правильно - весь путь с аргументами в одних кавычках
+            var binPathValue = $"\"{exePath}\"{args}";
+            
             var createPsi = new ProcessStartInfo
             {
                 FileName = "sc",
-                Arguments = $"create {serviceName} binPath= \"\\\"{exePath}\\\" {args}\" DisplayName= \"zapret\" start= auto",
+                Arguments = $"create {serviceName} binPath= \"{binPathValue}\" DisplayName= \"zapret\" start= auto",
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
