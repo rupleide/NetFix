@@ -122,11 +122,11 @@ public class ZapretConfigService
                     if (currentConfig.IsValid)
                     {
                         configs.Add(currentConfig);
-                        onProgress?.Invoke($"✅ Конфиг '{currentConfig.Name}' - РАБОЧИЙ!\n   Тесты: {successCount}/{totalCount}, Пинг: {currentConfig.AveragePing}мс");
+                        onProgress?.Invoke($"✅ {currentConfig.Name} - РАБОЧИЙ\n   🔹 Протестировано: {successCount}/{totalCount}, Пинг: {currentConfig.AveragePing}мс");
                     }
                     else
                     {
-                        onProgress?.Invoke($"❌ Конфиг '{currentConfig.Name}' - НЕРАБОЧИЙ!\n   Доступно: {successCount}, но {failedTests} из сайтов не ответили!");
+                        onProgress?.Invoke($"❌ {currentConfig.Name} - НЕРАБОЧИЙ\n   🔹 Протестировано: {successCount}/{totalCount}, Не работает: {failedTests} сайтов");
                     }
                     
                     System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Config: {currentConfig.Name}, Valid: {currentConfig.IsValid}, Success: {successCount}/{totalCount}, Errors: {currentConfig.ErrorCount}");
@@ -146,11 +146,11 @@ public class ZapretConfigService
                     Tests = new Dictionary<string, ServiceTestResult>()
                 };
 
-                onProgress?.Invoke($"🔄 Тестируем конфиг [{current}/{totalConfigs}]: {configName}");
+                onProgress?.Invoke($"🔄 Тестирую конфиг [{current}/{totalConfigs}]: {configName}");
                 return;
             }
 
-            // Парсинг строки теста
+            // Парсинг строки теста - проверяем только ключевые результаты
             var testMatch = TestLineRegex.Match(line);
             if (testMatch.Success && currentConfig != null)
             {
@@ -171,15 +171,17 @@ public class ZapretConfigService
 
                 currentConfig.Tests[serviceName] = testResult;
 
-                // Обновляем прогресс теста
-                var statusEmojis = GetStatusEmojis(httpStatus, tls12Status, tls13Status);
-                var statusText = httpStatus == "OK" && tls12Status == "OK" && tls13Status == "OK" 
-                    ? "РАБОТАЕТ" 
-                    : (httpStatus == "ERROR" || tls12Status == "ERROR" || tls13Status == "ERROR" 
-                        ? "НЕ РАБОТАЕТ" 
-                        : "ЧАСТИЧНО");
-                
-                onProgress?.Invoke($"   ✅ {serviceName}: {statusText} | Пинг: {ping}мс");
+                // Обновляем прогресс теста - показываем только основные сервисы
+                if (serviceName.StartsWith("Discord") || serviceName.StartsWith("YouTube") || serviceName.StartsWith("Google"))
+                {
+                    var statusText = httpStatus == "OK" && tls12Status == "OK" && tls13Status == "OK" 
+                        ? "РАБОТАЕТ" 
+                        : (httpStatus == "ERROR" || tls12Status == "ERROR" || tls13Status == "ERROR" 
+                            ? "НЕ РАБОТАЕТ" 
+                            : "ЧАСТИЧНО");
+                    
+                    onProgress?.Invoke($"   🟢 {serviceName}: {statusText} | {ping}мс");
+                }
 
                 // Считаем только полностью успешные тесты (все OK)
                 if (testResult.IsSuccess)
@@ -194,14 +196,7 @@ public class ZapretConfigService
                 if (currentConfig.Tests.Count > 0)
                     currentConfig.AveragePing = (int)currentConfig.Tests.Values.Average(t => t.Ping);
             }
-            else
-            {
-                // Для остальных строк просто передаём как есть (но тоже в человекочитаемом виде)
-                if (!line.Contains("[") || !line.Contains("]")) // Пропускаем технические строки с индексами
-                {
-                    onProgress?.Invoke($"📊 {line}");
-                }
-            }
+            // Пропускаем все остальные строки - не показываем технический мусор
         };
 
         process.Start();
