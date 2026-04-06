@@ -42,11 +42,82 @@ public partial class ZapretConfigWindow : Window
         {
             try
             {
-                _testProcess.Kill(true); // Убить процесс и все дочерние процессы
+                KillProcessAndChildren(_testProcess.Id);
                 _testProcess.Dispose();
             }
             catch { }
         }
+        
+        // Убить все winws.exe процессы которые могли запуститься во время теста
+        try
+        {
+            var processes = Process.GetProcessesByName("winws");
+            foreach (var proc in processes)
+            {
+                try
+                {
+                    proc.Kill(true);
+                    proc.Dispose();
+                }
+                catch { }
+            }
+        }
+        catch { }
+    }
+
+    private static void KillProcessAndChildren(int pid)
+    {
+        try
+        {
+            var process = Process.GetProcessById(pid);
+            if (!process.HasExited)
+            {
+                process.Kill(true);
+                process.WaitForExit(1000); // Ждем 1 секунду
+            }
+        }
+        catch (ArgumentException)
+        {
+            // Процесс уже завершён
+        }
+        catch
+        {
+            // Остальные ошибки игнорируем
+        }
+    }
+
+    private void SecondaryBtn_Click(object sender, RoutedEventArgs e)
+    {
+        _isTesting = false;
+        
+        // Убить процесс тестирования
+        if (_testProcess != null && !_testProcess.HasExited)
+        {
+            try
+            {
+                KillProcessAndChildren(_testProcess.Id);
+                _testProcess.Dispose();
+            }
+            catch { }
+        }
+        
+        // Убить все winws.exe процессы
+        try
+        {
+            var processes = Process.GetProcessesByName("winws");
+            foreach (var proc in processes)
+            {
+                try
+                {
+                    proc.Kill(true);
+                    proc.Dispose();
+                }
+                catch { }
+            }
+        }
+        catch { }
+        
+        Close();
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -96,24 +167,6 @@ public partial class ZapretConfigWindow : Window
         SecondaryBtn.Content = "Закрыть";
         PrimaryBtn.Content = "Пройти тест";
         PrimaryBtn.Visibility = Visibility.Visible;
-    }
-
-    private void StartIndeterminateAnimation()
-    {
-        var anim = new DoubleAnimation
-        {
-            From = -80,
-            To = ProgressBarContainer.ActualWidth,
-            Duration = TimeSpan.FromSeconds(1.5),
-            RepeatBehavior = RepeatBehavior.Forever
-        };
-        BarTranslate.BeginAnimation(TranslateTransform.XProperty, anim);
-    }
-
-    private void StopIndeterminateAnimation()
-    {
-        BarTranslate.BeginAnimation(TranslateTransform.XProperty, null);
-        ProgressBarContainer.Visibility = Visibility.Collapsed;
     }
 
     private async Task StartTestingAsync()
@@ -278,6 +331,9 @@ public partial class ZapretConfigWindow : Window
         }
         catch (Exception ex)
         {
+            // Скрыть лог и показать ошибку
+            LogContainer.Visibility = Visibility.Collapsed;
+            StatusPanel.Visibility = Visibility.Visible;
             StatusText.Text = $"Ошибка: {ex.Message}";
             StopIndeterminateAnimation();
             StatusIcon.Visibility = Visibility.Visible;
@@ -290,6 +346,24 @@ public partial class ZapretConfigWindow : Window
         }
 
         _isTesting = false;
+    }
+
+    private void StartIndeterminateAnimation()
+    {
+        var anim = new DoubleAnimation
+        {
+            From = -80,
+            To = ProgressBarContainer.ActualWidth,
+            Duration = TimeSpan.FromSeconds(1.5),
+            RepeatBehavior = RepeatBehavior.Forever
+        };
+        BarTranslate.BeginAnimation(TranslateTransform.XProperty, anim);
+    }
+
+    private void StopIndeterminateAnimation()
+    {
+        BarTranslate.BeginAnimation(TranslateTransform.XProperty, null);
+        ProgressBarContainer.Visibility = Visibility.Collapsed;
     }
 
     private void ShowConfigList()
@@ -361,7 +435,7 @@ public partial class ZapretConfigWindow : Window
 
             var infoText = new TextBlock
             {
-                Text = $"Пинг: {config.AveragePing} мс • Успешных тестов: {config.SuccessCount}",
+                Text = $"Пинг: {config.AveragePing} мс • Успешных тестов: {config.SuccessCount}/12",
                 FontSize = 11,
                 Foreground = isCurrent 
                     ? new SolidColorBrush(Color.FromRgb(0xe0, 0xe0, 0xe0))
@@ -386,16 +460,6 @@ public partial class ZapretConfigWindow : Window
         SecondaryBtn.Content = "Закрыть";
         PrimaryBtn.Content = "Повторить тест";
         PrimaryBtn.Visibility = Visibility.Visible;
-    }
-
-    private void SecondaryBtn_Click(object sender, RoutedEventArgs e)
-    {
-        if (_isTesting)
-        {
-            _isTesting = false;
-            StatusText.Text = "Тестирование отменено";
-        }
-        Close();
     }
 
     private async void PrimaryBtn_Click(object sender, RoutedEventArgs e)
