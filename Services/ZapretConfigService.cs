@@ -775,7 +775,8 @@ public class ZapretConfigService
             Console.WriteLine($"[CreateService] args: {args}");
             
             // Формируем binPath правильно - весь путь с аргументами в одних кавычках
-            var binPathValue = $"\"{exePath}\"{args}";
+            // ВАЖНО: добавляем пробел между exe и аргументами
+            var binPathValue = $"\"{exePath}\" {args}";
             
             var createPsi = new ProcessStartInfo
             {
