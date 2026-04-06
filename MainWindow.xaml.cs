@@ -1564,16 +1564,65 @@ public partial class MainWindow : Window
         };
 
         var stack = new StackPanel { Margin = new Thickness(20, 16, 20, 16) };
-        stack.Children.Add(new TextBlock
+        
+        // Создаем заголовок с иконкой вместо эмодзи
+        var titlePanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 12) };
+        
+        // Определяем какую иконку использовать
+        string iconKey = null;
+        string titleText = title;
+        
+        // Проверяем содержит ли заголовок ключевые слова для определения типа
+        if (title.Contains("tg-ws-proxy") || title.Contains("Telegram"))
         {
-            Text = title,
+            iconKey = "TelegramIcon";
+            // Убираем эмодзи из текста
+            titleText = title.Replace("🟢", "").Replace("🔴", "").Replace("🟡", "").TrimStart();
+        }
+        else if (title.Contains("Discord"))
+        {
+            iconKey = "DiscordIcon";
+            titleText = title.Replace("🟢", "").Replace("🔴", "").Replace("🟡", "").TrimStart();
+        }
+        else
+        {
+            // Для остальных просто убираем эмодзи
+            titleText = title.Replace("🟢", "").Replace("🔴", "").Replace("🟡", "").TrimStart();
+        }
+        
+        // Добавляем иконку если нашли
+        if (iconKey != null)
+        {
+            var iconGeometry = System.Windows.Application.Current.TryFindResource(iconKey) as PathGeometry;
+            if (iconGeometry != null)
+            {
+                var iconPath = new System.Windows.Shapes.Path
+                {
+                    Data = iconGeometry,
+                    Fill = new SolidColorBrush(accentColor),
+                    Width = 20,
+                    Height = 20,
+                    Stretch = Stretch.Uniform,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(0, 0, 10, 0)
+                };
+                
+                titlePanel.Children.Add(iconPath);
+            }
+        }
+        
+        titlePanel.Children.Add(new TextBlock
+        {
+            Text = titleText,
             FontFamily = new FontFamily("Segoe UI"),
             FontSize = 16,
             FontWeight = FontWeights.SemiBold,
             Foreground = Brushes.White,
             TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 0, 0, 12)
+            VerticalAlignment = VerticalAlignment.Center
         });
+        
+        stack.Children.Add(titlePanel);
         
         stack.Children.Add(content);
 
