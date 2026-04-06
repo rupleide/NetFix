@@ -201,22 +201,27 @@ public partial class ZapretConfigWindow : Window
             
             await Task.Delay(3000);
             
+            // Показать лог и скрыть StatusPanel
+            StatusPanel.Visibility = Visibility.Collapsed;
+            LogContainer.Visibility = Visibility.Visible;
+            LogTextBox.Text = "💡 Советуем вам подождать 10 минуток на полное сканирование.\n" +
+                             "В дальнейшем это сэкономит вам кучу времени и нервов!\n\n" +
+                             "Запуск тестирования...\n\n";
+            
             var (configs, testProcess) = await ZapretConfigService.TestAllConfigsAsync(
                 _zapretPath,
                 status => Dispatcher.Invoke(() => 
                 {
-                    // Всегда показываем мотивационный текст
-                    StatusText.Text = "💡 Советуем вам подождать 10 минуток на полное сканирование.\n" +
-                                     "В дальнейшем это сэкономит вам кучу времени и нервов!\n\n" +
-                                     status;
+                    // Добавляем в лог
+                    LogTextBox.AppendText(status + "\n");
+                    LogTextBox.ScrollToEnd();
                 }),
                 (current, total) => Dispatcher.Invoke(() => 
                 {
-                    StatusText.Text = "💡 Советуем вам подождать 10 минуток на полное сканирование.\n" +
-                                     "В дальнейшем это сэкономит вам кучу времени и нервов!\n\n" +
-                                     $"Тестирование конфигов: {current}/{total}\n" +
-                                     $"⏳ Проверяем каждый конфиг на 12 различных сервисов.\n" +
-                                     $"Прогресс: {(current * 100 / total)}%";
+                    // Обновляем прогресс в логе
+                    var progressLine = $"[{DateTime.Now:HH:mm:ss}] Прогресс: {current}/{total} ({(current * 100 / total)}%)\n";
+                    LogTextBox.AppendText(progressLine);
+                    LogTextBox.ScrollToEnd();
                 })
             );
             
@@ -235,7 +240,8 @@ public partial class ZapretConfigWindow : Window
                 };
                 ZapretConfigService.SaveCache(_cache);
 
-                // Показать поздравление
+                // Скрыть лог и показать поздравление
+                LogContainer.Visibility = Visibility.Collapsed;
                 StopIndeterminateAnimation();
                 StatusPanel.Visibility = Visibility.Visible;
                 StatusIcon.Visibility = Visibility.Visible;
@@ -255,6 +261,9 @@ public partial class ZapretConfigWindow : Window
             }
             else
             {
+                // Скрыть лог и показать ошибку
+                LogContainer.Visibility = Visibility.Collapsed;
+                StatusPanel.Visibility = Visibility.Visible;
                 StatusText.Text = "Не найдено рабочих конфигов с 12/12 успешными тестами.\n\n" +
                                  "Возможно, ваша сеть имеет особые ограничения. Попробуйте повторить тест позже.";
                 StopIndeterminateAnimation();

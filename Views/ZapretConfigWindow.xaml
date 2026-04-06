@@ -21,31 +21,29 @@
         
         <!-- ScrollBar Style -->
         <Style TargetType="ScrollBar">
-            <Setter Property="Background" Value="#252525"/>
-            <Setter Property="Width" Value="8"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="Width" Value="10"/>
+            <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ScrollBar">
-                        <Grid>
-                            <Border Background="{TemplateBinding Background}" CornerRadius="4"/>
+                        <Grid Background="{TemplateBinding Background}">
                             <Track x:Name="PART_Track" IsDirectionReversed="True">
                                 <Track.Thumb>
                                     <Thumb>
-                                        <Thumb.Style>
-                                            <Style TargetType="Thumb">
-                                                <Setter Property="Background" Value="#3b82f6"/>
-                                                <Setter Property="Template">
-                                                    <Setter.Value>
-                                                        <ControlTemplate TargetType="Thumb">
-                                                            <Border Background="{TemplateBinding Background}" 
-                                                                    CornerRadius="4" Margin="1"/>
-                                                        </ControlTemplate>
-                                                    </Setter.Value>
-                                                </Setter>
-                                            </Style>
-                                        </Thumb.Style>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border Background="#333333" CornerRadius="5" Width="5" HorizontalAlignment="Right" Margin="0,4,2,4"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
                                     </Thumb>
                                 </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0" Focusable="False"/>
+                                </Track.IncreaseRepeatButton>
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" Focusable="False"/>
+                                </Track.DecreaseRepeatButton>
                             </Track>
                         </Grid>
                     </ControlTemplate>
@@ -94,6 +92,24 @@
                         <TranslateTransform x:Name="BarTranslate"/>
                     </Border.RenderTransform>
                 </Border>
+            </Border>
+
+            <!-- Log TextBox -->
+            <Border Grid.Row="3" Background="#252525" CornerRadius="8" 
+                    BorderBrush="#333333" BorderThickness="1"
+                    x:Name="LogContainer" Visibility="Collapsed">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0">
+                    <TextBox x:Name="LogTextBox"
+                             Background="Transparent"
+                             Foreground="#888888"
+                             FontFamily="Consolas"
+                             FontSize="11"
+                             IsReadOnly="True"
+                             BorderThickness="0"
+                             TextWrapping="Wrap"
+                             Padding="12"
+                             VerticalScrollBarVisibility="Auto"/>
+                </ScrollViewer>
             </Border>
 
             <!-- Config List (ScrollViewer) -->
