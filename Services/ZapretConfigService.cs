@@ -600,21 +600,19 @@ public class ZapretConfigService
             var lines = await File.ReadAllLinesAsync(configPath);
             Console.WriteLine($"[ParseConfigArgs] Read {lines.Length} lines");
             
-            var args = "";
+            var listsPath = Path.Combine(zapretDir, "lists");
+            var fullText = "";
             bool capture = false;
-            int mergeargs = 0;
-            var argsWithValue = new[] { "sni", "host", "altorder" };
 
+            // Собираем весь текст после winws.exe
             foreach (var line in lines)
             {
                 var trimmed = line.Trim();
                 
-                // Ищем строку с winws.exe
                 if (trimmed.Contains("winws.exe"))
                 {
                     Console.WriteLine($"[ParseConfigArgs] Found winws.exe in line: {trimmed}");
                     capture = true;
-                    // Убираем всё до winws.exe
                     var idx = trimmed.IndexOf("winws.exe");
                     if (idx >= 0)
                     {
@@ -623,96 +621,28 @@ public class ZapretConfigService
                 }
 
                 if (!capture) continue;
-
-                // Пропускаем символ продолжения строки
-                if (trimmed == "^") continue;
-
-                // Разбиваем на токены
-                var tokens = SplitArgs(trimmed);
                 
-                foreach (var token in tokens)
+                // Убираем символ продолжения строки
+                if (trimmed.EndsWith("^"))
                 {
-                    if (string.IsNullOrWhiteSpace(token)) continue;
-
-                    var arg = token.Trim();
-
-                    // Обрабатываем кавычки и пути
-                    if (arg.StartsWith("\"") && arg.EndsWith("\""))
-                    {
-                        arg = arg.Substring(1, arg.Length - 2);
-
-                        if (arg.Contains(":"))
-                        {
-                            arg = $"\\\"{arg}\\\"";
-                        }
-                        else if (arg.StartsWith("@"))
-                        {
-                            arg = $"\\\"{Path.Combine(zapretDir, arg.Substring(1))}\\\"";
-                        }
-                        else if (arg.StartsWith("%BIN%"))
-                        {
-                            arg = $"\\\"{Path.Combine(binPath, arg.Substring(5))}\\\"";
-                        }
-                        else if (arg.StartsWith("%LISTS%"))
-                        {
-                            var listsPath = Path.Combine(zapretDir, "lists");
-                            arg = $"\\\"{Path.Combine(listsPath, arg.Substring(7))}\\\"";
-                        }
-                        else
-                        {
-                            arg = $"\\\"{Path.Combine(zapretDir, arg)}\\\"";
-                        }
-                    }
-                    else if (arg.StartsWith("%GameFilter%"))
-                    {
-                        arg = "12"; // По умолчанию отключено
-                    }
-                    else if (arg.StartsWith("%GameFilterTCP%"))
-                    {
-                        arg = "12";
-                    }
-                    else if (arg.StartsWith("%GameFilterUDP%"))
-                    {
-                        arg = "12";
-                    }
-
-                    // Обработка слияния аргументов
-                    if (mergeargs == 1)
-                    {
-                        args += $",{arg}";
-                    }
-                    else if (mergeargs == 3)
-                    {
-                        args += $"={arg}";
-                        mergeargs = 1;
-                    }
-                    else
-                    {
-                        args += $" {arg}";
-                    }
-
-                    if (arg.StartsWith("--"))
-                    {
-                        mergeargs = 2;
-                    }
-                    else if (mergeargs >= 1)
-                    {
-                        if (mergeargs == 2) mergeargs = 1;
-
-                        foreach (var argName in argsWithValue)
-                        {
-                            if (arg.Equals(argName, StringComparison.OrdinalIgnoreCase))
-                            {
-                                mergeargs = 3;
-                                break;
-                            }
-                        }
-                    }
+                    trimmed = trimmed.Substring(0, trimmed.Length - 1).Trim();
                 }
+                
+                fullText += " " + trimmed;
             }
 
-            Console.WriteLine($"[ParseConfigArgs] Final args: {args.Trim()}");
-            return args.Trim();
+            // Заменяем переменные
+            fullText = fullText.Replace("%BIN%", binPath + "\\");
+            fullText = fullText.Replace("%LISTS%", listsPath + "\\");
+            fullText = fullText.Replace("%GameFilter%", "12");
+            fullText = fullText.Replace("%GameFilterTCP%", "12");
+            fullText = fullText.Replace("%GameFilterUDP%", "12");
+            
+            // Убираем лишние пробелы
+            fullText = System.Text.RegularExpressions.Regex.Replace(fullText, @"\s+", " ").Trim();
+
+            Console.WriteLine($"[ParseConfigArgs] Final args: {fullText}");
+            return fullText;
         }
         catch (Exception ex)
         {
