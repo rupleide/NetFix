@@ -1485,7 +1485,7 @@
                                           Stretch="Uniform"
                                           Margin="0,0,10,0"
                                           VerticalAlignment="Center"/>
-                                    <TextBlock Text="Тест конфигов" 
+                                    <TextBlock Text="Начать тест" 
                                                FontFamily="Segoe UI" FontSize="13"
                                                Foreground="White" VerticalAlignment="Center"/>
                                 </StackPanel>

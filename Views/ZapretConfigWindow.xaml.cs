@@ -38,21 +38,34 @@ public partial class ZapretConfigWindow : Window
         // Остановить тестирование при закрытии окна
         _isTesting = false;
         
+        // Убить процесс тестирования
         if (_testProcess != null && !_testProcess.HasExited)
         {
             try
             {
-                KillProcessAndChildren(_testProcess.Id);
+                ForceKillProcessTree(_testProcess.Id);
                 _testProcess.Dispose();
             }
             catch { }
         }
         
-        // Убить все winws.exe процессы которые могли запуститься во время теста
+        // Убить все winws.exe и powershell.exe процессы которые могли запуститься во время теста
         try
         {
             var processes = Process.GetProcessesByName("winws");
             foreach (var proc in processes)
+            {
+                try
+                {
+                    ForceKillProcessTree(proc.Id);
+                    proc.Dispose();
+                }
+                catch { }
+            }
+            
+            // Также убить любые PowerShell процессы, запущенные от нашего процесса
+            var powerShellProcs = Process.GetProcessesByName("powershell");
+            foreach (var proc in powerShellProcs)
             {
                 try
                 {
@@ -65,24 +78,36 @@ public partial class ZapretConfigWindow : Window
         catch { }
     }
 
-    private static void KillProcessAndChildren(int pid)
+    private static void ForceKillProcessTree(int pid)
     {
         try
         {
+            // Убить основной процесс
             var process = Process.GetProcessById(pid);
-            if (!process.HasExited)
-            {
-                process.Kill(true);
-                process.WaitForExit(1000); // Ждем 1 секунду
-            }
+            process.Kill(true);
+            process.WaitForExit(2000); // Ждем 2 секунды
         }
         catch (ArgumentException)
         {
             // Процесс уже завершён
         }
-        catch
+        catch (Exception)
         {
-            // Остальные ошибки игнорируем
+            // В случае ошибки используем команду taskkill для полного уничтожения
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "taskkill",
+                    Arguments = $"/F /PID {pid} /T", // /T - убить дерево процессов
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden
+                };
+                using var proc = Process.Start(psi);
+                proc?.WaitForExit(2000);
+            }
+            catch { }
         }
     }
 
@@ -95,17 +120,29 @@ public partial class ZapretConfigWindow : Window
         {
             try
             {
-                KillProcessAndChildren(_testProcess.Id);
+                ForceKillProcessTree(_testProcess.Id);
                 _testProcess.Dispose();
             }
             catch { }
         }
         
-        // Убить все winws.exe процессы
+        // Убить все winws.exe и powershell.exe процессы
         try
         {
             var processes = Process.GetProcessesByName("winws");
             foreach (var proc in processes)
+            {
+                try
+                {
+                    ForceKillProcessTree(proc.Id);
+                    proc.Dispose();
+                }
+                catch { }
+            }
+            
+            // Также убить любые PowerShell процессы
+            var powerShellProcs = Process.GetProcessesByName("powershell");
+            foreach (var proc in powerShellProcs)
             {
                 try
                 {
