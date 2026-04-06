@@ -230,10 +230,8 @@ public partial class MainWindow : Window
         var cache = ZapretConfigService.LoadCache();
         if (cache == null || cache.ValidConfigs.Count == 0)
         {
-            // Показать предупреждение
-            var configWindow = new Views.ZapretConfigWindow(_settings.ZapretPath, testMode: false);
-            configWindow.Owner = this;
-            configWindow.ShowDialog();
+            // Показать стильное уведомление о необходимости полного сканирования
+            ShowFullScanRequiredNotification();
         }
         else
         {
@@ -242,6 +240,177 @@ public partial class MainWindow : Window
             configWindow.Owner = this;
             configWindow.ShowDialog();
         }
+    }
+
+    private void ShowFullScanRequiredNotification()
+    {
+        // Создаем overlay для затемнения фона
+        var overlay = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(180, 0, 0, 0)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+        Grid.SetRowSpan(overlay, 3);
+        MainGrid.Children.Add(overlay);
+
+        // Создаем карточку уведомления
+        var notificationCard = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x18)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08)),
+            BorderThickness = new Thickness(0, 3, 0, 0),
+            CornerRadius = new CornerRadius(14),
+            MaxWidth = 480,
+            Margin = new Thickness(40),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = Colors.Black,
+                BlurRadius = 30,
+                ShadowDepth = 0,
+                Opacity = 0.5
+            }
+        };
+        Grid.SetRowSpan(notificationCard, 3);
+
+        var cardContent = new StackPanel
+        {
+            Margin = new Thickness(32, 28, 32, 28)
+        };
+
+        // Иконка предупреждения
+        var iconBorder = new Border
+        {
+            Width = 56,
+            Height = 56,
+            CornerRadius = new CornerRadius(28),
+            Background = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08)) { Opacity = 0.15 },
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 20)
+        };
+
+        var warningIcon = new System.Windows.Shapes.Path
+        {
+            Data = Geometry.Parse("M12,2 L22,20 L2,20 Z M12,9 L12,13 M12,15 L12,17"),
+            Stroke = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08)),
+            StrokeThickness = 2.5,
+            Width = 28,
+            Height = 28,
+            Stretch = Stretch.Uniform,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        iconBorder.Child = warningIcon;
+        cardContent.Children.Add(iconBorder);
+
+        // Заголовок
+        var titleText = new TextBlock
+        {
+            Text = "Требуется полное сканирование",
+            FontSize = 20,
+            FontWeight = FontWeights.Bold,
+            Foreground = Brushes.White,
+            TextAlignment = TextAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 16)
+        };
+        cardContent.Children.Add(titleText);
+
+        // Описание
+        var descText = new TextBlock
+        {
+            Text = "Пройдите сначала полное сканирование, чтобы менять конфиги.\n\n" +
+                   "Это займёт около 10 минут, но зато приложение найдёт все рабочие конфиги " +
+                   "и вы сможете легко переключаться между ними когда что-то перестанет работать.",
+            FontSize = 14,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc)),
+            TextAlignment = TextAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+            LineHeight = 22,
+            Margin = new Thickness(0, 0, 0, 24)
+        };
+        cardContent.Children.Add(descText);
+
+        // Кнопки
+        var buttonsPanel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+        };
+
+        var startScanBtn = new Button
+        {
+            Content = "Начать сканирование",
+            Width = 180,
+            Height = 40,
+            Margin = new Thickness(0, 0, 10, 0),
+            Foreground = Brushes.White,
+            FontSize = 13,
+            FontWeight = FontWeights.SemiBold,
+            Cursor = System.Windows.Input.Cursors.Hand
+        };
+        startScanBtn.Style = (Style)FindResource("AccentBtn");
+        startScanBtn.Click += (s, e) =>
+        {
+            MainGrid.Children.Remove(overlay);
+            MainGrid.Children.Remove(notificationCard);
+            
+            // Открыть окно тестирования
+            var configWindow = new Views.ZapretConfigWindow(_settings.ZapretPath, testMode: true);
+            configWindow.Owner = this;
+            configWindow.ShowDialog();
+        };
+
+        var cancelBtn = new Button
+        {
+            Content = "Отмена",
+            Width = 100,
+            Height = 40,
+            Background = Brushes.Transparent,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+            BorderThickness = new Thickness(1),
+            FontSize = 13,
+            Cursor = System.Windows.Input.Cursors.Hand
+        };
+        cancelBtn.Style = (Style)FindResource("OutlineBtn");
+        cancelBtn.Click += (s, e) =>
+        {
+            MainGrid.Children.Remove(overlay);
+            MainGrid.Children.Remove(notificationCard);
+        };
+
+        buttonsPanel.Children.Add(startScanBtn);
+        buttonsPanel.Children.Add(cancelBtn);
+        cardContent.Children.Add(buttonsPanel);
+
+        notificationCard.Child = cardContent;
+        MainGrid.Children.Add(notificationCard);
+
+        // Анимация появления
+        overlay.Opacity = 0;
+        notificationCard.Opacity = 0;
+        notificationCard.RenderTransform = new ScaleTransform(0.9, 0.9);
+        notificationCard.RenderTransformOrigin = new System.Windows.Point(0.5, 0.5);
+
+        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+        var scaleIn = new DoubleAnimation(0.9, 1, TimeSpan.FromMilliseconds(300))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+
+        overlay.BeginAnimation(OpacityProperty, fadeIn);
+        notificationCard.BeginAnimation(OpacityProperty, fadeIn);
+        ((ScaleTransform)notificationCard.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleIn);
+        ((ScaleTransform)notificationCard.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty, scaleIn);
+
+        // Закрытие по клику на overlay
+        overlay.MouseLeftButtonDown += (s, e) =>
+        {
+            MainGrid.Children.Remove(overlay);
+            MainGrid.Children.Remove(notificationCard);
+        };
     }
 
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
