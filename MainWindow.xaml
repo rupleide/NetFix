@@ -488,8 +488,16 @@
     <!-- ROOT                                                                -->
     <!-- ═══════════════════════════════════════════════════════════════════ -->
     <Border Background="#161616" x:Name="RootBorder" CornerRadius="12" BorderBrush="#333333" BorderThickness="1">
-        <Border CornerRadius="11" ClipToBounds="True">
             <Grid>
+            <Grid.OpacityMask>
+                <VisualBrush>
+                    <VisualBrush.Visual>
+                        <Border Background="Black" CornerRadius="11" 
+                                Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Grid}}"
+                                Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Grid}}"/>
+                    </VisualBrush.Visual>
+                </VisualBrush>
+            </Grid.OpacityMask>
             <Grid.RowDefinitions>
                 <RowDefinition Height="54"/>
                 <!-- Header  -->
@@ -1466,6 +1474,5 @@
                 </Border>
             </Grid>
         </Grid>
-        </Border>
     </Border>
 </Window>
