@@ -122,11 +122,13 @@ public class ZapretConfigService
                     if (currentConfig.IsValid)
                     {
                         configs.Add(currentConfig);
-                        onProgress?.Invoke($"✅ {currentConfig.Name} - РАБОЧИЙ\n   🔹 Протестировано: {successCount}/{totalCount}, Пинг: {currentConfig.AveragePing}мс");
+                        onProgress?.Invoke($"[HEADER]✅ {currentConfig.Name} - РАБОЧИЙ[/HEADER]");
+                        onProgress?.Invoke($"   🔹 Протестировано: {successCount}/{totalCount}, Пинг: {currentConfig.AveragePing}мс\n");
                     }
                     else
                     {
-                        onProgress?.Invoke($"❌ {currentConfig.Name} - НЕРАБОЧИЙ\n   🔹 Протестировано: {successCount}/{totalCount}, Не работает: {failedTests} сайтов");
+                        onProgress?.Invoke($"[HEADER]❌ {currentConfig.Name} - НЕРАБОЧИЙ[/HEADER]");
+                        onProgress?.Invoke($"   🔹 Протестировано: {successCount}/{totalCount}, Не работает: {failedTests} сайтов\n");
                     }
                     
                     System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Config: {currentConfig.Name}, Valid: {currentConfig.IsValid}, Success: {successCount}/{totalCount}, Errors: {currentConfig.ErrorCount}");

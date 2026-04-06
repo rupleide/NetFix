@@ -43,9 +43,18 @@ public partial class ZapretConfigWindow : Window
             LogTextBox.Document.Blocks.Add(paragraph);
         }
 
+        // Проверяем, является ли это заголовком
+        bool isHeader = text.Contains("[HEADER]");
+        if (isHeader)
+        {
+            text = text.Replace("[HEADER]", "").Replace("[/HEADER]", "");
+        }
+
         var run = new Run(text + "\n")
         {
-            Foreground = new SolidColorBrush(color)
+            Foreground = new SolidColorBrush(color),
+            FontSize = isHeader ? 14 : 12,  // Крупнее для заголовков
+            FontWeight = isHeader ? FontWeights.Bold : FontWeights.Normal
         };
         paragraph.Inlines.Add(run);
         
