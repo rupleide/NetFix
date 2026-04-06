@@ -488,14 +488,8 @@
     <!-- ROOT                                                                -->
     <!-- ═══════════════════════════════════════════════════════════════════ -->
     <Border Background="#161616" x:Name="RootBorder" CornerRadius="12" BorderBrush="#333333" BorderThickness="1">
-        <Grid>
-            <Grid.OpacityMask>
-                <VisualBrush>
-                    <VisualBrush.Visual>
-                        <Border Background="White" CornerRadius="12" Width="880" Height="680"/>
-                    </VisualBrush.Visual>
-                </VisualBrush>
-            </Grid.OpacityMask>
+        <Border CornerRadius="11" ClipToBounds="True">
+            <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="54"/>
                 <!-- Header  -->
