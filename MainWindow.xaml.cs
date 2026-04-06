@@ -2496,12 +2496,12 @@ public partial class MainWindow : Window
             VerticalAlignment = VerticalAlignment.Center
         };
 
-        if (iconKey == "PlayIcon")
+        if (iconKey == "PlayIcon" || iconKey == "RefreshIcon")
             path.Fill = iconBrush;
         else
             path.Stroke = iconBrush;
 
-        if (iconKey != "PlayIcon")
+        if (iconKey != "PlayIcon" && iconKey != "RefreshIcon")
             path.StrokeThickness = 2;
 
         stack.Children.Add(path);
