@@ -759,7 +759,7 @@ public partial class ZapretConfigWindow : Window
             ConfigListPanel.Children.Add(border);
         }
 
-        SecondaryBtn.Content = "Закрыть";
+        SecondaryBtn.Content = "Применить";
         PrimaryBtn.Content = "Проверить конфиг";
         PrimaryBtn.Visibility = Visibility.Visible;
     }
