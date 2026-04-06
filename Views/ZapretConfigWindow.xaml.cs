@@ -404,9 +404,10 @@ public partial class ZapretConfigWindow : Window
         }
     }
 
-    private void PrimaryBtn_Click(object sender, RoutedEventArgs e)
+    private async void PrimaryBtn_Click(object sender, RoutedEventArgs e)
     {
-        // Обработчик теперь в OnLoaded
+        // Запустить тестирование
+        await StartTestingAsync();
     }
 
     private void StartIndeterminateAnimation()
