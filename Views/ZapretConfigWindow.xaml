@@ -91,6 +91,16 @@
                        Margin="0,0,0,6"
                        Visibility="Collapsed"/>
             
+            <!-- Time Remaining Text -->
+            <TextBlock x:Name="TimeRemainingText" Grid.Row="2" 
+                       Text="" 
+                       Foreground="#888888" 
+                       FontSize="11"
+                       HorizontalAlignment="Right"
+                       VerticalAlignment="Top"
+                       Margin="0,0,0,6"
+                       Visibility="Collapsed"/>
+            
             <!-- Progress Bar -->
             <Border Grid.Row="2" Height="6" CornerRadius="3" Background="#252525" Margin="0,20,0,16"
                     ClipToBounds="True" x:Name="ProgressBarContainer">
