@@ -122,7 +122,7 @@ public partial class ZapretConfigWindow : Window
                 StatusText.Text = "Не найдено рабочих конфигов";
                 StopIndeterminateAnimation();
                 StatusIcon.Visibility = Visibility.Visible;
-                StatusIcon.Data = (PathGeometry)FindResource("WarningIcon");
+                StatusIcon.Data = (Geometry)FindResource("WarningIcon");
                 StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
                 
                 SecondaryBtn.Content = "Закрыть";
@@ -135,7 +135,7 @@ public partial class ZapretConfigWindow : Window
             StatusText.Text = $"Ошибка: {ex.Message}";
             StopIndeterminateAnimation();
             StatusIcon.Visibility = Visibility.Visible;
-            StatusIcon.Data = (PathGeometry)FindResource("WarningIcon");
+            StatusIcon.Data = (Geometry)FindResource("WarningIcon");
             StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
             
             SecondaryBtn.Content = "Закрыть";
