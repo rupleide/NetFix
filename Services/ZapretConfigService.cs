@@ -268,151 +268,144 @@ public class ZapretConfigService
         var zapretDir = Path.GetDirectoryName(zapretPath);
         if (string.IsNullOrEmpty(zapretDir) || !Directory.Exists(zapretDir))
         {
-            return (false, "❌ Ошибка: директория Zapret не найдена");
+            onProgress?.Invoke("❌ Ошибка: директория Zapret не найдена");
+            return (false, "Ошибка: директория Zapret не найдена");
         }
 
-        // Проверить что конфиг существует
-        var configPath = Path.Combine(zapretDir, configName);
-        if (!File.Exists(configPath))
+        // Найти PowerShell скрипт для тестирования
+        var testScript = Path.Combine(zapretDir, "utils", "test zapret.ps1");
+        if (!File.Exists(testScript))
         {
-            return (false, $"❌ Ошибка: конфиг {configName} не найден");
+            onProgress?.Invoke("❌ Ошибка: скрипт test zapret.ps1 не найден");
+            return (false, "Ошибка: скрипт test zapret.ps1 не найден");
         }
 
-        onProgress?.Invoke($"🔄 Запуск конфига: {configName}");
-
-        // Запустить конфиг
+        onProgress?.Invoke("🔄 Запуск тестирования...");
+        await Task.Delay(1000); // Дать время для отображения сообщения
+        
+        // Запустить PowerShell скрипт
         var psi = new ProcessStartInfo
         {
-            FileName = configPath,
+            FileName = "powershell.exe",
+            Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{testScript}\"",
             WorkingDirectory = zapretDir,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            RedirectStandardInput = true,
             UseShellExecute = false,
-            CreateNoWindow = true
+            CreateNoWindow = true,
+            StandardOutputEncoding = System.Text.Encoding.UTF8
         };
 
-        Process? configProcess = null;
-        try
-        {
-            configProcess = Process.Start(psi);
-            if (configProcess == null)
-            {
-                return (false, "❌ Ошибка: не удалось запустить конфиг");
-            }
-
-            // Подождать 3 секунды чтобы конфиг запустился
-            await Task.Delay(3000);
-
-            // Проверить что winws.exe запущен
-            var winwsRunning = Process.GetProcessesByName("winws").Length > 0;
-            if (!winwsRunning)
-            {
-                return (false, "❌ Ошибка: winws.exe не запустился");
-            }
-
-            onProgress?.Invoke("✅ Конфиг запущен, тестирую подключение...");
-
-            // Выполнить комплексный тест, как в оригинальном скрипте
-            var testResults = await PerformComprehensiveTest(onProgress);
-            
-            // Остановить конфиг
-            try
-            {
-                foreach (var proc in Process.GetProcessesByName("winws"))
-                {
-                    proc.Kill(true);
-                    proc.Dispose();
-                }
-            }
-            catch { }
-
-            // Подсчитать результаты
-            int successCount = testResults.Count(r => r.success);
-            int totalCount = testResults.Count;
-            
-            if (successCount == totalCount)
-            {
-                onProgress?.Invoke($"🎉 Конфиг работает идеально! Пройдено {successCount}/{totalCount} тестов");
-                return (true, $"Конфиг работает идеально! Пройдено {successCount}/{totalCount} тестов");
-            }
-            else
-            {
-                onProgress?.Invoke($"⚠️ Конфиг работает частично. Пройдено {successCount}/{totalCount} тестов");
-                return (false, $"Конфиг работает частично. Пройдено {successCount}/{totalCount} тестов");
-            }
-        }
-        catch (Exception ex)
-        {
-            return (false, $"❌ Ошибка: {ex.Message}");
-        }
-        finally
-        {
-            // Убедиться что все процессы остановлены
-            try
-            {
-                foreach (var proc in Process.GetProcessesByName("winws"))
-                {
-                    proc.Kill(true);
-                    proc.Dispose();
-                }
-            }
-            catch { }
-        }
-    }
-
-    private static async Task<List<(string site, bool success)>> PerformComprehensiveTest(Action<string>? onProgress)
-    {
-        var results = new List<(string site, bool success)>();
+        var process = new Process { StartInfo = psi };
         
-        // Тестирование различных сервисов как в оригинальном скрипте
-        var testSites = new[]
-        {
-            ("Discord", "https://discord.com"),
-            ("Google", "https://www.google.com"),
-            ("YouTube", "https://www.youtube.com"),
-            ("Telegram", "https://web.telegram.org"),
-            ("Twitter", "https://twitter.com"),
-            ("Facebook", "https://www.facebook.com"),
-            ("Instagram", "https://www.instagram.com"),
-            ("Reddit", "https://www.reddit.com")
-        };
+        bool foundTargetConfig = false;
+        bool configProcessed = false;
 
-        onProgress?.Invoke("🔍 Начинаю комплексное тестирование...");
-
-        foreach (var (siteName, url) in testSites)
+        process.OutputDataReceived += (sender, e) =>
         {
-            try
+            if (string.IsNullOrEmpty(e.Data)) return;
+
+            var line = e.Data;
+            
+            // Парсинг строки конфига: [2/19] general (ALT2).bat
+            var configMatch = ConfigRegex.Match(line);
+            if (configMatch.Success)
             {
-                using var client = new HttpClient();
-                client.Timeout = TimeSpan.FromSeconds(10); // Увеличим таймаут
+                var configNameFromTest = configMatch.Groups[3].Value;
                 
-                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                var response = await client.GetAsync(url);
-                stopwatch.Stop();
-
-                var success = response.IsSuccessStatusCode;
-                var ping = stopwatch.ElapsedMilliseconds;
-
-                results.Add((siteName, success));
-
-                if (success)
+                if (configNameFromTest == configName)
                 {
-                    onProgress?.Invoke($"   🟢 {siteName}: работает | {ping}мс");
+                    // Это наш конфиг, начинаем отслеживание
+                    foundTargetConfig = true;
+                    onProgress?.Invoke($"[HEADER]🔄 Тестирую конфиг: {configName}[/HEADER]");
                 }
                 else
                 {
-                    onProgress?.Invoke($"   🔴 {siteName}: не работает | {(response.StatusCode == System.Net.HttpStatusCode.OK ? "ошибка" : response.StatusCode.ToString())}");
+                    // Если это не наш конфиг, игнорируем до следующего
+                    if (foundTargetConfig && !configProcessed)
+                    {
+                        // Завершить тестирование, так как уже прошли нужный конфиг
+                        configProcessed = true;
+                    }
+                    foundTargetConfig = false;
+                }
+                
+                return;
+            }
+
+            // Если нашли нужный конфиг, обрабатываем тесты
+            if (foundTargetConfig && !configProcessed)
+            {
+                // Парсинг строки теста - проверяем только ключевые результаты
+                var testMatch = TestLineRegex.Match(line);
+                if (testMatch.Success)
+                {
+                    var serviceName = testMatch.Groups[1].Value;
+                    var httpStatus = testMatch.Groups[2].Value;
+                    var tls12Status = testMatch.Groups[3].Value;
+                    var tls13Status = testMatch.Groups[4].Value;
+                    var pingStr = testMatch.Groups[5].Value;
+                    var ping = string.IsNullOrEmpty(pingStr) ? 0 : int.Parse(pingStr);
+
+                    // Обновляем прогресс теста - показываем только основные сервисы
+                    if (serviceName.StartsWith("Discord") || serviceName.StartsWith("YouTube") || serviceName.StartsWith("Google") || 
+                        serviceName.StartsWith("Telegram") || serviceName.StartsWith("Twitter") || serviceName.StartsWith("Facebook"))
+                    {
+                        var statusText = httpStatus == "OK" && tls12Status == "OK" && tls13Status == "OK" 
+                            ? "РАБОТАЕТ" 
+                            : (httpStatus == "ERROR" || tls12Status == "ERROR" || tls13Status == "ERROR" 
+                                ? "НЕ РАБОТАЕТ" 
+                                : "ЧАСТИЧНО");
+                        
+                        onProgress?.Invoke($"   🟢 {serviceName}: {statusText} | {ping}мс");
+                    }
+                }
+                else if (line.Contains("РАБОЧИЙ") || line.Contains("НЕРАБОЧИЙ"))
+                {
+                    // Обнаружено окончание тестирования конфига
+                    onProgress?.Invoke(line.Trim());
+                    configProcessed = true;
+                }
+                else if (line.Contains("Протестировано") || line.Contains("Не работает"))
+                {
+                    onProgress?.Invoke(line.Trim());
                 }
             }
-            catch (Exception ex)
-            {
-                results.Add((siteName, false));
-                onProgress?.Invoke($"   🔴 {siteName}: ошибка | {ex.Message}");
-            }
+        };
 
-            // Небольшая задержка между тестами
-            await Task.Delay(300);
+        process.Start();
+        process.BeginOutputReadLine();
+
+        try
+        {
+            // Отправить "2\n2\n{configName}\n" для выбора "individual test" -> "specify config name" -> указание имени конфига
+            await Task.Delay(1000);
+            await process.StandardInput.WriteLineAsync("2");  // Individual test
+            await Task.Delay(500);
+            await process.StandardInput.WriteLineAsync("2");  // Specify config name
+            await Task.Delay(500);
+            await process.StandardInput.WriteLineAsync(configName); // Config name
+            await process.StandardInput.WriteLineAsync("n"); // Не тестировать остальные
+            process.StandardInput.Close();
+        }
+        catch (IOException)
+        {
+            // Игнорируем ошибки записи в stdin
         }
 
-        return results;
+        await process.WaitForExitAsync();
+
+        // Ожидаем, что результаты уже выведены через onProgress
+        if (configProcessed)
+        {
+            return (true, "Тестирование завершено");
+        }
+        else
+        {
+            onProgress?.Invoke($"❌ Ошибка: конфиг {configName} не был протестирован должным образом");
+            return (false, $"Конфиг {configName} не был протестирован должным образом");
+        }
     }
 
     private static async Task<bool> TestDiscordConnection()
