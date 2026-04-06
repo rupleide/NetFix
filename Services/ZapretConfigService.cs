@@ -527,101 +527,362 @@ public class ZapretConfigService
             var configPath = Path.Combine(zapretDir, configName);
             if (!File.Exists(configPath)) return false;
 
-            var serviceBat = Path.Combine(zapretDir, "service.bat");
-            if (!File.Exists(serviceBat)) return false;
+            var binPath = Path.Combine(zapretDir, "bin");
+            var winwsExe = Path.Combine(binPath, "winws.exe");
+            if (!File.Exists(winwsExe)) return false;
 
-            var psi = new ProcessStartInfo
-            {
-                FileName = "cmd.exe",
-                Arguments = $"/c \"{serviceBat}\"",
-                RedirectStandardInput = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                WorkingDirectory = zapretDir
-            };
+            // Парсим конфиг и извлекаем аргументы
+            var args = await ParseConfigArgsAsync(configPath, zapretDir, binPath);
+            if (string.IsNullOrEmpty(args)) return false;
 
-            using var proc = new Process { StartInfo = psi };
-            proc.Start();
+            // Останавливаем и удаляем старый сервис если есть
+            await StopAndRemoveServiceAsync("zapret");
 
-            var reader = proc.StandardOutput;
-            var writer = proc.StandardInput;
+            // Включаем TCP timestamps
+            EnableTcpTimestamps();
+
+            // Создаём новый сервис
+            var success = await CreateServiceAsync("zapret", winwsExe, args, configName);
             
-            string currentOutput = "";
-            bool step1Done = false;
-            string configIndex = "";
-
-            var buffer = new char[1024];
-            int read;
-            
-            // Запускаем асинхронное чтение
-            var readTask = Task.Run(async () =>
+            if (success)
             {
-                while ((read = await reader.ReadAsync(buffer, 0, buffer.Length)) > 0)
-                {
-                    var text = new string(buffer, 0, read);
-                    currentOutput += text;
-
-                    // Отладочный вывод, если понадобится:
-                    // Console.Write(text);
-
-                    // Шаг 1: Ждем меню и нажимаем 1 (Install Service)
-                    if (!step1Done && (currentOutput.Contains("1. Install Service") || currentOutput.Contains("Install Service")))
-                    {
-                        // Ждем, чтобы весь текст успел вывестись
-                        await Task.Delay(200); 
-                        await writer.WriteLineAsync("1");
-                        await writer.FlushAsync();
-                        step1Done = true;
-                        currentOutput = ""; // Сбрасываем буфер
-                        continue;
-                    }
-
-                    // Шаг 2: Ищем индекс нашего конфига и вводим его
-                    if (step1Done && (currentOutput.Contains("Input file index") || currentOutput.Contains("number):")))
-                    {
-                        var lines = currentOutput.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                        foreach (var line in lines)
-                        {
-                            if (line.Contains(configName))
-                            {
-                                var match = System.Text.RegularExpressions.Regex.Match(line, @"^\s*(\d+)\.");
-                                if (match.Success)
-                                {
-                                    configIndex = match.Groups[1].Value;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (!string.IsNullOrEmpty(configIndex))
-                        {
-                            await Task.Delay(200);
-                            await writer.WriteLineAsync(configIndex);
-                            await writer.FlushAsync();
-                            break; // Дальше скрипт должен сам завершиться
-                        }
-                    }
-                }
-            });
-
-            // Ждем завершения с таймаутом в 15 секунд
-            var completed = await Task.WhenAny(proc.WaitForExitAsync(), Task.Delay(15000));
-            
-            if (completed != proc.WaitForExitAsync())
-            {
-                // Таймаут
-                try { proc.Kill(); } catch { }
-                return false;
+                // Запускаем сервис
+                await StartServiceAsync("zapret");
             }
 
-            return proc.ExitCode == 0 || string.IsNullOrEmpty(configIndex) == false;
+            return success;
         }
         catch
         {
             return false;
         }
+    }
+
+    private static async Task<string> ParseConfigArgsAsync(string configPath, string zapretDir, string binPath)
+    {
+        try
+        {
+            var lines = await File.ReadAllLinesAsync(configPath);
+            var args = "";
+            bool capture = false;
+            int mergeargs = 0;
+            var argsWithValue = new[] { "sni", "host", "altorder" };
+
+            foreach (var line in lines)
+            {
+                var trimmed = line.Trim();
+                
+                // Ищем строку с winws.exe
+                if (trimmed.Contains("winws.exe"))
+                {
+                    capture = true;
+                    // Убираем всё до winws.exe
+                    var idx = trimmed.IndexOf("winws.exe");
+                    if (idx >= 0)
+                    {
+                        trimmed = trimmed.Substring(idx + "winws.exe".Length).Trim();
+                    }
+                }
+
+                if (!capture) continue;
+
+                // Пропускаем символ продолжения строки
+                if (trimmed == "^") continue;
+
+                // Разбиваем на токены
+                var tokens = SplitArgs(trimmed);
+                
+                foreach (var token in tokens)
+                {
+                    if (string.IsNullOrWhiteSpace(token)) continue;
+
+                    var arg = token.Trim();
+
+                    // Обрабатываем кавычки и пути
+                    if (arg.StartsWith("\"") && arg.EndsWith("\""))
+                    {
+                        arg = arg.Substring(1, arg.Length - 2);
+
+                        if (arg.Contains(":"))
+                        {
+                            arg = $"\\\"{arg}\\\"";
+                        }
+                        else if (arg.StartsWith("@"))
+                        {
+                            arg = $"\\\"{Path.Combine(zapretDir, arg.Substring(1))}\\\"";
+                        }
+                        else if (arg.StartsWith("%BIN%"))
+                        {
+                            arg = $"\\\"{Path.Combine(binPath, arg.Substring(5))}\\\"";
+                        }
+                        else if (arg.StartsWith("%LISTS%"))
+                        {
+                            var listsPath = Path.Combine(zapretDir, "lists");
+                            arg = $"\\\"{Path.Combine(listsPath, arg.Substring(7))}\\\"";
+                        }
+                        else
+                        {
+                            arg = $"\\\"{Path.Combine(zapretDir, arg)}\\\"";
+                        }
+                    }
+                    else if (arg.StartsWith("%GameFilter%"))
+                    {
+                        arg = "12"; // По умолчанию отключено
+                    }
+                    else if (arg.StartsWith("%GameFilterTCP%"))
+                    {
+                        arg = "12";
+                    }
+                    else if (arg.StartsWith("%GameFilterUDP%"))
+                    {
+                        arg = "12";
+                    }
+
+                    // Обработка слияния аргументов
+                    if (mergeargs == 1)
+                    {
+                        args += $",{arg}";
+                    }
+                    else if (mergeargs == 3)
+                    {
+                        args += $"={arg}";
+                        mergeargs = 1;
+                    }
+                    else
+                    {
+                        args += $" {arg}";
+                    }
+
+                    if (arg.StartsWith("--"))
+                    {
+                        mergeargs = 2;
+                    }
+                    else if (mergeargs >= 1)
+                    {
+                        if (mergeargs == 2) mergeargs = 1;
+
+                        foreach (var argName in argsWithValue)
+                        {
+                            if (arg.Equals(argName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                mergeargs = 3;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return args.Trim();
+        }
+        catch
+        {
+            return "";
+        }
+    }
+
+    private static List<string> SplitArgs(string line)
+    {
+        var result = new List<string>();
+        var current = "";
+        bool inQuotes = false;
+
+        for (int i = 0; i < line.Length; i++)
+        {
+            char c = line[i];
+
+            if (c == '"')
+            {
+                inQuotes = !inQuotes;
+                current += c;
+            }
+            else if (c == ' ' && !inQuotes)
+            {
+                if (!string.IsNullOrWhiteSpace(current))
+                {
+                    result.Add(current);
+                    current = "";
+                }
+            }
+            else
+            {
+                current += c;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(current))
+        {
+            result.Add(current);
+        }
+
+        return result;
+    }
+
+    private static async Task StopAndRemoveServiceAsync(string serviceName)
+    {
+        try
+        {
+            // Останавливаем сервис
+            var stopPsi = new ProcessStartInfo
+            {
+                FileName = "net",
+                Arguments = $"stop {serviceName}",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            using (var stopProc = Process.Start(stopPsi))
+            {
+                if (stopProc != null)
+                {
+                    await stopProc.WaitForExitAsync();
+                }
+            }
+
+            await Task.Delay(500);
+
+            // Удаляем сервис
+            var deletePsi = new ProcessStartInfo
+            {
+                FileName = "sc",
+                Arguments = $"delete {serviceName}",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            using (var deleteProc = Process.Start(deletePsi))
+            {
+                if (deleteProc != null)
+                {
+                    await deleteProc.WaitForExitAsync();
+                }
+            }
+
+            await Task.Delay(500);
+
+            // Убиваем процессы winws.exe
+            foreach (var proc in Process.GetProcessesByName("winws"))
+            {
+                try { proc.Kill(); proc.Dispose(); } catch { }
+            }
+        }
+        catch { }
+    }
+
+    private static void EnableTcpTimestamps()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "netsh",
+                Arguments = "interface tcp set global timestamps=enabled",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            using var proc = Process.Start(psi);
+            proc?.WaitForExit();
+        }
+        catch { }
+    }
+
+    private static async Task<bool> CreateServiceAsync(string serviceName, string exePath, string args, string configName)
+    {
+        try
+        {
+            var createPsi = new ProcessStartInfo
+            {
+                FileName = "sc",
+                Arguments = $"create {serviceName} binPath= \"\\\"{exePath}\\\" {args}\" DisplayName= \"zapret\" start= auto",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            using (var createProc = Process.Start(createPsi))
+            {
+                if (createProc != null)
+                {
+                    await createProc.WaitForExitAsync();
+                    if (createProc.ExitCode != 0) return false;
+                }
+            }
+
+            // Устанавливаем описание
+            var descPsi = new ProcessStartInfo
+            {
+                FileName = "sc",
+                Arguments = $"description {serviceName} \"Zapret DPI bypass software\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            using (var descProc = Process.Start(descPsi))
+            {
+                if (descProc != null)
+                {
+                    await descProc.WaitForExitAsync();
+                }
+            }
+
+            // Сохраняем имя конфига в реестр
+            var regPsi = new ProcessStartInfo
+            {
+                FileName = "reg",
+                Arguments = $"add \"HKLM\\System\\CurrentControlSet\\Services\\{serviceName}\" /v zapret-discord-youtube /t REG_SZ /d \"{configName.Replace(".bat", "")}\" /f",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            using (var regProc = Process.Start(regPsi))
+            {
+                if (regProc != null)
+                {
+                    await regProc.WaitForExitAsync();
+                }
+            }
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static async Task StartServiceAsync(string serviceName)
+    {
+        try
+        {
+            var startPsi = new ProcessStartInfo
+            {
+                FileName = "sc",
+                Arguments = $"start {serviceName}",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            using var startProc = Process.Start(startPsi);
+            if (startProc != null)
+            {
+                await startProc.WaitForExitAsync();
+            }
+        }
+        catch { }
     }
 }
 
