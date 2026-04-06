@@ -24,8 +24,9 @@ public partial class UpdateWindow : Window
     {
         StopIndeterminateAnimation();
         SetProgressBar(0, "#3b82f6");
+        SetStatusIcon("WarningIcon", "#eab308", true);
         StatusText.Foreground = Brush("#888888");
-        StatusText.Text = "⚠️  Перед проверкой убедитесь что:\n\n• VPN отключён\n• Zapret / tg-ws-proxy остановлены";
+        StatusText.Text = "Перед проверкой убедитесь что:\n\n• VPN отключён\n• Zapret / tg-ws-proxy остановлены";
         PrimaryBtn.Content = "Проверить обновления";
         PrimaryBtn.Background = Brush("#3b82f6");
         PrimaryBtn.Visibility = Visibility.Visible;
@@ -36,6 +37,7 @@ public partial class UpdateWindow : Window
     private void ShowCheckingState()
     {
         PrimaryBtn.Visibility = Visibility.Collapsed;
+        StatusIcon.Visibility = Visibility.Collapsed;
         StatusText.Foreground = Brush("#888888");
         SetProgressBar(0, "#3b82f6");
         StartIndeterminateAnimation();
@@ -45,7 +47,8 @@ public partial class UpdateWindow : Window
     private void ShowErrorState()
     {
         StopIndeterminateAnimation();
-        StatusText.Text = "❌  Не удалось подключиться к GitHub.\n\nПожалуйста, выключите VPN и Zapret, затем попробуйте снова.";
+        SetStatusIcon("CloseIcon", "#ef4444", false);
+        StatusText.Text = "Не удалось подключиться к GitHub.\n\nПожалуйста, выключите VPN и Zapret, затем попробуйте снова.";
         StatusText.Foreground = Brush("#ef4444");
         SetProgressBar(BarWidth, "#ef4444");
         PrimaryBtn.Content = "Попробовать снова";
@@ -58,7 +61,8 @@ public partial class UpdateWindow : Window
     private void ShowUpToDateState()
     {
         StopIndeterminateAnimation();
-        StatusText.Text = "✓  У вас установлена последняя версия";
+        SetStatusIcon("CheckmarkIcon", "#22c55e", true);
+        StatusText.Text = "У вас установлена последняя версия";
         StatusText.Foreground = Brush("#22c55e");
         SetProgressBar(BarWidth, "#22c55e");
         PrimaryBtn.Visibility = Visibility.Collapsed;
@@ -70,7 +74,8 @@ public partial class UpdateWindow : Window
     {
         StopIndeterminateAnimation();
         _downloadUrl = downloadUrl;
-        StatusText.Text = $"🚀  Доступна новая версия, {newVersion}";
+        SetStatusIcon("RocketIcon", "#3b82f6", false);
+        StatusText.Text = $"Доступна новая версия, {newVersion}";
         StatusText.Foreground = Brush("#f0f0f0");
         SetProgressBar(BarWidth, "#3b82f6");
         PrimaryBtn.Content = "Установить";
@@ -93,7 +98,7 @@ public partial class UpdateWindow : Window
             // Если есть ошибка, показываем в окне
             if (!string.IsNullOrEmpty(error))
             {
-                StatusText.Text = $"⚠️ {error}";
+                StatusText.Text = $"⚠ {error}";
                 // не возвращаемся, идём на следующую попытку
                 if (attempt < maxAttempts)
                 {
@@ -159,7 +164,8 @@ public partial class UpdateWindow : Window
             catch
             {
                 StopIndeterminateAnimation();
-                StatusText.Text = "❌  Ошибка при скачивании. Попробуйте ещё раз.";
+                SetStatusIcon("CloseIcon", "#ef4444", false);
+                StatusText.Text = "Ошибка при скачивании. Попробуйте ещё раз.";
                 StatusText.Foreground = Brush("#ef4444");
                 SetProgressBar(BarWidth, "#ef4444");
                 PrimaryBtn.IsEnabled = true;
@@ -202,4 +208,30 @@ public partial class UpdateWindow : Window
 
     private static Color ToColor(string hex) =>
         (Color)new ColorConverter().ConvertFrom(hex)!;
+    
+    private void SetStatusIcon(string iconKey, string colorHex, bool useFill)
+    {
+        var geometry = TryFindResource(iconKey) as PathGeometry;
+        if (geometry != null)
+        {
+            StatusIcon.Data = geometry;
+            StatusIcon.Visibility = Visibility.Visible;
+            
+            if (useFill)
+            {
+                StatusIcon.Fill = Brush(colorHex);
+                StatusIcon.Stroke = null;
+            }
+            else
+            {
+                StatusIcon.Stroke = Brush(colorHex);
+                StatusIcon.StrokeThickness = 2;
+                StatusIcon.Fill = null;
+            }
+        }
+        else
+        {
+            StatusIcon.Visibility = Visibility.Collapsed;
+        }
+    }
 }

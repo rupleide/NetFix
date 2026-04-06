@@ -8,6 +8,21 @@
         AllowsTransparency="True"
         Background="Transparent"
         ResizeMode="NoResize">
+    
+    <Window.Resources>
+        <!-- Checkmark Icon -->
+        <PathGeometry x:Key="CheckmarkIcon">M4.63 15.638a1.028 1.028 0 0 1-.79-.37L.36 11.09a1.03 1.03 0 1 1 1.58-1.316l2.535 3.043L9.958 3.32a1.029 1.029 0 0 1 1.783 1.03L5.52 15.122a1.03 1.03 0 0 1-.803.511.89.89 0 0 1-.088.004z</PathGeometry>
+        
+        <!-- Close/X Icon -->
+        <PathGeometry x:Key="CloseIcon">M6,6 L18,18 M18,6 L6,18</PathGeometry>
+        
+        <!-- Rocket Icon -->
+        <PathGeometry x:Key="RocketIcon">m15 14 2.045-1.533C19.469 10.648 20.542 6.98 20 4c-2.981-.542-6.649.531-8.467 2.955L10 9m5 5-3.5 2.5-4-4L10 9m5 5v2.667a4 4 0 0 1-.8 2.4l-.7.933-1-1M10 9H7.333a4 4 0 0 0-2.4.8L4 10.5l1 1M8.5 18 5 19l1.166-3.5m9.334-6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z</PathGeometry>
+        
+        <!-- Warning Icon -->
+        <PathGeometry x:Key="WarningIcon">M12,2 L22,20 L2,20 Z M12,9 L12,13 M12,15 L12,17</PathGeometry>
+    </Window.Resources>
+    
     <Border Background="#1e1e1e" CornerRadius="12" BorderBrush="#2e2e2e" BorderThickness="1">
         <Grid Margin="28">
             <Grid.RowDefinitions>
@@ -26,10 +41,14 @@
             </StackPanel>
 
             
-            <TextBlock x:Name="StatusText" Grid.Row="1"
-                       Text="Подключение к GitHub..."
-                       Foreground="#888888" FontSize="13"
-                       Margin="0,0,0,16" TextWrapping="Wrap"/>
+            <StackPanel x:Name="StatusPanel" Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,16">
+                <Path x:Name="StatusIcon" Width="16" Height="16" Stretch="Uniform" 
+                      VerticalAlignment="Top" Margin="0,2,10,0" Visibility="Collapsed"/>
+                <TextBlock x:Name="StatusText"
+                           Text="Подключение к GitHub..."
+                           Foreground="#888888" FontSize="13"
+                           TextWrapping="Wrap"/>
+            </StackPanel>
 
             
             <Border Grid.Row="2" Height="6" CornerRadius="3" Background="#252525" Margin="0,0,0,0"
