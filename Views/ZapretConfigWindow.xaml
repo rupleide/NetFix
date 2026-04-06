@@ -13,6 +13,9 @@
         <!-- Settings Icon -->
         <PathGeometry x:Key="SettingsIcon">M12,8 A4,4 0 1,1 12,16 A4,4 0 1,1 12,8 M12,2 L12,6 M12,18 L12,22 M4.93,4.93 L7.76,7.76 M16.24,16.24 L19.07,19.07 M2,12 L6,12 M18,12 L22,12 M4.93,19.07 L7.76,16.24 M16.24,7.76 L19.07,4.93</PathGeometry>
         
+        <!-- Plug Icon -->
+        <PathGeometry x:Key="PlugIcon">M6 0a.5.5 0 0 1 .5.5V3h3V.5a.5.5 0 0 1 1 0V3h1a.5.5 0 0 1 .5.5v3A3.5 3.5 0 0 1 8.5 10c-.002.434-.01.845-.04 1.22-.041.514-.126 1.003-.317 1.424a2.083 2.083 0 0 1-.97 1.028C6.725 13.9 6.169 14 5.5 14c-.998 0-1.61.33-1.974.718A1.922 1.922 0 0 0 3 16H2c0-.616.232-1.367.797-1.968C3.374 13.42 4.261 13 5.5 13c.581 0 .962-.088 1.218-.219.241-.123.4-.3.514-.55.121-.266.193-.621.23-1.09.027-.34.035-.718.037-1.141A3.5 3.5 0 0 1 4 6.5v-3a.5.5 0 0 1 .5-.5h1V.5A.5.5 0 0 1 6 0zM5 4v2.5A2.5 2.5 0 0 0 7.5 9h1A2.5 2.5 0 0 0 11 6.5V4H5z</PathGeometry>
+        
         <!-- Checkmark Icon -->
         <PathGeometry x:Key="CheckmarkIcon">M2,12 L8,18 L22,4</PathGeometry>
         
@@ -65,7 +68,7 @@
             <!-- Header -->
             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,20">
                 <Path Width="18" Height="18" Stretch="Uniform" Margin="0,0,10,0" VerticalAlignment="Center"
-                      Data="{StaticResource SettingsIcon}" Stroke="#888888" StrokeThickness="1.5"/>
+                      Data="{StaticResource PlugIcon}" Fill="#888888"/>
                 <TextBlock Text="Настройка конфига Zapret" FontSize="16" FontWeight="SemiBold"
                            Foreground="#f0f0f0" VerticalAlignment="Center"/>
             </StackPanel>
