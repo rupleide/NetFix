@@ -1219,9 +1219,7 @@
                                         Click="ReOnboard_Click">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                         <Path Data="{StaticResource RefreshIcon}" 
-                                              Stroke="#888888"
-                                              StrokeThickness="2"
-                                              
+                                              Fill="#888888"
                                               Width="14" Height="14"
                                               Stretch="Uniform"
                                               Margin="0,0,8,0"
