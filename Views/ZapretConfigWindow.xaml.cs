@@ -499,44 +499,60 @@ public partial class ZapretConfigWindow : Window
         ProgressBarContainer.Visibility = Visibility.Collapsed;
     }
 
+    private void CloseBtn_Click(object sender, RoutedEventArgs e)
+    {
+        Close();
+    }
+
     private void ShowConfigList()
     {
         if (_cache == null || _cache.ValidConfigs.Count == 0) return;
-
         StopIndeterminateAnimation();
         StatusPanel.Visibility = Visibility.Collapsed;
         ConfigListScroll.Visibility = Visibility.Visible;
         ConfigListPanel.Children.Clear();
 
-        // Заголовок с поздравлением
-        var congratsText = new TextBlock
-        {
-            Text = "✅ Тестирование завершено успешно!",
-            FontSize = 14,
-            FontWeight = FontWeights.Bold,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
-            Margin = new Thickness(0, 0, 0, 8)
-        };
-        ConfigListPanel.Children.Add(congratsText);
+        // Заголовок
+        var headerGrid = new Grid { Margin = new Thickness(0, 0, 0, 4) };
+        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-        var headerText = new TextBlock
+        var titleText = new TextBlock
         {
-            Text = $"Текущий конфиг: {_cache.CurrentConfig}",
-            FontSize = 12,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
-            Margin = new Thickness(0, 0, 0, 12)
-        };
-        ConfigListPanel.Children.Add(headerText);
-
-        var subText = new TextBlock
-        {
-            Text = $"Найдено {_cache.ValidConfigs.Count} идеальных конфигов (12/12 тестов):",
+            Text = "Доступные конфиги",
             FontSize = 13,
-            Foreground = new SolidColorBrush(Color.FromRgb(0xf0, 0xf0, 0xf0)),
             FontWeight = FontWeights.SemiBold,
-            Margin = new Thickness(0, 0, 0, 12)
+            Foreground = new SolidColorBrush(Color.FromRgb(0xf0, 0xf0, 0xf0)),
+            VerticalAlignment = VerticalAlignment.Center
         };
-        ConfigListPanel.Children.Add(subText);
+
+        var badge = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x2a, 0x3a)),
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(8, 3, 8, 3),
+            Child = new TextBlock
+            {
+                Text = $"{_cache.ValidConfigs.Count} конфигов",
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6))
+            }
+        };
+
+        Grid.SetColumn(titleText, 0);
+        Grid.SetColumn(badge, 1);
+        headerGrid.Children.Add(titleText);
+        headerGrid.Children.Add(badge);
+        ConfigListPanel.Children.Add(headerGrid);
+
+        var currentLabel = new TextBlock
+        {
+            Text = $"Активный: {_cache.CurrentConfig}",
+            FontSize = 11,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58)),
+            Margin = new Thickness(0, 2, 0, 14)
+        };
+        ConfigListPanel.Children.Add(currentLabel);
 
         // Список конфигов
         foreach (var config in _cache.ValidConfigs)
@@ -545,46 +561,100 @@ public partial class ZapretConfigWindow : Window
 
             var border = new Border
             {
-                Background = isCurrent 
+                Background = isCurrent
+                    ? new SolidColorBrush(Color.FromRgb(0x1a, 0x25, 0x3a))
+                    : new SolidColorBrush(Color.FromRgb(0x1a, 0x1a, 0x1c)),
+                BorderBrush = isCurrent
                     ? new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6))
-                    : new SolidColorBrush(Color.FromRgb(0x25, 0x25, 0x25)),
-                BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+                    : new SolidColorBrush(Color.FromRgb(0x26, 0x26, 0x2a)),
                 BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(8),
+                CornerRadius = new CornerRadius(10),
                 Padding = new Thickness(14, 12, 14, 12),
-                Margin = new Thickness(0, 0, 0, 8),
+                Margin = new Thickness(0, 0, 0, 6),
                 Cursor = System.Windows.Input.Cursors.Hand
             };
 
-            var stack = new StackPanel();
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
+            var left = new StackPanel();
+
+            var nameRow = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal };
             var nameText = new TextBlock
             {
                 Text = config.Name,
                 FontSize = 13,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = Brushes.White
+                Foreground = Brushes.White,
+                VerticalAlignment = VerticalAlignment.Center
             };
+            nameRow.Children.Add(nameText);
+
+            if (isCurrent)
+            {
+                var activeBadge = new Border
+                {
+                    Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x30, 0x4a)),
+                    CornerRadius = new CornerRadius(4),
+                    Padding = new Thickness(6, 2, 6, 2),
+                    Margin = new Thickness(8, 0, 0, 0),
+                    Child = new TextBlock
+                    {
+                        Text = "активный",
+                        FontSize = 10,
+                        Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6))
+                    }
+                };
+                nameRow.Children.Add(activeBadge);
+            }
 
             var infoText = new TextBlock
             {
-                Text = $"Пинг: {config.AveragePing} мс • Успешных тестов: {config.SuccessCount}/12",
+                Text = $"Пинг: {config.AveragePing} мс  •  Тесты: {config.SuccessCount}/12",
                 FontSize = 11,
-                Foreground = isCurrent 
-                    ? new SolidColorBrush(Color.FromRgb(0xe0, 0xe0, 0xe0))
-                    : new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+                Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58)),
                 Margin = new Thickness(0, 4, 0, 0)
             };
 
-            stack.Children.Add(nameText);
-            stack.Children.Add(infoText);
-            border.Child = stack;
+            left.Children.Add(nameRow);
+            left.Children.Add(infoText);
+
+            // Стрелка справа
+            var arrow = new TextBlock
+            {
+                Text = isCurrent ? "✓" : "→",
+                FontSize = 14,
+                Foreground = isCurrent
+                    ? new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6))
+                    : new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x36)),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+
+            Grid.SetColumn(left, 0);
+            Grid.SetColumn(arrow, 1);
+            grid.Children.Add(left);
+            grid.Children.Add(arrow);
+
+            border.Child = grid;
 
             border.MouseLeftButtonDown += (s, e) =>
             {
                 _cache.CurrentConfig = config.Name;
                 ZapretConfigService.SaveCache(_cache);
-                ShowConfigList(); // Перерисовать список
+                ShowConfigList();
+            };
+
+            // Hover эффект
+            border.MouseEnter += (s, e) =>
+            {
+                if (!isCurrent)
+                    border.Background = new SolidColorBrush(Color.FromRgb(0x20, 0x20, 0x23));
+            };
+            border.MouseLeave += (s, e) =>
+            {
+                if (!isCurrent)
+                    border.Background = new SolidColorBrush(Color.FromRgb(0x1a, 0x1a, 0x1c));
             };
 
             ConfigListPanel.Children.Add(border);
