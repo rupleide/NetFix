@@ -76,8 +76,9 @@
                       VerticalAlignment="Top" Margin="0,2,10,0" Visibility="Collapsed"/>
                 <TextBlock x:Name="StatusText"
                            Text="Запуск тестирования..."
-                           Foreground="#888888" FontSize="13"
-                           TextWrapping="Wrap"/>
+                           Foreground="White" FontSize="13"
+                           TextWrapping="Wrap"
+                           MaxWidth="450"/>
             </StackPanel>
 
             <!-- Progress Bar -->
