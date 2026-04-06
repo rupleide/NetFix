@@ -122,8 +122,8 @@
             <Border Grid.Row="2" Background="#111113" CornerRadius="10"
                     BorderBrush="#22222a" BorderThickness="1"
                     x:Name="LogContainer" Visibility="Collapsed"
-                    Margin="28,16,28,0"
-                    VerticalAlignment="Top" Height="0">
+                    Margin="28,16,28,16"
+                    VerticalAlignment="Stretch" Height="Auto">
                 <ScrollViewer x:Name="LogScrollViewer" VerticalScrollBarVisibility="Auto">
                     <RichTextBox x:Name="LogTextBox"
                                  Background="Transparent"
@@ -142,8 +142,8 @@
             <ScrollViewer x:Name="ConfigListScroll" Grid.Row="2"
                           VerticalScrollBarVisibility="Auto"
                           Visibility="Collapsed"
-                          Margin="28,16,28,0"
-                          VerticalAlignment="Top" Height="0">
+                          Margin="28,16,28,16"
+                          VerticalAlignment="Stretch" Height="Auto">
                 <StackPanel x:Name="ConfigListPanel"/>
             </ScrollViewer>
 

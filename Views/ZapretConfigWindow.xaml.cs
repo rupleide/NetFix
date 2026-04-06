@@ -299,7 +299,6 @@ public partial class ZapretConfigWindow : Window
             ProgressText.Text = "Тестирование конфигов: 0%";
             TimeRemainingText.Text = "Осталось: ~10 мин";
             LogContainer.Visibility = Visibility.Visible;
-            LogContainer.Height = 350; // Установить высоту для отображения лога
             
             // Запомнить время начала
             _testStartTime = DateTime.Now;
@@ -377,7 +376,6 @@ public partial class ZapretConfigWindow : Window
                 ProgressText.Visibility = Visibility.Collapsed;
                 TimeRemainingText.Visibility = Visibility.Collapsed;
                 LogContainer.Visibility = Visibility.Collapsed;
-                LogContainer.Height = 0; // Вернуть нулевую высоту
                 StopIndeterminateAnimation();
                 StatusPanel.Visibility = Visibility.Visible;
                 StatusIcon.Visibility = Visibility.Visible;
@@ -402,7 +400,6 @@ public partial class ZapretConfigWindow : Window
                 ProgressText.Visibility = Visibility.Collapsed;
                 TimeRemainingText.Visibility = Visibility.Collapsed;
                 LogContainer.Visibility = Visibility.Collapsed;
-                LogContainer.Height = 0; // Вернуть нулевую высоту
                 StatusPanel.Visibility = Visibility.Visible;
                 StatusText.Text = "Не найдено рабочих конфигов с 12/12 успешными тестами.\n\n" +
                                  "Возможно, ваша сеть имеет особые ограничения. Попробуйте повторить тест позже.";
@@ -423,7 +420,6 @@ public partial class ZapretConfigWindow : Window
             ProgressText.Visibility = Visibility.Collapsed;
             TimeRemainingText.Visibility = Visibility.Collapsed;
             LogContainer.Visibility = Visibility.Collapsed;
-            LogContainer.Height = 0; // Вернуть нулевую высоту
             StatusPanel.Visibility = Visibility.Visible;
             StatusText.Text = $"Ошибка: {ex.Message}";
             StopIndeterminateAnimation();
@@ -512,11 +508,9 @@ public partial class ZapretConfigWindow : Window
 
         // Скрыть список конфигов и показать лог
         ConfigListScroll.Visibility = Visibility.Collapsed;
-        ConfigListScroll.Height = 0;
         StatusPanel.Visibility = Visibility.Collapsed;
         ProgressBarContainer.Visibility = Visibility.Collapsed;
         LogContainer.Visibility = Visibility.Visible;
-        LogContainer.Height = 350; // Установить высоту для отображения лога
         
         PrimaryBtn.Visibility = Visibility.Collapsed;
         SecondaryBtn.Content = "Отмена";
@@ -558,9 +552,7 @@ public partial class ZapretConfigWindow : Window
         
         // Вернуться к списку конфигов
         LogContainer.Visibility = Visibility.Collapsed;
-        LogContainer.Height = 0;
         ConfigListScroll.Visibility = Visibility.Visible;
-        ConfigListScroll.Height = 350; // Установить высоту для списка
         PrimaryBtn.Visibility = Visibility.Visible;
         SecondaryBtn.Content = "Закрыть";
     }
@@ -582,7 +574,6 @@ public partial class ZapretConfigWindow : Window
         StatusPanel.Visibility = Visibility.Collapsed;
         ProgressBarContainer.Visibility = Visibility.Collapsed;
         ConfigListScroll.Visibility = Visibility.Visible;
-        ConfigListScroll.Height = 350; // Установить высоту для списка
         ConfigListPanel.Children.Clear();
 
         // Заголовок
