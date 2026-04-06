@@ -258,6 +258,116 @@ public class ZapretConfigService
         return (configs, process);
     }
 
+    public static async Task<(bool isWorking, string message)> TestSingleConfigAsync(
+        string zapretPath,
+        string configName,
+        Action<string>? onProgress = null)
+    {
+        // Получить директорию Zapret
+        var zapretDir = Path.GetDirectoryName(zapretPath);
+        if (string.IsNullOrEmpty(zapretDir) || !Directory.Exists(zapretDir))
+        {
+            return (false, "Ошибка: директория Zapret не найдена");
+        }
+
+        // Проверить что конфиг существует
+        var configPath = Path.Combine(zapretDir, configName);
+        if (!File.Exists(configPath))
+        {
+            return (false, $"Ошибка: конфиг {configName} не найден");
+        }
+
+        onProgress?.Invoke($"🔄 Тестирую конфиг: {configName}");
+
+        // Запустить конфиг
+        var psi = new ProcessStartInfo
+        {
+            FileName = configPath,
+            WorkingDirectory = zapretDir,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        Process? configProcess = null;
+        try
+        {
+            configProcess = Process.Start(psi);
+            if (configProcess == null)
+            {
+                return (false, "Ошибка: не удалось запустить конфиг");
+            }
+
+            // Подождать 3 секунды чтобы конфиг запустился
+            await Task.Delay(3000);
+
+            // Проверить что winws.exe запущен
+            var winwsRunning = Process.GetProcessesByName("winws").Length > 0;
+            if (!winwsRunning)
+            {
+                return (false, "Ошибка: winws.exe не запустился");
+            }
+
+            onProgress?.Invoke("✅ Конфиг запущен, тестирую подключение...");
+
+            // Тестировать Discord
+            bool discordWorks = await TestDiscordConnection();
+            
+            // Остановить конфиг
+            try
+            {
+                foreach (var proc in Process.GetProcessesByName("winws"))
+                {
+                    proc.Kill(true);
+                    proc.Dispose();
+                }
+            }
+            catch { }
+
+            if (discordWorks)
+            {
+                onProgress?.Invoke("✅ Конфиг работает! Discord доступен");
+                return (true, "Конфиг работает! Discord доступен");
+            }
+            else
+            {
+                onProgress?.Invoke("❌ Конфиг не работает. Discord недоступен");
+                return (false, "Конфиг не работает. Discord недоступен");
+            }
+        }
+        catch (Exception ex)
+        {
+            return (false, $"Ошибка: {ex.Message}");
+        }
+        finally
+        {
+            // Убедиться что все процессы остановлены
+            try
+            {
+                foreach (var proc in Process.GetProcessesByName("winws"))
+                {
+                    proc.Kill(true);
+                    proc.Dispose();
+                }
+            }
+            catch { }
+        }
+    }
+
+    private static async Task<bool> TestDiscordConnection()
+    {
+        try
+        {
+            using var client = new System.Net.Http.HttpClient();
+            client.Timeout = TimeSpan.FromSeconds(5);
+            var response = await client.GetAsync("https://discord.com");
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private static string GetStatusEmojis(string http, string tls12, string tls13)
     {
         var httpEmoji = http switch
