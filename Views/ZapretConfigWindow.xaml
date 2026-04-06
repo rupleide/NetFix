@@ -54,9 +54,7 @@
                 <RowDefinition Height="Auto" MinHeight="71"/>
                 <!-- Header -->
                 <RowDefinition Height="Auto" MinHeight="56"/>
-                <!-- Status -->
-                <RowDefinition Height="Auto"/>
-                <!-- Progress -->
+                <!-- Status + Progress -->
                 <RowDefinition/>
                 <!-- Content -->
                 <RowDefinition Height="Auto"/>
@@ -94,7 +92,7 @@
             </StackPanel>
 
             <!-- Progress -->
-            <Grid Grid.Row="2" Margin="28,16,28,0" x:Name="ProgressBarContainer">
+            <Grid Grid.Row="1" Margin="28,16,28,0" x:Name="ProgressBarContainer">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -121,7 +119,7 @@
             </Grid>
 
             <!-- Log -->
-            <Border Grid.Row="3" Background="#111113" CornerRadius="10"
+            <Border Grid.Row="2" Background="#111113" CornerRadius="10"
                     BorderBrush="#22222a" BorderThickness="1"
                     x:Name="LogContainer" Visibility="Collapsed"
                     Margin="28,16,28,0"
@@ -141,7 +139,7 @@
             </Border>
 
             <!-- Config List -->
-            <ScrollViewer x:Name="ConfigListScroll" Grid.Row="3"
+            <ScrollViewer x:Name="ConfigListScroll" Grid.Row="2"
                           VerticalScrollBarVisibility="Auto"
                           Visibility="Collapsed"
                           Margin="28,16,28,0"
@@ -150,7 +148,7 @@
             </ScrollViewer>
 
             <!-- Buttons -->
-            <Border Grid.Row="4" Background="#111113" CornerRadius="0,0,14,14"
+            <Border Grid.Row="3" Background="#111113" CornerRadius="0,0,14,14"
                         BorderBrush="#22222a" BorderThickness="0,1,0,0"
                         Margin="0,16,0,0" Padding="28,12,28,12">
                 <Grid>
