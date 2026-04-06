@@ -64,7 +64,7 @@
                 </Grid.RowDefinitions>
 
                 <!-- Header -->
-                <Grid Grid.Row="0" Margin="28,20,28,0">
+                <Grid Grid.Row="0" Margin="28,24,28,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <Border Width="32" Height="32" CornerRadius="8" Background="#1e1e22" Margin="0,0,12,0">
                             <Path Width="16" Height="16" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Center"
