@@ -446,7 +446,7 @@ public partial class ZapretConfigWindow : Window
         }
         else if (SecondaryBtn.Content?.ToString() == "Применить")
         {
-            // Применить выбранный конфиг - пересоздать сервис
+            // Применить выбранный конфиг и ВСЕГДА запустить сервис
             if (_cache != null && !string.IsNullOrEmpty(_cache.CurrentConfig))
             {
                 SecondaryBtn.IsEnabled = false;
@@ -454,6 +454,7 @@ public partial class ZapretConfigWindow : Window
                 var originalContent = SecondaryBtn.Content;
                 SecondaryBtn.Content = "Применение...";
 
+                // Применяем конфиг (ApplyConfigAsync автоматически останавливает старый сервис если запущен и запускает новый)
                 bool success = await ZapretConfigService.ApplyConfigAsync(_zapretPath, _cache.CurrentConfig);
 
                 SecondaryBtn.IsEnabled = true;
@@ -462,7 +463,7 @@ public partial class ZapretConfigWindow : Window
 
                 if (success)
                 {
-                    // Успешно применили конфиг, закрываем окно
+                    // Успешно применили конфиг и запустили сервис, закрываем окно
                     Close();
                 }
                 else
