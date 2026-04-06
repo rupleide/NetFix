@@ -1503,7 +1503,7 @@
                                     Click="SelectConfigBtn_Click">
                                 <StackPanel Orientation="Horizontal">
                                     <Path Data="{StaticResource SettingsIcon}" 
-                                          Fill="#22c55e"
+                                          Fill="#3b82f6"
                                           Width="16" Height="16"
                                           Stretch="Uniform"
                                           Margin="0,0,10,0"
