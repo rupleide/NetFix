@@ -181,8 +181,15 @@ public partial class MainWindow : Window
                 var isServiceBat = System.IO.Path.GetFileName(_settings.ZapretPath).Equals("service.bat", StringComparison.OrdinalIgnoreCase);
                 var cache = ZapretConfigService.LoadCache();
 
-                if (isServiceBat && cache != null && !string.IsNullOrEmpty(cache.CurrentConfig))
+                if (isServiceBat)
                 {
+                    // Для service.bat ОБЯЗАТЕЛЬНО нужен выбранный конфиг
+                    if (cache == null || string.IsNullOrEmpty(cache.CurrentConfig))
+                    {
+                        ShowNotification("Zapret", "Сначала выберите конфиг через 'Выбрать конфиг' в панели управления сервисами.", isError: true);
+                        return;
+                    }
+
                     ZapretToggleBtn.IsEnabled = false;
                     var originalContent = ZapretToggleBtn.Content;
                     ZapretToggleBtn.Content = "Запуск...";
@@ -194,12 +201,12 @@ public partial class MainWindow : Window
 
                     if (!success)
                     {
-                        // Fallback если не удалось автоматизировать
-                        Process.Start(new ProcessStartInfo(_settings.ZapretPath) { UseShellExecute = true });
+                        ShowNotification("Zapret", "Не удалось установить сервис. Проверьте права администратора.", isError: true);
                     }
                 }
                 else
                 {
+                    // Для обычных .bat файлов просто запускаем
                     Process.Start(new ProcessStartInfo(_settings.ZapretPath) { UseShellExecute = true });
                 }
             }
