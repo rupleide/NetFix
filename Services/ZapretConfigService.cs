@@ -405,11 +405,12 @@ public class ZapretConfigService
             await Task.Delay(500);
             
             // Найти номер конфига в списке
-            // Получаем список всех .bat файлов, исключая service*.bat, и сортируем их
+            // Получаем список всех .bat файлов, исключая service*.bat
+            // ВАЖНО: Используем естественную сортировку как в PowerShell скрипте
             var configFiles = Directory.GetFiles(zapretDir, "*.bat")
                 .Where(f => !Path.GetFileName(f).StartsWith("service", StringComparison.OrdinalIgnoreCase))
                 .Select(Path.GetFileName)
-                .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(f => f, new NaturalStringComparer())
                 .ToList();
             
             int configIndex = configFiles.IndexOf(configName) + 1; // +1 потому что нумерация с 1
@@ -540,5 +541,48 @@ public class ZapretConfigService
         {
             return false;
         }
+    }
+}
+
+// Класс для естественной сортировки (ALT, ALT2, ALT3... ALT10, ALT11)
+public class NaturalStringComparer : IComparer<string>
+{
+    public int Compare(string? x, string? y)
+    {
+        if (x == null && y == null) return 0;
+        if (x == null) return -1;
+        if (y == null) return 1;
+
+        int ix = 0, iy = 0;
+        while (ix < x.Length && iy < y.Length)
+        {
+            if (char.IsDigit(x[ix]) && char.IsDigit(y[iy]))
+            {
+                // Извлекаем числа
+                var numX = GetNumber(x, ref ix);
+                var numY = GetNumber(y, ref iy);
+                
+                var result = numX.CompareTo(numY);
+                if (result != 0) return result;
+            }
+            else
+            {
+                var result = string.Compare(x, ix, y, iy, 1, StringComparison.OrdinalIgnoreCase);
+                if (result != 0) return result;
+                ix++;
+                iy++;
+            }
+        }
+        
+        return x.Length.CompareTo(y.Length);
+    }
+
+    private static int GetNumber(string s, ref int index)
+    {
+        int start = index;
+        while (index < s.Length && char.IsDigit(s[index]))
+            index++;
+        
+        return int.Parse(s.Substring(start, index - start));
     }
 }
