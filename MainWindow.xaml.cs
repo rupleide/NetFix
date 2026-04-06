@@ -1593,7 +1593,7 @@ public partial class MainWindow : Window
         // Добавляем иконку если нашли
         if (iconKey != null)
         {
-            PathGeometry iconGeometry = null;
+            Geometry iconGeometry = null;
             
             // Пробуем найти в ресурсах
             iconGeometry = System.Windows.Application.Current.TryFindResource(iconKey) as PathGeometry;
@@ -1603,11 +1603,11 @@ public partial class MainWindow : Window
             {
                 if (iconKey == "TelegramIcon")
                 {
-                    iconGeometry = Geometry.Parse("M2,21 L23,12 L2,3 L2,10 L17,12 L2,14 Z") as PathGeometry;
+                    iconGeometry = Geometry.Parse("M2,21 L23,12 L2,3 L2,10 L17,12 L2,14 Z");
                 }
                 else if (iconKey == "DiscordIcon")
                 {
-                    iconGeometry = Geometry.Parse("M20,2 L4,2 A2,2 0 0,0 2,4 L2,22 L6,18 L20,18 A2,2 0 0,0 22,16 L22,4 A2,2 0 0,0 20,2 M8,11 A1.5,1.5 0 1,1 8,8 A1.5,1.5 0 1,1 8,11 M16,11 A1.5,1.5 0 1,1 16,8 A1.5,1.5 0 1,1 16,11") as PathGeometry;
+                    iconGeometry = Geometry.Parse("M20,2 L4,2 A2,2 0 0,0 2,4 L2,22 L6,18 L20,18 A2,2 0 0,0 22,16 L22,4 A2,2 0 0,0 20,2 M8,11 A1.5,1.5 0 1,1 8,8 A1.5,1.5 0 1,1 8,11 M16,11 A1.5,1.5 0 1,1 16,8 A1.5,1.5 0 1,1 16,11");
                 }
             }
             
