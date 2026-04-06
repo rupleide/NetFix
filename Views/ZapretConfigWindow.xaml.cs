@@ -299,10 +299,10 @@ public partial class ZapretConfigWindow : Window
                 {
                     // Добавляем в лог с цветом в зависимости от содержимого
                     Color logColor;
-                    if (status.Contains("✅") || status.Contains("РАБОТАЕТ") || status.Contains("РАБОЧИЙ"))
-                        logColor = Color.FromRgb(0x22, 0xc5, 0x5e); // Зелёный
-                    else if (status.Contains("❌") || status.Contains("НЕ РАБОТАЕТ") || status.Contains("НЕРАБОЧИЙ"))
+                    if (status.Contains("❌") || status.Contains("НЕ РАБОТАЕТ") || status.Contains("НЕРАБОЧИЙ"))
                         logColor = Color.FromRgb(0xef, 0x44, 0x44); // Красный
+                    else if (status.Contains("✅") || status.Contains("РАБОТАЕТ") || status.Contains("РАБОЧИЙ"))
+                        logColor = Color.FromRgb(0x22, 0xc5, 0x5e); // Зелёный
                     else if (status.Contains("🔄") || status.Contains("Тестирую"))
                         logColor = Color.FromRgb(0x3b, 0x82, 0xf6); // Синий
                     else if (status.Contains("⚠️") || status.Contains("ЧАСТИЧНО"))
