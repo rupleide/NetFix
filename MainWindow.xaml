@@ -1519,9 +1519,7 @@
                             <TextBlock x:Name="ActiveConfigText" 
                                        Margin="0,12,0,0"
                                        FontSize="12"
-                                       Visibility="Collapsed"
-                                       TextTrimming="CharacterEllipsis"
-                                       MaxWidth="400">
+                                       Visibility="Collapsed">
                                 <Run Text="Включен конфиг: " Foreground="#888888"/>
                                 <Run x:Name="ActiveConfigName" Text="" Foreground="#22c55e"/>
                             </TextBlock>
