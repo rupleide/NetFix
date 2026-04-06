@@ -81,8 +81,18 @@
                            MaxWidth="450"/>
             </StackPanel>
 
+            <!-- Progress Text -->
+            <TextBlock x:Name="ProgressText" Grid.Row="2" 
+                       Text="" 
+                       Foreground="White" 
+                       FontSize="11"
+                       HorizontalAlignment="Left"
+                       VerticalAlignment="Top"
+                       Margin="0,0,0,6"
+                       Visibility="Collapsed"/>
+            
             <!-- Progress Bar -->
-            <Border Grid.Row="2" Height="6" CornerRadius="3" Background="#252525" Margin="0,0,0,16"
+            <Border Grid.Row="2" Height="6" CornerRadius="3" Background="#252525" Margin="0,20,0,16"
                     ClipToBounds="True" x:Name="ProgressBarContainer">
                 <Border x:Name="ProgressBar" Height="6" CornerRadius="3"
                         Background="#3b82f6" HorizontalAlignment="Left" Width="0">
@@ -91,32 +101,22 @@
                     </Border.Effect>
                 </Border>
             </Border>
-            
-            <!-- Progress Text -->
-            <TextBlock x:Name="ProgressText" Grid.Row="2" 
-                       Text="" 
-                       Foreground="White" 
-                       FontSize="11"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"
-                       Margin="0,20,0,0"
-                       Visibility="Collapsed"/>
 
             <!-- Log TextBox -->
             <Border Grid.Row="3" Background="#252525" CornerRadius="8" 
                     BorderBrush="#333333" BorderThickness="1"
                     x:Name="LogContainer" Visibility="Collapsed">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0">
-                    <TextBox x:Name="LogTextBox"
-                             Background="Transparent"
-                             Foreground="#f0f0f0"
-                             FontFamily="Consolas"
-                             FontSize="12"
-                             IsReadOnly="True"
-                             BorderThickness="0"
-                             TextWrapping="Wrap"
-                             Padding="12"
-                             VerticalScrollBarVisibility="Auto"/>
+                <ScrollViewer x:Name="LogScrollViewer" VerticalScrollBarVisibility="Auto" Margin="0">
+                    <RichTextBox x:Name="LogTextBox"
+                                 Background="Transparent"
+                                 Foreground="#f0f0f0"
+                                 FontFamily="Consolas"
+                                 FontSize="12"
+                                 IsReadOnly="True"
+                                 BorderThickness="0"
+                                 Padding="12"
+                                 VerticalScrollBarVisibility="Disabled"
+                                 IsDocumentEnabled="True"/>
                 </ScrollViewer>
             </Border>
 

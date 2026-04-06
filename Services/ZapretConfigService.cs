@@ -19,8 +19,8 @@ public class ZapretConfigService
     // Regex для парсинга вывода тестов
     private static readonly Regex ConfigRegex = new Regex(@"\[(\d+)/(\d+)\]\s+(.+\.bat)", RegexOptions.Compiled);
     private static readonly Regex TestLineRegex = new Regex(
-        @"^\s*(\w+)\s+HTTP:(\w+)\s+TLS1\.2:(\w+)\s+TLS1\.3:(\w+)\s+\|\s+Ping:\s+(\d+)\s+ms",
-        RegexOptions.Compiled);
+        @"^\s*(\w+)\s+HTTP:(\w+)\s+TLS1\.2:(\w+)\s+TLS1\.3:(\w+)\s+\|\s+Ping:\s*(\d+)\s*ms",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     public static ZapretConfigCache? LoadCache()
     {
@@ -158,7 +158,10 @@ public class ZapretConfigService
                 var httpStatus = testMatch.Groups[2].Value;
                 var tls12Status = testMatch.Groups[3].Value;
                 var tls13Status = testMatch.Groups[4].Value;
-                var ping = int.Parse(testMatch.Groups[5].Value);
+                var pingStr = testMatch.Groups[5].Value;
+                var ping = string.IsNullOrEmpty(pingStr) ? 0 : int.Parse(pingStr);
+
+                System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Parsed: {serviceName}, Ping: {ping}ms (raw: '{pingStr}')");
 
                 var testResult = new ServiceTestResult
                 {
@@ -195,6 +198,13 @@ public class ZapretConfigService
                 // Обновить средний пинг
                 if (currentConfig.Tests.Count > 0)
                     currentConfig.AveragePing = (int)currentConfig.Tests.Values.Average(t => t.Ping);
+                
+                System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Average ping for {currentConfig.Name}: {currentConfig.AveragePing}ms");
+            }
+            else if (line.Contains("Ping:") && currentConfig != null)
+            {
+                // Если regex не сработал, но строка содержит "Ping:", выводим для отладки
+                System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Failed to parse line with Ping: '{line}'");
             }
             // Пропускаем все остальные строки - не показываем технический мусор
         };
