@@ -517,7 +517,7 @@ public class ZapretConfigService
         return $"{httpEmoji} {http} | {tls12Emoji} {tls12} | {tls13Emoji} {tls13}";
     }
 
-    public static bool ApplyConfig(string zapretPath, string configName)
+    public static async Task<bool> ApplyConfigAsync(string zapretPath, string configName)
     {
         try
         {
@@ -527,15 +527,96 @@ public class ZapretConfigService
             var configPath = Path.Combine(zapretDir, configName);
             if (!File.Exists(configPath)) return false;
 
-            // Запустить service.bat с опцией установки конфига
             var serviceBat = Path.Combine(zapretDir, "service.bat");
             if (!File.Exists(serviceBat)) return false;
 
-            // Здесь нужно будет вызвать service.bat -> Install Service -> выбрать конфиг
-            // Это сложно автоматизировать, поэтому пока просто вернём true
-            // В будущем можно добавить автоматизацию через отправку ввода
+            var psi = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = $"/c \"{serviceBat}\"",
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WorkingDirectory = zapretDir
+            };
 
-            return true;
+            using var proc = new Process { StartInfo = psi };
+            proc.Start();
+
+            var reader = proc.StandardOutput;
+            var writer = proc.StandardInput;
+            
+            string currentOutput = "";
+            bool step1Done = false;
+            string configIndex = "";
+
+            var buffer = new char[1024];
+            int read;
+            
+            // Запускаем асинхронное чтение
+            var readTask = Task.Run(async () =>
+            {
+                while ((read = await reader.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                {
+                    var text = new string(buffer, 0, read);
+                    currentOutput += text;
+
+                    // Отладочный вывод, если понадобится:
+                    // Console.Write(text);
+
+                    // Шаг 1: Ждем меню и нажимаем 1 (Install Service)
+                    if (!step1Done && (currentOutput.Contains("1. Install Service") || currentOutput.Contains("Install Service")))
+                    {
+                        // Ждем, чтобы весь текст успел вывестись
+                        await Task.Delay(200); 
+                        await writer.WriteLineAsync("1");
+                        await writer.FlushAsync();
+                        step1Done = true;
+                        currentOutput = ""; // Сбрасываем буфер
+                        continue;
+                    }
+
+                    // Шаг 2: Ищем индекс нашего конфига и вводим его
+                    if (step1Done && (currentOutput.Contains("Input file index") || currentOutput.Contains("number):")))
+                    {
+                        var lines = currentOutput.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var line in lines)
+                        {
+                            if (line.Contains(configName))
+                            {
+                                var match = System.Text.RegularExpressions.Regex.Match(line, @"^\s*(\d+)\.");
+                                if (match.Success)
+                                {
+                                    configIndex = match.Groups[1].Value;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!string.IsNullOrEmpty(configIndex))
+                        {
+                            await Task.Delay(200);
+                            await writer.WriteLineAsync(configIndex);
+                            await writer.FlushAsync();
+                            break; // Дальше скрипт должен сам завершиться
+                        }
+                    }
+                }
+            });
+
+            // Ждем завершения с таймаутом в 15 секунд
+            var completed = await Task.WhenAny(proc.WaitForExitAsync(), Task.Delay(15000));
+            
+            if (completed != proc.WaitForExitAsync())
+            {
+                // Таймаут
+                try { proc.Kill(); } catch { }
+                return false;
+            }
+
+            return proc.ExitCode == 0 || string.IsNullOrEmpty(configIndex) == false;
         }
         catch
         {
