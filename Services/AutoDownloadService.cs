@@ -183,7 +183,7 @@ public static class AutoDownloadService
                 SettingsService.Save(settings);
                 onProgress(1.0);
 
-                onLog("🎉 Установка завершена успешно!");
+                onLog("✓ Установка завершена успешно!");
                 onLog("Можно закрыть окно и начать использовать приложение.");
                 return true;
             }
