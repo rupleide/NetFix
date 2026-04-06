@@ -254,7 +254,7 @@ public partial class MainWindow : Window
         configWindow.ShowDialog();
     }
 
-    private void SelectConfigBtn_Click(object s, RoutedEventArgs e)
+    private async void SelectConfigBtn_Click(object s, RoutedEventArgs e)
     {
         if (string.IsNullOrEmpty(_settings.ZapretPath) || !File.Exists(_settings.ZapretPath))
         {
@@ -279,8 +279,8 @@ public partial class MainWindow : Window
             // Обновить отображение выбранного конфига после закрытия окна
             UpdateSelectedConfigDisplay();
             
-            // Обновить статус приложений с задержкой (чтобы сервис успел запуститься)
-            Task.Delay(1000).ContinueWith(_ => Dispatcher.Invoke(UpdateActiveApps));
+            // Обновить статус приложений сразу
+            UpdateActiveApps();
         }
     }
 
