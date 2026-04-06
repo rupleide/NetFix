@@ -105,9 +105,6 @@ public class ZapretConfigService
             // Логирование для отладки
             System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] {line}");
             
-            // Передаем все строки в лог
-            onProgress?.Invoke($"📊 {line}");
-            
             // Парсинг строки конфига: [2/19] general (ALT2).bat
             var configMatch = ConfigRegex.Match(line);
             if (configMatch.Success)
@@ -115,12 +112,24 @@ public class ZapretConfigService
                 // Сохранить предыдущий конфиг
                 if (currentConfig != null)
                 {
+                    // Подсчитываем результаты предыдущего конфига
+                    var successCount = currentConfig.SuccessCount;
+                    var totalCount = currentConfig.Tests.Count;
+                    var failedTests = totalCount - successCount;
+                    
                     // Конфиг валиден только если: 0 ошибок И минимум 12 успешных тестов
                     currentConfig.IsValid = currentConfig.ErrorCount == 0 && currentConfig.SuccessCount >= 12;
                     if (currentConfig.IsValid)
+                    {
                         configs.Add(currentConfig);
+                        onProgress?.Invoke($"✅ Конфиг '{currentConfig.Name}' - РАБОЧИЙ!\n   Тесты: {successCount}/{totalCount}, Пинг: {currentConfig.AveragePing}мс");
+                    }
+                    else
+                    {
+                        onProgress?.Invoke($"❌ Конфиг '{currentConfig.Name}' - НЕРАБОЧИЙ!\n   Доступно: {successCount}, но {failedTests} из сайтов не ответили!");
+                    }
                     
-                    System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Config: {currentConfig.Name}, Valid: {currentConfig.IsValid}, Success: {currentConfig.SuccessCount}/12, Errors: {currentConfig.ErrorCount}");
+                    System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Config: {currentConfig.Name}, Valid: {currentConfig.IsValid}, Success: {successCount}/{totalCount}, Errors: {currentConfig.ErrorCount}");
                     
                     testedConfigs++;
                     onConfigTested?.Invoke(testedConfigs, totalConfigs);
@@ -137,7 +146,7 @@ public class ZapretConfigService
                     Tests = new Dictionary<string, ServiceTestResult>()
                 };
 
-                onProgress?.Invoke($"📋 Тестируем [{current}/{totalConfigs}] {configName}");
+                onProgress?.Invoke($"🔄 Тестируем конфиг [{current}/{totalConfigs}]: {configName}");
                 return;
             }
 
@@ -162,9 +171,15 @@ public class ZapretConfigService
 
                 currentConfig.Tests[serviceName] = testResult;
 
-                // Логируем результат теста
+                // Обновляем прогресс теста
                 var statusEmojis = GetStatusEmojis(httpStatus, tls12Status, tls13Status);
-                onProgress?.Invoke($"✅ {serviceName}: {statusEmojis} | Пинг: {ping}мс");
+                var statusText = httpStatus == "OK" && tls12Status == "OK" && tls13Status == "OK" 
+                    ? "РАБОТАЕТ" 
+                    : (httpStatus == "ERROR" || tls12Status == "ERROR" || tls13Status == "ERROR" 
+                        ? "НЕ РАБОТАЕТ" 
+                        : "ЧАСТИЧНО");
+                
+                onProgress?.Invoke($"   ✅ {serviceName}: {statusText} | Пинг: {ping}мс");
 
                 // Считаем только полностью успешные тесты (все OK)
                 if (testResult.IsSuccess)
@@ -178,6 +193,14 @@ public class ZapretConfigService
                 // Обновить средний пинг
                 if (currentConfig.Tests.Count > 0)
                     currentConfig.AveragePing = (int)currentConfig.Tests.Values.Average(t => t.Ping);
+            }
+            else
+            {
+                // Для остальных строк просто передаём как есть (но тоже в человекочитаемом виде)
+                if (!line.Contains("[") || !line.Contains("]")) // Пропускаем технические строки с индексами
+                {
+                    onProgress?.Invoke($"📊 {line}");
+                }
             }
         };
 
