@@ -580,6 +580,7 @@ public partial class ZapretConfigWindow : Window
         if (_cache == null || _cache.ValidConfigs.Count == 0) return;
         StopIndeterminateAnimation();
         StatusPanel.Visibility = Visibility.Collapsed;
+        ProgressBarContainer.Visibility = Visibility.Collapsed;
         ConfigListScroll.Visibility = Visibility.Visible;
         ConfigListScroll.Height = 350; // Установить высоту для списка
         ConfigListPanel.Children.Clear();
