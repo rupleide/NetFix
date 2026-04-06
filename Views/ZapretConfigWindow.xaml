@@ -48,7 +48,7 @@
     </Window.Resources>
 
     <!-- Основной фон -->
-    <Border Background="#161618" CornerRadius="14" BorderBrush="#2a2a2d" BorderThickness="1" ClipToBounds="True" MouseLeftButtonDown="Background_MouseLeftButtonDown">
+    <Border Background="#161618" CornerRadius="14" BorderBrush="#2a2a2d" BorderThickness="1" ClipToBounds="True">
         <Grid Margin="1,1,-1,-1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" MinHeight="71"/>
@@ -73,6 +73,32 @@
                         <TextBlock Text="Настройка конфига" FontSize="15" FontWeight="SemiBold" Foreground="#f0f0f0"/>
                     </StackPanel>
                 </StackPanel>
+                
+                <!-- Кнопка закрытия -->
+                <Button Width="32" Height="32" HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Background="Transparent" BorderThickness="0" Cursor="Hand"
+                        Click="CloseButton_Click">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                                            <TextBlock Text="✕" FontSize="16" Foreground="#888888" 
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#2a2a2d"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
             </Grid>
 
             <!-- Разделитель -->

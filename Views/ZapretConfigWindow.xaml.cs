@@ -837,12 +837,8 @@ public partial class ZapretConfigWindow : Window
         ProgressBarContainer.Visibility = Visibility.Collapsed;
     }
     
-    private void Background_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
-        // Закрыть окно только если клик был непосредственно на фоне, а не на дочерних элементах
-        if (e.Source == sender)
-        {
-            Close();
-        }
+        Close();
     }
 }
