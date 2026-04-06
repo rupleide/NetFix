@@ -62,7 +62,7 @@ public class ZapretConfigService
         var zapretDir = Path.GetDirectoryName(zapretPath);
         if (string.IsNullOrEmpty(zapretDir) || !Directory.Exists(zapretDir))
         {
-            onProgress?.Invoke("Ошибка: директория Zapret не найдена");
+            onProgress?.Invoke("❌ Ошибка: директория Zapret не найдена");
             return (configs, null);
         }
 
@@ -70,11 +70,11 @@ public class ZapretConfigService
         var testScript = Path.Combine(zapretDir, "utils", "test zapret.ps1");
         if (!File.Exists(testScript))
         {
-            onProgress?.Invoke("Ошибка: скрипт test zapret.ps1 не найден");
+            onProgress?.Invoke("❌ Ошибка: скрипт test zapret.ps1 не найден");
             return (configs, null);
         }
 
-        onProgress?.Invoke("Запуск тестирования всех конфигов...");
+        onProgress?.Invoke("🚀 Начинаем полное тестирование конфигов...");
 
         // Запустить PowerShell скрипт
         var psi = new ProcessStartInfo
@@ -105,6 +105,9 @@ public class ZapretConfigService
             // Логирование для отладки
             System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] {line}");
             
+            // Передаем все строки в лог
+            onProgress?.Invoke($"📊 {line}");
+            
             // Парсинг строки конфига: [2/19] general (ALT2).bat
             var configMatch = ConfigRegex.Match(line);
             if (configMatch.Success)
@@ -134,7 +137,7 @@ public class ZapretConfigService
                     Tests = new Dictionary<string, ServiceTestResult>()
                 };
 
-                onProgress?.Invoke($"Тестирование [{current}/{totalConfigs}] {configName}");
+                onProgress?.Invoke($"📋 Тестируем [{current}/{totalConfigs}] {configName}");
                 return;
             }
 
@@ -159,6 +162,10 @@ public class ZapretConfigService
 
                 currentConfig.Tests[serviceName] = testResult;
 
+                // Логируем результат теста
+                var statusEmojis = GetStatusEmojis(httpStatus, tls12Status, tls13Status);
+                onProgress?.Invoke($"✅ {serviceName}: {statusEmojis} | Пинг: {ping}мс");
+
                 // Считаем только полностью успешные тесты (все OK)
                 if (testResult.IsSuccess)
                     currentConfig.SuccessCount++;
@@ -177,9 +184,9 @@ public class ZapretConfigService
         process.Start();
         process.BeginOutputReadLine();
 
-        // Отправить "1\n1\n" для выбора "standard tests" -> "all configs"
         try
         {
+            // Отправить "1\n1\n" для выбора "standard tests" -> "all configs"
             await Task.Delay(1000);
             await process.StandardInput.WriteLineAsync("1");
             await Task.Delay(500);
@@ -216,6 +223,35 @@ public class ZapretConfigService
         onProgress?.Invoke($"Тестирование завершено. Найдено {configs.Count} рабочих конфигов");
 
         return (configs, process);
+    }
+
+    private static string GetStatusEmojis(string http, string tls12, string tls13)
+    {
+        var httpEmoji = http switch
+        {
+            "OK" => "✅",
+            "ERROR" => "❌", 
+            "UNSUP" => "⚠️",
+            _ => "❓"
+        };
+        
+        var tls12Emoji = tls12 switch
+        {
+            "OK" => "✅",
+            "ERROR" => "❌",
+            "UNSUP" => "⚠️",
+            _ => "❓"
+        };
+        
+        var tls13Emoji = tls13 switch
+        {
+            "OK" => "✅",
+            "ERROR" => "❌",
+            "UNSUP" => "⚠️",
+            _ => "❓"
+        };
+        
+        return $"{httpEmoji} {http} | {tls12Emoji} {tls12} | {tls13Emoji} {tls13}";
     }
 
     public static bool ApplyConfig(string zapretPath, string configName)

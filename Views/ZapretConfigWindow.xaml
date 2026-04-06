@@ -101,9 +101,9 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0">
                     <TextBox x:Name="LogTextBox"
                              Background="Transparent"
-                             Foreground="#888888"
+                             Foreground="#f0f0f0"
                              FontFamily="Consolas"
-                             FontSize="11"
+                             FontSize="12"
                              IsReadOnly="True"
                              BorderThickness="0"
                              TextWrapping="Wrap"
