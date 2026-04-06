@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using NetFix.Models;
@@ -31,6 +32,24 @@ public partial class ZapretConfigWindow : Window
         _testMode = testMode;
         Loaded += OnLoaded;
         Closing += OnClosing;
+    }
+
+    private void AppendColoredLog(string text, Color color)
+    {
+        var paragraph = LogTextBox.Document.Blocks.LastBlock as Paragraph;
+        if (paragraph == null)
+        {
+            paragraph = new Paragraph();
+            LogTextBox.Document.Blocks.Add(paragraph);
+        }
+
+        var run = new Run(text + "\n")
+        {
+            Foreground = new SolidColorBrush(color)
+        };
+        paragraph.Inlines.Add(run);
+        
+        LogScrollViewer.ScrollToEnd();
     }
 
     private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
@@ -267,17 +286,31 @@ public partial class ZapretConfigWindow : Window
             ProgressText.Visibility = Visibility.Visible;
             ProgressText.Text = "Тестирование конфигов: 0%";
             LogContainer.Visibility = Visibility.Visible;
-            LogTextBox.Text = "💡 Советуем вам подождать 10 минуток на полное сканирование.\n" +
-                             "В дальнейшем это сэкономит вам кучу времени и нервов!\n\n" +
-                             "Запуск тестирования...\n\n";
+            
+            // Очистить лог и добавить начальное сообщение
+            LogTextBox.Document.Blocks.Clear();
+            AppendColoredLog("💡 Советуем вам подождать 10 минуток на полное сканирование.", Color.FromRgb(0xf0, 0xf0, 0xf0));
+            AppendColoredLog("В дальнейшем это сэкономит вам кучу времени и нервов!\n", Color.FromRgb(0xf0, 0xf0, 0xf0));
+            AppendColoredLog("Запуск тестирования...\n", Color.FromRgb(0x88, 0x88, 0x88));
             
             var (configs, testProcess) = await ZapretConfigService.TestAllConfigsAsync(
                 _zapretPath,
                 status => Dispatcher.Invoke(() => 
                 {
-                    // Добавляем в лог
-                    LogTextBox.AppendText(status + "\n");
-                    LogTextBox.ScrollToEnd();
+                    // Добавляем в лог с цветом в зависимости от содержимого
+                    Color logColor;
+                    if (status.Contains("✅") || status.Contains("РАБОТАЕТ") || status.Contains("РАБОЧИЙ"))
+                        logColor = Color.FromRgb(0x22, 0xc5, 0x5e); // Зелёный
+                    else if (status.Contains("❌") || status.Contains("НЕ РАБОТАЕТ") || status.Contains("НЕРАБОЧИЙ"))
+                        logColor = Color.FromRgb(0xef, 0x44, 0x44); // Красный
+                    else if (status.Contains("🔄") || status.Contains("Тестирую"))
+                        logColor = Color.FromRgb(0x3b, 0x82, 0xf6); // Синий
+                    else if (status.Contains("⚠️") || status.Contains("ЧАСТИЧНО"))
+                        logColor = Color.FromRgb(0xea, 0xb3, 0x08); // Жёлтый
+                    else
+                        logColor = Color.FromRgb(0xf0, 0xf0, 0xf0); // Белый по умолчанию
+                    
+                    AppendColoredLog(status, logColor);
                 }),
                 (current, total) => Dispatcher.Invoke(() => 
                 {
