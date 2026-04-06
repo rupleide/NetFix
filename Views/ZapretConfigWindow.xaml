@@ -57,7 +57,7 @@
                 <!-- Status + Progress -->
                 <RowDefinition/>
                 <!-- Content -->
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto" MinHeight="77"/>
                 <!-- Buttons -->
             </Grid.RowDefinitions>
 
@@ -123,7 +123,7 @@
                     BorderBrush="#22222a" BorderThickness="1"
                     x:Name="LogContainer" Visibility="Collapsed"
                     Margin="28,16,28,0"
-                    VerticalAlignment="Top">
+                    VerticalAlignment="Top" Height="0">
                 <ScrollViewer x:Name="LogScrollViewer" VerticalScrollBarVisibility="Auto">
                     <RichTextBox x:Name="LogTextBox"
                                  Background="Transparent"
@@ -143,7 +143,7 @@
                           VerticalScrollBarVisibility="Auto"
                           Visibility="Collapsed"
                           Margin="28,16,28,0"
-                          VerticalAlignment="Top">
+                          VerticalAlignment="Top" Height="0">
                 <StackPanel x:Name="ConfigListPanel"/>
             </ScrollViewer>
 
@@ -158,72 +158,72 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                        <!-- Подсказка слева -->
-                        <TextBlock Grid.Column="0" Text="Zapret Config Manager" 
+                    <!-- Подсказка слева -->
+                    <TextBlock Grid.Column="0" Text="Zapret Config Manager" 
                                    Foreground="#333336" FontSize="11" VerticalAlignment="Center"/>
 
-                        <Button x:Name="PrimaryBtn" Grid.Column="1" Content="Да, начать"
+                    <Button x:Name="PrimaryBtn" Grid.Column="1" Content="Да, начать"
                                 Width="140" Height="36" Margin="0,0,10,0"
                                 Foreground="White" BorderThickness="0"
                                 Cursor="Hand" Click="PrimaryBtn_Click"
                                 Visibility="Collapsed">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border CornerRadius="8">
-                                                    <Border.Background>
-                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                            <GradientStop Color="#3b82f6" Offset="0"/>
-                                                            <GradientStop Color="#6366f1" Offset="1"/>
-                                                        </LinearGradientBrush>
-                                                    </Border.Background>
-                                                    <Border.Effect>
-                                                        <DropShadowEffect Color="#3b82f6" BlurRadius="12" ShadowDepth="0" Opacity="0.4"/>
-                                                    </Border.Effect>
-                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Opacity" Value="0.88"/>
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border CornerRadius="8">
+                                                <Border.Background>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                        <GradientStop Color="#3b82f6" Offset="0"/>
+                                                        <GradientStop Color="#6366f1" Offset="1"/>
+                                                    </LinearGradientBrush>
+                                                </Border.Background>
+                                                <Border.Effect>
+                                                    <DropShadowEffect Color="#3b82f6" BlurRadius="12" ShadowDepth="0" Opacity="0.4"/>
+                                                </Border.Effect>
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Opacity" Value="0.88"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
 
-                        <Button x:Name="SecondaryBtn" Grid.Column="2" Content="Отмена"
+                    <Button x:Name="SecondaryBtn" Grid.Column="2" Content="Отмена"
                                 Width="110" Height="36"
                                 Background="Transparent" Foreground="#666669"
                                 BorderBrush="#2a2a2d" BorderThickness="1"
                                 Cursor="Hand" Click="SecondaryBtn_Click">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="{TemplateBinding Background}"
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}"
                                                         BorderBrush="{TemplateBinding BorderBrush}"
                                                         BorderThickness="{TemplateBinding BorderThickness}"
                                                         CornerRadius="8">
-                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#1e1e22"/>
-                                            <Setter Property="BorderBrush" Value="#3a3a3d"/>
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#1e1e22"/>
+                                        <Setter Property="BorderBrush" Value="#3a3a3d"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                 </Grid>
             </Border>
         </Grid>
