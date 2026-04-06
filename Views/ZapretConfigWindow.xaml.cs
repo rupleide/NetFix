@@ -19,35 +19,65 @@ namespace NetFix.Views;
 public partial class ZapretConfigWindow : Window
 {
     private readonly string _zapretPath;
+    private readonly bool _testMode;
     private ZapretConfigCache? _cache;
     private bool _isTesting = false;
 
-    public ZapretConfigWindow(string zapretPath)
+    public ZapretConfigWindow(string zapretPath, bool testMode)
     {
         InitializeComponent();
         _zapretPath = zapretPath;
+        _testMode = testMode;
         Loaded += OnLoaded;
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
-        StartIndeterminateAnimation();
-
         // Загрузить кэш
         _cache = ZapretConfigService.LoadCache();
 
-        if (_cache == null || _cache.ValidConfigs.Count == 0)
+        if (_testMode)
         {
-            // Первый запуск - начать тестирование
-            StatusText.Text = "Первый запуск. Начинаем тестирование всех конфигов...";
-            await Task.Delay(1000);
+            // Режим тестирования - сразу начать тест
+            StartIndeterminateAnimation();
+            StatusText.Text = "Подготовка к тестированию...";
+            await Task.Delay(500);
             await StartTestingAsync();
         }
         else
         {
-            // Показать список конфигов
-            ShowConfigList();
+            // Режим выбора конфига
+            if (_cache == null || _cache.ValidConfigs.Count == 0)
+            {
+                // Нет кэша - показать предупреждение
+                ShowWarningNoCache();
+            }
+            else
+            {
+                // Показать список конфигов
+                StopIndeterminateAnimation();
+                ShowConfigList();
+            }
         }
+    }
+
+    private void ShowWarningNoCache()
+    {
+        StopIndeterminateAnimation();
+        StatusPanel.Visibility = Visibility.Visible;
+        ProgressBarContainer.Visibility = Visibility.Collapsed;
+        
+        StatusIcon.Visibility = Visibility.Visible;
+        StatusIcon.Data = (Geometry)FindResource("WarningIcon");
+        StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08));
+        
+        StatusText.Text = "ОБЯЗАТЕЛЬНО ПРОЙДИТЕ полный тест конфигов!\n\n" +
+                         "Это поможет вам в будущем и сэкономит кучу времени! " +
+                         "Приложение найдёт все рабочие конфиги и выберет лучший для вашей сети.";
+        
+        SecondaryBtn.Content = "Закрыть";
+        PrimaryBtn.Content = "Пройти тест";
+        PrimaryBtn.Visibility = Visibility.Visible;
     }
 
     private void StartIndeterminateAnimation()
@@ -146,12 +176,28 @@ public partial class ZapretConfigWindow : Window
 
         try
         {
+            StatusText.Text = "Запуск полного тестирования конфигов...\n\n" +
+                             "💡 Советуем вам подождать 10 минуток на полное сканирование.\n" +
+                             "В дальнейшем это сэкономит вам кучу времени и нервов!\n\n" +
+                             "Приложение найдёт все идеальные конфиги (12/12 тестов) и выберет лучший.";
+            
+            await Task.Delay(2000);
+            
             var configs = await ZapretConfigService.TestAllConfigsAsync(
                 _zapretPath,
-                status => Dispatcher.Invoke(() => StatusText.Text = status),
+                status => Dispatcher.Invoke(() => 
+                {
+                    // Показываем статус с дополнительной информацией
+                    if (status.Contains("Тестирование"))
+                        StatusText.Text = status + "\n\n⏳ Идёт проверка всех конфигов...\nПожалуйста, подождите.";
+                    else
+                        StatusText.Text = status;
+                }),
                 (current, total) => Dispatcher.Invoke(() => 
                 {
-                    StatusText.Text = $"Тестирование конфигов: {current}/{total}";
+                    StatusText.Text = $"Тестирование конфигов: {current}/{total}\n\n" +
+                                     $"⏳ Проверяем каждый конфиг на 12 различных сервисов.\n" +
+                                     $"Прогресс: {(current * 100 / total)}%";
                 })
             );
 
@@ -168,15 +214,28 @@ public partial class ZapretConfigWindow : Window
                 };
                 ZapretConfigService.SaveCache(_cache);
 
-                StatusText.Text = $"Найдено {configs.Count} рабочих конфигов!";
+                // Показать поздравление
                 StopIndeterminateAnimation();
+                StatusPanel.Visibility = Visibility.Visible;
+                StatusIcon.Visibility = Visibility.Visible;
+                StatusIcon.Data = (Geometry)FindResource("CheckmarkIcon");
+                StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+                
+                var topConfigs = string.Join("\n", configs.Take(5).Select((c, i) => 
+                    $"{i + 1}. {c.Name} (пинг: {c.AveragePing} мс, тестов: {c.SuccessCount}/12)"));
+                
+                StatusText.Text = $"🎉 Поздравляю с полным тестированием!\n\n" +
+                                 $"Найдено {configs.Count} идеальных конфигов.\n" +
+                                 $"Все они прошли 12/12 тестов без ошибок!\n\n" +
+                                 $"Ваш топ конфигов на следующие разы:\n\n{topConfigs}";
 
-                await Task.Delay(1000);
+                await Task.Delay(3000);
                 ShowConfigList();
             }
             else
             {
-                StatusText.Text = "Не найдено рабочих конфигов";
+                StatusText.Text = "Не найдено рабочих конфигов с 12/12 успешными тестами.\n\n" +
+                                 "Возможно, ваша сеть имеет особые ограничения. Попробуйте повторить тест позже.";
                 StopIndeterminateAnimation();
                 StatusIcon.Visibility = Visibility.Visible;
                 StatusIcon.Data = (Geometry)FindResource("WarningIcon");
@@ -212,7 +271,17 @@ public partial class ZapretConfigWindow : Window
         ConfigListScroll.Visibility = Visibility.Visible;
         ConfigListPanel.Children.Clear();
 
-        // Заголовок
+        // Заголовок с поздравлением
+        var congratsText = new TextBlock
+        {
+            Text = "✅ Тестирование завершено успешно!",
+            FontSize = 14,
+            FontWeight = FontWeights.Bold,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
+            Margin = new Thickness(0, 0, 0, 8)
+        };
+        ConfigListPanel.Children.Add(congratsText);
+
         var headerText = new TextBlock
         {
             Text = $"Текущий конфиг: {_cache.CurrentConfig}",
@@ -224,7 +293,7 @@ public partial class ZapretConfigWindow : Window
 
         var subText = new TextBlock
         {
-            Text = "Выберите конфиг из списка:",
+            Text = $"Найдено {_cache.ValidConfigs.Count} идеальных конфигов (12/12 тестов):",
             FontSize = 13,
             Foreground = new SolidColorBrush(Color.FromRgb(0xf0, 0xf0, 0xf0)),
             FontWeight = FontWeights.SemiBold,

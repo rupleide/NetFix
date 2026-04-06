@@ -1409,64 +1409,10 @@
                                 </Grid>
                             </Border>
 
-                            <!-- Zapret Config Button -->
-                            <Border Background="#252525" CornerRadius="12"
-                                    BorderBrush="#333333" BorderThickness="1"
-                                    Margin="0,0,0,10"
-                                    Cursor="Hand">
-                                <Border.InputBindings>
-                                    <MouseBinding MouseAction="LeftClick" Command="{Binding ZapretConfigCommand}"/>
-                                </Border.InputBindings>
-                                <Button x:Name="ZapretConfigBtn"
-                                        Style="{StaticResource FlatBtn}"
-                                        Background="Transparent"
-                                        BorderThickness="0"
-                                        Padding="16,14"
-                                        HorizontalContentAlignment="Left"
-                                        WindowChrome.IsHitTestVisibleInChrome="True"
-                                        Click="ZapretConfigBtn_Click">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        
-                                        <Border Width="38" Height="38" CornerRadius="10"
-                                                Background="#1a2a3a" Margin="0,0,12,0"
-                                                VerticalAlignment="Center">
-                                            <Path Data="{StaticResource SettingsIcon}" 
-                                                  Stroke="#3b82f6"
-                                                  StrokeThickness="1.5"
-                                                  Width="18" Height="18"
-                                                  Stretch="Uniform"
-                                                  HorizontalAlignment="Center"
-                                                  VerticalAlignment="Center"/>
-                                        </Border>
-                                        
-                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                            <TextBlock Text="Настройка конфига"
-                                                       FontFamily="Segoe UI" FontSize="13"
-                                                       FontWeight="SemiBold" Foreground="White"/>
-                                            <TextBlock Text="Тестирование и выбор лучшего конфига"
-                                                       FontFamily="Segoe UI" FontSize="11"
-                                                       Foreground="#888888" Margin="0,3,0,0"/>
-                                        </StackPanel>
-                                        
-                                        <Path Grid.Column="2" Data="M9,6 L15,12 L9,18" 
-                                              Stroke="#888888"
-                                              StrokeThickness="2"
-                                              Width="10" Height="10"
-                                              Stretch="Uniform"
-                                              VerticalAlignment="Center"/>
-                                    </Grid>
-                                </Button>
-                            </Border>
-
                             <!-- tg-ws-proxy -->
                             <Border Background="#252525" CornerRadius="12"
                                     BorderBrush="#333333" BorderThickness="1"
-                                    Padding="16,14">
+                                    Padding="16,14" Margin="0,0,0,10">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
@@ -1513,6 +1459,61 @@
                                     </Button>
                                 </Grid>
                             </Border>
+
+                            <!-- Zapret Config Buttons -->
+                            <TextBlock Text="Настройка Zapret" 
+                                       FontFamily="Segoe UI" FontSize="12"
+                                       FontWeight="SemiBold" Foreground="#888888" 
+                                       Margin="0,16,0,8"/>
+                            
+                            <!-- Test Configs Button -->
+                            <Button x:Name="TestConfigsBtn"
+                                    Style="{StaticResource FlatBtn}"
+                                    Background="#252525"
+                                    BorderBrush="#333333"
+                                    BorderThickness="1"
+                                    Padding="14,12"
+                                    Margin="0,0,0,8"
+                                    HorizontalContentAlignment="Left"
+                                    WindowChrome.IsHitTestVisibleInChrome="True"
+                                    Click="TestConfigsBtn_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource SearchIcon}" 
+                                          Stroke="#3b82f6"
+                                          StrokeThickness="1.5"
+                                          Width="16" Height="16"
+                                          Stretch="Uniform"
+                                          Margin="0,0,10,0"
+                                          VerticalAlignment="Center"/>
+                                    <TextBlock Text="Тест конфигов" 
+                                               FontFamily="Segoe UI" FontSize="13"
+                                               Foreground="White" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            
+                            <!-- Select Config Button -->
+                            <Button x:Name="SelectConfigBtn"
+                                    Style="{StaticResource FlatBtn}"
+                                    Background="#252525"
+                                    BorderBrush="#333333"
+                                    BorderThickness="1"
+                                    Padding="14,12"
+                                    HorizontalContentAlignment="Left"
+                                    WindowChrome.IsHitTestVisibleInChrome="True"
+                                    Click="SelectConfigBtn_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource SettingsIcon}" 
+                                          Stroke="#22c55e"
+                                          StrokeThickness="1.5"
+                                          Width="16" Height="16"
+                                          Stretch="Uniform"
+                                          Margin="0,0,10,0"
+                                          VerticalAlignment="Center"/>
+                                    <TextBlock Text="Выбрать конфиг" 
+                                               FontFamily="Segoe UI" FontSize="13"
+                                               Foreground="White" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
 
                         </StackPanel>
                     </DockPanel>
