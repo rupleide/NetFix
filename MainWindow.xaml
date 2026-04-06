@@ -559,7 +559,7 @@
 
                         <!-- Window controls -->
                         <Button Content="−" Style="{StaticResource FlatBtnCentered}"
-                                Width="34" Padding="0" FontSize="14"
+                                Width="34" Height="18.62" Padding="0" FontSize="14"
                                 WindowChrome.IsHitTestVisibleInChrome="True"
                                 Click="MinBtn_Click" Margin="4,0,0,0"/>
                         <Button Style="{StaticResource CloseBtn}"
