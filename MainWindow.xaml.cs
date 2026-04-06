@@ -279,8 +279,8 @@ public partial class MainWindow : Window
             // Обновить отображение выбранного конфига после закрытия окна
             UpdateSelectedConfigDisplay();
             
-            // Обновить статус приложений (чтобы кнопка Zapret показала правильный статус)
-            UpdateActiveApps();
+            // Обновить статус приложений с задержкой (чтобы сервис успел запуститься)
+            Task.Delay(1000).ContinueWith(_ => Dispatcher.Invoke(UpdateActiveApps));
         }
     }
 
