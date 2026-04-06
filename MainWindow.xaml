@@ -563,7 +563,7 @@
                                 WindowChrome.IsHitTestVisibleInChrome="True"
                                 Click="MinBtn_Click" Margin="4,0,0,0"/>
                         <Button Style="{StaticResource CloseBtn}"
-                                Width="34" Padding="0" Margin="-6,0,0,0"
+                                Width="34" Height="18.62" Padding="0" Margin="-6,0,0,0"
                                 WindowChrome.IsHitTestVisibleInChrome="True"
                                 Click="CloseBtn_Click">
                             <Path Data="{StaticResource CloseIcon}" 
