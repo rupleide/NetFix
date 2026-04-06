@@ -256,6 +256,8 @@ public partial class MainWindow : Window
 
     private async void SelectConfigBtn_Click(object s, RoutedEventArgs e)
     {
+        Console.WriteLine("[MainWindow] SelectConfigBtn_Click started");
+        
         if (string.IsNullOrEmpty(_settings.ZapretPath) || !File.Exists(_settings.ZapretPath))
         {
             ShowNotification("Zapret", "Путь к Zapret не указан. Проверьте настройки.", isError: true);
@@ -271,19 +273,26 @@ public partial class MainWindow : Window
         }
         else
         {
+            Console.WriteLine("[MainWindow] Opening config window");
             // Показать окно выбора конфига
             var configWindow = new Views.ZapretConfigWindow(_settings.ZapretPath, testMode: false);
             configWindow.Owner = this;
             configWindow.ShowDialog();
             
+            Console.WriteLine("[MainWindow] Config window closed");
+            
             // Обновить отображение выбранного конфига после закрытия окна
             UpdateSelectedConfigDisplay();
             
+            Console.WriteLine("[MainWindow] Waiting 2500ms before updating status");
             // Подождать чтобы Windows сервис успел запуститься и процесс winws.exe появился в списке процессов
             await Task.Delay(2500);
             
+            Console.WriteLine("[MainWindow] Calling UpdateActiveApps");
             // Обновить статус приложений (кнопка "Запустить" изменится на "Закрыть" если сервис запущен)
             UpdateActiveApps();
+            
+            Console.WriteLine("[MainWindow] SelectConfigBtn_Click finished");
         }
     }
 
