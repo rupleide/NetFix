@@ -38,7 +38,6 @@ public partial class ZapretConfigWindow : Window
         // Остановить тестирование при закрытии окна
         _isTesting = false;
         
-        // Убить процесс тестирования
         if (_testProcess != null && !_testProcess.HasExited)
         {
             try
@@ -111,52 +110,6 @@ public partial class ZapretConfigWindow : Window
         }
     }
 
-    private void SecondaryBtn_Click(object sender, RoutedEventArgs e)
-    {
-        _isTesting = false;
-        
-        // Убить процесс тестирования
-        if (_testProcess != null && !_testProcess.HasExited)
-        {
-            try
-            {
-                ForceKillProcessTree(_testProcess.Id);
-                _testProcess.Dispose();
-            }
-            catch { }
-        }
-        
-        // Убить все winws.exe и powershell.exe процессы
-        try
-        {
-            var processes = Process.GetProcessesByName("winws");
-            foreach (var proc in processes)
-            {
-                try
-                {
-                    ForceKillProcessTree(proc.Id);
-                    proc.Dispose();
-                }
-                catch { }
-            }
-            
-            // Также убить любые PowerShell процессы
-            var powerShellProcs = Process.GetProcessesByName("powershell");
-            foreach (var proc in powerShellProcs)
-            {
-                try
-                {
-                    proc.Kill(true);
-                    proc.Dispose();
-                }
-                catch { }
-            }
-        }
-        catch { }
-        
-        Close();
-    }
-
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
         // Загрузить кэш
@@ -164,27 +117,22 @@ public partial class ZapretConfigWindow : Window
 
         if (_testMode)
         {
-            // Режим тестирования - сначала показать подтверждение
-            var result = System.Windows.MessageBox.Show(
-                "НАЧАТЬ ПОЛНОЕ ТЕСТИРОВАНИЕ ВСЕХ КОНФИГОВ?\n\n" +
-                "Это займёт 10-15 минут.\n" +
-                "Все текущие коннекты Zapret будут остановлены.\n\n" +
-                "Продолжить?",
-                "Начать полное тестирование",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                StartIndeterminateAnimation();
-                StatusText.Text = "Подготовка к тестированию...";
-                await Task.Delay(500);
-                await StartTestingAsync();
-            }
-            else
-            {
-                Close();
-            }
+            // Режим тестирования - показать сообщение о подтверждении в текущем окне
+            StatusPanel.Visibility = Visibility.Visible;
+            ProgressBarContainer.Visibility = Visibility.Collapsed;
+            
+            StatusIcon.Visibility = Visibility.Visible;
+            StatusIcon.Data = (Geometry)FindResource("WarningIcon");
+            StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08));
+            
+            StatusText.Text = "НАЧАТЬ ПОЛНОЕ ТЕСТИРОВАНИЕ ВСЕХ КОНФИГОВ?\n\n" +
+                             "Это займёт 10-15 минут.\n" +
+                             "Все текущие коннекты Zapret будут остановлены.\n\n" +
+                             "Продолжить?";
+            
+            SecondaryBtn.Content = "Нет, выйти";
+            PrimaryBtn.Content = "Да, начать";
+            PrimaryBtn.Visibility = Visibility.Visible;
         }
         else
         {
@@ -401,6 +349,64 @@ public partial class ZapretConfigWindow : Window
         _isTesting = false;
     }
 
+    private void SecondaryBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (_testMode && _cache == null) // Если режим тестирования и ещё не начали
+        {
+            Close();
+        }
+        else
+        {
+            _isTesting = false;
+            
+            // Убить процесс тестирования
+            if (_testProcess != null && !_testProcess.HasExited)
+            {
+                try
+                {
+                    ForceKillProcessTree(_testProcess.Id);
+                    _testProcess.Dispose();
+                }
+                catch { }
+            }
+            
+            // Убить все winws.exe и powershell.exe процессы
+            try
+            {
+                var processes = Process.GetProcessesByName("winws");
+                foreach (var proc in processes)
+                {
+                    try
+                    {
+                        ForceKillProcessTree(proc.Id);
+                        proc.Dispose();
+                    }
+                    catch { }
+                }
+                
+                // Также убить любые PowerShell процессы
+                var powerShellProcs = Process.GetProcessesByName("powershell");
+                foreach (var proc in powerShellProcs)
+                {
+                    try
+                    {
+                        proc.Kill(true);
+                        proc.Dispose();
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+            
+            Close();
+        }
+    }
+
+    private void PrimaryBtn_Click(object sender, RoutedEventArgs e)
+    {
+        // Обработчик теперь в OnLoaded
+    }
+
     private void StartIndeterminateAnimation()
     {
         var anim = new DoubleAnimation
@@ -513,16 +519,5 @@ public partial class ZapretConfigWindow : Window
         SecondaryBtn.Content = "Закрыть";
         PrimaryBtn.Content = "Повторить тест";
         PrimaryBtn.Visibility = Visibility.Visible;
-    }
-
-    private async void PrimaryBtn_Click(object sender, RoutedEventArgs e)
-    {
-        // Повторить тестирование
-        ConfigListScroll.Visibility = Visibility.Collapsed;
-        StatusPanel.Visibility = Visibility.Visible;
-        ProgressBarContainer.Visibility = Visibility.Visible;
-        StartIndeterminateAnimation();
-        
-        await StartTestingAsync();
     }
 }
