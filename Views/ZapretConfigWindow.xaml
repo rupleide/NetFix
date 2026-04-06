@@ -162,11 +162,11 @@
                     <TextBlock Grid.Column="0" Text="Zapret Config Manager" 
                                    Foreground="#333336" FontSize="11" VerticalAlignment="Center"/>
 
-                    <Button x:Name="PrimaryBtn" Grid.Column="1" Content="Да, начать"
+                    <!-- Да, начать (теперь с градиентом, слева) -->
+                    <Button x:Name="SecondaryBtn" Grid.Column="1" Content="Применить"
                                 Width="140" Height="36" Margin="0,0,10,0"
                                 Foreground="White" BorderThickness="0"
-                                Cursor="Hand" Click="PrimaryBtn_Click"
-                                Visibility="Collapsed">
+                                Cursor="Hand" Click="SecondaryBtn_Click">
                         <Button.Style>
                             <Style TargetType="Button">
                                 <Setter Property="Template">
@@ -196,11 +196,13 @@
                         </Button.Style>
                     </Button>
 
-                    <Button x:Name="SecondaryBtn" Grid.Column="2" Content="Отмена"
-                                Width="110" Height="36"
+                    <!-- Нет, выйти (теперь outline, справа) -->
+                    <Button x:Name="PrimaryBtn" Grid.Column="2" Content="Проверить конфиг"
+                                Width="140" Height="36"
                                 Background="Transparent" Foreground="#666669"
                                 BorderBrush="#2a2a2d" BorderThickness="1"
-                                Cursor="Hand" Click="SecondaryBtn_Click">
+                                Cursor="Hand" Click="PrimaryBtn_Click"
+                                Visibility="Collapsed">
                         <Button.Style>
                             <Style TargetType="Button">
                                 <Setter Property="Template">

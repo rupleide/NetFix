@@ -1468,50 +1468,22 @@
                             
                             <!-- Selected Config Display -->
                             <TextBlock x:Name="SelectedConfigText"
-                                       Text="Выбранный конфиг: не выбран" 
                                        FontFamily="Segoe UI" FontSize="14"
                                        FontWeight="SemiBold" Foreground="#f0f0f0" 
                                        Margin="0,0,0,12"
                                        TextWrapping="Wrap"/>
                             
-                            <!-- Test Configs Button -->
-                            <Button x:Name="TestConfigsBtn"
-                                    Style="{StaticResource FlatBtn}"
-                                    Background="#252525"
-                                    BorderBrush="#333333"
-                                    BorderThickness="1"
+                            <!-- Select Config Button (теперь первая, с акцентным стилем) -->
+                            <Button x:Name="SelectConfigBtn"
+                                    Style="{StaticResource AccentBtn}"
                                     Padding="14,12"
                                     Margin="0,0,0,8"
-                                    HorizontalContentAlignment="Left"
-                                    WindowChrome.IsHitTestVisibleInChrome="True"
-                                    Click="TestConfigsBtn_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource SearchIcon}" 
-                                          Stroke="#3b82f6"
-                                          StrokeThickness="1.5"
-                                          Width="16" Height="16"
-                                          Stretch="Uniform"
-                                          Margin="0,0,10,0"
-                                          VerticalAlignment="Center"/>
-                                    <TextBlock Text="Начать тест" 
-                                               FontFamily="Segoe UI" FontSize="13"
-                                               Foreground="White" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-                            
-                            <!-- Select Config Button -->
-                            <Button x:Name="SelectConfigBtn"
-                                    Style="{StaticResource FlatBtn}"
-                                    Background="#252525"
-                                    BorderBrush="#333333"
-                                    BorderThickness="1"
-                                    Padding="14,12"
                                     HorizontalContentAlignment="Left"
                                     WindowChrome.IsHitTestVisibleInChrome="True"
                                     Click="SelectConfigBtn_Click">
                                 <StackPanel Orientation="Horizontal">
                                     <Path Data="{StaticResource SettingsIcon}" 
-                                          Fill="#3b82f6"
+                                          Fill="White"
                                           Width="16" Height="16"
                                           Stretch="Uniform"
                                           Margin="0,0,10,0"
@@ -1519,6 +1491,27 @@
                                     <TextBlock Text="Выбрать конфиг" 
                                                FontFamily="Segoe UI" FontSize="13"
                                                Foreground="White" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            
+                            <!-- Test Configs Button (теперь вторая, с outline стилем) -->
+                            <Button x:Name="TestConfigsBtn"
+                                    Style="{StaticResource OutlineBtn}"
+                                    Padding="14,12"
+                                    HorizontalContentAlignment="Left"
+                                    WindowChrome.IsHitTestVisibleInChrome="True"
+                                    Click="TestConfigsBtn_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource SearchIcon}" 
+                                          Stroke="#888888"
+                                          StrokeThickness="1.5"
+                                          Width="16" Height="16"
+                                          Stretch="Uniform"
+                                          Margin="0,0,10,0"
+                                          VerticalAlignment="Center"/>
+                                    <TextBlock Text="Начать сканирование" 
+                                               FontFamily="Segoe UI" FontSize="13"
+                                               Foreground="#888888" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
 
