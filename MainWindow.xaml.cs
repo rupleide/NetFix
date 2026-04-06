@@ -166,7 +166,11 @@ public partial class MainWindow : Window
 
     private async void ZapretToggle_Click(object s, RoutedEventArgs e)
     {
+        Console.WriteLine("[MainWindow] ZapretToggle_Click called");
+        
         var st = DiagnosticsEngine.CheckAppStatus();
+        Console.WriteLine($"[MainWindow] ZapretRunning: {st.ZapretRunning}");
+        
         if (st.ZapretRunning)
         {
             foreach (var p in Process.GetProcessesByName("winws"))
