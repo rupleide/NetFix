@@ -490,8 +490,60 @@ public partial class ZapretConfigWindow : Window
 
     private async void PrimaryBtn_Click(object sender, RoutedEventArgs e)
     {
-        // Запустить тестирование
-        await StartTestingAsync();
+        // Если показан список конфигов и есть выбранный конфиг - тестировать только его
+        if (ConfigListScroll.Visibility == Visibility.Visible && _cache != null && !string.IsNullOrEmpty(_cache.CurrentConfig))
+        {
+            await TestCurrentConfigAsync();
+        }
+        else
+        {
+            // Запустить полное тестирование
+            await StartTestingAsync();
+        }
+    }
+
+    private async Task TestCurrentConfigAsync()
+    {
+        if (_cache == null || string.IsNullOrEmpty(_cache.CurrentConfig)) return;
+
+        // Скрыть список конфигов и показать статус
+        ConfigListScroll.Visibility = Visibility.Collapsed;
+        StatusPanel.Visibility = Visibility.Visible;
+        StatusIcon.Visibility = Visibility.Visible;
+        StatusIcon.Data = (Geometry)FindResource("WarningIcon");
+        StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6));
+        StatusText.Text = $"Тестирую конфиг: {_cache.CurrentConfig}";
+        
+        PrimaryBtn.Visibility = Visibility.Collapsed;
+        SecondaryBtn.Content = "Отмена";
+
+        var (isWorking, message) = await ZapretConfigService.TestSingleConfigAsync(
+            _zapretPath,
+            _cache.CurrentConfig,
+            status => Dispatcher.Invoke(() => StatusText.Text = status)
+        );
+
+        // Показать результат
+        if (isWorking)
+        {
+            StatusIcon.Data = (Geometry)FindResource("CheckmarkIcon");
+            StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+            StatusText.Text = $"✅ {message}";
+        }
+        else
+        {
+            StatusIcon.Data = (Geometry)FindResource("WarningIcon");
+            StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
+            StatusText.Text = $"❌ {message}";
+        }
+
+        await Task.Delay(3000);
+        
+        // Вернуться к списку конфигов
+        StatusPanel.Visibility = Visibility.Collapsed;
+        ConfigListScroll.Visibility = Visibility.Visible;
+        PrimaryBtn.Visibility = Visibility.Visible;
+        SecondaryBtn.Content = "Закрыть";
     }
 
     private void StopIndeterminateAnimation()
