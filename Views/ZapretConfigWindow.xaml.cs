@@ -22,6 +22,7 @@ public partial class ZapretConfigWindow : Window
     private readonly bool _testMode;
     private ZapretConfigCache? _cache;
     private bool _isTesting = false;
+    private Process? _testProcess = null;
 
     public ZapretConfigWindow(string zapretPath, bool testMode)
     {
@@ -29,6 +30,23 @@ public partial class ZapretConfigWindow : Window
         _zapretPath = zapretPath;
         _testMode = testMode;
         Loaded += OnLoaded;
+        Closing += OnClosing;
+    }
+
+    private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        // Остановить тестирование при закрытии окна
+        _isTesting = false;
+        
+        if (_testProcess != null && !_testProcess.HasExited)
+        {
+            try
+            {
+                _testProcess.Kill(true); // Убить процесс и все дочерние процессы
+                _testProcess.Dispose();
+            }
+            catch { }
+        }
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -181,25 +199,28 @@ public partial class ZapretConfigWindow : Window
                              "В дальнейшем это сэкономит вам кучу времени и нервов!\n\n" +
                              "Приложение найдёт все идеальные конфиги (12/12 тестов) и выберет лучший.";
             
-            await Task.Delay(2000);
+            await Task.Delay(3000);
             
-            var configs = await ZapretConfigService.TestAllConfigsAsync(
+            var (configs, testProcess) = await ZapretConfigService.TestAllConfigsAsync(
                 _zapretPath,
                 status => Dispatcher.Invoke(() => 
                 {
-                    // Показываем статус с дополнительной информацией
-                    if (status.Contains("Тестирование"))
-                        StatusText.Text = status + "\n\n⏳ Идёт проверка всех конфигов...\nПожалуйста, подождите.";
-                    else
-                        StatusText.Text = status;
+                    // Всегда показываем мотивационный текст
+                    StatusText.Text = "💡 Советуем вам подождать 10 минуток на полное сканирование.\n" +
+                                     "В дальнейшем это сэкономит вам кучу времени и нервов!\n\n" +
+                                     status;
                 }),
                 (current, total) => Dispatcher.Invoke(() => 
                 {
-                    StatusText.Text = $"Тестирование конфигов: {current}/{total}\n\n" +
+                    StatusText.Text = "💡 Советуем вам подождать 10 минуток на полное сканирование.\n" +
+                                     "В дальнейшем это сэкономит вам кучу времени и нервов!\n\n" +
+                                     $"Тестирование конфигов: {current}/{total}\n" +
                                      $"⏳ Проверяем каждый конфиг на 12 различных сервисов.\n" +
                                      $"Прогресс: {(current * 100 / total)}%";
                 })
             );
+            
+            _testProcess = testProcess;
 
             if (!_isTesting) return; // Отменено
 
