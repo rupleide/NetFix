@@ -1466,6 +1466,14 @@
                                        FontWeight="SemiBold" Foreground="#888888" 
                                        Margin="0,16,0,8"/>
                             
+                            <!-- Selected Config Display -->
+                            <TextBlock x:Name="SelectedConfigText"
+                                       Text="Выбранный конфиг: не выбран" 
+                                       FontFamily="Segoe UI" FontSize="14"
+                                       FontWeight="SemiBold" Foreground="#f0f0f0" 
+                                       Margin="0,0,0,12"
+                                       TextWrapping="Wrap"/>
+                            
                             <!-- Test Configs Button -->
                             <Button x:Name="TestConfigsBtn"
                                     Style="{StaticResource FlatBtn}"

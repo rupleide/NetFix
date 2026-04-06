@@ -67,6 +67,7 @@ public partial class MainWindow : Window
             StartActiveAppsMonitor();
         }
         LoadFaqItems();
+        UpdateSelectedConfigDisplay();
     }
 
     private void OnSizeChanged(object sender, SizeChangedEventArgs e)
@@ -239,6 +240,22 @@ public partial class MainWindow : Window
             var configWindow = new Views.ZapretConfigWindow(_settings.ZapretPath, testMode: false);
             configWindow.Owner = this;
             configWindow.ShowDialog();
+            
+            // Обновить отображение выбранного конфига после закрытия окна
+            UpdateSelectedConfigDisplay();
+        }
+    }
+
+    private void UpdateSelectedConfigDisplay()
+    {
+        var cache = ZapretConfigService.LoadCache();
+        if (cache != null && !string.IsNullOrEmpty(cache.CurrentConfig))
+        {
+            SelectedConfigText.Text = $"Выбранный конфиг: {cache.CurrentConfig}";
+        }
+        else
+        {
+            SelectedConfigText.Text = "Выбранный конфиг: не выбран";
         }
     }
 
