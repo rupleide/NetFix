@@ -308,11 +308,16 @@ public class ZapretConfigService
 
             var line = e.Data;
             
+            // Отладочный вывод
+            System.Diagnostics.Debug.WriteLine($"[TEST OUTPUT] {line}");
+            
             // Парсинг строки конфига: [2/19] general (ALT2).bat
             var configMatch = ConfigRegex.Match(line);
             if (configMatch.Success)
             {
                 var configNameFromTest = configMatch.Groups[3].Value;
+                
+                System.Diagnostics.Debug.WriteLine($"[CONFIG MATCH] Found: {configNameFromTest}, Looking for: {configName}");
                 
                 // Если это наш конфиг
                 if (configNameFromTest == configName)
@@ -331,6 +336,7 @@ public class ZapretConfigService
                 {
                     // Если мы уже нашли наш конфиг и теперь видим другой - значит тестирование завершено
                     configTestComplete = true;
+                    System.Diagnostics.Debug.WriteLine($"[CONFIG COMPLETE] Test complete for {configName}");
                 }
                 
                 return;
@@ -407,6 +413,14 @@ public class ZapretConfigService
                 .ToList();
             
             int configIndex = configFiles.IndexOf(configName) + 1; // +1 потому что нумерация с 1
+            
+            System.Diagnostics.Debug.WriteLine($"[CONFIG SEARCH] Looking for: {configName}");
+            System.Diagnostics.Debug.WriteLine($"[CONFIG SEARCH] Found at index: {configIndex - 1}, sending: {configIndex}");
+            System.Diagnostics.Debug.WriteLine($"[CONFIG LIST] Total configs: {configFiles.Count}");
+            for (int i = 0; i < configFiles.Count; i++)
+            {
+                System.Diagnostics.Debug.WriteLine($"[CONFIG LIST] [{i + 1}] {configFiles[i]}");
+            }
             
             if (configIndex > 0)
             {
