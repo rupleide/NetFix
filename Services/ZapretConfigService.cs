@@ -101,6 +101,9 @@ public class ZapretConfigService
 
             var line = e.Data;
             
+            // Логирование для отладки
+            System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] {line}");
+            
             // Парсинг строки конфига: [2/19] general (ALT2).bat
             var configMatch = ConfigRegex.Match(line);
             if (configMatch.Success)
@@ -188,6 +191,14 @@ public class ZapretConfigService
             currentConfig.IsValid = currentConfig.ErrorCount == 0 && currentConfig.SuccessCount > 0;
             if (currentConfig.IsValid)
                 configs.Add(currentConfig);
+            
+            System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Last config: {currentConfig.Name}, Valid: {currentConfig.IsValid}, Success: {currentConfig.SuccessCount}, Errors: {currentConfig.ErrorCount}");
+        }
+
+        System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Total configs found: {configs.Count}");
+        foreach (var cfg in configs)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Config: {cfg.Name}, Ping: {cfg.AveragePing}, Success: {cfg.SuccessCount}");
         }
 
         // Отсортировать по среднему пингу (лучший = меньший пинг)
