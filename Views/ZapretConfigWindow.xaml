@@ -49,7 +49,7 @@
 
     <!-- Основной фон -->
     <Border Background="#161618" CornerRadius="14" BorderBrush="#2a2a2d" BorderThickness="1" ClipToBounds="True">
-        <Grid Margin="1,-1,-1,1">
+        <Grid Margin="1,1,-1,-1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" MinHeight="71"/>
                 <!-- Header -->
