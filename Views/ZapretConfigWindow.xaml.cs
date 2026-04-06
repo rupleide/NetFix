@@ -437,11 +437,12 @@ public partial class ZapretConfigWindow : Window
         _isTesting = false;
     }
 
-    private void SecondaryBtn_Click(object sender, RoutedEventArgs e)
+    private async void SecondaryBtn_Click(object sender, RoutedEventArgs e)
     {
         if (_testMode && _cache == null) // Если режим тестирования и ещё не начали
         {
-            Close();
+            await StartTestingAsync();
+            return;
         }
         else
         {
@@ -492,6 +493,12 @@ public partial class ZapretConfigWindow : Window
 
     private async void PrimaryBtn_Click(object sender, RoutedEventArgs e)
     {
+        if (_testMode && _cache == null) // Если режим тестирования и ещё не начали
+        {
+            Close();
+            return;
+        }
+
         // Если показан список конфигов и есть выбранный конфиг - тестировать только его
         if (ConfigListScroll.Visibility == Visibility.Visible && _cache != null && !string.IsNullOrEmpty(_cache.CurrentConfig))
         {
