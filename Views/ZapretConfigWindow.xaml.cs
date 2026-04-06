@@ -125,12 +125,16 @@ public partial class ZapretConfigWindow : Window
             StatusIcon.Data = (Geometry)FindResource("WarningIcon");
             StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08));
             
-            StatusText.Text = "Начать полное тестирование всех конфигов?\n\n" +
-                             "Тестирование нужно, чтобы в следующий раз вам не тыкаться по сто раз по каждому конфигу и гадать какой из них заработает.\n" +
-                             "Приложение само запомнит самые лучшие конфиги и в следующий раз, если конфиг перестанет работать вы сможете быстро переключиться на другой!\n\n" +
-                             "На самом деле это очень полезная функция, так что советую пройти один раз тест и подождать минуток 10,\n" +
-                             "и в следующий раз вы сэкономите себе кучу времени!\n\n" +
-                             "Начать?";
+            StatusText.Text = "Перед запуском - важная вещь!\n\n" +
+                             "Приложение может само протестировать все конфиги и запомнить лучшие. " +
+                             "Займёт минут 10, зато потом не придётся вручную перебирать их когда что-то перестаёт работать.\n\n" +
+                             "А ломается, кстати, по-разному. Иногда конфиг вроде работает, Discord открылся, всё хорошо. " +
+                             "Но стоит зайти на какой-нибудь сайт, и он либо вообще не загружается, " +
+                             "либо открывается сломанным, без стилей, всё съехало, кнопки не работают. " +
+                             "Это не браузер виноват, просто конфиг обрабатывает трафик не так, как нужно, и часть сайтов ломается.\n\n" +
+                             "Именно поэтому важно иметь несколько проверенных конфигов под рукой, " +
+                             "если один перестал работать правильно, переключились на другой и всё.\n\n" +
+                             "Пройдите тест один раз, и приложение само разберётся что к чему. Запускаем?";
             
             SecondaryBtn.Content = "Нет, выйти";
             PrimaryBtn.Content = "Да, начать";
@@ -257,27 +261,25 @@ public partial class ZapretConfigWindow : Window
             
             await Task.Delay(3000);
             
-            // Показать лог и скрыть StatusPanel
+            // Показать прогресс-бар и скрыть StatusPanel
             StatusPanel.Visibility = Visibility.Collapsed;
-            LogContainer.Visibility = Visibility.Visible;
-            LogTextBox.Text = "💡 Советуем вам подождать 10 минуток на полное сканирование.\n" +
-                             "В дальнейшем это сэкономит вам кучу времени и нервов!\n\n" +
-                             "Запуск тестирования...\n\n";
+            ProgressBarContainer.Visibility = Visibility.Visible;
+            ProgressText.Visibility = Visibility.Visible;
+            ProgressText.Text = "Тестирование конфигов: 0%";
             
             var (configs, testProcess) = await ZapretConfigService.TestAllConfigsAsync(
                 _zapretPath,
                 status => Dispatcher.Invoke(() => 
                 {
-                    // Добавляем в лог
-                    LogTextBox.AppendText(status + "\n");
-                    LogTextBox.ScrollToEnd();
+                    // Игнорируем статусы, показываем только прогресс
                 }),
                 (current, total) => Dispatcher.Invoke(() => 
                 {
-                    // Обновляем прогресс в логе
-                    var progressLine = $"[{DateTime.Now:HH:mm:ss}] Прогресс: {current}/{total} ({(current * 100 / total)}%)\n";
-                    LogTextBox.AppendText(progressLine);
-                    LogTextBox.ScrollToEnd();
+                    // Обновляем прогресс-бар
+                    var percentage = (current * 100 / total);
+                    var progressWidth = (ProgressBarContainer.ActualWidth * current / total);
+                    ProgressBar.Width = progressWidth;
+                    ProgressText.Text = $"Тестирование конфигов: {current}/{total} ({percentage}%)";
                 })
             );
             
@@ -296,8 +298,9 @@ public partial class ZapretConfigWindow : Window
                 };
                 ZapretConfigService.SaveCache(_cache);
 
-                // Скрыть лог и показать поздравление
-                LogContainer.Visibility = Visibility.Collapsed;
+                // Скрыть прогресс-бар и показать поздравление
+                ProgressBarContainer.Visibility = Visibility.Collapsed;
+                ProgressText.Visibility = Visibility.Collapsed;
                 StopIndeterminateAnimation();
                 StatusPanel.Visibility = Visibility.Visible;
                 StatusIcon.Visibility = Visibility.Visible;
@@ -317,8 +320,9 @@ public partial class ZapretConfigWindow : Window
             }
             else
             {
-                // Скрыть лог и показать ошибку
-                LogContainer.Visibility = Visibility.Collapsed;
+                // Скрыть прогресс-бар и показать ошибку
+                ProgressBarContainer.Visibility = Visibility.Collapsed;
+                ProgressText.Visibility = Visibility.Collapsed;
                 StatusPanel.Visibility = Visibility.Visible;
                 StatusText.Text = "Не найдено рабочих конфигов с 12/12 успешными тестами.\n\n" +
                                  "Возможно, ваша сеть имеет особые ограничения. Попробуйте повторить тест позже.";
@@ -334,8 +338,9 @@ public partial class ZapretConfigWindow : Window
         }
         catch (Exception ex)
         {
-            // Скрыть лог и показать ошибку
-            LogContainer.Visibility = Visibility.Collapsed;
+            // Скрыть прогресс-бар и показать ошибку
+            ProgressBarContainer.Visibility = Visibility.Collapsed;
+            ProgressText.Visibility = Visibility.Collapsed;
             StatusPanel.Visibility = Visibility.Visible;
             StatusText.Text = $"Ошибка: {ex.Message}";
             StopIndeterminateAnimation();
@@ -410,21 +415,8 @@ public partial class ZapretConfigWindow : Window
         await StartTestingAsync();
     }
 
-    private void StartIndeterminateAnimation()
-    {
-        var anim = new DoubleAnimation
-        {
-            From = -80,
-            To = ProgressBarContainer.ActualWidth,
-            Duration = TimeSpan.FromSeconds(1.5),
-            RepeatBehavior = RepeatBehavior.Forever
-        };
-        BarTranslate.BeginAnimation(TranslateTransform.XProperty, anim);
-    }
-
     private void StopIndeterminateAnimation()
     {
-        BarTranslate.BeginAnimation(TranslateTransform.XProperty, null);
         ProgressBarContainer.Visibility = Visibility.Collapsed;
     }
 
