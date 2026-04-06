@@ -559,17 +559,16 @@
 
                         <!-- Window controls -->
                         <Button Content="−" Style="{StaticResource FlatBtnCentered}"
-                                Width="34" Padding="0" FontSize="14"
+                                Width="46" Height="32" Padding="0" FontSize="16"
                                 WindowChrome.IsHitTestVisibleInChrome="True"
-                                Click="MinBtn_Click" Margin="4,0,0,0"/>
+                                Click="MinBtn_Click"/>
                         <Button Style="{StaticResource CloseBtn}"
-                                Width="34" Padding="0" Margin="-6,0,0,0"
+                                Width="46" Height="32" Padding="0"
                                 WindowChrome.IsHitTestVisibleInChrome="True"
                                 Click="CloseBtn_Click">
                             <Path Data="{StaticResource CloseIcon}" 
                                   Stroke="#888888"
                                   StrokeThickness="2"
-                                  
                                   Width="12" Height="12"
                                   Stretch="Uniform"/>
                         </Button>
