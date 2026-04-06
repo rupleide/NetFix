@@ -50,19 +50,20 @@ public class ZapretConfigService
         catch { }
     }
 
-    public static async Task<List<ZapretConfig>> TestAllConfigsAsync(
+    public static async Task<(List<ZapretConfig> configs, Process? process)> TestAllConfigsAsync(
         string zapretPath,
         Action<string>? onProgress = null,
         Action<int, int>? onConfigTested = null)
     {
         var configs = new List<ZapretConfig>();
+        Process? process = null;
         
         // Получить директорию Zapret
         var zapretDir = Path.GetDirectoryName(zapretPath);
         if (string.IsNullOrEmpty(zapretDir) || !Directory.Exists(zapretDir))
         {
             onProgress?.Invoke("Ошибка: директория Zapret не найдена");
-            return configs;
+            return (configs, null);
         }
 
         // Найти PowerShell скрипт для тестирования
@@ -70,7 +71,7 @@ public class ZapretConfigService
         if (!File.Exists(testScript))
         {
             onProgress?.Invoke("Ошибка: скрипт test zapret.ps1 не найден");
-            return configs;
+            return (configs, null);
         }
 
         onProgress?.Invoke("Запуск тестирования всех конфигов...");
@@ -89,7 +90,7 @@ public class ZapretConfigService
             StandardOutputEncoding = System.Text.Encoding.UTF8
         };
 
-        using var process = new Process { StartInfo = psi };
+        process = new Process { StartInfo = psi };
         
         ZapretConfig? currentConfig = null;
         int totalConfigs = 0;
@@ -214,7 +215,7 @@ public class ZapretConfigService
 
         onProgress?.Invoke($"Тестирование завершено. Найдено {configs.Count} рабочих конфигов");
 
-        return configs;
+        return (configs, process);
     }
 
     public static bool ApplyConfig(string zapretPath, string configName)
