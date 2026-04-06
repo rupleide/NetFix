@@ -74,7 +74,9 @@ public partial class ZapretConfigWindow : Window
         SecondaryBtn.Content = "Отмена";
         PrimaryBtn.Visibility = Visibility.Collapsed;
 
-        // Остановить Zapret если запущен
+        // Остановить и удалить сервис Zapret если установлен
+        StatusText.Text = "Подготовка к тестированию...";
+        
         var st = DiagnosticsEngine.CheckAppStatus();
         if (st.ZapretRunning)
         {
@@ -85,6 +87,61 @@ public partial class ZapretConfigWindow : Window
                 try { p.Kill(); } catch { }
 
             await Task.Delay(1000);
+        }
+
+        // Удалить сервис Zapret если установлен
+        try
+        {
+            StatusText.Text = "Удаление сервиса Zapret...";
+            
+            var psi = new ProcessStartInfo
+            {
+                FileName = "sc.exe",
+                Arguments = "query zapret",
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            
+            using var checkProcess = Process.Start(psi);
+            if (checkProcess != null)
+            {
+                await checkProcess.WaitForExitAsync();
+                
+                // Если сервис существует (код возврата 0), удалить его
+                if (checkProcess.ExitCode == 0)
+                {
+                    var stopPsi = new ProcessStartInfo
+                    {
+                        FileName = "net.exe",
+                        Arguments = "stop zapret",
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+                    using var stopProcess = Process.Start(stopPsi);
+                    if (stopProcess != null)
+                        await stopProcess.WaitForExitAsync();
+                    
+                    await Task.Delay(500);
+                    
+                    var deletePsi = new ProcessStartInfo
+                    {
+                        FileName = "sc.exe",
+                        Arguments = "delete zapret",
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+                    using var deleteProcess = Process.Start(deletePsi);
+                    if (deleteProcess != null)
+                        await deleteProcess.WaitForExitAsync();
+                    
+                    await Task.Delay(500);
+                }
+            }
+        }
+        catch
+        {
+            // Игнорируем ошибки удаления сервиса
         }
 
         try
