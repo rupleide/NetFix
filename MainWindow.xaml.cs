@@ -279,7 +279,10 @@ public partial class MainWindow : Window
             // Обновить отображение выбранного конфига после закрытия окна
             UpdateSelectedConfigDisplay();
             
-            // Обновить статус приложений сразу
+            // Подождать немного чтобы процесс winws.exe появился в списке процессов
+            await Task.Delay(500);
+            
+            // Обновить статус приложений
             UpdateActiveApps();
         }
     }
