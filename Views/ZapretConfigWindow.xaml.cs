@@ -164,11 +164,27 @@ public partial class ZapretConfigWindow : Window
 
         if (_testMode)
         {
-            // Режим тестирования - сразу начать тест
-            StartIndeterminateAnimation();
-            StatusText.Text = "Подготовка к тестированию...";
-            await Task.Delay(500);
-            await StartTestingAsync();
+            // Режим тестирования - сначала показать подтверждение
+            var result = System.Windows.MessageBox.Show(
+                "НАЧАТЬ ПОЛНОЕ ТЕСТИРОВАНИЕ ВСЕХ КОНФИГОВ?\n\n" +
+                "Это займёт 10-15 минут.\n" +
+                "Все текущие коннекты Zapret будут остановлены.\n\n" +
+                "Продолжить?",
+                "Начать полное тестирование",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                StartIndeterminateAnimation();
+                StatusText.Text = "Подготовка к тестированию...";
+                await Task.Delay(500);
+                await StartTestingAsync();
+            }
+            else
+            {
+                Close();
+            }
         }
         else
         {
