@@ -11,13 +11,13 @@
     
     <Window.Resources>
         <!-- Checkmark Icon -->
-        <PathGeometry x:Key="CheckmarkIcon">M4.63 15.638a1.028 1.028 0 0 1-.79-.37L.36 11.09a1.03 1.03 0 1 1 1.58-1.316l2.535 3.043L9.958 3.32a1.029 1.029 0 0 1 1.783 1.03L5.52 15.122a1.03 1.03 0 0 1-.803.511.89.89 0 0 1-.088.004z</PathGeometry>
+        <PathGeometry x:Key="CheckmarkIcon">M2,12 L8,18 L22,4</PathGeometry>
         
         <!-- Close/X Icon -->
-        <PathGeometry x:Key="CloseIcon">M6,6 L18,18 M18,6 L6,18</PathGeometry>
+        <PathGeometry x:Key="CloseIcon">M4,4 L20,20 M20,4 L4,20</PathGeometry>
         
         <!-- Rocket Icon -->
-        <PathGeometry x:Key="RocketIcon">m15 14 2.045-1.533C19.469 10.648 20.542 6.98 20 4c-2.981-.542-6.649.531-8.467 2.955L10 9m5 5-3.5 2.5-4-4L10 9m5 5v2.667a4 4 0 0 1-.8 2.4l-.7.933-1-1M10 9H7.333a4 4 0 0 0-2.4.8L4 10.5l1 1M8.5 18 5 19l1.166-3.5m9.334-6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z</PathGeometry>
+        <PathGeometry x:Key="RocketIcon">M15 14 L17.045 12.467C19.469 10.648 20.542 6.98 20 4C17.019 3.458 13.351 4.531 11.533 6.955L10 9M15 14L11.5 16.5L7.5 12.5L10 9M15 14V16.667C15 17.467 14.733 18.267 14.2 19.067L13.5 20L12.5 19M10 9H7.333C6.533 9 5.733 9.267 4.933 9.8L4 10.5L5 11.5M8.5 18L5 19L6.166 15.5M15.5 9C16.328 9 17 8.328 17 7.5C17 6.672 16.328 6 15.5 6C14.672 6 14 6.672 14 7.5C14 8.328 14.672 9 15.5 9Z</PathGeometry>
         
         <!-- Warning Icon -->
         <PathGeometry x:Key="WarningIcon">M12,2 L22,20 L2,20 Z M12,9 L12,13 M12,15 L12,17</PathGeometry>
@@ -35,7 +35,8 @@
 
             
             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,20">
-                <TextBlock Text="⚡" FontSize="20" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                <Path Width="18" Height="18" Stretch="Uniform" Margin="0,0,10,0" VerticalAlignment="Center"
+                      Data="M13,2 L3,14 L10,14 L9,22 L19,10 L12,10 Z" Fill="#888888"/>
                 <TextBlock Text="Обновление NetFix" FontSize="16" FontWeight="SemiBold"
                            Foreground="#f0f0f0" VerticalAlignment="Center"/>
             </StackPanel>
