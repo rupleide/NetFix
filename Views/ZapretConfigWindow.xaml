@@ -78,7 +78,7 @@
                 </Grid>
 
                 <!-- Разделитель -->
-                <Border Grid.Row="0" Height="1" Background="#22222a" Margin="28,60,28,0" VerticalAlignment="Bottom"/>
+                <Border Grid.Row="0" Height="1" Background="#22222a" Margin="28,50,28,0" VerticalAlignment="Bottom"/>
 
                 <!-- Status Panel -->
                 <StackPanel x:Name="StatusPanel" Grid.Row="1" Orientation="Horizontal" Margin="28,20,28,0">
