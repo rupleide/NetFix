@@ -326,7 +326,15 @@ public partial class MainWindow : Window
         if (zapretRunning && cache != null && !string.IsNullOrEmpty(cache.CurrentConfig))
         {
             ActiveConfigText.Visibility = Visibility.Visible;
-            ActiveConfigName.Text = cache.CurrentConfig;
+            
+            // Обрезать длинное название конфига
+            string configName = cache.CurrentConfig;
+            if (configName.Length > 40)
+            {
+                configName = configName.Substring(0, 37) + "...";
+            }
+            
+            ActiveConfigName.Text = configName;
         }
         else
         {
