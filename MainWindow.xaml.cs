@@ -251,11 +251,15 @@ public partial class MainWindow : Window
         var cache = ZapretConfigService.LoadCache();
         if (cache != null && !string.IsNullOrEmpty(cache.CurrentConfig))
         {
-            SelectedConfigText.Text = $"Выбранный конфиг: {cache.CurrentConfig}";
+            // Создаем текст с зеленым цветом для названия конфига
+            SelectedConfigText.Inlines.Clear();
+            SelectedConfigText.Inlines.Add(new Run("Выбранный конфиг: ") { Foreground = new SolidColorBrush(Color.FromRgb(0xf0, 0xf0, 0xf0)) });
+            SelectedConfigText.Inlines.Add(new Run(cache.CurrentConfig) { Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)) });
         }
         else
         {
-            SelectedConfigText.Text = "Выбранный конфиг: не выбран";
+            SelectedConfigText.Inlines.Clear();
+            SelectedConfigText.Inlines.Add(new Run("Выбранный конфиг: не выбран") { Foreground = new SolidColorBrush(Color.FromRgb(0xf0, 0xf0, 0xf0)) });
         }
     }
 

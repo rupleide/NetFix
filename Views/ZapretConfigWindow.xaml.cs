@@ -166,8 +166,8 @@ public partial class ZapretConfigWindow : Window
                              "если один перестал работать правильно, переключились на другой и всё.\n\n" +
                              "Пройдите тест один раз, и приложение само разберётся что к чему. Запускаем?";
             
-            SecondaryBtn.Content = "Нет, выйти";
-            PrimaryBtn.Content = "Да, начать";
+            SecondaryBtn.Content = "Да, начать";
+            PrimaryBtn.Content = "Нет, выйти";
             PrimaryBtn.Visibility = Visibility.Visible;
         }
         else
