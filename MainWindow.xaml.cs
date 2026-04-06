@@ -128,17 +128,21 @@ public partial class MainWindow : Window
     private void ServicesBtn_Click(object s, RoutedEventArgs e)
     {
         ServicesLayer.Visibility = Visibility.Visible;
-        var anim = new DoubleAnimation(300, 0, TimeSpan.FromMilliseconds(280));
+        var anim = new DoubleAnimation(50, 0, TimeSpan.FromMilliseconds(280));
         anim.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut };
+        var opacityAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(280));
         ServicesTrans.BeginAnimation(TranslateTransform.XProperty, anim);
+        ServicesPanel.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
     }
 
     private void CloseServicesPanel()
     {
-        var anim = new DoubleAnimation(0, 300, TimeSpan.FromMilliseconds(220));
+        var anim = new DoubleAnimation(0, 50, TimeSpan.FromMilliseconds(220));
         anim.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn };
+        var opacityAnim = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(220));
         anim.Completed += (_, _) => ServicesLayer.Visibility = Visibility.Collapsed;
         ServicesTrans.BeginAnimation(TranslateTransform.XProperty, anim);
+        ServicesPanel.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
     }
 
     private void ServicesCloseBtn_Click(object s, RoutedEventArgs e) => CloseServicesPanel();
@@ -1676,8 +1680,8 @@ public partial class MainWindow : Window
 
     private void AnimateSettings(bool open)
     {
-        double fromX = open ? 370 : 0;
-        double toX   = open ? 0   : 370;
+        double fromX = open ? 50 : 0;
+        double toX   = open ? 0   : 50;
 
         var slideAnim = new DoubleAnimation(fromX, toX, TimeSpan.FromMilliseconds(220))
         {
@@ -1686,6 +1690,9 @@ public partial class MainWindow : Window
 
         var fadeAnim = new DoubleAnimation(open ? 0 : 0.5, open ? 0.5 : 0,
             TimeSpan.FromMilliseconds(200));
+        
+        var opacityAnim = new DoubleAnimation(open ? 0 : 1, open ? 1 : 0,
+            TimeSpan.FromMilliseconds(220));
 
         if (!open)
         {
@@ -1698,6 +1705,7 @@ public partial class MainWindow : Window
 
         SettingsTrans.BeginAnimation(TranslateTransform.XProperty, slideAnim);
         SettingsBackdrop.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
+        SettingsPanel.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
     }
 
     // ── Settings load/save ───────────────────────────────────────────────────
@@ -1847,18 +1855,22 @@ public partial class MainWindow : Window
     // ── Zapret Wizard ────────────────────────────────────────────────────────
     private void CloseWizard()
     {
-        var slideAnim = new DoubleAnimation(0, 370, TimeSpan.FromMilliseconds(220)) 
+        var slideAnim = new DoubleAnimation(0, 50, TimeSpan.FromMilliseconds(220)) 
             { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn } };
+        var opacityAnim = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(220));
         slideAnim.Completed += (_, _) => WizardLayer.Visibility = Visibility.Collapsed;
         WizardTrans.BeginAnimation(TranslateTransform.XProperty, slideAnim);
+        WizardLayer.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
     }
 
     private void ShowZapretWizard()
     {
         WizardLayer.Visibility = Visibility.Visible;
-        var slideAnim = new DoubleAnimation(370, 0, TimeSpan.FromMilliseconds(220)) 
+        var slideAnim = new DoubleAnimation(50, 0, TimeSpan.FromMilliseconds(220)) 
             { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+        var opacityAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(220));
         WizardTrans.BeginAnimation(TranslateTransform.XProperty, slideAnim);
+        WizardLayer.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
 
         try {
             Process.Start(new ProcessStartInfo(_settings.ZapretPath) {
@@ -1945,8 +1957,10 @@ public partial class MainWindow : Window
     private void ShowTgProxyWizard()
     {
         WizardLayer.Visibility = Visibility.Visible;
-        var slideAnim = new DoubleAnimation(370, 0, TimeSpan.FromMilliseconds(220)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+        var slideAnim = new DoubleAnimation(50, 0, TimeSpan.FromMilliseconds(220)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+        var opacityAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(220));
         WizardTrans.BeginAnimation(TranslateTransform.XProperty, slideAnim);
+        WizardLayer.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
         
         // Принудительный запуск при открытии мастера
         StartTgProxyProcess();
