@@ -1004,7 +1004,7 @@
 
                 <!-- Slide-in panel -->
                 <Border x:Name="SettingsPanel" Width="370" HorizontalAlignment="Right"
-                        Background="#1e1e1e" CornerRadius="12,0,0,12" BorderBrush="#333333" BorderThickness="1,0,0,0">
+                        Background="#1e1e1e" CornerRadius="12" BorderBrush="#333333" BorderThickness="1,0,0,0">
                     <Border.RenderTransform>
                         <TranslateTransform x:Name="SettingsTrans" X="370"/>
                     </Border.RenderTransform>
@@ -1282,7 +1282,7 @@
                   Visibility="Collapsed" Panel.ZIndex="15">
                 <Rectangle x:Name="WizardBackdrop" Fill="Black" Opacity="0.6"/>
                 <Border Width="370" HorizontalAlignment="Right"
-                        Background="#1e1e1e" CornerRadius="12,0,0,12" BorderBrush="#333333" BorderThickness="1,0,0,0">
+                        Background="#1e1e1e" CornerRadius="12" BorderBrush="#333333" BorderThickness="1,0,0,0">
                     <Border.RenderTransform>
                         <TranslateTransform x:Name="WizardTrans" X="370"/>
                     </Border.RenderTransform>
@@ -1331,7 +1331,7 @@
                            MouseLeftButtonDown="ServicesBackdrop_Click"/>
                 <Border x:Name="ServicesPanel" Width="300"
                         HorizontalAlignment="Right"
-                        Background="#1e1e1e" CornerRadius="12,0,0,12"
+                        Background="#1e1e1e" CornerRadius="12"
                         BorderBrush="#333333" BorderThickness="1,0,0,0">
                     <Border.RenderTransform>
                         <TranslateTransform x:Name="ServicesTrans" X="300"/>
