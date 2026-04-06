@@ -167,10 +167,18 @@ public class ZapretConfigService
         process.BeginOutputReadLine();
 
         // Отправить "1\n1\n" для выбора "standard tests" -> "all configs"
-        await Task.Delay(1000);
-        await process.StandardInput.WriteLineAsync("1");
-        await Task.Delay(500);
-        await process.StandardInput.WriteLineAsync("1");
+        try
+        {
+            await Task.Delay(1000);
+            await process.StandardInput.WriteLineAsync("1");
+            await Task.Delay(500);
+            await process.StandardInput.WriteLineAsync("1");
+            process.StandardInput.Close();
+        }
+        catch (IOException)
+        {
+            // Игнорируем ошибки записи в stdin
+        }
 
         await process.WaitForExitAsync();
 
