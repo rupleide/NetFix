@@ -620,7 +620,7 @@ public partial class MainWindow : Window
         
         var linkBtnContent = new StackPanel { Orientation = Orientation.Horizontal };
         var linkIcon = new System.Windows.Shapes.Path {
-            Data = (PathGeometry)FindResource("ExternalLinkIcon"),
+            Data = (Geometry)FindResource("ExternalLinkIcon"),
             Fill = Brushes.White,
             Width = 14,
             Height = 14,
