@@ -53,8 +53,8 @@ public partial class ZapretConfigWindow : Window
         var run = new Run(text + "\n")
         {
             Foreground = new SolidColorBrush(color),
-            FontSize = isHeader ? 14 : 12,  // Крупнее для заголовков
-            FontWeight = isHeader ? FontWeights.Bold : FontWeights.Normal
+            FontSize = isHeader ? 16 : 12,  // Ещё крупнее для заголовков (было 14)
+            FontWeight = isHeader ? FontWeights.ExtraBold : FontWeights.Normal  // ExtraBold вместо Bold
         };
         paragraph.Inlines.Add(run);
         
