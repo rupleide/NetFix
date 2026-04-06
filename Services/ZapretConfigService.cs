@@ -150,7 +150,8 @@ public class ZapretConfigService
                     Tests = new Dictionary<string, ServiceTestResult>()
                 };
 
-                onProgress?.Invoke($"🔄 Тестирую конфиг [{current}/{totalConfigs}]: {configName}");
+                onProgress?.Invoke(""); // Пустая строка для отступа перед новым конфигом
+                onProgress?.Invoke($"[HEADER]🔄 Тестирую конфиг [{current}/{totalConfigs}]: {configName}[/HEADER]");
                 return;
             }
 
