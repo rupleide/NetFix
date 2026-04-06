@@ -468,7 +468,7 @@ public static class DiagnosticsEngine
 
         if (r.UdpResult?.Blocked == true)
             recs.Add(bypass
-                ? $"🎮  Discord UDP: заблокирован, НО {BypassList()} активен, Discord работает! 🎉"
+                ? $"🎮  Discord UDP: заблокирован, НО {BypassList()} активен, Discord работает! ✓"
                 : "🎮  Discord UDP заблокирован, голосовые каналы пострадают\n" +
                   "    1) Zapret: github.com/Flowseal/zapret-discord-youtube\n" +
                   "    2) Discord → Параметры → Голос → TCP (+ ~150ms lag)\n" +

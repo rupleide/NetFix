@@ -612,12 +612,28 @@ public partial class MainWindow : Window
         });
 
         var linkBtn = new Button {
-            Content = "🔗 Открыть Telegram-канал @NetFixRuBi",
             Style = (Style)FindResource("AccentBtn"),
             Background = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
             HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
             Margin = new Thickness(0, 0, 0, 0)
         };
+        
+        var linkBtnContent = new StackPanel { Orientation = Orientation.Horizontal };
+        var linkIcon = new System.Windows.Shapes.Path {
+            Data = (PathGeometry)FindResource("ExternalLinkIcon"),
+            Fill = Brushes.White,
+            Width = 14,
+            Height = 14,
+            Stretch = Stretch.Uniform,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 8, 0)
+        };
+        linkBtnContent.Children.Add(linkIcon);
+        linkBtnContent.Children.Add(new TextBlock { 
+            Text = "Открыть Telegram-канал @NetFixRuBi",
+            VerticalAlignment = VerticalAlignment.Center
+        });
+        linkBtn.Content = linkBtnContent;
         linkBtn.Click += (s, e) => {
             try {
                 // Пробуем открыть напрямую в Telegram
