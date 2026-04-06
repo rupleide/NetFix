@@ -568,10 +568,12 @@
                         </Button>
 
                         <!-- Window controls -->
-                        <Button Content="−" Style="{StaticResource FlatBtnCentered}"
-                                Width="34" Height="18.62" MinWidth="34" MinHeight="18.62" Padding="0" FontSize="14"
+                        <Button Style="{StaticResource FlatBtnCentered}"
+                                Width="34" Height="18.62" MinWidth="34" MinHeight="18.62" Padding="0,0,0,1" FontSize="14"
                                 WindowChrome.IsHitTestVisibleInChrome="True"
-                                Click="MinBtn_Click" Margin="4,0,0,0"/>
+                                Click="MinBtn_Click" Margin="4,0,0,0">
+                            <TextBlock Text="−" Margin="0,-1,0,0"/>
+                        </Button>
                         <Button Style="{StaticResource CloseBtn}"
                                 Width="34" Height="18.62" Padding="0" Margin="-6,0,0,0"
                                 WindowChrome.IsHitTestVisibleInChrome="True"
