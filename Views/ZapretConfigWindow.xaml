@@ -47,14 +47,8 @@
         </Style>
     </Window.Resources>
 
-    <!-- Внешняя тень -->
-    <Border CornerRadius="14">
-        <Border.Effect>
-            <DropShadowEffect Color="#000000" BlurRadius="30" ShadowDepth="0" Opacity="0.6"/>
-        </Border.Effect>
-
-        <!-- Основной фон -->
-        <Border Background="#161618" CornerRadius="14" BorderBrush="#2a2a2d" BorderThickness="1" ClipToBounds="True">
+    <!-- Основной фон -->
+    <Border Background="#161618" CornerRadius="14" BorderBrush="#2a2a2d" BorderThickness="1" ClipToBounds="True">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -71,11 +65,6 @@
 
                 <!-- Header -->
                 <Grid Grid.Row="0" Margin="28,20,28,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <Border Width="32" Height="32" CornerRadius="8" Background="#1e1e22" Margin="0,0,12,0">
                             <Path Width="16" Height="16" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Center"
@@ -86,30 +75,6 @@
                             <TextBlock Text="Настройка конфига" FontSize="15" FontWeight="SemiBold" Foreground="#f0f0f0"/>
                         </StackPanel>
                     </StackPanel>
-
-                    <!-- Кнопка закрытия -->
-                    <Button Grid.Column="1" Width="28" Height="28" Background="Transparent" BorderThickness="0"
-                            Cursor="Hand" Click="CloseBtn_Click" VerticalAlignment="Center">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}" CornerRadius="6">
-                                                <TextBlock Text="✕" FontSize="12" Foreground="#555558"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#2a2a2d"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
                 </Grid>
 
                 <!-- Разделитель -->
@@ -263,5 +228,4 @@
                 </Border>
             </Grid>
         </Border>
-    </Border>
 </Window>
