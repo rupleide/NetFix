@@ -329,9 +329,9 @@ public partial class MainWindow : Window
             
             // Обрезать длинное название конфига
             string configName = cache.CurrentConfig;
-            if (configName.Length > 40)
+            if (configName.Length > 30)
             {
-                configName = configName.Substring(0, 37) + "...";
+                configName = configName.Substring(0, 27) + "...";
             }
             
             ActiveConfigName.Text = configName;
