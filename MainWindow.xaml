@@ -487,8 +487,8 @@
     <!-- ═══════════════════════════════════════════════════════════════════ -->
     <!-- ROOT                                                                -->
     <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <Border Background="#161616" x:Name="RootBorder" CornerRadius="12" BorderBrush="#333333" BorderThickness="1" ClipToBounds="True">
-        <Grid>
+    <Border Background="#161616" x:Name="RootBorder" CornerRadius="12" BorderBrush="#333333" BorderThickness="1">
+        <Grid ClipToBounds="True">
             <Grid.RowDefinitions>
                 <RowDefinition Height="54"/>
                 <!-- Header  -->
