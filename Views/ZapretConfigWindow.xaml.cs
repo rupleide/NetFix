@@ -506,41 +506,52 @@ public partial class ZapretConfigWindow : Window
     {
         if (_cache == null || string.IsNullOrEmpty(_cache.CurrentConfig)) return;
 
-        // Скрыть список конфигов и показать статус
+        // Скрыть список конфигов и показать лог
         ConfigListScroll.Visibility = Visibility.Collapsed;
-        StatusPanel.Visibility = Visibility.Visible;
-        StatusIcon.Visibility = Visibility.Visible;
-        StatusIcon.Data = (Geometry)FindResource("WarningIcon");
-        StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6));
-        StatusText.Text = $"Тестирую конфиг: {_cache.CurrentConfig}";
+        StatusPanel.Visibility = Visibility.Collapsed;
+        ProgressBarContainer.Visibility = Visibility.Collapsed;
+        LogContainer.Visibility = Visibility.Visible;
         
         PrimaryBtn.Visibility = Visibility.Collapsed;
         SecondaryBtn.Content = "Отмена";
 
+        // Очистить лог
+        LogTextBox.Document.Blocks.Clear();
+        AppendColoredLog($"🔄 Тестирую конфиг: {_cache.CurrentConfig}\n", Color.FromRgb(0x3b, 0x82, 0xf6));
+
         var (isWorking, message) = await ZapretConfigService.TestSingleConfigAsync(
             _zapretPath,
             _cache.CurrentConfig,
-            status => Dispatcher.Invoke(() => StatusText.Text = status)
+            status => Dispatcher.Invoke(() => 
+            {
+                Color logColor;
+                if (status.Contains("✅") || status.Contains("работает") || status.Contains("доступен"))
+                    logColor = Color.FromRgb(0x22, 0xc5, 0x5e); // Зелёный
+                else if (status.Contains("❌") || status.Contains("не работает") || status.Contains("недоступен"))
+                    logColor = Color.FromRgb(0xef, 0x44, 0x44); // Красный
+                else if (status.Contains("🔄") || status.Contains("Тестирую"))
+                    logColor = Color.FromRgb(0x3b, 0x82, 0xf6); // Синий
+                else
+                    logColor = Color.FromRgb(0xf0, 0xf0, 0xf0); // Белый
+                
+                AppendColoredLog(status, logColor);
+            })
         );
 
         // Показать результат
         if (isWorking)
         {
-            StatusIcon.Data = (Geometry)FindResource("CheckmarkIcon");
-            StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
-            StatusText.Text = $"✅ {message}";
+            AppendColoredLog($"\n✅ {message}", Color.FromRgb(0x22, 0xc5, 0x5e));
         }
         else
         {
-            StatusIcon.Data = (Geometry)FindResource("WarningIcon");
-            StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
-            StatusText.Text = $"❌ {message}";
+            AppendColoredLog($"\n❌ {message}", Color.FromRgb(0xef, 0x44, 0x44));
         }
 
         await Task.Delay(3000);
         
         // Вернуться к списку конфигов
-        StatusPanel.Visibility = Visibility.Collapsed;
+        LogContainer.Visibility = Visibility.Collapsed;
         ConfigListScroll.Visibility = Visibility.Visible;
         PrimaryBtn.Visibility = Visibility.Visible;
         SecondaryBtn.Content = "Закрыть";
@@ -713,7 +724,7 @@ public partial class ZapretConfigWindow : Window
         }
 
         SecondaryBtn.Content = "Закрыть";
-        PrimaryBtn.Content = "Повторить тест";
+        PrimaryBtn.Content = "Проверить выбранный конфиг";
         PrimaryBtn.Visibility = Visibility.Visible;
     }
 }
