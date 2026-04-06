@@ -479,7 +479,7 @@ public partial class ZapretConfigWindow : Window
                     StatusIcon.Visibility = Visibility.Visible;
                     StatusIcon.Data = (Geometry)FindResource("WarningIcon");
                     StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
-                    StatusText.Text = "Не удалось применить конфиг. Проверьте права администратора.";
+                    StatusText.Text = "Не удалось применить конфиг. Проверьте:\n1. Запущено ли приложение от администратора\n2. Правильно ли указан путь к Zapret\n3. Логи в консоли для деталей";
                     SecondaryBtn.Content = "Закрыть";
                     PrimaryBtn.Visibility = Visibility.Collapsed;
                 }
