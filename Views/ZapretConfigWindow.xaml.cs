@@ -788,11 +788,28 @@ public partial class ZapretConfigWindow : Window
 
             border.Child = grid;
 
+            // Одинарный клик - выбрать конфиг
             border.MouseLeftButtonDown += (s, e) =>
             {
-                _cache.CurrentConfig = config.Name;
-                ZapretConfigService.SaveCache(_cache);
-                ShowConfigList();
+                if (e.ClickCount == 1)
+                {
+                    _cache.CurrentConfig = config.Name;
+                    ZapretConfigService.SaveCache(_cache);
+                    ShowConfigList();
+                }
+            };
+            
+            // Двойной клик - применить конфиг
+            border.MouseLeftButtonDown += async (s, e) =>
+            {
+                if (e.ClickCount == 2)
+                {
+                    _cache.CurrentConfig = config.Name;
+                    ZapretConfigService.SaveCache(_cache);
+                    
+                    // Применить конфиг (вызвать тот же код что и кнопка "Применить")
+                    SecondaryBtn_Click(s, e);
+                }
             };
 
             // Hover эффект
@@ -818,5 +835,14 @@ public partial class ZapretConfigWindow : Window
     private void StopIndeterminateAnimation()
     {
         ProgressBarContainer.Visibility = Visibility.Collapsed;
+    }
+    
+    private void Background_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        // Закрыть окно только если клик был непосредственно на фоне, а не на дочерних элементах
+        if (e.Source == sender)
+        {
+            Close();
+        }
     }
 }
