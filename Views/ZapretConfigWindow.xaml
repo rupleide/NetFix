@@ -122,28 +122,30 @@
 
             <!-- Log -->
             <Border Grid.Row="3" Background="#111113" CornerRadius="10"
-                        BorderBrush="#22222a" BorderThickness="1"
-                        x:Name="LogContainer" Visibility="Collapsed"
-                        Margin="28,16,28,0">
+                    BorderBrush="#22222a" BorderThickness="1"
+                    x:Name="LogContainer" Visibility="Collapsed"
+                    Margin="28,16,28,0"
+                    VerticalAlignment="Top">
                 <ScrollViewer x:Name="LogScrollViewer" VerticalScrollBarVisibility="Auto">
                     <RichTextBox x:Name="LogTextBox"
-                                     Background="Transparent"
-                                     Foreground="#888888"
-                                     FontFamily="Consolas"
-                                     FontSize="11"
-                                     IsReadOnly="True"
-                                     BorderThickness="0"
-                                     Padding="14"
-                                     VerticalScrollBarVisibility="Disabled"
-                                     IsDocumentEnabled="True"/>
+                                 Background="Transparent"
+                                 Foreground="#888888"
+                                 FontFamily="Consolas"
+                                 FontSize="11"
+                                 IsReadOnly="True"
+                                 BorderThickness="0"
+                                 Padding="14"
+                                 VerticalScrollBarVisibility="Disabled"
+                                 IsDocumentEnabled="True"/>
                 </ScrollViewer>
             </Border>
 
             <!-- Config List -->
             <ScrollViewer x:Name="ConfigListScroll" Grid.Row="3"
-                              VerticalScrollBarVisibility="Auto"
-                              Visibility="Collapsed"
-                              Margin="28,16,28,0">
+                          VerticalScrollBarVisibility="Auto"
+                          Visibility="Collapsed"
+                          Margin="28,16,28,0"
+                          VerticalAlignment="Top">
                 <StackPanel x:Name="ConfigListPanel"/>
             </ScrollViewer>
 
