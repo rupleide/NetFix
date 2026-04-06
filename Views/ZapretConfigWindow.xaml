@@ -53,7 +53,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" MinHeight="71"/>
                 <!-- Header -->
-                <RowDefinition Height="Auto" MinHeight="56"/>
+                <RowDefinition Height="Auto"/>
                 <!-- Status + Progress -->
                 <RowDefinition/>
                 <!-- Content -->
