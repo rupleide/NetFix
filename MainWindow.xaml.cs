@@ -164,7 +164,7 @@ public partial class MainWindow : Window
     private void ServicesCloseBtn_Click(object s, RoutedEventArgs e) => CloseServicesPanel();
     private void ServicesBackdrop_Click(object s, MouseButtonEventArgs e) => CloseServicesPanel();
 
-    private void ZapretToggle_Click(object s, RoutedEventArgs e)
+    private async void ZapretToggle_Click(object s, RoutedEventArgs e)
     {
         var st = DiagnosticsEngine.CheckAppStatus();
         if (st.ZapretRunning)
@@ -177,13 +177,41 @@ public partial class MainWindow : Window
         else
         {
             if (!string.IsNullOrEmpty(_settings.ZapretPath) && File.Exists(_settings.ZapretPath))
-                Process.Start(new ProcessStartInfo(_settings.ZapretPath) { UseShellExecute = true });
+            {
+                var isServiceBat = System.IO.Path.GetFileName(_settings.ZapretPath).Equals("service.bat", StringComparison.OrdinalIgnoreCase);
+                var cache = ZapretConfigService.LoadCache();
+
+                if (isServiceBat && cache != null && !string.IsNullOrEmpty(cache.CurrentConfig))
+                {
+                    ZapretToggleBtn.IsEnabled = false;
+                    var originalContent = ZapretToggleBtn.Content;
+                    ZapretToggleBtn.Content = "Запуск...";
+
+                    bool success = await ZapretConfigService.ApplyConfigAsync(_settings.ZapretPath, cache.CurrentConfig);
+
+                    ZapretToggleBtn.IsEnabled = true;
+                    ZapretToggleBtn.Content = originalContent;
+
+                    if (!success)
+                    {
+                        // Fallback если не удалось автоматизировать
+                        Process.Start(new ProcessStartInfo(_settings.ZapretPath) { UseShellExecute = true });
+                    }
+                }
+                else
+                {
+                    Process.Start(new ProcessStartInfo(_settings.ZapretPath) { UseShellExecute = true });
+                }
+            }
             else
+            {
                 ShowNotification("Zapret", "Путь не указан. Проверьте настройки.", isError: true);
+            }
         }
 
         // Обновить статус через 800мс
-        Task.Delay(800).ContinueWith(_ => Dispatcher.Invoke(UpdateActiveApps));
+        await Task.Delay(800);
+        UpdateActiveApps();
     }
 
     private void TgWsToggle_Click(object s, RoutedEventArgs e)
