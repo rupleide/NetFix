@@ -99,10 +99,12 @@
         <!-- ═══ FLAT BUTTON CENTERED ═══ -->
         <Style x:Key="FlatBtnCentered" TargetType="Button" BasedOn="{StaticResource FlatBtn}">
             <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="bd" Background="Transparent"
+                                CornerRadius="8"
                                 Width="{TemplateBinding Width}"
                                 Height="{TemplateBinding Height}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
