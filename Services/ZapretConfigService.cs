@@ -391,19 +391,19 @@ public class ZapretConfigService
 
         try
         {
-            // Отправить "1\n3\n{номер конфига}\n" для выбора "standard tests" -> "specific config" -> номер
+            // Отправить "1\n2\n{номер конфига}\n" для выбора "standard tests" -> "selected configs" -> номер
             await Task.Delay(1000);
             await process.StandardInput.WriteLineAsync("1");  // Standard tests
             await Task.Delay(500);
-            await process.StandardInput.WriteLineAsync("3");  // Specific config
+            await process.StandardInput.WriteLineAsync("2");  // Selected configs
             await Task.Delay(500);
             
             // Найти номер конфига в списке
-            // Для этого нужно получить список всех конфигов и найти индекс нужного
+            // Получаем список всех .bat файлов, исключая service*.bat, и сортируем их
             var configFiles = Directory.GetFiles(zapretDir, "*.bat")
                 .Where(f => !Path.GetFileName(f).StartsWith("service", StringComparison.OrdinalIgnoreCase))
-                .OrderBy(f => f)
                 .Select(Path.GetFileName)
+                .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
                 .ToList();
             
             int configIndex = configFiles.IndexOf(configName) + 1; // +1 потому что нумерация с 1
@@ -411,6 +411,12 @@ public class ZapretConfigService
             if (configIndex > 0)
             {
                 await process.StandardInput.WriteLineAsync(configIndex.ToString());
+            }
+            else
+            {
+                onProgress?.Invoke($"❌ Ошибка: не удалось найти конфиг {configName} в списке");
+                process.StandardInput.Close();
+                return (false, $"Не удалось найти конфиг {configName} в списке");
             }
             
             process.StandardInput.Close();
