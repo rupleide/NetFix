@@ -49,11 +49,13 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         Loaded += OnLoaded;
+        SizeChanged += OnSizeChanged;
         InitTray();
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        UpdateMainGridClip();
         LoadSettingsToPanel();
 
         if (!SettingsService.IsOnboarded)
@@ -65,6 +67,19 @@ public partial class MainWindow : Window
             StartActiveAppsMonitor();
         }
         LoadFaqItems();
+    }
+
+    private void OnSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        UpdateMainGridClip();
+    }
+
+    private void UpdateMainGridClip()
+    {
+        var rect = new RectangleGeometry(
+            new Rect(0, 0, MainGrid.ActualWidth, MainGrid.ActualHeight),
+            11, 11);
+        MainGrid.Clip = rect;
     }
 
     // ── Tray Icon ─────────────────────────────────────────────────────────────
