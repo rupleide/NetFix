@@ -278,6 +278,9 @@ public partial class MainWindow : Window
             
             // Обновить отображение выбранного конфига после закрытия окна
             UpdateSelectedConfigDisplay();
+            
+            // Обновить статус приложений (чтобы кнопка Zapret показала правильный статус)
+            UpdateActiveApps();
         }
     }
 
