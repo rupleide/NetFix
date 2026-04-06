@@ -1502,7 +1502,7 @@
                                     WindowChrome.IsHitTestVisibleInChrome="True"
                                     Click="SelectConfigBtn_Click">
                                 <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource PlugIcon}" 
+                                    <Path Data="{StaticResource SettingsIcon}" 
                                           Fill="#22c55e"
                                           Width="16" Height="16"
                                           Stretch="Uniform"
