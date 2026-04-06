@@ -2207,6 +2207,19 @@ public partial class MainWindow : Window
 
     private void BuildOnboardZapretSuccess(StackPanel p)
     {
+        // Добавляем иконку лайка
+        var likeIcon = new System.Windows.Shapes.Path
+        {
+            Data = Geometry.Parse("M8,11.47A18.74,18.74,0,0,0,10.69,8.9a18.74,18.74,0,0,0,1.76-2.42A6.42,6.42,0,0,0,13,5.41l1.74-4.57a4.45,4.45,0,0,1,2.83,2A4,4,0,0,1,18,4.77a2.67,2.67,0,0,1-.09.55L16.72,9.05h5.22a2,2,0,0,1,2,1.85,19.32,19.32,0,0,1-.32,5.44,33.83,33.83,0,0,1-1.23,4.34,3.78,3.78,0,0,1-3.58,2.49,25.54,25.54,0,0,1-6.28-.66A45.85,45.85,0,0,1,8,21.26V11.47Z M5,9H1a1,1,0,0,0-1,1V22a1,1,0,0,0,1,1H5a1,1,0,0,0,1-1V10A1,1,0,0,0,5,9ZM3,21a1,1,0,1,1,1-1A1,1,0,0,1,3,21Z"),
+            Fill = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            Width = 48,
+            Height = 48,
+            Stretch = Stretch.Uniform,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 20)
+        };
+        p.Children.Add(likeIcon);
+        
         AddOnboardTitle(p, "Ты молодец!");
         AddOnboardSub(p, "Надеюсь, ты сделал всё правильно.");
         AddOnboardBtn(p, "Далее", "#3b82f6", () => ShowOnboardScreen(10));
@@ -2266,6 +2279,19 @@ public partial class MainWindow : Window
 
     private void BuildOnboardDone(StackPanel p)
     {
+        // Добавляем иконку лайка
+        var likeIcon = new System.Windows.Shapes.Path
+        {
+            Data = Geometry.Parse("M8,11.47A18.74,18.74,0,0,0,10.69,8.9a18.74,18.74,0,0,0,1.76-2.42A6.42,6.42,0,0,0,13,5.41l1.74-4.57a4.45,4.45,0,0,1,2.83,2A4,4,0,0,1,18,4.77a2.67,2.67,0,0,1-.09.55L16.72,9.05h5.22a2,2,0,0,1,2,1.85,19.32,19.32,0,0,1-.32,5.44,33.83,33.83,0,0,1-1.23,4.34,3.78,3.78,0,0,1-3.58,2.49,25.54,25.54,0,0,1-6.28-.66A45.85,45.85,0,0,1,8,21.26V11.47Z M5,9H1a1,1,0,0,0-1,1V22a1,1,0,0,0,1,1H5a1,1,0,0,0,1-1V10A1,1,0,0,0,5,9ZM3,21a1,1,0,1,1,1-1A1,1,0,0,1,3,21Z"),
+            Fill = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
+            Width = 48,
+            Height = 48,
+            Stretch = Stretch.Uniform,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 20)
+        };
+        p.Children.Add(likeIcon);
+        
         AddOnboardTitle(p, "Всё готово!");
         
         var subText = new TextBlock();
