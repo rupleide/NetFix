@@ -390,8 +390,10 @@ public partial class ZapretConfigWindow : Window
                                  $"Все они прошли 12/12 тестов без ошибок!\n\n" +
                                  $"Ваш топ конфигов на следующие разы:\n\n{topConfigs}";
 
-                await Task.Delay(3000);
-                ShowConfigList();
+                // Оставить экран поздравления, не скрывать автоматически
+                // Пользователь сам нажмет на кнопку чтобы перейти к выбору конфигов
+                PrimaryBtn.Visibility = Visibility.Visible;
+                PrimaryBtn.Content = "Выбрать конфиг";
             }
             else
             {
@@ -497,8 +499,29 @@ public partial class ZapretConfigWindow : Window
         }
         else
         {
-            // Запустить полное тестирование
-            await StartTestingAsync();
+            // Если на экране поздравления, перейти к списку конфигов
+            if (StatusPanel.Visibility == Visibility.Visible && PrimaryBtn.Content.ToString() == "Выбрать конфиг")
+            {
+                ShowConfigList();
+            }
+            // Если в логе после тестирования конфига, вернуться к списку
+            else if (LogContainer.Visibility == Visibility.Visible && PrimaryBtn.Content.ToString() == "Назад к списку")
+            {
+                LogContainer.Visibility = Visibility.Collapsed;
+                ConfigListScroll.Visibility = Visibility.Visible;
+                PrimaryBtn.Visibility = Visibility.Collapsed;
+                PrimaryBtn.Content = "Проверить конфиг";
+                SecondaryBtn.Content = "Закрыть";
+                
+                // Восстановить обработчик события
+                SecondaryBtn.Click -= SecondaryBtn_Click;
+                SecondaryBtn.Click += SecondaryBtn_Click;
+            }
+            else
+            {
+                // Запустить полное тестирование
+                await StartTestingAsync();
+            }
         }
     }
 
@@ -547,19 +570,13 @@ public partial class ZapretConfigWindow : Window
         {
             AppendColoredLog($"\n❌ {message}", Color.FromRgb(0xef, 0x44, 0x44));
         }
-
-        await Task.Delay(3000);
         
-        // Вернуться к списку конфигов
-        LogContainer.Visibility = Visibility.Collapsed;
-        ConfigListScroll.Visibility = Visibility.Visible;
+        // Оставить лог открытым, показать кнопку для возврата к списку
         PrimaryBtn.Visibility = Visibility.Visible;
+        PrimaryBtn.Content = "Назад к списку";
         SecondaryBtn.Content = "Закрыть";
-    }
-
-    private void StopIndeterminateAnimation()
-    {
-        ProgressBarContainer.Visibility = Visibility.Collapsed;
+        SecondaryBtn.Click -= SecondaryBtn_Click;
+        SecondaryBtn.Click += (s, e) => Close();
     }
 
     private void CloseBtn_Click(object sender, RoutedEventArgs e)
@@ -745,5 +762,10 @@ public partial class ZapretConfigWindow : Window
         SecondaryBtn.Content = "Закрыть";
         PrimaryBtn.Content = "Проверить конфиг";
         PrimaryBtn.Visibility = Visibility.Visible;
+    }
+
+    private void StopIndeterminateAnimation()
+    {
+        ProgressBarContainer.Visibility = Visibility.Collapsed;
     }
 }
