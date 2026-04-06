@@ -444,6 +444,42 @@ public partial class ZapretConfigWindow : Window
             await StartTestingAsync();
             return;
         }
+        else if (SecondaryBtn.Content?.ToString() == "Применить")
+        {
+            // Применить выбранный конфиг - пересоздать сервис
+            if (_cache != null && !string.IsNullOrEmpty(_cache.CurrentConfig))
+            {
+                SecondaryBtn.IsEnabled = false;
+                PrimaryBtn.IsEnabled = false;
+                var originalContent = SecondaryBtn.Content;
+                SecondaryBtn.Content = "Применение...";
+
+                bool success = await ZapretConfigService.ApplyConfigAsync(_zapretPath, _cache.CurrentConfig);
+
+                SecondaryBtn.IsEnabled = true;
+                PrimaryBtn.IsEnabled = true;
+                SecondaryBtn.Content = originalContent;
+
+                if (success)
+                {
+                    // Успешно применили конфиг, закрываем окно
+                    Close();
+                }
+                else
+                {
+                    // Показать ошибку
+                    StatusPanel.Visibility = Visibility.Visible;
+                    ConfigListScroll.Visibility = Visibility.Collapsed;
+                    StatusIcon.Visibility = Visibility.Visible;
+                    StatusIcon.Data = (Geometry)FindResource("WarningIcon");
+                    StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
+                    StatusText.Text = "Не удалось применить конфиг. Проверьте права администратора.";
+                    SecondaryBtn.Content = "Закрыть";
+                    PrimaryBtn.Visibility = Visibility.Collapsed;
+                }
+            }
+            return;
+        }
         else
         {
             _isTesting = false;
