@@ -111,9 +111,12 @@ public class ZapretConfigService
                 // Сохранить предыдущий конфиг
                 if (currentConfig != null)
                 {
-                    currentConfig.IsValid = currentConfig.ErrorCount == 0 && currentConfig.SuccessCount > 0;
+                    // Конфиг валиден только если: 0 ошибок И минимум 12 успешных тестов
+                    currentConfig.IsValid = currentConfig.ErrorCount == 0 && currentConfig.SuccessCount >= 12;
                     if (currentConfig.IsValid)
                         configs.Add(currentConfig);
+                    
+                    System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Config: {currentConfig.Name}, Valid: {currentConfig.IsValid}, Success: {currentConfig.SuccessCount}/12, Errors: {currentConfig.ErrorCount}");
                     
                     testedConfigs++;
                     onConfigTested?.Invoke(testedConfigs, totalConfigs);
@@ -155,9 +158,13 @@ public class ZapretConfigService
 
                 currentConfig.Tests[serviceName] = testResult;
 
+                // Считаем только полностью успешные тесты (все OK)
                 if (testResult.IsSuccess)
                     currentConfig.SuccessCount++;
-                else if (httpStatus == "ERROR" || tls12Status == "ERROR" || tls13Status == "ERROR")
+                
+                // Любая ошибка или UNSUP - это провал конфига
+                if (httpStatus == "ERROR" || tls12Status == "ERROR" || tls13Status == "ERROR" ||
+                    httpStatus == "UNSUP" || tls12Status == "UNSUP" || tls13Status == "UNSUP")
                     currentConfig.ErrorCount++;
 
                 // Обновить средний пинг
@@ -188,17 +195,18 @@ public class ZapretConfigService
         // Сохранить последний конфиг
         if (currentConfig != null)
         {
-            currentConfig.IsValid = currentConfig.ErrorCount == 0 && currentConfig.SuccessCount > 0;
+            // Конфиг валиден только если: 0 ошибок И минимум 12 успешных тестов
+            currentConfig.IsValid = currentConfig.ErrorCount == 0 && currentConfig.SuccessCount >= 12;
             if (currentConfig.IsValid)
                 configs.Add(currentConfig);
             
-            System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Last config: {currentConfig.Name}, Valid: {currentConfig.IsValid}, Success: {currentConfig.SuccessCount}, Errors: {currentConfig.ErrorCount}");
+            System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Last config: {currentConfig.Name}, Valid: {currentConfig.IsValid}, Success: {currentConfig.SuccessCount}/12, Errors: {currentConfig.ErrorCount}");
         }
 
         System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Total configs found: {configs.Count}");
         foreach (var cfg in configs)
         {
-            System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Config: {cfg.Name}, Ping: {cfg.AveragePing}, Success: {cfg.SuccessCount}");
+            System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Config: {cfg.Name}, Ping: {cfg.AveragePing}, Success: {cfg.SuccessCount}/12");
         }
 
         // Отсортировать по среднему пингу (лучший = меньший пинг)

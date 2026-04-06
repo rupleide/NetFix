@@ -205,7 +205,7 @@ public partial class MainWindow : Window
     }
 
     // ── Zapret Config Testing ──────────────────────────────────────────────────
-    private void ZapretConfigBtn_Click(object s, RoutedEventArgs e)
+    private void TestConfigsBtn_Click(object s, RoutedEventArgs e)
     {
         if (string.IsNullOrEmpty(_settings.ZapretPath) || !File.Exists(_settings.ZapretPath))
         {
@@ -213,9 +213,35 @@ public partial class MainWindow : Window
             return;
         }
 
-        var configWindow = new Views.ZapretConfigWindow(_settings.ZapretPath);
+        var configWindow = new Views.ZapretConfigWindow(_settings.ZapretPath, testMode: true);
         configWindow.Owner = this;
         configWindow.ShowDialog();
+    }
+
+    private void SelectConfigBtn_Click(object s, RoutedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(_settings.ZapretPath) || !File.Exists(_settings.ZapretPath))
+        {
+            ShowNotification("Zapret", "Путь к Zapret не указан. Проверьте настройки.", isError: true);
+            return;
+        }
+
+        // Проверить есть ли кэш с тестами
+        var cache = ZapretConfigService.LoadCache();
+        if (cache == null || cache.ValidConfigs.Count == 0)
+        {
+            // Показать предупреждение
+            var configWindow = new Views.ZapretConfigWindow(_settings.ZapretPath, testMode: false);
+            configWindow.Owner = this;
+            configWindow.ShowDialog();
+        }
+        else
+        {
+            // Показать окно выбора конфига
+            var configWindow = new Views.ZapretConfigWindow(_settings.ZapretPath, testMode: false);
+            configWindow.Owner = this;
+            configWindow.ShowDialog();
+        }
     }
 
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
