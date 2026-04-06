@@ -317,6 +317,22 @@ public partial class MainWindow : Window
             SelectedConfigText.Inlines.Add(new Run("Выбранный конфиг: не выбран") { Foreground = new SolidColorBrush(Color.FromRgb(0xf0, 0xf0, 0xf0)) });
         }
     }
+    
+    private void UpdateActiveConfigDisplay(bool zapretRunning)
+    {
+        var cache = ZapretConfigService.LoadCache();
+        
+        // Показывать активный конфиг только если Zapret запущен и есть выбранный конфиг
+        if (zapretRunning && cache != null && !string.IsNullOrEmpty(cache.CurrentConfig))
+        {
+            ActiveConfigText.Visibility = Visibility.Visible;
+            ActiveConfigName.Text = cache.CurrentConfig;
+        }
+        else
+        {
+            ActiveConfigText.Visibility = Visibility.Collapsed;
+        }
+    }
 
     private void ShowFullScanRequiredNotification()
     {
@@ -1332,6 +1348,9 @@ public partial class MainWindow : Window
                     ? new SolidColorBrush(Color.FromRgb(0x3d, 0x1a, 0x1a))
                     : new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6));
                 ZapretToggleBtn.Foreground = st.ZapretRunning ? redBrush : Brushes.White;
+                
+                // Обновить отображение активного конфига
+                UpdateActiveConfigDisplay(st.ZapretRunning);
 
                 TgWsDot2.Fill = st.TgWsProxyRunning ? greenBrush : grayBrush;
                 TgWsStatusLbl.Text = st.TgWsProxyRunning ? "Запущен" : "Не запущен";

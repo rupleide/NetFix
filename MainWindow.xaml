@@ -1515,6 +1515,16 @@
                                 </StackPanel>
                             </Button>
 
+                            <!-- Активный конфиг -->
+                            <TextBlock x:Name="ActiveConfigText" 
+                                       Margin="0,12,0,0"
+                                       FontSize="12"
+                                       Foreground="#888888"
+                                       Visibility="Collapsed">
+                                <Run Text="Включен конфиг: "/>
+                                <Run x:Name="ActiveConfigName" Text="" Foreground="#22c55e"/>
+                            </TextBlock>
+
                         </StackPanel>
                     </DockPanel>
                 </Border>
