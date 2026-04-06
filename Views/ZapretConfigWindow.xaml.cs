@@ -261,17 +261,23 @@ public partial class ZapretConfigWindow : Window
             
             await Task.Delay(3000);
             
-            // Показать прогресс-бар и скрыть StatusPanel
+            // Показать прогресс-бар, лог и скрыть StatusPanel
             StatusPanel.Visibility = Visibility.Collapsed;
             ProgressBarContainer.Visibility = Visibility.Visible;
             ProgressText.Visibility = Visibility.Visible;
             ProgressText.Text = "Тестирование конфигов: 0%";
+            LogContainer.Visibility = Visibility.Visible;
+            LogTextBox.Text = "💡 Советуем вам подождать 10 минуток на полное сканирование.\n" +
+                             "В дальнейшем это сэкономит вам кучу времени и нервов!\n\n" +
+                             "Запуск тестирования...\n\n";
             
             var (configs, testProcess) = await ZapretConfigService.TestAllConfigsAsync(
                 _zapretPath,
                 status => Dispatcher.Invoke(() => 
                 {
-                    // Игнорируем статусы, показываем только прогресс
+                    // Добавляем в лог
+                    LogTextBox.AppendText(status + "\n");
+                    LogTextBox.ScrollToEnd();
                 }),
                 (current, total) => Dispatcher.Invoke(() => 
                 {
@@ -298,9 +304,10 @@ public partial class ZapretConfigWindow : Window
                 };
                 ZapretConfigService.SaveCache(_cache);
 
-                // Скрыть прогресс-бар и показать поздравление
+                // Скрыть прогресс-бар и лог, показать поздравление
                 ProgressBarContainer.Visibility = Visibility.Collapsed;
                 ProgressText.Visibility = Visibility.Collapsed;
+                LogContainer.Visibility = Visibility.Collapsed;
                 StopIndeterminateAnimation();
                 StatusPanel.Visibility = Visibility.Visible;
                 StatusIcon.Visibility = Visibility.Visible;
@@ -320,9 +327,10 @@ public partial class ZapretConfigWindow : Window
             }
             else
             {
-                // Скрыть прогресс-бар и показать ошибку
+                // Скрыть прогресс-бар и лог, показать ошибку
                 ProgressBarContainer.Visibility = Visibility.Collapsed;
                 ProgressText.Visibility = Visibility.Collapsed;
+                LogContainer.Visibility = Visibility.Collapsed;
                 StatusPanel.Visibility = Visibility.Visible;
                 StatusText.Text = "Не найдено рабочих конфигов с 12/12 успешными тестами.\n\n" +
                                  "Возможно, ваша сеть имеет особые ограничения. Попробуйте повторить тест позже.";
@@ -338,9 +346,10 @@ public partial class ZapretConfigWindow : Window
         }
         catch (Exception ex)
         {
-            // Скрыть прогресс-бар и показать ошибку
+            // Скрыть прогресс-бар и лог, показать ошибку
             ProgressBarContainer.Visibility = Visibility.Collapsed;
             ProgressText.Visibility = Visibility.Collapsed;
+            LogContainer.Visibility = Visibility.Collapsed;
             StatusPanel.Visibility = Visibility.Visible;
             StatusText.Text = $"Ошибка: {ex.Message}";
             StopIndeterminateAnimation();
