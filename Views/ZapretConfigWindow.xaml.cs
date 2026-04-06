@@ -439,7 +439,7 @@ public partial class ZapretConfigWindow : Window
 
     private async void SecondaryBtn_Click(object sender, RoutedEventArgs e)
     {
-        if (_testMode && _cache == null) // Если режим тестирования и ещё не начали
+        if (SecondaryBtn.Content?.ToString() == "Да, начать")
         {
             await StartTestingAsync();
             return;
@@ -493,7 +493,7 @@ public partial class ZapretConfigWindow : Window
 
     private async void PrimaryBtn_Click(object sender, RoutedEventArgs e)
     {
-        if (_testMode && _cache == null) // Если режим тестирования и ещё не начали
+        if (PrimaryBtn.Content?.ToString() == "Нет, выйти")
         {
             Close();
             return;
