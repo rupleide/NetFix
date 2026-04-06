@@ -576,7 +576,34 @@ public partial class ZapretConfigWindow : Window
         ConfigListScroll.Visibility = Visibility.Visible;
         ConfigListPanel.Children.Clear();
 
-        // Заголовок
+        // Активный конфиг (сначала)
+        var currentLabel = new StackPanel
+        {
+            Orientation = System.Windows.Controls.Orientation.Horizontal,
+            Margin = new Thickness(0, 0, 0, 16)
+        };
+        
+        var activeText = new TextBlock
+        {
+            Text = "Активный конфиг: ",
+            FontSize = 15,
+            Foreground = Brushes.White,
+            FontWeight = FontWeights.Bold
+        };
+        
+        var configNameText = new TextBlock
+        {
+            Text = _cache.CurrentConfig,
+            FontSize = 15,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
+            FontWeight = FontWeights.Bold
+        };
+        
+        currentLabel.Children.Add(activeText);
+        currentLabel.Children.Add(configNameText);
+        ConfigListPanel.Children.Add(currentLabel);
+
+        // Заголовок (потом)
         var headerGrid = new Grid { Margin = new Thickness(0, 0, 0, 4) };
         headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -608,32 +635,6 @@ public partial class ZapretConfigWindow : Window
         headerGrid.Children.Add(titleText);
         headerGrid.Children.Add(badge);
         ConfigListPanel.Children.Add(headerGrid);
-
-        var currentLabel = new StackPanel
-        {
-            Orientation = System.Windows.Controls.Orientation.Horizontal,
-            Margin = new Thickness(0, 2, 0, 14)
-        };
-        
-        var activeText = new TextBlock
-        {
-            Text = "Активный конфиг: ",
-            FontSize = 13,
-            Foreground = Brushes.White,
-            FontWeight = FontWeights.SemiBold
-        };
-        
-        var configNameText = new TextBlock
-        {
-            Text = _cache.CurrentConfig,
-            FontSize = 13,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
-            FontWeight = FontWeights.SemiBold
-        };
-        
-        currentLabel.Children.Add(activeText);
-        currentLabel.Children.Add(configNameText);
-        ConfigListPanel.Children.Add(currentLabel);
 
         // Список конфигов
         foreach (var config in _cache.ValidConfigs)
