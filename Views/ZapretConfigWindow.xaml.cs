@@ -24,6 +24,8 @@ public partial class ZapretConfigWindow : Window
     private ZapretConfigCache? _cache;
     private bool _isTesting = false;
     private Process? _testProcess = null;
+    private DateTime _testStartTime;
+    private int _totalConfigs = 0;
 
     public ZapretConfigWindow(string zapretPath, bool testMode)
     {
@@ -293,8 +295,13 @@ public partial class ZapretConfigWindow : Window
             StatusPanel.Visibility = Visibility.Collapsed;
             ProgressBarContainer.Visibility = Visibility.Visible;
             ProgressText.Visibility = Visibility.Visible;
+            TimeRemainingText.Visibility = Visibility.Visible;
             ProgressText.Text = "Тестирование конфигов: 0%";
+            TimeRemainingText.Text = "Осталось: ~10 мин";
             LogContainer.Visibility = Visibility.Visible;
+            
+            // Запомнить время начала
+            _testStartTime = DateTime.Now;
             
             // Очистить лог и добавить начальное сообщение
             LogTextBox.Document.Blocks.Clear();
@@ -323,11 +330,29 @@ public partial class ZapretConfigWindow : Window
                 }),
                 (current, total) => Dispatcher.Invoke(() => 
                 {
+                    // Сохранить общее количество конфигов
+                    if (_totalConfigs == 0)
+                        _totalConfigs = total;
+                    
                     // Обновляем прогресс-бар
                     var percentage = (current * 100 / total);
                     var progressWidth = (ProgressBarContainer.ActualWidth * current / total);
                     ProgressBar.Width = progressWidth;
                     ProgressText.Text = $"Тестирование конфигов: {current}/{total} ({percentage}%)";
+                    
+                    // Рассчитать оставшееся время
+                    if (current > 0)
+                    {
+                        var elapsed = DateTime.Now - _testStartTime;
+                        var avgTimePerConfig = elapsed.TotalSeconds / current;
+                        var remainingConfigs = total - current;
+                        var estimatedSecondsRemaining = avgTimePerConfig * remainingConfigs;
+                        
+                        if (estimatedSecondsRemaining < 60)
+                            TimeRemainingText.Text = $"Осталось: ~{(int)estimatedSecondsRemaining} сек";
+                        else
+                            TimeRemainingText.Text = $"Осталось: ~{(int)(estimatedSecondsRemaining / 60)} мин";
+                    }
                 })
             );
             
@@ -349,6 +374,7 @@ public partial class ZapretConfigWindow : Window
                 // Скрыть прогресс-бар и лог, показать поздравление
                 ProgressBarContainer.Visibility = Visibility.Collapsed;
                 ProgressText.Visibility = Visibility.Collapsed;
+                TimeRemainingText.Visibility = Visibility.Collapsed;
                 LogContainer.Visibility = Visibility.Collapsed;
                 StopIndeterminateAnimation();
                 StatusPanel.Visibility = Visibility.Visible;
@@ -372,6 +398,7 @@ public partial class ZapretConfigWindow : Window
                 // Скрыть прогресс-бар и лог, показать ошибку
                 ProgressBarContainer.Visibility = Visibility.Collapsed;
                 ProgressText.Visibility = Visibility.Collapsed;
+                TimeRemainingText.Visibility = Visibility.Collapsed;
                 LogContainer.Visibility = Visibility.Collapsed;
                 StatusPanel.Visibility = Visibility.Visible;
                 StatusText.Text = "Не найдено рабочих конфигов с 12/12 успешными тестами.\n\n" +
@@ -391,6 +418,7 @@ public partial class ZapretConfigWindow : Window
             // Скрыть прогресс-бар и лог, показать ошибку
             ProgressBarContainer.Visibility = Visibility.Collapsed;
             ProgressText.Visibility = Visibility.Collapsed;
+            TimeRemainingText.Visibility = Visibility.Collapsed;
             LogContainer.Visibility = Visibility.Collapsed;
             StatusPanel.Visibility = Visibility.Visible;
             StatusText.Text = $"Ошибка: {ex.Message}";
