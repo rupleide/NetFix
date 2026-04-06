@@ -724,7 +724,7 @@ public partial class ZapretConfigWindow : Window
         }
 
         SecondaryBtn.Content = "Закрыть";
-        PrimaryBtn.Content = "Проверить выбранный конфиг";
+        PrimaryBtn.Content = "Проверить конфиг";
         PrimaryBtn.Visibility = Visibility.Visible;
     }
 }
