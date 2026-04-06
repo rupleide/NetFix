@@ -638,6 +638,9 @@ public class ZapretConfigService
             fullText = fullText.Replace("%GameFilterTCP%", "12");
             fullText = fullText.Replace("%GameFilterUDP%", "12");
             
+            // ВАЖНО: Убираем ВСЕ кавычки из аргументов, т.к. весь binPath будет в кавычках
+            fullText = fullText.Replace("\"", "");
+            
             // Убираем лишние пробелы
             fullText = System.Text.RegularExpressions.Regex.Replace(fullText, @"\s+", " ").Trim();
 
