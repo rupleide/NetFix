@@ -164,7 +164,7 @@
 
                     <!-- Да, начать (теперь с градиентом, слева) -->
                     <Button x:Name="SecondaryBtn" Grid.Column="1" Content="Применить"
-                                Width="140" Height="36" Margin="0,0,10,0"
+                                MinWidth="140" MinHeight="38" Padding="16,8" Margin="0,0,10,0"
                                 Foreground="White" BorderThickness="0"
                                 Cursor="Hand" Click="SecondaryBtn_Click">
                         <Button.Style>
@@ -198,7 +198,7 @@
 
                     <!-- Нет, выйти (теперь outline, справа) -->
                     <Button x:Name="PrimaryBtn" Grid.Column="2" Content="Проверить конфиг"
-                                Width="140" Height="36"
+                                MinWidth="140" MinHeight="38" Padding="16,8"
                                 Background="Transparent" Foreground="#666669"
                                 BorderBrush="#2a2a2d" BorderThickness="1"
                                 Cursor="Hand" Click="PrimaryBtn_Click"
