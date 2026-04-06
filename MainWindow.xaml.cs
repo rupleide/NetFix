@@ -415,8 +415,8 @@ public partial class MainWindow : Window
             var iconPath = new System.Windows.Shapes.Path
             {
                 Data = geometry,
-                Width = 20,
-                Height = 20,
+                Width = 24,
+                Height = 24,
                 Stretch = Stretch.Uniform,
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = System.Windows.HorizontalAlignment.Center
