@@ -98,6 +98,7 @@
 
         <!-- ═══ FLAT BUTTON CENTERED ═══ -->
         <Style x:Key="FlatBtnCentered" TargetType="Button" BasedOn="{StaticResource FlatBtn}">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
