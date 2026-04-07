@@ -197,7 +197,7 @@ public partial class UpdateWindow : Window
             PrimaryBtn.Background = Brush("#22c55e");
             
             SecondaryBtn.Content = "Я уверен, закрыть";
-            SecondaryBtn.Width = 135; // Увеличиваем кнопку, чтобы текст влез
+            SecondaryBtn.Width = 155; // Увеличиваем кнопку еще больше, чтобы текст 100% влез
             
             this.Height = 290; // Немного увеличиваем высоту окна, чтобы текст точно поместился
         }
