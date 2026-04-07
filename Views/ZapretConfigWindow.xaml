@@ -238,9 +238,9 @@
                                     </Setter>
                                     <Style.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#2a2a2d"/>
-                                            <Setter Property="BorderBrush" Value="#4a4a4d"/>
-                                            <Setter Property="Foreground" Value="#888889"/>
+                                            <Setter Property="Background" Value="#3a3a3d"/>
+                                            <Setter Property="BorderBrush" Value="#5a5a5d"/>
+                                            <Setter Property="Foreground" Value="#aaaaaa"/>
                                         </Trigger>
                                     </Style.Triggers>
                                 </Style>
