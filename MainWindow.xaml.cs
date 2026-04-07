@@ -1925,9 +1925,9 @@ public partial class MainWindow : Window
         iconGlow.RepeatBehavior = RepeatBehavior.Forever;
         
         // Находим иконку в шаблоне кнопки
-        if (GetFixButtonIcon() is Path iconEl)
+        if (GetFixButtonIcon() is System.Windows.Shapes.Path iconEl)
         {
-            iconEl.BeginAnimation(Path.StrokeProperty, iconGlow);
+            iconEl.BeginAnimation(System.Windows.Shapes.Path.StrokeProperty, iconGlow);
         }
     }
 
@@ -1969,18 +1969,18 @@ public partial class MainWindow : Window
     }
 
     // ── Diagnostics ──────────────────────────────────────────────────────────
-    private Path? GetFixButtonIcon()
+    private System.Windows.Shapes.Path? GetFixButtonIcon()
     {
         FixBtn.ApplyTemplate();
-        return FixBtn.Template.FindName("BtnIcon", FixBtn) as Path;
+        return FixBtn.Template.FindName("BtnIcon", FixBtn) as System.Windows.Shapes.Path;
     }
 
     private void SetFixButtonIconColor(Color color)
     {
-        if (GetFixButtonIcon() is not Path icon)
+        if (GetFixButtonIcon() is not System.Windows.Shapes.Path icon)
             return;
 
-        icon.BeginAnimation(Path.StrokeProperty, null);
+        icon.BeginAnimation(System.Windows.Shapes.Path.StrokeProperty, null);
         icon.Stroke = new SolidColorBrush(color);
     }
 
