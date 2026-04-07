@@ -177,82 +177,94 @@
             <Border Grid.Row="3" Background="#111113" CornerRadius="0,0,14,14"
                         BorderBrush="#22222a" BorderThickness="0,1,0,0"
                         Margin="0,16,0,0" Padding="28,12,28,12">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
 
-                    <!-- Подсказка слева -->
-                    <TextBlock Grid.Column="0" Text="Zapret Config Manager" 
-                                   Foreground="#333336" FontSize="11" VerticalAlignment="Center"/>
+                        <!-- Подсказка слева -->
+                        <TextBlock Grid.Column="0" Text="Zapret Config Manager" 
+                                       Foreground="#333336" FontSize="11" VerticalAlignment="Center"/>
 
-                    <!-- Да, начать (теперь с градиентом, слева) -->
-                    <Button x:Name="SecondaryBtn" Grid.Column="1" Content="Применить"
-                                MinWidth="140" MinHeight="38" Padding="16,8" Margin="0,0,10,0"
-                                Foreground="White" BorderThickness="0"
-                                Cursor="Hand" Click="SecondaryBtn_Click">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border CornerRadius="8">
-                                                <Border.Background>
-                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                        <GradientStop Color="#3b82f6" Offset="0"/>
-                                                        <GradientStop Color="#6366f1" Offset="1"/>
-                                                    </LinearGradientBrush>
-                                                </Border.Background>
-                                                <Border.Effect>
-                                                    <DropShadowEffect Color="#3b82f6" BlurRadius="12" ShadowDepth="0" Opacity="0.4"/>
-                                                </Border.Effect>
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Opacity" Value="0.88"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
+                        <!-- Да, начать (теперь с градиентом, слева) -->
+                        <Button x:Name="SecondaryBtn" Grid.Column="1" Content="Применить"
+                                    MinWidth="140" MinHeight="38" Padding="16,8" Margin="0,0,10,0"
+                                    Foreground="White" BorderThickness="0"
+                                    Cursor="Hand" Click="SecondaryBtn_Click">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border CornerRadius="8">
+                                                    <Border.Background>
+                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                            <GradientStop Color="#3b82f6" Offset="0"/>
+                                                            <GradientStop Color="#6366f1" Offset="1"/>
+                                                        </LinearGradientBrush>
+                                                    </Border.Background>
+                                                    <Border.Effect>
+                                                        <DropShadowEffect Color="#3b82f6" BlurRadius="12" ShadowDepth="0" Opacity="0.4"/>
+                                                    </Border.Effect>
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Opacity" Value="0.88"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
 
-                    <!-- Нет, выйти (теперь outline, справа) -->
-                    <Button x:Name="PrimaryBtn" Grid.Column="2" Content="Проверить конфиг"
-                                MinWidth="140" MinHeight="38" Padding="16,8"
-                                Background="Transparent" Foreground="#666669"
-                                BorderBrush="#2a2a2d" BorderThickness="1"
-                                Cursor="Hand" Click="PrimaryBtn_Click"
-                                Visibility="Collapsed">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}"
-                                                        BorderBrush="{TemplateBinding BorderBrush}"
-                                                        BorderThickness="{TemplateBinding BorderThickness}"
-                                                        CornerRadius="8">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#1e1e22"/>
-                                        <Setter Property="BorderBrush" Value="#3a3a3d"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                </Grid>
+                        <!-- Нет, выйти (теперь outline, справа) -->
+                        <Button x:Name="PrimaryBtn" Grid.Column="2" Content="Проверить конфиг"
+                                    MinWidth="140" MinHeight="38" Padding="16,8"
+                                    Background="Transparent" Foreground="#666669"
+                                    BorderBrush="#2a2a2d" BorderThickness="1"
+                                    Cursor="Hand" Click="PrimaryBtn_Click"
+                                    Visibility="Collapsed">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}"
+                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                                            CornerRadius="8">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#1e1e22"/>
+                                            <Setter Property="BorderBrush" Value="#3a3a3d"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </Grid>
+                    
+                    <!-- Прогресс-бар для применения конфига -->
+                    <ProgressBar x:Name="ApplyConfigProgress"
+                                 Height="3"
+                                 Margin="0,8,0,0"
+                                 IsIndeterminate="True"
+                                 Visibility="Collapsed"
+                                 Foreground="#3b82f6"
+                                 Background="#1a1a1c"
+                                 BorderThickness="0"/>
+                </StackPanel>
             </Border>
         </Grid>
     </Border>

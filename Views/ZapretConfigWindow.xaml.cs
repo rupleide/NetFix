@@ -471,6 +471,9 @@ public partial class ZapretConfigWindow : Window
                 Console.WriteLine($"[ZapretConfigWindow] Applying config: {_cache.CurrentConfig}");
                 Console.WriteLine($"[ZapretConfigWindow] Zapret path: {_zapretPath}");
                 
+                // Показать прогресс-бар
+                ApplyConfigProgress.Visibility = Visibility.Visible;
+                
                 SecondaryBtn.IsEnabled = false;
                 PrimaryBtn.IsEnabled = false;
                 var originalContent = SecondaryBtn.Content;
@@ -484,6 +487,9 @@ public partial class ZapretConfigWindow : Window
                 SecondaryBtn.IsEnabled = true;
                 PrimaryBtn.IsEnabled = true;
                 SecondaryBtn.Content = originalContent;
+                
+                // Скрыть прогресс-бар
+                ApplyConfigProgress.Visibility = Visibility.Collapsed;
 
                 if (success)
                 {
