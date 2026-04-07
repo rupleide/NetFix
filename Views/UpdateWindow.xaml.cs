@@ -196,8 +196,8 @@ public partial class UpdateWindow : Window
             PrimaryBtn.Content = "Обновить";
             PrimaryBtn.Background = Brush("#22c55e");
             
-            SecondaryBtn.Content = "Я уверен, закрыть";
-            SecondaryBtn.Width = 155; // Увеличиваем кнопку еще больше, чтобы текст 100% влез
+            SecondaryBtn.Content = "Закрыть!";
+            SecondaryBtn.Width = 100; // Возвращаем стандартную ширину
             
             this.Height = 290; // Немного увеличиваем высоту окна, чтобы текст точно поместился
         }
