@@ -1871,10 +1871,10 @@ public partial class MainWindow : Window
         SuccessArc.Visibility = Visibility.Visible;
 
         // Запускаем анимацию цвета СРАЗУ
-        var icon = (TextBlock)FixBtn.Template.FindName("BtnIcon", FixBtn);
+        var icon = GetFixButtonIcon();
         if (icon != null) {
             var brush = new SolidColorBrush(Color.FromRgb(0x7c, 0x6a, 0xf7));
-            icon.Foreground = brush;
+            icon.Stroke = brush;
             brush.BeginAnimation(SolidColorBrush.ColorProperty,
                 new ColorAnimation(
                     Color.FromRgb(0x7c, 0x6a, 0xf7),
@@ -1925,9 +1925,9 @@ public partial class MainWindow : Window
         iconGlow.RepeatBehavior = RepeatBehavior.Forever;
         
         // Находим иконку в шаблоне кнопки
-        if (FixBtn.Template.FindName("BtnIcon", FixBtn) is TextBlock iconEl)
+        if (GetFixButtonIcon() is Path iconEl)
         {
-            iconEl.BeginAnimation(TextBlock.ForegroundProperty, iconGlow);
+            iconEl.BeginAnimation(Path.StrokeProperty, iconGlow);
         }
     }
 
@@ -1941,10 +1941,9 @@ public partial class MainWindow : Window
         SpinArc2.Visibility = Visibility.Collapsed;
         
         // Возвращаем цвет иконки в нормальное состояние
-        if (FixBtn.Template.FindName("BtnIcon", FixBtn) is TextBlock iconEl)
-        {
-            iconEl.Foreground = new SolidColorBrush(Color.FromRgb(0x7c, 0x6a, 0xf7));
-        }
+        SetFixButtonIconColor(success
+            ? Color.FromRgb(0x22, 0xc5, 0x5e)
+            : Color.FromRgb(0xef, 0x44, 0x44));
     }
 
     private void PlayErrorRing()
@@ -1952,10 +1951,7 @@ public partial class MainWindow : Window
         ErrorRing.Visibility = Visibility.Visible;
         
         // Меняем цвет иконки на красный
-        if (FixBtn.Template.FindName("BtnIcon", FixBtn) is TextBlock iconEl)
-        {
-            iconEl.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
-        }
+        SetFixButtonIconColor(Color.FromRgb(0xef, 0x44, 0x44));
         
         // Shake анимация кнопки (аналог CSS)
         var shakeTransform = new TranslateTransform();
@@ -1973,6 +1969,21 @@ public partial class MainWindow : Window
     }
 
     // ── Diagnostics ──────────────────────────────────────────────────────────
+    private Path? GetFixButtonIcon()
+    {
+        FixBtn.ApplyTemplate();
+        return FixBtn.Template.FindName("BtnIcon", FixBtn) as Path;
+    }
+
+    private void SetFixButtonIconColor(Color color)
+    {
+        if (GetFixButtonIcon() is not Path icon)
+            return;
+
+        icon.BeginAnimation(Path.StrokeProperty, null);
+        icon.Stroke = new SolidColorBrush(color);
+    }
+
     private void DiagRunBtn_Click(object s, RoutedEventArgs e)
     {
         DiagRunBtn.IsEnabled = false;
