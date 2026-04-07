@@ -22,6 +22,10 @@ public class ZapretConfigService
     private static readonly Regex TestLineRegex = new Regex(
         @"^\s*(\w+)\s+HTTP:(\w+)\s+TLS1\.2:(\w+)\s+TLS1\.3:(\w+)\s+\|\s+Ping:\s*(\d+)\s*ms",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    // Regex для строк только с Ping (DNS тесты и т.д.)
+    private static readonly Regex PingOnlyRegex = new Regex(
+        @"^\s*(\w+)\s+Ping:\s*(\d+)\s*ms",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     public static ZapretConfigCache? LoadCache()
     {
@@ -206,11 +210,39 @@ public class ZapretConfigService
                     currentConfig.AveragePing = (int)currentConfig.Tests.Values.Average(t => t.Ping);
                 
                 System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Average ping for {currentConfig.Name}: {currentConfig.AveragePing}ms");
+                return;
             }
-            else if (line.Contains("Ping:") && currentConfig != null)
+            
+            // Парсинг строк только с Ping (DNS тесты)
+            var pingOnlyMatch = PingOnlyRegex.Match(line);
+            if (pingOnlyMatch.Success && currentConfig != null)
             {
-                // Если regex не сработал, но строка содержит "Ping:", выводим для отладки
-                System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Failed to parse line with Ping: '{line}'");
+                var serviceName = pingOnlyMatch.Groups[1].Value;
+                var pingStr = pingOnlyMatch.Groups[2].Value;
+                var ping = string.IsNullOrEmpty(pingStr) ? 0 : int.Parse(pingStr);
+
+                System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Parsed Ping-only: {serviceName}, Ping: {ping}ms");
+
+                var testResult = new ServiceTestResult
+                {
+                    ServiceName = serviceName,
+                    HttpStatus = "OK",  // DNS тесты считаем OK если есть пинг
+                    Tls12Status = "N/A",
+                    Tls13Status = "N/A",
+                    Ping = ping
+                };
+
+                currentConfig.Tests[serviceName] = testResult;
+
+                // DNS тесты с пингом считаем успешными
+                if (ping > 0)
+                    currentConfig.SuccessCount++;
+
+                // Обновить средний пинг
+                if (currentConfig.Tests.Count > 0)
+                    currentConfig.AveragePing = (int)currentConfig.Tests.Values.Average(t => t.Ping);
+                
+                System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Average ping for {currentConfig.Name}: {currentConfig.AveragePing}ms");
             }
             // Пропускаем все остальные строки - не показываем технический мусор
         };
@@ -384,6 +416,35 @@ public class ZapretConfigService
                     if (httpStatus == "ERROR" || tls12Status == "ERROR" || tls13Status == "ERROR" ||
                         httpStatus == "UNSUP" || tls12Status == "UNSUP" || tls13Status == "UNSUP")
                         currentConfig.ErrorCount++;
+
+                    // Обновить средний пинг
+                    if (currentConfig.Tests.Count > 0)
+                        currentConfig.AveragePing = (int)currentConfig.Tests.Values.Average(t => t.Ping);
+                    return;
+                }
+                
+                // Парсинг строк только с Ping (DNS тесты)
+                var pingOnlyMatch = PingOnlyRegex.Match(line);
+                if (pingOnlyMatch.Success)
+                {
+                    var serviceName = pingOnlyMatch.Groups[1].Value;
+                    var pingStr = pingOnlyMatch.Groups[2].Value;
+                    var ping = string.IsNullOrEmpty(pingStr) ? 0 : int.Parse(pingStr);
+
+                    var testResult = new ServiceTestResult
+                    {
+                        ServiceName = serviceName,
+                        HttpStatus = "OK",
+                        Tls12Status = "N/A",
+                        Tls13Status = "N/A",
+                        Ping = ping
+                    };
+
+                    currentConfig.Tests[serviceName] = testResult;
+
+                    // DNS тесты с пингом считаем успешными
+                    if (ping > 0)
+                        currentConfig.SuccessCount++;
 
                     // Обновить средний пинг
                     if (currentConfig.Tests.Count > 0)
