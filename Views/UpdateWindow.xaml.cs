@@ -69,6 +69,11 @@ public partial class UpdateWindow : Window
         SecondaryBtn.Content = "Закрыть";
     }
 
+    public void InitWithUpdate(string newVersion, string downloadUrl)
+    {
+        ShowUpdateAvailableState(newVersion, downloadUrl);
+    }
+
     // Состояние 4б: Есть обновление
     private void ShowUpdateAvailableState(string newVersion, string downloadUrl)
     {
