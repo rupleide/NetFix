@@ -95,13 +95,13 @@
 
 <br/>
 
-<img src="Assets/Screenshots/Main.png" width="800" alt="Главный экран"/>
+<img src="Assets/Screenshots/Main2.png" width="800" alt="Главный экран"/>
 
 <p><i><b>Главный экран:</b> Одна кнопка запускает диагностику, проверяет соединение и активирует необходимые службы. Лог в реальном времени покажет каждый шаг.</i></p>
 
 <br/>
 
-<img src="Assets/Screenshots/Servers.png" width="800" alt="Диагностика"/>
+<img src="Assets/Screenshots/Servers2.png" width="800" alt="Диагностика серверов"/>
 
 <p><i><b>Расширенная диагностика:</b> Проверяет пинг и доступность каждого дата-центра Telegram (DC1–DC5). Сразу видно, где именно "затык" в сети.</i></p>
 
@@ -109,27 +109,49 @@
 
 <table border="0" cellpadding="12">
   <tr>
-    <td width="50%" align="center">
-      <img src="Assets/Screenshots/Settings.png" width="380"/><br/><br/>
+    <td colspan="2" align="center">
+      <h3>✨ ОБНОВЛЕНИЕ: Умный подбор конфигурации Zapret</h3>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center" valign="top">
+      <img src="Assets/Screenshots/Config_menu.png" width="380" alt="Выбор конфига"/><br/><br/>
+      <b>📑 1. Выбор конфига</b><br/>
+      <i>Список конфигов, отсортированный по качеству работы: от идеальных до менее стабильных.</i>
+    </td>
+    <td width="50%" align="center" valign="top">
+      <img src="Assets/Screenshots/Scan_log.png" width="380" alt="Сканирование конфигов"/><br/><br/>
+      <b>🔍 2. Сканирование конфигов</b><br/>
+      <i>Автоматическая проверка всех конфигов на работоспособность с сохранением лучшего результата в память.</i>
+    </td>
+  </tr>
+</table>
+
+<br/>
+
+<table border="0" cellpadding="12">
+  <tr>
+    <td width="50%" align="center" valign="top">
+      <img src="Assets/Screenshots/Settings2.png" width="380" alt="Настройки"/><br/><br/>
       <b>⚙️ Гибкие настройки</b><br/>
       <i>Управление путями к файлам, автозагрузкой и уведомлениями в одном окне.</i>
     </td>
-    <td width="50%" align="center">
-      <img src="Assets/Screenshots/Services.png" width="380"/><br/><br/>
+    <td width="50%" align="center" valign="top">
+      <img src="Assets/Screenshots/Services2.png" width="380" alt="Сервисы"/><br/><br/>
       <b>🛠 Управление сервисами</b><br/>
       <i>Быстрый доступ к запуску и остановке Zapret и TgWsProxy по отдельности.</i>
     </td>
   </tr>
   <tr>
-    <td width="50%" align="center">
-      <img src="Assets/Screenshots/Update.png" width="380"/><br/><br/>
+    <td width="50%" align="center" valign="top">
+      <img src="Assets/Screenshots/Update2.png" width="380" alt="Обновление"/><br/><br/>
       <b>🔄 Автообновление</b><br/>
       <i>Программа сама следит за новыми версиями и предлагает обновиться в один клик.</i>
     </td>
-    <td width="50%" align="center">
-      <img src="Assets/Screenshots/Frequent%20questions.png" width="380"/><br/><br/>
+    <td width="50%" align="center" valign="top">
+      <img src="Assets/Screenshots/FAQ.png" width="380" alt="FAQ"/><br/><br/>
       <b>❓ Понятный FAQ</b><br/>
-      <i>Все типичные проблемы и их решения - чтобы не пришлось никого просить о помощи.</i>
+      <i>Все типичные проблемы и их решения — чтобы не пришлось никого просить о помощи.</i>
     </td>
   </tr>
 </table>
@@ -151,5 +173,5 @@
 
 <div align="center">
   <sub>Разработано с ❤️ для тех, кто хочет просто нажать на кнопку</sub><br/>
-  <sub>v1.0.6 · 2026</sub>
+  <sub>v1.0.7 · 2026</sub>
 </div>
