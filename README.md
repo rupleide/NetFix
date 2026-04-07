@@ -89,7 +89,7 @@
 
 <div align="center">
 
-<img src="Assets/Screenshots/0318.gif" width="800" alt="NetFix в действии"/>
+<img src="Assets/Screenshots/0407(1).gif" width="800" alt="NetFix в действии"/>
 
 <p><i>Вся программа за 30 секунд - от кнопки до результата.</i></p>
 
