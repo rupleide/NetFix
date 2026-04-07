@@ -37,7 +37,7 @@ public partial class ZapretConfigWindow : Window
         Loaded += OnLoaded;
         Closing += OnClosing;
         
-        // Добавить эффект при наведении для PrimaryBtn
+        // Р”РѕР±Р°РІРёС‚СЊ СЌС„С„РµРєС‚ РїСЂРё РЅР°РІРµРґРµРЅРёРё РґР»СЏ PrimaryBtn
         PrimaryBtn.MouseEnter += (s, e) =>
         {
             PrimaryBtn.Background = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x2d));
@@ -61,7 +61,7 @@ public partial class ZapretConfigWindow : Window
             LogTextBox.Document.Blocks.Add(paragraph);
         }
 
-        // Проверяем, является ли это заголовком
+        // РџСЂРѕРІРµСЂСЏРµРј, СЏРІР»СЏРµС‚СЃСЏ Р»Рё СЌС‚Рѕ Р·Р°РіРѕР»РѕРІРєРѕРј
         bool isHeader = text.Contains("[HEADER]");
         if (isHeader)
         {
@@ -71,8 +71,8 @@ public partial class ZapretConfigWindow : Window
         var run = new Run(text + "\n")
         {
             Foreground = new SolidColorBrush(color),
-            FontSize = isHeader ? 16 : 12,  // Ещё крупнее для заголовков (было 14)
-            FontWeight = isHeader ? FontWeights.ExtraBold : FontWeights.Normal  // ExtraBold вместо Bold
+            FontSize = isHeader ? 16 : 12,  // Р•С‰С‘ РєСЂСѓРїРЅРµРµ РґР»СЏ Р·Р°РіРѕР»РѕРІРєРѕРІ (Р±С‹Р»Рѕ 14)
+            FontWeight = isHeader ? FontWeights.ExtraBold : FontWeights.Normal  // ExtraBold РІРјРµСЃС‚Рѕ Bold
         };
         paragraph.Inlines.Add(run);
         
@@ -81,7 +81,7 @@ public partial class ZapretConfigWindow : Window
 
     private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
-        // Остановить тестирование при закрытии окна
+        // РћСЃС‚Р°РЅРѕРІРёС‚СЊ С‚РµСЃС‚РёСЂРѕРІР°РЅРёРµ РїСЂРё Р·Р°РєСЂС‹С‚РёРё РѕРєРЅР°
         _isTesting = false;
         
         if (_testProcess != null && !_testProcess.HasExited)
@@ -94,8 +94,8 @@ public partial class ZapretConfigWindow : Window
             catch { }
         }
         
-        // Убить все winws.exe и powershell.exe процессы ТОЛЬКО если это режим тестирования
-        // В режиме выбора конфига НЕ трогаем запущенные процессы
+        // РЈР±РёС‚СЊ РІСЃРµ winws.exe Рё powershell.exe РїСЂРѕС†РµСЃСЃС‹ РўРћР›Р¬РљРћ РµСЃР»Рё СЌС‚Рѕ СЂРµР¶РёРј С‚РµСЃС‚РёСЂРѕРІР°РЅРёСЏ
+        // Р’ СЂРµР¶РёРјРµ РІС‹Р±РѕСЂР° РєРѕРЅС„РёРіР° РќР• С‚СЂРѕРіР°РµРј Р·Р°РїСѓС‰РµРЅРЅС‹Рµ РїСЂРѕС†РµСЃСЃС‹
         if (_testMode)
         {
             try
@@ -111,7 +111,7 @@ public partial class ZapretConfigWindow : Window
                     catch { }
                 }
                 
-                // Также убить любые PowerShell процессы, запущенные от нашего процесса
+                // РўР°РєР¶Рµ СѓР±РёС‚СЊ Р»СЋР±С‹Рµ PowerShell РїСЂРѕС†РµСЃСЃС‹, Р·Р°РїСѓС‰РµРЅРЅС‹Рµ РѕС‚ РЅР°С€РµРіРѕ РїСЂРѕС†РµСЃСЃР°
                 var powerShellProcs = Process.GetProcessesByName("powershell");
                 foreach (var proc in powerShellProcs)
                 {
@@ -131,24 +131,24 @@ public partial class ZapretConfigWindow : Window
     {
         try
         {
-            // Убить основной процесс
+            // РЈР±РёС‚СЊ РѕСЃРЅРѕРІРЅРѕР№ РїСЂРѕС†РµСЃСЃ
             var process = Process.GetProcessById(pid);
             process.Kill(true);
-            process.WaitForExit(2000); // Ждем 2 секунды
+            process.WaitForExit(2000); // Р–РґРµРј 2 СЃРµРєСѓРЅРґС‹
         }
         catch (ArgumentException)
         {
-            // Процесс уже завершён
+            // РџСЂРѕС†РµСЃСЃ СѓР¶Рµ Р·Р°РІРµСЂС€С‘РЅ
         }
         catch (Exception)
         {
-            // В случае ошибки используем команду taskkill для полного уничтожения
+            // Р’ СЃР»СѓС‡Р°Рµ РѕС€РёР±РєРё РёСЃРїРѕР»СЊР·СѓРµРј РєРѕРјР°РЅРґСѓ taskkill РґР»СЏ РїРѕР»РЅРѕРіРѕ СѓРЅРёС‡С‚РѕР¶РµРЅРёСЏ
             try
             {
                 var psi = new ProcessStartInfo
                 {
                     FileName = "taskkill",
-                    Arguments = $"/F /PID {pid} /T", // /T - убить дерево процессов
+                    Arguments = $"/F /PID {pid} /T", // /T - СѓР±РёС‚СЊ РґРµСЂРµРІРѕ РїСЂРѕС†РµСЃСЃРѕРІ
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     WindowStyle = ProcessWindowStyle.Hidden
@@ -162,12 +162,12 @@ public partial class ZapretConfigWindow : Window
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
-        // Загрузить кэш
+        // Р—Р°РіСЂСѓР·РёС‚СЊ РєСЌС€
         _cache = ZapretConfigService.LoadCache();
 
         if (_testMode)
         {
-            // Режим тестирования - показать сообщение о подтверждении в текущем окне
+            // Р РµР¶РёРј С‚РµСЃС‚РёСЂРѕРІР°РЅРёСЏ - РїРѕРєР°Р·Р°С‚СЊ СЃРѕРѕР±С‰РµРЅРёРµ Рѕ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРё РІ С‚РµРєСѓС‰РµРј РѕРєРЅРµ
             StatusPanel.Visibility = Visibility.Visible;
             ProgressBarContainer.Visibility = Visibility.Collapsed;
             
@@ -175,32 +175,31 @@ public partial class ZapretConfigWindow : Window
             StatusIcon.Data = (Geometry)FindResource("WarningIcon");
             StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08));
             
-            StatusText.Text = "Перед запуском - важная вещь!\n\n" +
-                             "Приложение может само протестировать все конфиги и запомнить лучшие. " +
-                             "Займёт минут 10, зато потом не придётся вручную перебирать их когда что-то перестаёт работать.\n\n" +
-                             "А ломается, кстати, по-разному. Иногда конфиг вроде работает, Discord открылся, всё хорошо. " +
-                             "Но стоит зайти на какой-нибудь сайт, и он либо вообще не загружается, " +
-                             "либо открывается сломанным, без стилей, всё съехало, кнопки не работают. " +
-                             "Это не браузер виноват, просто конфиг обрабатывает трафик не так, как нужно, и часть сайтов ломается.\n\n" +
-                             "Именно поэтому важно иметь несколько проверенных конфигов под рукой, " +
-                             "если один перестал работать правильно, переключились на другой и всё.\n\n" +
-                             "Пройдите тест один раз, и приложение само разберётся что к чему. Запускаем?";
+            StatusText.Text = "РџРµСЂРµРґ Р·Р°РїСѓСЃРєРѕРј - РІР°Р¶РЅР°СЏ РІРµС‰СЊ!\n\n" +
+                             "РџСЂРёР»РѕР¶РµРЅРёРµ РјРѕР¶РµС‚ СЃР°РјРѕ РїСЂРѕС‚РµСЃС‚РёСЂРѕРІР°С‚СЊ РІСЃРµ РєРѕРЅС„РёРіРё Рё Р·Р°РїРѕРјРЅРёС‚СЊ Р»СѓС‡С€РёРµ. " +
+                             "Р—Р°Р№РјС‘С‚ РјРёРЅСѓС‚ 10, Р·Р°С‚Рѕ РїРѕС‚РѕРј РЅРµ РїСЂРёРґС‘С‚СЃСЏ РІСЂСѓС‡РЅСѓСЋ РїРµСЂРµР±РёСЂР°С‚СЊ РёС… РєРѕРіРґР° С‡С‚Рѕ-С‚Рѕ РїРµСЂРµСЃС‚Р°С‘С‚ СЂР°Р±РѕС‚Р°С‚СЊ.\n\n" +
+                             "Рђ Р»РѕРјР°РµС‚СЃСЏ, РєСЃС‚Р°С‚Рё, РїРѕ-СЂР°Р·РЅРѕРјСѓ. РРЅРѕРіРґР° РєРѕРЅС„РёРі РІСЂРѕРґРµ СЂР°Р±РѕС‚Р°РµС‚, Discord РѕС‚РєСЂС‹Р»СЃСЏ, РІСЃС‘ С…РѕСЂРѕС€Рѕ. " +
+                             "РќРѕ СЃС‚РѕРёС‚ Р·Р°Р№С‚Рё РЅР° РєР°РєРѕР№-РЅРёР±СѓРґСЊ СЃР°Р№С‚, Рё РѕРЅ Р»РёР±Рѕ РІРѕРѕР±С‰Рµ РЅРµ Р·Р°РіСЂСѓР¶Р°РµС‚СЃСЏ, " +
+                             "Р»РёР±Рѕ РѕС‚РєСЂС‹РІР°РµС‚СЃСЏ СЃР»РѕРјР°РЅРЅС‹Рј, Р±РµР· СЃС‚РёР»РµР№, РІСЃС‘ СЃСЉРµС…Р°Р»Рѕ, РєРЅРѕРїРєРё РЅРµ СЂР°Р±РѕС‚Р°СЋС‚. " +
+                             "Р­С‚Рѕ РЅРµ Р±СЂР°СѓР·РµСЂ РІРёРЅРѕРІР°С‚, РїСЂРѕСЃС‚Рѕ РєРѕРЅС„РёРі РѕР±СЂР°Р±Р°С‚С‹РІР°РµС‚ С‚СЂР°С„РёРє РЅРµ С‚Р°Рє, РєР°Рє РЅСѓР¶РЅРѕ, Рё С‡Р°СЃС‚СЊ СЃР°Р№С‚РѕРІ Р»РѕРјР°РµС‚СЃСЏ.\n\n" +
+                             "РРјРµРЅРЅРѕ РїРѕСЌС‚РѕРјСѓ РІР°Р¶РЅРѕ РёРјРµС‚СЊ РЅРµСЃРєРѕР»СЊРєРѕ РїСЂРѕРІРµСЂРµРЅРЅС‹С… РєРѕРЅС„РёРіРѕРІ РїРѕРґ СЂСѓРєРѕР№, " +
+                             "РµСЃР»Рё РѕРґРёРЅ РїРµСЂРµСЃС‚Р°Р» СЂР°Р±РѕС‚Р°С‚СЊ РїСЂР°РІРёР»СЊРЅРѕ, РїРµСЂРµРєР»СЋС‡РёР»РёСЃСЊ РЅР° РґСЂСѓРіРѕР№ Рё РІСЃС‘.\n\n" +
+                             "РџСЂРѕР№РґРёС‚Рµ С‚РµСЃС‚ РѕРґРёРЅ СЂР°Р·, Рё РїСЂРёР»РѕР¶РµРЅРёРµ СЃР°РјРѕ СЂР°Р·Р±РµСЂС‘С‚СЃСЏ С‡С‚Рѕ Рє С‡РµРјСѓ. Р—Р°РїСѓСЃРєР°РµРј?";
             
-            SecondaryBtn.Content = "Да, начать";
-            PrimaryBtn.Content = "Нет, выйти";
+            SecondaryBtn.Content = "Р”Р°, РЅР°С‡Р°С‚СЊ";
+            PrimaryBtn.Content = "РќРµС‚, РІС‹Р№С‚Рё";
             PrimaryBtn.Visibility = Visibility.Visible;
         }
         else
         {
-            // Режим выбора конфига
-            if (_cache == null || _cache.ValidConfigs.Count == 0)
+            // Р РµР¶РёРј РІС‹Р±РѕСЂР° РєРѕРЅС„РёРіР°
+            if (_cache == null || !_cache.HasAnyConfigs)
             {
-                // Нет кэша - показать предупреждение
+                // РќРµС‚ РєСЌС€Р° - РїРѕРєР°Р·Р°С‚СЊ РїСЂРµРґСѓРїСЂРµР¶РґРµРЅРёРµ
                 ShowWarningNoCache();
             }
             else
             {
-                // Показать список конфигов
                 StopIndeterminateAnimation();
                 ShowConfigList();
             }
@@ -217,28 +216,28 @@ public partial class ZapretConfigWindow : Window
         StatusIcon.Data = (Geometry)FindResource("WarningIcon");
         StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08));
         
-        StatusText.Text = "ОБЯЗАТЕЛЬНО ПРОЙДИТЕ полный тест конфигов!\n\n" +
-                         "Это поможет вам в будущем и сэкономит кучу времени! " +
-                         "Приложение найдёт все рабочие конфиги и выберет лучший для вашей сети.";
+        StatusText.Text = "РћР‘РЇР—РђРўР•Р›Р¬РќРћ РџР РћР™Р”РРўР• РїРѕР»РЅС‹Р№ С‚РµСЃС‚ РєРѕРЅС„РёРіРѕРІ!\n\n" +
+                         "Р­С‚Рѕ РїРѕРјРѕР¶РµС‚ РІР°Рј РІ Р±СѓРґСѓС‰РµРј Рё СЃСЌРєРѕРЅРѕРјРёС‚ РєСѓС‡Сѓ РІСЂРµРјРµРЅРё! " +
+                         "РџСЂРёР»РѕР¶РµРЅРёРµ РЅР°Р№РґС‘С‚ РІСЃРµ СЂР°Р±РѕС‡РёРµ РєРѕРЅС„РёРіРё Рё РІС‹Р±РµСЂРµС‚ Р»СѓС‡С€РёР№ РґР»СЏ РІР°С€РµР№ СЃРµС‚Рё.";
         
-        SecondaryBtn.Content = "Закрыть";
-        PrimaryBtn.Content = "Пройти тест";
+        SecondaryBtn.Content = "Р—Р°РєСЂС‹С‚СЊ";
+        PrimaryBtn.Content = "РџСЂРѕР№С‚Рё С‚РµСЃС‚";
         PrimaryBtn.Visibility = Visibility.Visible;
     }
 
     private async Task StartTestingAsync()
     {
         _isTesting = true;
-        SecondaryBtn.Content = "Отмена";
+        SecondaryBtn.Content = "РћС‚РјРµРЅР°";
         PrimaryBtn.Visibility = Visibility.Collapsed;
 
-        // Остановить и удалить сервис Zapret если установлен
-        StatusText.Text = "Подготовка к тестированию...";
+        // РћСЃС‚Р°РЅРѕРІРёС‚СЊ Рё СѓРґР°Р»РёС‚СЊ СЃРµСЂРІРёСЃ Zapret РµСЃР»Рё СѓСЃС‚Р°РЅРѕРІР»РµРЅ
+        StatusText.Text = "РџРѕРґРіРѕС‚РѕРІРєР° Рє С‚РµСЃС‚РёСЂРѕРІР°РЅРёСЋ...";
         
         var st = DiagnosticsEngine.CheckAppStatus();
         if (st.ZapretRunning)
         {
-            StatusText.Text = "Остановка Zapret...";
+            StatusText.Text = "РћСЃС‚Р°РЅРѕРІРєР° Zapret...";
             foreach (var p in Process.GetProcessesByName("winws"))
                 try { p.Kill(); } catch { }
             foreach (var p in Process.GetProcessesByName("winws.exe"))
@@ -247,10 +246,10 @@ public partial class ZapretConfigWindow : Window
             await Task.Delay(1000);
         }
 
-        // Удалить сервис Zapret если установлен
+        // РЈРґР°Р»РёС‚СЊ СЃРµСЂРІРёСЃ Zapret РµСЃР»Рё СѓСЃС‚Р°РЅРѕРІР»РµРЅ
         try
         {
-            StatusText.Text = "Удаление сервиса Zapret...";
+            StatusText.Text = "РЈРґР°Р»РµРЅРёРµ СЃРµСЂРІРёСЃР° Zapret...";
             
             var psi = new ProcessStartInfo
             {
@@ -266,7 +265,7 @@ public partial class ZapretConfigWindow : Window
             {
                 await checkProcess.WaitForExitAsync();
                 
-                // Если сервис существует (код возврата 0), удалить его
+                // Р•СЃР»Рё СЃРµСЂРІРёСЃ СЃСѓС‰РµСЃС‚РІСѓРµС‚ (РєРѕРґ РІРѕР·РІСЂР°С‚Р° 0), СѓРґР°Р»РёС‚СЊ РµРіРѕ
                 if (checkProcess.ExitCode == 0)
                 {
                     var stopPsi = new ProcessStartInfo
@@ -299,68 +298,68 @@ public partial class ZapretConfigWindow : Window
         }
         catch
         {
-            // Игнорируем ошибки удаления сервиса
+            // РРіРЅРѕСЂРёСЂСѓРµРј РѕС€РёР±РєРё СѓРґР°Р»РµРЅРёСЏ СЃРµСЂРІРёСЃР°
         }
 
         try
         {
-            StatusText.Text = "Запуск полного тестирования конфигов...\n\n" +
-                             "💡 Советуем вам подождать 10 минуток на полное сканирование.\n" +
-                             "В дальнейшем это сэкономит вам кучу времени и нервов!\n\n" +
-                             "Приложение найдёт все идеальные конфиги (12/12 тестов) и выберет лучший.";
+            StatusText.Text = "Р—Р°РїСѓСЃРє РїРѕР»РЅРѕРіРѕ С‚РµСЃС‚РёСЂРѕРІР°РЅРёСЏ РєРѕРЅС„РёРіРѕРІ...\n\n" +
+                             "рџ’Ў РЎРѕРІРµС‚СѓРµРј РІР°Рј РїРѕРґРѕР¶РґР°С‚СЊ 10 РјРёРЅСѓС‚РѕРє РЅР° РїРѕР»РЅРѕРµ СЃРєР°РЅРёСЂРѕРІР°РЅРёРµ.\n" +
+                             "Р’ РґР°Р»СЊРЅРµР№С€РµРј СЌС‚Рѕ СЃСЌРєРѕРЅРѕРјРёС‚ РІР°Рј РєСѓС‡Сѓ РІСЂРµРјРµРЅРё Рё РЅРµСЂРІРѕРІ!\n\n" +
+                             "РџСЂРёР»РѕР¶РµРЅРёРµ РЅР°Р№РґС‘С‚ РІСЃРµ РёРґРµР°Р»СЊРЅС‹Рµ РєРѕРЅС„РёРіРё (12/12 С‚РµСЃС‚РѕРІ) Рё РІС‹Р±РµСЂРµС‚ Р»СѓС‡С€РёР№.";
             
             await Task.Delay(3000);
             
-            // Показать прогресс-бар, лог и скрыть StatusPanel
+            // РџРѕРєР°Р·Р°С‚СЊ РїСЂРѕРіСЂРµСЃСЃ-Р±Р°СЂ, Р»РѕРі Рё СЃРєСЂС‹С‚СЊ StatusPanel
             StatusPanel.Visibility = Visibility.Collapsed;
             ProgressBarContainer.Visibility = Visibility.Visible;
             ProgressText.Visibility = Visibility.Visible;
             TimeRemainingText.Visibility = Visibility.Visible;
-            ProgressText.Text = "Тестирование конфигов: 0%";
-            TimeRemainingText.Text = "Осталось: ~10 мин";
+            ProgressText.Text = "РўРµСЃС‚РёСЂРѕРІР°РЅРёРµ РєРѕРЅС„РёРіРѕРІ: 0%";
+            TimeRemainingText.Text = "РћСЃС‚Р°Р»РѕСЃСЊ: ~10 РјРёРЅ";
             LogContainer.Visibility = Visibility.Visible;
             
-            // Запомнить время начала
+            // Р—Р°РїРѕРјРЅРёС‚СЊ РІСЂРµРјСЏ РЅР°С‡Р°Р»Р°
             _testStartTime = DateTime.Now;
             
-            // Очистить лог и добавить начальное сообщение
+            // РћС‡РёСЃС‚РёС‚СЊ Р»РѕРі Рё РґРѕР±Р°РІРёС‚СЊ РЅР°С‡Р°Р»СЊРЅРѕРµ СЃРѕРѕР±С‰РµРЅРёРµ
             LogTextBox.Document.Blocks.Clear();
-            AppendColoredLog("💡 Советуем вам подождать 10 минуток на полное сканирование.", Color.FromRgb(0xf0, 0xf0, 0xf0));
-            AppendColoredLog("В дальнейшем это сэкономит вам кучу времени и нервов!\n", Color.FromRgb(0xf0, 0xf0, 0xf0));
-            AppendColoredLog("Запуск тестирования...\n", Color.FromRgb(0x88, 0x88, 0x88));
+            AppendColoredLog("рџ’Ў РЎРѕРІРµС‚СѓРµРј РІР°Рј РїРѕРґРѕР¶РґР°С‚СЊ 10 РјРёРЅСѓС‚РѕРє РЅР° РїРѕР»РЅРѕРµ СЃРєР°РЅРёСЂРѕРІР°РЅРёРµ.", Color.FromRgb(0xf0, 0xf0, 0xf0));
+            AppendColoredLog("Р’ РґР°Р»СЊРЅРµР№С€РµРј СЌС‚Рѕ СЃСЌРєРѕРЅРѕРјРёС‚ РІР°Рј РєСѓС‡Сѓ РІСЂРµРјРµРЅРё Рё РЅРµСЂРІРѕРІ!\n", Color.FromRgb(0xf0, 0xf0, 0xf0));
+            AppendColoredLog("Р—Р°РїСѓСЃРє С‚РµСЃС‚РёСЂРѕРІР°РЅРёСЏ...\n", Color.FromRgb(0x88, 0x88, 0x88));
             
             var (configs, testProcess) = await ZapretConfigService.TestAllConfigsAsync(
                 _zapretPath,
                 status => Dispatcher.Invoke(() => 
                 {
-                    // Добавляем в лог с цветом в зависимости от содержимого
+                    // Р”РѕР±Р°РІР»СЏРµРј РІ Р»РѕРі СЃ С†РІРµС‚РѕРј РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ СЃРѕРґРµСЂР¶РёРјРѕРіРѕ
                     Color logColor;
-                    if (status.Contains("❌") || status.Contains("НЕ РАБОТАЕТ") || status.Contains("НЕРАБОЧИЙ"))
-                        logColor = Color.FromRgb(0xef, 0x44, 0x44); // Красный
-                    else if (status.Contains("✅") || status.Contains("РАБОТАЕТ") || status.Contains("РАБОЧИЙ"))
-                        logColor = Color.FromRgb(0x22, 0xc5, 0x5e); // Зелёный
-                    else if (status.Contains("🔄") || status.Contains("Тестирую"))
-                        logColor = Color.FromRgb(0x3b, 0x82, 0xf6); // Синий
-                    else if (status.Contains("⚠️") || status.Contains("ЧАСТИЧНО"))
-                        logColor = Color.FromRgb(0xea, 0xb3, 0x08); // Жёлтый
+                    if (status.Contains("вќЊ") || status.Contains("РќР• Р РђР‘РћРўРђР•Рў") || status.Contains("РќР•Р РђР‘РћР§РР™"))
+                        logColor = Color.FromRgb(0xef, 0x44, 0x44); // РљСЂР°СЃРЅС‹Р№
+                    else if (status.Contains("вњ…") || status.Contains("Р РђР‘РћРўРђР•Рў") || status.Contains("Р РђР‘РћР§РР™"))
+                        logColor = Color.FromRgb(0x22, 0xc5, 0x5e); // Р—РµР»С‘РЅС‹Р№
+                    else if (status.Contains("рџ”„") || status.Contains("РўРµСЃС‚РёСЂСѓСЋ"))
+                        logColor = Color.FromRgb(0x3b, 0x82, 0xf6); // РЎРёРЅРёР№
+                    else if (status.Contains("вљ пёЏ") || status.Contains("Р§РђРЎРўРР§РќРћ"))
+                        logColor = Color.FromRgb(0xea, 0xb3, 0x08); // Р–С‘Р»С‚С‹Р№
                     else
-                        logColor = Color.FromRgb(0xf0, 0xf0, 0xf0); // Белый по умолчанию
+                        logColor = Color.FromRgb(0xf0, 0xf0, 0xf0); // Р‘РµР»С‹Р№ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
                     
                     AppendColoredLog(status, logColor);
                 }),
                 (current, total) => Dispatcher.Invoke(() => 
                 {
-                    // Сохранить общее количество конфигов
+                    // РЎРѕС…СЂР°РЅРёС‚СЊ РѕР±С‰РµРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РєРѕРЅС„РёРіРѕРІ
                     if (_totalConfigs == 0)
                         _totalConfigs = total;
                     
-                    // Обновляем прогресс-бар
+                    // РћР±РЅРѕРІР»СЏРµРј РїСЂРѕРіСЂРµСЃСЃ-Р±Р°СЂ
                     var percentage = (current * 100 / total);
                     var progressWidth = (ProgressBarContainer.ActualWidth * current / total);
                     ProgressBar.Width = progressWidth;
-                    ProgressText.Text = $"Тестирование конфигов: {current}/{total} ({percentage}%)";
+                    ProgressText.Text = $"РўРµСЃС‚РёСЂРѕРІР°РЅРёРµ РєРѕРЅС„РёРіРѕРІ: {current}/{total} ({percentage}%)";
                     
-                    // Рассчитать оставшееся время
+                    // Р Р°СЃСЃС‡РёС‚Р°С‚СЊ РѕСЃС‚Р°РІС€РµРµСЃСЏ РІСЂРµРјСЏ
                     if (current > 0)
                     {
                         var elapsed = DateTime.Now - _testStartTime;
@@ -369,29 +368,33 @@ public partial class ZapretConfigWindow : Window
                         var estimatedSecondsRemaining = avgTimePerConfig * remainingConfigs;
                         
                         if (estimatedSecondsRemaining < 60)
-                            TimeRemainingText.Text = $"Осталось: ~{(int)estimatedSecondsRemaining} сек";
+                            TimeRemainingText.Text = $"РћСЃС‚Р°Р»РѕСЃСЊ: ~{(int)estimatedSecondsRemaining} СЃРµРє";
                         else
-                            TimeRemainingText.Text = $"Осталось: ~{(int)(estimatedSecondsRemaining / 60)} мин";
+                            TimeRemainingText.Text = $"РћСЃС‚Р°Р»РѕСЃСЊ: ~{(int)(estimatedSecondsRemaining / 60)} РјРёРЅ";
                     }
                 })
             );
             
             _testProcess = testProcess;
 
-            if (!_isTesting) return; // Отменено
+            if (!_isTesting) return; // РћС‚РјРµРЅРµРЅРѕ
 
-            if (configs.Count > 0)
+            var idealConfigs = configs.Where(c => c.IsValid).OrderBy(c => c.AveragePing).ToList();
+            var partialConfigs = configs.Where(c => c.IsPartiallyUsable).OrderBy(c => c.AveragePing).ToList();
+
+            if (idealConfigs.Count > 0)
             {
-                // Сохранить результаты
+                // РЎРѕС…СЂР°РЅРёС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚С‹
                 _cache = new ZapretConfigCache
                 {
                     LastTested = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                    CurrentConfig = configs[0].Name,
-                    ValidConfigs = configs
+                    CurrentConfig = idealConfigs[0].Name,
+                    ValidConfigs = idealConfigs,
+                    PartialConfigs = partialConfigs
                 };
                 ZapretConfigService.SaveCache(_cache);
 
-                // Скрыть прогресс-бар и лог, показать поздравление
+                // РЎРєСЂС‹С‚СЊ РїСЂРѕРіСЂРµСЃСЃ-Р±Р°СЂ Рё Р»РѕРі, РїРѕРєР°Р·Р°С‚СЊ РїРѕР·РґСЂР°РІР»РµРЅРёРµ
                 ProgressBarContainer.Visibility = Visibility.Collapsed;
                 ProgressText.Visibility = Visibility.Collapsed;
                 TimeRemainingText.Visibility = Visibility.Collapsed;
@@ -402,55 +405,55 @@ public partial class ZapretConfigWindow : Window
                 StatusIcon.Data = (Geometry)FindResource("CheckmarkIcon");
                 StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
                 
-                var topConfigs = string.Join("\n", configs.Take(5).Select((c, i) => 
-                    $"{i + 1}. {c.Name} (пинг: {c.AveragePing} мс, тестов: {c.SuccessCount}/12)"));
+                var topConfigs = string.Join("\n", idealConfigs.Take(5).Select((c, i) => 
+                    $"{i + 1}. {c.Name} (РїРёРЅРі: {c.AveragePing} РјСЃ, С‚РµСЃС‚РѕРІ: {c.SuccessCount}/12)"));
                 
-                StatusText.Text = $"🎉 Поздравляю с полным тестированием!\n\n" +
-                                 $"Найдено {configs.Count} идеальных конфигов.\n" +
-                                 $"Все они прошли 12/12 тестов без ошибок!\n\n" +
-                                 $"Ваш топ конфигов на следующие разы:\n\n{topConfigs}";
+                StatusText.Text = $"рџЋ‰ РџРѕР·РґСЂР°РІР»СЏСЋ СЃ РїРѕР»РЅС‹Рј С‚РµСЃС‚РёСЂРѕРІР°РЅРёРµРј!\n\n" +
+                                 $"РќР°Р№РґРµРЅРѕ {idealConfigs.Count} РёРґРµР°Р»СЊРЅС‹С… РєРѕРЅС„РёРіРѕРІ.\n" +
+                                 $"Р’СЃРµ РѕРЅРё РїСЂРѕС€Р»Рё 12/12 С‚РµСЃС‚РѕРІ Р±РµР· РѕС€РёР±РѕРє!\n\n" +
+                                 $"Р’Р°С€ С‚РѕРї РєРѕРЅС„РёРіРѕРІ РЅР° СЃР»РµРґСѓСЋС‰РёРµ СЂР°Р·С‹:\n\n{topConfigs}";
 
-                // Оставить экран поздравления, не скрывать автоматически
-                // Пользователь сам нажмет на кнопку чтобы перейти к выбору конфигов
+                // РћСЃС‚Р°РІРёС‚СЊ СЌРєСЂР°РЅ РїРѕР·РґСЂР°РІР»РµРЅРёСЏ, РЅРµ СЃРєСЂС‹РІР°С‚СЊ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё
+                // РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ СЃР°Рј РЅР°Р¶РјРµС‚ РЅР° РєРЅРѕРїРєСѓ С‡С‚РѕР±С‹ РїРµСЂРµР№С‚Рё Рє РІС‹Р±РѕСЂСѓ РєРѕРЅС„РёРіРѕРІ
                 PrimaryBtn.Visibility = Visibility.Visible;
-                PrimaryBtn.Content = "Выбрать конфиг";
+                PrimaryBtn.Content = "Р’С‹Р±СЂР°С‚СЊ РєРѕРЅС„РёРі";
             }
             else
             {
-                // Скрыть прогресс-бар и лог, показать ошибку
+                // РЎРєСЂС‹С‚СЊ РїСЂРѕРіСЂРµСЃСЃ-Р±Р°СЂ Рё Р»РѕРі, РїРѕРєР°Р·Р°С‚СЊ РѕС€РёР±РєСѓ
                 ProgressBarContainer.Visibility = Visibility.Collapsed;
                 ProgressText.Visibility = Visibility.Collapsed;
                 TimeRemainingText.Visibility = Visibility.Collapsed;
                 LogContainer.Visibility = Visibility.Collapsed;
                 StatusPanel.Visibility = Visibility.Visible;
-                StatusText.Text = "Не найдено рабочих конфигов с 12/12 успешными тестами.\n\n" +
-                                 "Возможно, ваша сеть имеет особые ограничения. Попробуйте повторить тест позже.";
+                StatusText.Text = "РќРµ РЅР°Р№РґРµРЅРѕ СЂР°Р±РѕС‡РёС… РєРѕРЅС„РёРіРѕРІ СЃ 12/12 СѓСЃРїРµС€РЅС‹РјРё С‚РµСЃС‚Р°РјРё.\n\n" +
+                                 "Р’РѕР·РјРѕР¶РЅРѕ, РІР°С€Р° СЃРµС‚СЊ РёРјРµРµС‚ РѕСЃРѕР±С‹Рµ РѕРіСЂР°РЅРёС‡РµРЅРёСЏ. РџРѕРїСЂРѕР±СѓР№С‚Рµ РїРѕРІС‚РѕСЂРёС‚СЊ С‚РµСЃС‚ РїРѕР·Р¶Рµ.";
                 StopIndeterminateAnimation();
                 StatusIcon.Visibility = Visibility.Visible;
                 StatusIcon.Data = (Geometry)FindResource("WarningIcon");
                 StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
                 
-                SecondaryBtn.Content = "Закрыть";
-                PrimaryBtn.Content = "Повторить тест";
+                SecondaryBtn.Content = "Р—Р°РєСЂС‹С‚СЊ";
+                PrimaryBtn.Content = "РџРѕРІС‚РѕСЂРёС‚СЊ С‚РµСЃС‚";
                 PrimaryBtn.Visibility = Visibility.Visible;
             }
         }
         catch (Exception ex)
         {
-            // Скрыть прогресс-бар и лог, показать ошибку
+            // РЎРєСЂС‹С‚СЊ РїСЂРѕРіСЂРµСЃСЃ-Р±Р°СЂ Рё Р»РѕРі, РїРѕРєР°Р·Р°С‚СЊ РѕС€РёР±РєСѓ
             ProgressBarContainer.Visibility = Visibility.Collapsed;
             ProgressText.Visibility = Visibility.Collapsed;
             TimeRemainingText.Visibility = Visibility.Collapsed;
             LogContainer.Visibility = Visibility.Collapsed;
             StatusPanel.Visibility = Visibility.Visible;
-            StatusText.Text = $"Ошибка: {ex.Message}";
+            StatusText.Text = $"РћС€РёР±РєР°: {ex.Message}";
             StopIndeterminateAnimation();
             StatusIcon.Visibility = Visibility.Visible;
             StatusIcon.Data = (Geometry)FindResource("WarningIcon");
             StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
             
-            SecondaryBtn.Content = "Закрыть";
-            PrimaryBtn.Content = "Повторить тест";
+            SecondaryBtn.Content = "Р—Р°РєСЂС‹С‚СЊ";
+            PrimaryBtn.Content = "РџРѕРІС‚РѕСЂРёС‚СЊ С‚РµСЃС‚";
             PrimaryBtn.Visibility = Visibility.Visible;
         }
 
@@ -459,41 +462,41 @@ public partial class ZapretConfigWindow : Window
 
     private async void SecondaryBtn_Click(object sender, RoutedEventArgs e)
     {
-        if (SecondaryBtn.Content?.ToString() == "Назад к списку")
+        if (SecondaryBtn.Content?.ToString() == "РќР°Р·Р°Рґ Рє СЃРїРёСЃРєСѓ")
         {
             LogContainer.Visibility = Visibility.Collapsed;
             ConfigListScroll.Visibility = Visibility.Visible;
             PrimaryBtn.Visibility = Visibility.Collapsed;
-            PrimaryBtn.Content = "Проверить конфиг";
-            SecondaryBtn.Content = "Закрыть";
+            PrimaryBtn.Content = "РџСЂРѕРІРµСЂРёС‚СЊ РєРѕРЅС„РёРі";
+            SecondaryBtn.Content = "Р—Р°РєСЂС‹С‚СЊ";
             
-            // Восстановить обработчик события для PrimaryBtn
+            // Р’РѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ РѕР±СЂР°Р±РѕС‚С‡РёРє СЃРѕР±С‹С‚РёСЏ РґР»СЏ PrimaryBtn
             PrimaryBtn.Click -= PrimaryBtn_Click;
             PrimaryBtn.Click += PrimaryBtn_Click;
             return;
         }
-        else if (SecondaryBtn.Content?.ToString() == "Да, начать")
+        else if (SecondaryBtn.Content?.ToString() == "Р”Р°, РЅР°С‡Р°С‚СЊ")
         {
             await StartTestingAsync();
             return;
         }
-        else if (SecondaryBtn.Content?.ToString() == "Применить")
+        else if (SecondaryBtn.Content?.ToString() == "РџСЂРёРјРµРЅРёС‚СЊ")
         {
-            // Применить выбранный конфиг и ВСЕГДА запустить сервис
+            // РџСЂРёРјРµРЅРёС‚СЊ РІС‹Р±СЂР°РЅРЅС‹Р№ РєРѕРЅС„РёРі Рё Р’РЎР•Р“Р”Рђ Р·Р°РїСѓСЃС‚РёС‚СЊ СЃРµСЂРІРёСЃ
             if (_cache != null && !string.IsNullOrEmpty(_cache.CurrentConfig))
             {
                 Console.WriteLine($"[ZapretConfigWindow] Applying config: {_cache.CurrentConfig}");
                 Console.WriteLine($"[ZapretConfigWindow] Zapret path: {_zapretPath}");
                 
-                // Показать прогресс-бар
+                // РџРѕРєР°Р·Р°С‚СЊ РїСЂРѕРіСЂРµСЃСЃ-Р±Р°СЂ
                 ApplyConfigProgress.Visibility = Visibility.Visible;
                 
                 SecondaryBtn.IsEnabled = false;
                 PrimaryBtn.IsEnabled = false;
                 var originalContent = SecondaryBtn.Content;
-                SecondaryBtn.Content = "Применение...";
+                SecondaryBtn.Content = "РџСЂРёРјРµРЅРµРЅРёРµ...";
 
-                // Применяем конфиг (ApplyConfigAsync автоматически останавливает старый сервис если запущен и запускает новый)
+                // РџСЂРёРјРµРЅСЏРµРј РєРѕРЅС„РёРі (ApplyConfigAsync Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РѕСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ СЃС‚Р°СЂС‹Р№ СЃРµСЂРІРёСЃ РµСЃР»Рё Р·Р°РїСѓС‰РµРЅ Рё Р·Р°РїСѓСЃРєР°РµС‚ РЅРѕРІС‹Р№)
                 bool success = await ZapretConfigService.ApplyConfigAsync(_zapretPath, _cache.CurrentConfig);
                 
                 Console.WriteLine($"[ZapretConfigWindow] ApplyConfigAsync result: {success}");
@@ -502,27 +505,27 @@ public partial class ZapretConfigWindow : Window
                 PrimaryBtn.IsEnabled = true;
                 SecondaryBtn.Content = originalContent;
                 
-                // Скрыть прогресс-бар
+                // РЎРєСЂС‹С‚СЊ РїСЂРѕРіСЂРµСЃСЃ-Р±Р°СЂ
                 ApplyConfigProgress.Visibility = Visibility.Collapsed;
 
                 if (success)
                 {
-                    // Успешно применили конфиг и запустили сервис
+                    // РЈСЃРїРµС€РЅРѕ РїСЂРёРјРµРЅРёР»Рё РєРѕРЅС„РёРі Рё Р·Р°РїСѓСЃС‚РёР»Рё СЃРµСЂРІРёСЃ
                     ConfigWasApplied = true;
-                    // Подождем немного чтобы сервис успел запуститься
+                    // РџРѕРґРѕР¶РґРµРј РЅРµРјРЅРѕРіРѕ С‡С‚РѕР±С‹ СЃРµСЂРІРёСЃ СѓСЃРїРµР» Р·Р°РїСѓСЃС‚РёС‚СЊСЃСЏ
                     await Task.Delay(1000);
                     Close();
                 }
                 else
                 {
-                    // Показать ошибку
+                    // РџРѕРєР°Р·Р°С‚СЊ РѕС€РёР±РєСѓ
                     StatusPanel.Visibility = Visibility.Visible;
                     ConfigListScroll.Visibility = Visibility.Collapsed;
                     StatusIcon.Visibility = Visibility.Visible;
                     StatusIcon.Data = (Geometry)FindResource("WarningIcon");
                     StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
-                    StatusText.Text = "Не удалось применить конфиг. Проверьте:\n1. Запущено ли приложение от администратора\n2. Правильно ли указан путь к Zapret\n3. Логи в консоли для деталей";
-                    SecondaryBtn.Content = "Закрыть";
+                    StatusText.Text = "РќРµ СѓРґР°Р»РѕСЃСЊ РїСЂРёРјРµРЅРёС‚СЊ РєРѕРЅС„РёРі. РџСЂРѕРІРµСЂСЊС‚Рµ:\n1. Р—Р°РїСѓС‰РµРЅРѕ Р»Рё РїСЂРёР»РѕР¶РµРЅРёРµ РѕС‚ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°\n2. РџСЂР°РІРёР»СЊРЅРѕ Р»Рё СѓРєР°Р·Р°РЅ РїСѓС‚СЊ Рє Zapret\n3. Р›РѕРіРё РІ РєРѕРЅСЃРѕР»Рё РґР»СЏ РґРµС‚Р°Р»РµР№";
+                    SecondaryBtn.Content = "Р—Р°РєСЂС‹С‚СЊ";
                     PrimaryBtn.Visibility = Visibility.Collapsed;
                 }
             }
@@ -532,7 +535,7 @@ public partial class ZapretConfigWindow : Window
         {
             _isTesting = false;
             
-            // Убить процесс тестирования
+            // РЈР±РёС‚СЊ РїСЂРѕС†РµСЃСЃ С‚РµСЃС‚РёСЂРѕРІР°РЅРёСЏ
             if (_testProcess != null && !_testProcess.HasExited)
             {
                 try
@@ -543,7 +546,7 @@ public partial class ZapretConfigWindow : Window
                 catch { }
             }
             
-            // Убить все winws.exe и powershell.exe процессы
+            // РЈР±РёС‚СЊ РІСЃРµ winws.exe Рё powershell.exe РїСЂРѕС†РµСЃСЃС‹
             try
             {
                 var processes = Process.GetProcessesByName("winws");
@@ -557,7 +560,7 @@ public partial class ZapretConfigWindow : Window
                     catch { }
                 }
                 
-                // Также убить любые PowerShell процессы
+                // РўР°РєР¶Рµ СѓР±РёС‚СЊ Р»СЋР±С‹Рµ PowerShell РїСЂРѕС†РµСЃСЃС‹
                 var powerShellProcs = Process.GetProcessesByName("powershell");
                 foreach (var proc in powerShellProcs)
                 {
@@ -577,27 +580,27 @@ public partial class ZapretConfigWindow : Window
 
     private async void PrimaryBtn_Click(object sender, RoutedEventArgs e)
     {
-        if (PrimaryBtn.Content?.ToString() == "Нет, выйти")
+        if (PrimaryBtn.Content?.ToString() == "РќРµС‚, РІС‹Р№С‚Рё")
         {
             Close();
             return;
         }
 
-        // Если показан список конфигов и есть выбранный конфиг - тестировать только его
+        // Р•СЃР»Рё РїРѕРєР°Р·Р°РЅ СЃРїРёСЃРѕРє РєРѕРЅС„РёРіРѕРІ Рё РµСЃС‚СЊ РІС‹Р±СЂР°РЅРЅС‹Р№ РєРѕРЅС„РёРі - С‚РµСЃС‚РёСЂРѕРІР°С‚СЊ С‚РѕР»СЊРєРѕ РµРіРѕ
         if (ConfigListScroll.Visibility == Visibility.Visible && _cache != null && !string.IsNullOrEmpty(_cache.CurrentConfig))
         {
             await TestCurrentConfigAsync();
         }
         else
         {
-            // Если на экране поздравления, перейти к списку конфигов
-            if (StatusPanel.Visibility == Visibility.Visible && PrimaryBtn.Content.ToString() == "Выбрать конфиг")
+            // Р•СЃР»Рё РЅР° СЌРєСЂР°РЅРµ РїРѕР·РґСЂР°РІР»РµРЅРёСЏ, РїРµСЂРµР№С‚Рё Рє СЃРїРёСЃРєСѓ РєРѕРЅС„РёРіРѕРІ
+            if (StatusPanel.Visibility == Visibility.Visible && PrimaryBtn.Content.ToString() == "Р’С‹Р±СЂР°С‚СЊ РєРѕРЅС„РёРі")
             {
                 ShowConfigList();
             }
             else
             {
-                // Запустить полное тестирование
+                // Р—Р°РїСѓСЃС‚РёС‚СЊ РїРѕР»РЅРѕРµ С‚РµСЃС‚РёСЂРѕРІР°РЅРёРµ
                 await StartTestingAsync();
             }
         }
@@ -607,18 +610,18 @@ public partial class ZapretConfigWindow : Window
     {
         if (_cache == null || string.IsNullOrEmpty(_cache.CurrentConfig)) return;
 
-        // Скрыть список конфигов и показать лог
+        // РЎРєСЂС‹С‚СЊ СЃРїРёСЃРѕРє РєРѕРЅС„РёРіРѕРІ Рё РїРѕРєР°Р·Р°С‚СЊ Р»РѕРі
         ConfigListScroll.Visibility = Visibility.Collapsed;
         StatusPanel.Visibility = Visibility.Collapsed;
         ProgressBarContainer.Visibility = Visibility.Collapsed;
         LogContainer.Visibility = Visibility.Visible;
         
         PrimaryBtn.Visibility = Visibility.Collapsed;
-        SecondaryBtn.Content = "Отмена";
+        SecondaryBtn.Content = "РћС‚РјРµРЅР°";
 
-        // Очистить лог
+        // РћС‡РёСЃС‚РёС‚СЊ Р»РѕРі
         LogTextBox.Document.Blocks.Clear();
-        AppendColoredLog($"🔄 Тестирую конфиг: {_cache.CurrentConfig}\n", Color.FromRgb(0x3b, 0x82, 0xf6));
+        AppendColoredLog($"рџ”„ РўРµСЃС‚РёСЂСѓСЋ РєРѕРЅС„РёРі: {_cache.CurrentConfig}\n", Color.FromRgb(0x3b, 0x82, 0xf6));
 
         var (isWorking, message) = await ZapretConfigService.TestSingleConfigAsync(
             _zapretPath,
@@ -626,35 +629,35 @@ public partial class ZapretConfigWindow : Window
             status => Dispatcher.Invoke(() => 
             {
                 Color logColor;
-                if (status.Contains("✅") || status.Contains("работает") || status.Contains("доступен"))
-                    logColor = Color.FromRgb(0x22, 0xc5, 0x5e); // Зелёный
-                else if (status.Contains("❌") || status.Contains("не работает") || status.Contains("недоступен"))
-                    logColor = Color.FromRgb(0xef, 0x44, 0x44); // Красный
-                else if (status.Contains("🔄") || status.Contains("Тестирую"))
-                    logColor = Color.FromRgb(0x3b, 0x82, 0xf6); // Синий
+                if (status.Contains("вњ…") || status.Contains("СЂР°Р±РѕС‚Р°РµС‚") || status.Contains("РґРѕСЃС‚СѓРїРµРЅ"))
+                    logColor = Color.FromRgb(0x22, 0xc5, 0x5e); // Р—РµР»С‘РЅС‹Р№
+                else if (status.Contains("вќЊ") || status.Contains("РЅРµ СЂР°Р±РѕС‚Р°РµС‚") || status.Contains("РЅРµРґРѕСЃС‚СѓРїРµРЅ"))
+                    logColor = Color.FromRgb(0xef, 0x44, 0x44); // РљСЂР°СЃРЅС‹Р№
+                else if (status.Contains("рџ”„") || status.Contains("РўРµСЃС‚РёСЂСѓСЋ"))
+                    logColor = Color.FromRgb(0x3b, 0x82, 0xf6); // РЎРёРЅРёР№
                 else
-                    logColor = Color.FromRgb(0xf0, 0xf0, 0xf0); // Белый
+                    logColor = Color.FromRgb(0xf0, 0xf0, 0xf0); // Р‘РµР»С‹Р№
                 
                 AppendColoredLog(status, logColor);
             })
         );
 
-        // Показать результат
+        // РџРѕРєР°Р·Р°С‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚
         if (isWorking)
         {
-            AppendColoredLog($"\n✅ {message}", Color.FromRgb(0x22, 0xc5, 0x5e));
+            AppendColoredLog($"\nвњ… {message}", Color.FromRgb(0x22, 0xc5, 0x5e));
         }
         else
         {
-            AppendColoredLog($"\n❌ {message}", Color.FromRgb(0xef, 0x44, 0x44));
+            AppendColoredLog($"\nвќЊ {message}", Color.FromRgb(0xef, 0x44, 0x44));
         }
         
-        // Оставить лог открытым, показать кнопку для возврата к списку
+        // РћСЃС‚Р°РІРёС‚СЊ Р»РѕРі РѕС‚РєСЂС‹С‚С‹Рј, РїРѕРєР°Р·Р°С‚СЊ РєРЅРѕРїРєСѓ РґР»СЏ РІРѕР·РІСЂР°С‚Р° Рє СЃРїРёСЃРєСѓ
         PrimaryBtn.Visibility = Visibility.Visible;
-        PrimaryBtn.Content = "Закрыть";
+        PrimaryBtn.Content = "Р—Р°РєСЂС‹С‚СЊ";
         PrimaryBtn.Click -= PrimaryBtn_Click;
         PrimaryBtn.Click += (s, e) => Close();
-        SecondaryBtn.Content = "Назад к списку";
+        SecondaryBtn.Content = "РќР°Р·Р°Рґ Рє СЃРїРёСЃРєСѓ";
     }
 
     private void CloseBtn_Click(object sender, RoutedEventArgs e)
@@ -664,14 +667,16 @@ public partial class ZapretConfigWindow : Window
 
     private void ShowConfigList()
     {
-        if (_cache == null || _cache.ValidConfigs.Count == 0) return;
+        if (_cache == null || !_cache.HasAnyConfigs) return;
         StopIndeterminateAnimation();
         StatusPanel.Visibility = Visibility.Collapsed;
         ProgressBarContainer.Visibility = Visibility.Collapsed;
         ConfigListScroll.Visibility = Visibility.Visible;
         ConfigListPanel.Children.Clear();
+        var selectableConfigs = _cache.GetSelectableConfigs();
+        var usingPartialConfigs = _cache.ValidConfigs.Count == 0 && _cache.PartialConfigs.Count > 0;
 
-        // Активный конфиг (сначала)
+        // РђРєС‚РёРІРЅС‹Р№ РєРѕРЅС„РёРі (СЃРЅР°С‡Р°Р»Р°)
         var currentLabel = new StackPanel
         {
             Orientation = System.Windows.Controls.Orientation.Horizontal,
@@ -680,7 +685,7 @@ public partial class ZapretConfigWindow : Window
         
         var activeText = new TextBlock
         {
-            Text = "Активный конфиг: ",
+            Text = "РђРєС‚РёРІРЅС‹Р№ РєРѕРЅС„РёРі: ",
             FontSize = 15,
             Foreground = Brushes.White,
             FontWeight = FontWeights.Bold
@@ -690,7 +695,9 @@ public partial class ZapretConfigWindow : Window
         {
             Text = _cache.CurrentConfig,
             FontSize = 15,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
+            Foreground = new SolidColorBrush(usingPartialConfigs
+                ? Color.FromRgb(0xea, 0xb3, 0x08)
+                : Color.FromRgb(0x22, 0xc5, 0x5e)),
             FontWeight = FontWeights.Bold
         };
         
@@ -698,14 +705,34 @@ public partial class ZapretConfigWindow : Window
         currentLabel.Children.Add(configNameText);
         ConfigListPanel.Children.Add(currentLabel);
 
-        // Заголовок (потом)
+        if (usingPartialConfigs)
+        {
+            ConfigListPanel.Children.Add(new Border
+            {
+                Background = new SolidColorBrush(Color.FromRgb(0x2a, 0x20, 0x08)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(10),
+                Padding = new Thickness(12, 10, 12, 10),
+                Margin = new Thickness(0, 0, 0, 12),
+                Child = new TextBlock
+                {
+                    Text = "Идеальных конфигов не найдено. Ниже показаны частично рабочие варианты без ошибок и недоступных сервисов. Если что-то будет работать нестабильно, переключитесь на другой конфиг.",
+                    FontSize = 12,
+                    Foreground = new SolidColorBrush(Color.FromRgb(0xff, 0xf3, 0xc4)),
+                    TextWrapping = TextWrapping.Wrap
+                }
+            });
+        }
+
+        // Р—Р°РіРѕР»РѕРІРѕРє (РїРѕС‚РѕРј)
         var headerGrid = new Grid { Margin = new Thickness(0, 0, 0, 4) };
         headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
         var titleText = new TextBlock
         {
-            Text = "Доступные конфиги",
+            Text = "Р”РѕСЃС‚СѓРїРЅС‹Рµ РєРѕРЅС„РёРіРё",
             FontSize = 13,
             FontWeight = FontWeights.SemiBold,
             Foreground = new SolidColorBrush(Color.FromRgb(0xf0, 0xf0, 0xf0)),
@@ -719,9 +746,11 @@ public partial class ZapretConfigWindow : Window
             Padding = new Thickness(8, 3, 8, 3),
             Child = new TextBlock
             {
-                Text = $"{_cache.ValidConfigs.Count} конфигов",
+                Text = $"{selectableConfigs.Count} РєРѕРЅС„РёРіРѕРІ",
                 FontSize = 11,
-                Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6))
+                Foreground = new SolidColorBrush(usingPartialConfigs
+                    ? Color.FromRgb(0xea, 0xb3, 0x08)
+                    : Color.FromRgb(0x3b, 0x82, 0xf6))
             }
         };
 
@@ -731,8 +760,8 @@ public partial class ZapretConfigWindow : Window
         headerGrid.Children.Add(badge);
         ConfigListPanel.Children.Add(headerGrid);
 
-        // Список конфигов
-        foreach (var config in _cache.ValidConfigs)
+        // РЎРїРёСЃРѕРє РєРѕРЅС„РёРіРѕРІ
+        foreach (var config in selectableConfigs)
         {
             var isCurrent = config.Name == _cache.CurrentConfig;
 
@@ -778,7 +807,7 @@ public partial class ZapretConfigWindow : Window
                     Margin = new Thickness(8, 0, 0, 0),
                     Child = new TextBlock
                     {
-                        Text = "активный",
+                        Text = "Р°РєС‚РёРІРЅС‹Р№",
                         FontSize = 10,
                         Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6))
                     }
@@ -788,7 +817,7 @@ public partial class ZapretConfigWindow : Window
 
             var infoText = new TextBlock
             {
-                Text = $"Пинг: {config.AveragePing} мс  •  Тесты: {config.SuccessCount}/12",
+                Text = $"РџРёРЅРі: {config.AveragePing} РјСЃ  вЂў  РўРµСЃС‚С‹: {config.SuccessCount}/12" + (config.IsPartiallyUsable ? "  вЂў  С‡Р°СЃС‚РёС‡РЅРѕ" : ""),
                 FontSize = 11,
                 Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58)),
                 Margin = new Thickness(0, 4, 0, 0)
@@ -797,10 +826,10 @@ public partial class ZapretConfigWindow : Window
             left.Children.Add(nameRow);
             left.Children.Add(infoText);
 
-            // Стрелка справа
+            // РЎС‚СЂРµР»РєР° СЃРїСЂР°РІР°
             var arrow = new TextBlock
             {
-                Text = isCurrent ? "✓" : "→",
+                Text = isCurrent ? "вњ“" : "в†’",
                 FontSize = 14,
                 Foreground = isCurrent
                     ? new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6))
@@ -815,7 +844,7 @@ public partial class ZapretConfigWindow : Window
 
             border.Child = grid;
 
-            // Одинарный клик - выбрать конфиг
+            // РћРґРёРЅР°СЂРЅС‹Р№ РєР»РёРє - РІС‹Р±СЂР°С‚СЊ РєРѕРЅС„РёРі
             border.MouseLeftButtonDown += (s, e) =>
             {
                 if (e.ClickCount == 1)
@@ -826,7 +855,7 @@ public partial class ZapretConfigWindow : Window
                 }
             };
             
-            // Двойной клик - применить конфиг
+            // Р”РІРѕР№РЅРѕР№ РєР»РёРє - РїСЂРёРјРµРЅРёС‚СЊ РєРѕРЅС„РёРі
             border.MouseLeftButtonDown += async (s, e) =>
             {
                 if (e.ClickCount == 2)
@@ -834,12 +863,12 @@ public partial class ZapretConfigWindow : Window
                     _cache.CurrentConfig = config.Name;
                     ZapretConfigService.SaveCache(_cache);
                     
-                    // Применить конфиг (вызвать тот же код что и кнопка "Применить")
+                    // РџСЂРёРјРµРЅРёС‚СЊ РєРѕРЅС„РёРі (РІС‹Р·РІР°С‚СЊ С‚РѕС‚ Р¶Рµ РєРѕРґ С‡С‚Рѕ Рё РєРЅРѕРїРєР° "РџСЂРёРјРµРЅРёС‚СЊ")
                     SecondaryBtn_Click(s, e);
                 }
             };
 
-            // Hover эффект
+            // Hover СЌС„С„РµРєС‚
             border.MouseEnter += (s, e) =>
             {
                 if (!isCurrent)
@@ -854,8 +883,8 @@ public partial class ZapretConfigWindow : Window
             ConfigListPanel.Children.Add(border);
         }
 
-        SecondaryBtn.Content = "Применить";
-        PrimaryBtn.Content = "Проверить конфиг";
+        SecondaryBtn.Content = "РџСЂРёРјРµРЅРёС‚СЊ";
+        PrimaryBtn.Content = "РџСЂРѕРІРµСЂРёС‚СЊ РєРѕРЅС„РёРі";
         PrimaryBtn.Visibility = Visibility.Visible;
     }
 
