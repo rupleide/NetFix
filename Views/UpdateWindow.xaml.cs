@@ -148,7 +148,7 @@ public partial class UpdateWindow : Window
             return;
         }
 
-        if (content == "Установить")
+        if (content == "Установить" || content == "Обновить")
         {
             PrimaryBtn.IsEnabled = false;
             SecondaryBtn.Content = "Отмена";
@@ -179,7 +179,28 @@ public partial class UpdateWindow : Window
         }
     }
 
-    private void SecondaryBtn_Click(object sender, RoutedEventArgs e) => Close();
+    private void SecondaryBtn_Click(object sender, RoutedEventArgs e)
+    {
+        string secContent = SecondaryBtn.Content?.ToString() ?? "";
+        string primContent = PrimaryBtn.Content?.ToString() ?? "";
+
+        if (secContent == "Закрыть" && primContent == "Установить" && PrimaryBtn.Visibility == Visibility.Visible)
+        {
+            // Показать предупреждение
+            SetStatusIcon("WarningIcon", "#eab308", true);
+            StatusText.Text = "Ты точно не хочешь обновить приложение?\n\nВ обновлении куча нового! То, что могло не работать раньше, теперь может работать стабильнее, а также добавлены полезные фишки и улучшения.";
+            StatusText.Foreground = Brush("#eab308");
+            
+            PrimaryBtn.Content = "Обновить";
+            PrimaryBtn.Background = Brush("#22c55e");
+            
+            SecondaryBtn.Content = "Я уверен, закрыть";
+        }
+        else
+        {
+            Close();
+        }
+    }
 
     // Хелперы
     private void StartIndeterminateAnimation()
