@@ -229,8 +229,8 @@ public partial class MainWindow : Window
                 }
             }
 
-            // Обновить статус через 1500мс
-            await Task.Delay(1500);
+            // Обновить статус через 2000мс (увеличено для видимости анимации)
+            await Task.Delay(2000);
             UpdateActiveApps();
         }
         finally
@@ -264,8 +264,8 @@ public partial class MainWindow : Window
                 }
             }
 
-            // Обновить статус через 1500мс
-            await Task.Delay(1500);
+            // Обновить статус через 2000мс (увеличено для видимости анимации)
+            await Task.Delay(2000);
             UpdateActiveApps();
         }
         finally
