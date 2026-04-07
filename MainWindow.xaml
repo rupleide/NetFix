@@ -363,12 +363,35 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ProgressBar">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="2">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="2" ClipToBounds="True">
                             <Border x:Name="PART_Track" CornerRadius="2">
-                                <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}"
-                                        HorizontalAlignment="Left" CornerRadius="2"/>
+                                <Grid x:Name="PART_Indicator">
+                                    <Border Background="{TemplateBinding Foreground}"
+                                            HorizontalAlignment="Left" CornerRadius="2"/>
+                                    <Border x:Name="IndeterminateBar" Background="{TemplateBinding Foreground}"
+                                            Width="50" HorizontalAlignment="Left" CornerRadius="2"
+                                            Visibility="Collapsed">
+                                        <Border.RenderTransform>
+                                            <TranslateTransform X="-50"/>
+                                        </Border.RenderTransform>
+                                    </Border>
+                                </Grid>
                             </Border>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsIndeterminate" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard RepeatBehavior="Forever">
+                                            <DoubleAnimation Storyboard.TargetName="IndeterminateBar"
+                                                           Storyboard.TargetProperty="(Border.RenderTransform).(TranslateTransform.X)"
+                                                           From="-50" To="400" Duration="0:0:1.5"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Setter TargetName="IndeterminateBar" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
