@@ -21,7 +21,6 @@ using System.Windows.Threading;
 using NetFix.Models;
 using NetFix.Services;
 using NetFix.Views;
-using System.Runtime.InteropServices;
 
 // Алиасы для разрешения конфликтов между WPF и WinForms
 using Color        = System.Windows.Media.Color;
@@ -41,31 +40,6 @@ namespace NetFix;
 
 public partial class MainWindow : Window
 {
-    // ── Windows API для работы с системным треем ─────────────────────────────
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern IntPtr FindWindow(string? lpClassName, string? lpWindowName);
-    
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string? lpszClass, string? lpszWindow);
-    
-    [DllImport("user32.dll")]
-    private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
-    
-    [DllImport("user32.dll")]
-    private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
-    
-    [StructLayout(LayoutKind.Sequential)]
-    private struct RECT
-    {
-        public int Left;
-        public int Top;
-        public int Right;
-        public int Bottom;
-    }
-    
-    private const uint WM_LBUTTONDOWN = 0x0201;
-    private const uint WM_LBUTTONUP = 0x0202;
-    
     // ── State ────────────────────────────────────────────────────────────────
     private AppSettings _settings = SettingsService.Load();
     private bool _settingsOpen = false;
@@ -168,42 +142,49 @@ public partial class MainWindow : Window
         System.Windows.Application.Current.Shutdown();
     }
 
-    // ── Автоматический клик по иконке в трее ──────────────────────────────────
-    private void ClickTrayIcon(string processName)
+    // ── Автоматическая активация прокси TgWsProxy ────────────────────────────
+    private async Task ActivateTgWsProxyAsync()
     {
         try
         {
-            // Находим окно системного трея
-            IntPtr taskbarHandle = FindWindow("Shell_TrayWnd", null);
-            if (taskbarHandle == IntPtr.Zero) return;
-
-            IntPtr trayHandle = FindWindowEx(taskbarHandle, IntPtr.Zero, "TrayNotifyWnd", null);
-            if (trayHandle == IntPtr.Zero) return;
-
-            IntPtr sysPagerHandle = FindWindowEx(trayHandle, IntPtr.Zero, "SysPager", null);
-            if (sysPagerHandle == IntPtr.Zero) return;
-
-            IntPtr notificationAreaHandle = FindWindowEx(sysPagerHandle, IntPtr.Zero, "ToolbarWindow32", null);
-            if (notificationAreaHandle == IntPtr.Zero) return;
-
-            // Получаем координаты области уведомлений
-            if (GetWindowRect(notificationAreaHandle, out RECT rect))
+            // TgWsProxy обычно создаёт прокси на порту 8080
+            // Пробуем получить информацию о прокси из буфера обмена или напрямую открыть стандартную ссылку
+            
+            // Ждём немного, чтобы TgWsProxy успел запуститься и создать прокси
+            await Task.Delay(2000);
+            
+            // Пытаемся прочитать ссылку из буфера обмена (TgWsProxy может её туда скопировать)
+            string? proxyLink = null;
+            try
             {
-                // Кликаем в центр области уведомлений
-                int centerX = (rect.Left + rect.Right) / 2;
-                int centerY = (rect.Top + rect.Bottom) / 2;
-                
-                // Преобразуем координаты в lParam
-                IntPtr lParam = (IntPtr)((centerY << 16) | (centerX & 0xFFFF));
-                
-                // Отправляем клик
-                SendMessage(notificationAreaHandle, WM_LBUTTONDOWN, IntPtr.Zero, lParam);
-                SendMessage(notificationAreaHandle, WM_LBUTTONUP, IntPtr.Zero, lParam);
+                if (Clipboard.ContainsText())
+                {
+                    var clipText = Clipboard.GetText();
+                    if (clipText.StartsWith("tg://proxy", StringComparison.OrdinalIgnoreCase))
+                    {
+                        proxyLink = clipText;
+                    }
+                }
+            }
+            catch { }
+            
+            // Если в буфере нет ссылки, пробуем стандартную конфигурацию TgWsProxy
+            if (string.IsNullOrEmpty(proxyLink))
+            {
+                // TgWsProxy по умолчанию использует порт 8080 и секрет dd
+                proxyLink = "tg://proxy?server=127.0.0.1&port=8080&secret=dd";
+            }
+            
+            // Открываем ссылку в Telegram
+            if (!string.IsNullOrEmpty(proxyLink))
+            {
+                Process.Start(new ProcessStartInfo(proxyLink) { UseShellExecute = true });
             }
         }
         catch
         {
-            // Игнорируем ошибки - если не получилось кликнуть, пользователь сделает это вручную
+            // Игнорируем ошибки - если не получилось активировать автоматически, 
+            // пользователь может кликнуть по иконке в трее вручную
         }
     }
 
@@ -324,11 +305,8 @@ public partial class MainWindow : Window
                 {
                     Process.Start(new ProcessStartInfo(_settings.TgWsProxyPath) { UseShellExecute = true });
                     
-                    // Ждём, пока TgWsProxy создаст иконку в трее
-                    await Task.Delay(1500);
-                    
-                    // Автоматически кликаем по иконке в трее для активации прокси
-                    ClickTrayIcon("TgWsProxy");
+                    // Автоматически активируем прокси в Telegram
+                    await ActivateTgWsProxyAsync();
                 }
                 else
                 {
