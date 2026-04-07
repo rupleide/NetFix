@@ -168,6 +168,9 @@ public partial class MainWindow : Window
     {
         Console.WriteLine("[MainWindow] ZapretToggle_Click called");
         
+        // Показать прогресс-бар
+        ZapretToggleProgress.Visibility = Visibility.Visible;
+        
         var st = DiagnosticsEngine.CheckAppStatus();
         Console.WriteLine($"[MainWindow] ZapretRunning: {st.ZapretRunning}");
         
@@ -190,6 +193,7 @@ public partial class MainWindow : Window
                     // Для service.bat ОБЯЗАТЕЛЬНО нужен выбранный конфиг
                     if (cache == null || string.IsNullOrEmpty(cache.CurrentConfig))
                     {
+                        ZapretToggleProgress.Visibility = Visibility.Collapsed;
                         ShowNotification("Zapret", "Сначала выберите конфиг через 'Выбрать конфиг' в панели управления сервисами.", isError: true);
                         return;
                     }
@@ -205,7 +209,9 @@ public partial class MainWindow : Window
 
                     if (!success)
                     {
+                        ZapretToggleProgress.Visibility = Visibility.Collapsed;
                         ShowNotification("Zapret", "Не удалось установить сервис. Проверьте права администратора.", isError: true);
+                        return;
                     }
                 }
                 else
@@ -216,13 +222,18 @@ public partial class MainWindow : Window
             }
             else
             {
+                ZapretToggleProgress.Visibility = Visibility.Collapsed;
                 ShowNotification("Zapret", "Путь не указан. Проверьте настройки.", isError: true);
+                return;
             }
         }
 
         // Обновить статус через 800мс
         await Task.Delay(800);
         UpdateActiveApps();
+        
+        // Скрыть прогресс-бар
+        ZapretToggleProgress.Visibility = Visibility.Collapsed;
     }
 
     private void TgWsToggle_Click(object s, RoutedEventArgs e)

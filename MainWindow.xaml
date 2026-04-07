@@ -1524,6 +1524,16 @@
                                 <Run x:Name="ActiveConfigName" Text="" Foreground="#22c55e"/>
                             </TextBlock>
 
+                            <!-- Прогресс-бар для переключения Zapret -->
+                            <ProgressBar x:Name="ZapretToggleProgress"
+                                         Height="3"
+                                         Margin="0,8,0,0"
+                                         IsIndeterminate="True"
+                                         Visibility="Collapsed"
+                                         Foreground="#3b82f6"
+                                         Background="#1a1a1c"
+                                         BorderThickness="0"/>
+
                         </StackPanel>
                     </DockPanel>
                 </Border>
