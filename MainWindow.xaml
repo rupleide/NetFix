@@ -1322,7 +1322,17 @@
                             </Grid>
                         </Border>
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <StackPanel x:Name="WizardContent" Margin="20,20,20,24"/>
+                            <StackPanel x:Name="WizardContent" Margin="20,20,20,24">
+                                <!-- Прогресс-бар для применения конфига -->
+                                <ProgressBar x:Name="WizardApplyProgress"
+                                             Height="3"
+                                             Margin="0,0,0,8"
+                                             IsIndeterminate="True"
+                                             Visibility="Collapsed"
+                                             Foreground="#3b82f6"
+                                             Background="#1a1a1c"
+                                             BorderThickness="0"/>
+                            </StackPanel>
                         </ScrollViewer>
                     </DockPanel>
                 </Border>

@@ -2373,8 +2373,14 @@ public partial class MainWindow : Window
         {
             if (!string.IsNullOrEmpty(cache.CurrentConfig))
             {
+                // Показать прогресс-бар
+                WizardApplyProgress.Visibility = Visibility.Visible;
+                
                 // Применяем конфиг (ApplyConfigAsync автоматически останавливает старый сервис и запускает новый)
                 bool success = await ZapretConfigService.ApplyConfigAsync(_settings.ZapretPath, cache.CurrentConfig);
+                
+                // Скрыть прогресс-бар
+                WizardApplyProgress.Visibility = Visibility.Collapsed;
                 
                 if (success)
                 {
@@ -2383,6 +2389,10 @@ public partial class MainWindow : Window
                     // Обновить статус через 1500мс
                     await Task.Delay(1500);
                     UpdateActiveApps();
+                    
+                    // Автоматически нажать кнопку "Починить интернет" ещё раз
+                    await Task.Delay(500);
+                    RunAutoFix();
                 }
                 else
                 {
