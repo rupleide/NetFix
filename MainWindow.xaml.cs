@@ -288,9 +288,8 @@ public partial class MainWindow : Window
             // Обновить отображение выбранного конфига после закрытия окна
             UpdateSelectedConfigDisplay();
             
-            // Проверить был ли применен конфиг (если окно закрылось успешно)
-            var updatedCache = ZapretConfigService.LoadCache();
-            if (updatedCache != null && !string.IsNullOrEmpty(updatedCache.CurrentConfig))
+            // Запустить сервис только если конфиг был ПРИМЕНЕН через кнопку "Применить"
+            if (configWindow.ConfigWasApplied)
             {
                 Console.WriteLine("[MainWindow] Config was applied, triggering ZapretToggle_Click to start service");
                 // Вызвать метод запуска сервиса
