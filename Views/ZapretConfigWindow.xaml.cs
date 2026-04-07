@@ -36,6 +36,20 @@ public partial class ZapretConfigWindow : Window
         _testMode = testMode;
         Loaded += OnLoaded;
         Closing += OnClosing;
+        
+        // Добавить эффект при наведении для PrimaryBtn
+        PrimaryBtn.MouseEnter += (s, e) =>
+        {
+            PrimaryBtn.Background = new SolidColorBrush(Color.FromRgb(0x3a, 0x3a, 0x3d));
+            PrimaryBtn.BorderBrush = new SolidColorBrush(Color.FromRgb(0x5a, 0x5a, 0x5d));
+            PrimaryBtn.Foreground = new SolidColorBrush(Color.FromRgb(0xaa, 0xaa, 0xaa));
+        };
+        PrimaryBtn.MouseLeave += (s, e) =>
+        {
+            PrimaryBtn.Background = Brushes.Transparent;
+            PrimaryBtn.BorderBrush = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x2d));
+            PrimaryBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x69));
+        };
     }
 
     private void AppendColoredLog(string text, Color color)
