@@ -224,9 +224,9 @@ public partial class MainWindow : Window
     {
         try
         {
-            // TgWsProxy хранит конфигурацию в %APPDATA%\tg-ws-proxy\config.json
+            // TgWsProxy хранит конфигурацию в %APPDATA%\TgWsProxy\config.json
             string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            string configPath = Path.Combine(appData, "tg-ws-proxy", "config.json");
+            string configPath = Path.Combine(appData, "TgWsProxy", "config.json");
             
             if (File.Exists(configPath))
             {
@@ -238,13 +238,15 @@ public partial class MainWindow : Window
                 
                 if (!string.IsNullOrEmpty(host) && !string.IsNullOrEmpty(port) && !string.IsNullOrEmpty(secret))
                 {
-                    // Формируем tg://proxy ссылку
-                    return $"tg://proxy?server={host}&port={port}&secret={secret}";
+                    // Формируем tg://proxy ссылку с префиксом dd (как в исходном коде TgWsProxy)
+                    // Если host = 127.0.0.1 или localhost, используем 127.0.0.1
+                    string linkHost = host == "0.0.0.0" ? "127.0.0.1" : host;
+                    return $"tg://proxy?server={linkHost}&port={port}&secret=dd{secret}";
                 }
             }
             
-            // Если конфига нет, пробуем стандартные значения
-            return "tg://proxy?server=127.0.0.1&port=1080&secret=dd";
+            // Если конфига нет, возвращаем null чтобы попробовать клик по трею
+            return null;
         }
         catch
         {
