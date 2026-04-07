@@ -171,69 +171,71 @@ public partial class MainWindow : Window
         // Показать прогресс-бар
         ZapretToggleProgress.Visibility = Visibility.Visible;
         
-        var st = DiagnosticsEngine.CheckAppStatus();
-        Console.WriteLine($"[MainWindow] ZapretRunning: {st.ZapretRunning}");
-        
-        if (st.ZapretRunning)
+        try
         {
-            foreach (var p in Process.GetProcessesByName("winws"))
-                try { p.Kill(); } catch { }
-            foreach (var p in Process.GetProcessesByName("winws.exe"))
-                try { p.Kill(); } catch { }
-        }
-        else
-        {
-            if (!string.IsNullOrEmpty(_settings.ZapretPath) && File.Exists(_settings.ZapretPath))
+            var st = DiagnosticsEngine.CheckAppStatus();
+            Console.WriteLine($"[MainWindow] ZapretRunning: {st.ZapretRunning}");
+            
+            if (st.ZapretRunning)
             {
-                var isServiceBat = System.IO.Path.GetFileName(_settings.ZapretPath).Equals("service.bat", StringComparison.OrdinalIgnoreCase);
-                var cache = ZapretConfigService.LoadCache();
-
-                if (isServiceBat)
+                foreach (var p in Process.GetProcessesByName("winws"))
+                    try { p.Kill(); } catch { }
+                foreach (var p in Process.GetProcessesByName("winws.exe"))
+                    try { p.Kill(); } catch { }
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(_settings.ZapretPath) && File.Exists(_settings.ZapretPath))
                 {
-                    // Для service.bat ОБЯЗАТЕЛЬНО нужен выбранный конфиг
-                    if (cache == null || string.IsNullOrEmpty(cache.CurrentConfig))
+                    var isServiceBat = System.IO.Path.GetFileName(_settings.ZapretPath).Equals("service.bat", StringComparison.OrdinalIgnoreCase);
+                    var cache = ZapretConfigService.LoadCache();
+
+                    if (isServiceBat)
                     {
-                        ZapretToggleProgress.Visibility = Visibility.Collapsed;
-                        ShowNotification("Zapret", "Сначала выберите конфиг через 'Выбрать конфиг' в панели управления сервисами.", isError: true);
-                        return;
+                        // Для service.bat ОБЯЗАТЕЛЬНО нужен выбранный конфиг
+                        if (cache == null || string.IsNullOrEmpty(cache.CurrentConfig))
+                        {
+                            ShowNotification("Zapret", "Сначала выберите конфиг через 'Выбрать конфиг' в панели управления сервисами.", isError: true);
+                            return;
+                        }
+
+                        ZapretToggleBtn.IsEnabled = false;
+                        var originalContent = ZapretToggleBtn.Content;
+                        ZapretToggleBtn.Content = "Запуск...";
+
+                        bool success = await ZapretConfigService.ApplyConfigAsync(_settings.ZapretPath, cache.CurrentConfig);
+
+                        ZapretToggleBtn.IsEnabled = true;
+                        ZapretToggleBtn.Content = originalContent;
+
+                        if (!success)
+                        {
+                            ShowNotification("Zapret", "Не удалось установить сервис. Проверьте права администратора.", isError: true);
+                            return;
+                        }
                     }
-
-                    ZapretToggleBtn.IsEnabled = false;
-                    var originalContent = ZapretToggleBtn.Content;
-                    ZapretToggleBtn.Content = "Запуск...";
-
-                    bool success = await ZapretConfigService.ApplyConfigAsync(_settings.ZapretPath, cache.CurrentConfig);
-
-                    ZapretToggleBtn.IsEnabled = true;
-                    ZapretToggleBtn.Content = originalContent;
-
-                    if (!success)
+                    else
                     {
-                        ZapretToggleProgress.Visibility = Visibility.Collapsed;
-                        ShowNotification("Zapret", "Не удалось установить сервис. Проверьте права администратора.", isError: true);
-                        return;
+                        // Для обычных .bat файлов просто запускаем
+                        Process.Start(new ProcessStartInfo(_settings.ZapretPath) { UseShellExecute = true });
                     }
                 }
                 else
                 {
-                    // Для обычных .bat файлов просто запускаем
-                    Process.Start(new ProcessStartInfo(_settings.ZapretPath) { UseShellExecute = true });
+                    ShowNotification("Zapret", "Путь не указан. Проверьте настройки.", isError: true);
+                    return;
                 }
             }
-            else
-            {
-                ZapretToggleProgress.Visibility = Visibility.Collapsed;
-                ShowNotification("Zapret", "Путь не указан. Проверьте настройки.", isError: true);
-                return;
-            }
-        }
 
-        // Обновить статус через 800мс
-        await Task.Delay(800);
-        UpdateActiveApps();
-        
-        // Скрыть прогресс-бар
-        ZapretToggleProgress.Visibility = Visibility.Collapsed;
+            // Обновить статус через 1500мс
+            await Task.Delay(1500);
+            UpdateActiveApps();
+        }
+        finally
+        {
+            // Скрыть прогресс-бар в любом случае
+            ZapretToggleProgress.Visibility = Visibility.Collapsed;
+        }
     }
 
     private void TgWsToggle_Click(object s, RoutedEventArgs e)
