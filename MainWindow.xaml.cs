@@ -302,9 +302,21 @@ public partial class MainWindow : Window
             // Запустить сервис только если конфиг был ПРИМЕНЕН через кнопку "Применить"
             if (configWindow.ConfigWasApplied)
             {
-                Console.WriteLine("[MainWindow] Config was applied, triggering ZapretToggle_Click to start service");
-                // Вызвать метод запуска сервиса
-                ZapretToggle_Click(this, new RoutedEventArgs());
+                Console.WriteLine("[MainWindow] Config was applied, checking if service needs to be started");
+                
+                // Проверить текущее состояние Zapret
+                var status = DiagnosticsEngine.CheckAppStatus();
+                
+                // Запустить только если Zapret НЕ запущен
+                if (!status.ZapretRunning)
+                {
+                    Console.WriteLine("[MainWindow] Zapret not running, starting service");
+                    ZapretToggle_Click(this, new RoutedEventArgs());
+                }
+                else
+                {
+                    Console.WriteLine("[MainWindow] Zapret already running, skipping start");
+                }
             }
             
             Console.WriteLine("[MainWindow] SelectConfigBtn_Click finished");
