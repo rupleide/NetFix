@@ -122,11 +122,14 @@ public class ZapretConfigService
                     var totalCount = currentConfig.Tests.Count;
                     var failedTests = totalCount - successCount;
                     
-                    // Добавляем конфиг, если он работает хотя бы частично (SuccessCount > 0)
-                    if (currentConfig.IsValid || currentConfig.SuccessCount > 0)
+                    // Конфиг валиден только если: 0 ошибок И минимум 12 успешных тестов (если всего 12 сайтов)
+                    // Для гарантии, что Идеальный конфиг - это когда ДОСТУПНЫ ВСЕ протестированные сайты
+                    currentConfig.IsValid = currentConfig.ErrorCount == 0 && currentConfig.SuccessCount == totalCount && totalCount > 0;
+                    
+                    if (currentConfig.IsValid)
                     {
                         configs.Add(currentConfig);
-                        onProgress?.Invoke($"[HEADER]✅ {currentConfig.Name} - РАБОЧИЙ[/HEADER]");
+                        onProgress?.Invoke($"[HEADER]✅ {currentConfig.Name} - ИДЕАЛЬНЫЙ[/HEADER]");
                         onProgress?.Invoke($"   🔹 Протестировано: {successCount}/{totalCount}, Пинг: {currentConfig.AveragePing}мс");
                         onProgress?.Invoke(""); // Пустая строка для отступа
                     }
@@ -193,7 +196,7 @@ public class ZapretConfigService
                 // Обновляем прогресс теста - показываем только основные сервисы
                 if (serviceName.StartsWith("Discord") || serviceName.StartsWith("YouTube") || serviceName.StartsWith("Google"))
                 {
-                    var statusText = httpStatus == "OK" && tls12Status == "OK" && tls13Status == "OK" 
+                    var statusText = httpStatus == "OK" && (tls12Status == "OK" || tls13Status == "OK") 
                         ? "РАБОТАЕТ" 
                         : (httpStatus == "ERROR" || tls12Status == "ERROR" || tls13Status == "ERROR" 
                             ? "НЕ РАБОТАЕТ" 
@@ -274,10 +277,11 @@ public class ZapretConfigService
         // Сохранить последний конфиг
         if (currentConfig != null)
         {
-            // Конфиг валиден только если: 0 ошибок И минимум 12 успешных тестов
-            currentConfig.IsValid = currentConfig.ErrorCount == 0 && currentConfig.SuccessCount >= 12;
-            // Добавляем конфиг, если он работает хотя бы частично (SuccessCount > 0)
-            if (currentConfig.IsValid || currentConfig.SuccessCount > 0)
+            var totalCountEnd = currentConfig.Tests.Count;
+            // Конфиг валиден только если: 0 ошибок И все протестированные сайты успешны
+            currentConfig.IsValid = currentConfig.ErrorCount == 0 && currentConfig.SuccessCount == totalCountEnd && totalCountEnd > 0;
+            // Добавляем конфиг, если он идеальный или частично рабочий
+            if (currentConfig.IsValid || currentConfig.IsPartiallyUsable)
                 configs.Add(currentConfig);
             
             System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Last config: {currentConfig.Name}, Valid: {currentConfig.IsValid}, Success: {currentConfig.SuccessCount}/12, Errors: {currentConfig.ErrorCount}");
@@ -411,7 +415,7 @@ public class ZapretConfigService
                     currentConfig.Tests[serviceName] = testResult;
 
                     // Показываем результаты тестов
-                    var statusText = httpStatus == "OK" && tls12Status == "OK" && tls13Status == "OK" 
+                    var statusText = httpStatus == "OK" && (tls12Status == "OK" || tls13Status == "OK") 
                         ? "РАБОТАЕТ" 
                         : (httpStatus == "ERROR" || tls12Status == "ERROR" || tls13Status == "ERROR" 
                             ? "НЕ РАБОТАЕТ" 
@@ -518,8 +522,8 @@ public class ZapretConfigService
         // Проверить результат
         if (currentConfig != null && foundTargetConfig)
         {
-            // Конфиг валиден только если: 0 ошибок И минимум 12 успешных тестов
-            currentConfig.IsValid = currentConfig.ErrorCount == 0 && currentConfig.SuccessCount >= 12;
+            // Конфиг валиден только если: 0 ошибок И все протестированные сайты успешны
+            currentConfig.IsValid = currentConfig.ErrorCount == 0 && currentConfig.SuccessCount == currentConfig.Tests.Count && currentConfig.Tests.Count > 0;
             
             var successCount = currentConfig.SuccessCount;
             var totalCount = currentConfig.Tests.Count;

@@ -827,7 +827,7 @@ public partial class ZapretConfigWindow : Window
                 Text = config.Name,
                 FontSize = 13,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = Brushes.White,
+                Foreground = new SolidColorBrush(config.IsValid ? Color.FromRgb(0x22, 0xc5, 0x5e) : Color.FromRgb(0xea, 0xb3, 0x08)),
                 VerticalAlignment = VerticalAlignment.Center
             };
             nameRow.Children.Add(nameText);

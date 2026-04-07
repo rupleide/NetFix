@@ -24,8 +24,7 @@ public class ServiceTestResult
     
     public bool IsSuccess => 
         HttpStatus == "OK" && 
-        Tls12Status == "OK" && 
-        Tls13Status == "OK";
+        (Tls12Status == "OK" || Tls13Status == "OK");
 }
 
 public class ZapretConfigCache
@@ -37,8 +36,11 @@ public class ZapretConfigCache
 
     public bool HasAnyConfigs => ValidConfigs.Count > 0 || PartialConfigs.Count > 0;
 
-    public List<ZapretConfig> GetSelectableConfigs() =>
-        ValidConfigs.Count > 0
-            ? ValidConfigs
-            : PartialConfigs.OrderByDescending(c => c.SuccessCount).ThenBy(c => c.AveragePing).ToList();
+    public List<ZapretConfig> GetSelectableConfigs()
+    {
+        var list = new List<ZapretConfig>();
+        list.AddRange(ValidConfigs.OrderBy(c => c.AveragePing));
+        list.AddRange(PartialConfigs.OrderByDescending(c => c.SuccessCount).ThenBy(c => c.AveragePing));
+        return list;
+    }
 }
