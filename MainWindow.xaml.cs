@@ -20,6 +20,7 @@ using Microsoft.Win32;
 using System.Windows.Threading;
 using NetFix.Models;
 using NetFix.Services;
+using NetFix.Views;
 
 // Алиасы для разрешения конфликтов между WPF и WinForms
 using Color        = System.Windows.Media.Color;
@@ -28,6 +29,7 @@ using FontFamily   = System.Windows.Media.FontFamily;
 using Clipboard    = System.Windows.Clipboard;
 using Cursors      = System.Windows.Input.Cursors;
 using Orientation  = System.Windows.Controls.Orientation;
+using RadioButton  = System.Windows.Controls.RadioButton;
 using Button       = System.Windows.Controls.Button;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using Brush        = System.Windows.Media.Brush;
@@ -2223,17 +2225,130 @@ public partial class MainWindow : Window
         WizardTrans.BeginAnimation(TranslateTransform.XProperty, slideAnim);
         WizardLayer.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
 
-        try {
-            Process.Start(new ProcessStartInfo(_settings.ZapretPath) {
-                UseShellExecute = true,
-                WorkingDirectory = System.IO.Path.GetDirectoryName(_settings.ZapretPath)
-            });
-            ShowNotification("Успешно", "Zapret запущен через мастер", false);
-        } catch {
-            ShowNotification("Ошибка запуска", "Не удалось запустить Zapret через мастер. Проверьте путь.", true);
+        // Проверяем наличие результатов тестирования
+        var cache = ZapretConfigService.LoadCache();
+        if (cache != null && cache.ValidConfigs.Count > 0)
+        {
+            // Случай 1: Есть результаты тестирования - показываем выбор конфига
+            RenderWizardConfigSelection(cache);
+        }
+        else
+        {
+            // Случай 2: Нет результатов - предлагаем пройти тестирование
+            RenderWizardNoConfigs();
+        }
+    }
+
+    // Случай 1: Есть результаты тестирования - показываем выбор конфига
+    private void RenderWizardConfigSelection(ZapretConfigCache cache)
+    {
+        WizardContent.Children.Clear();
+        var title = FindChild<TextBlock>(WizardLayer);
+        if (title != null) title.Text = "Мастер настройки Zapret";
+
+        AddWizText("Выбери конфиг для запуска и нажми на кнопку «Применить»!");
+
+        // Добавляем список конфигов
+        var scrollViewer = new ScrollViewer
+        {
+            MaxHeight = 300,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            Margin = new Thickness(0, 0, 0, 20)
+        };
+
+        var configPanel = new StackPanel();
+        
+        foreach (var config in cache.ValidConfigs)
+        {
+            var configBtn = new RadioButton
+            {
+                Content = $"{config.Name} (Успешно: {config.SuccessCount}, Пинг: {config.AveragePing}ms)",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 13,
+                Foreground = Brushes.White,
+                Margin = new Thickness(0, 5, 0, 5),
+                GroupName = "ZapretConfigs",
+                Tag = config.Name
+            };
+
+            // Выбираем текущий конфиг по умолчанию
+            if (config.Name == cache.CurrentConfig)
+            {
+                configBtn.IsChecked = true;
+            }
+
+            configPanel.Children.Add(configBtn);
         }
 
-        RenderWizardStep(0);
+        scrollViewer.Content = configPanel;
+        WizardContent.Children.Add(scrollViewer);
+
+        // Кнопка применить
+        AddWizBtn("Применить", "#22c55e", () =>
+        {
+            // Находим выбранный конфиг
+            string? selectedConfig = null;
+            foreach (var child in configPanel.Children)
+            {
+                if (child is RadioButton rb && rb.IsChecked == true)
+                {
+                    selectedConfig = rb.Tag as string;
+                    break;
+                }
+            }
+
+            if (selectedConfig != null)
+            {
+                // Сохраняем выбранный конфиг
+                cache.CurrentConfig = selectedConfig;
+                ZapretConfigService.SaveCache(cache);
+
+                // Запускаем service.bat
+                try
+                {
+                    Process.Start(new ProcessStartInfo(_settings.ZapretPath)
+                    {
+                        UseShellExecute = true,
+                        WorkingDirectory = System.IO.Path.GetDirectoryName(_settings.ZapretPath)
+                    });
+                    ShowNotification("Успешно", $"Zapret запущен с конфигом {selectedConfig}", false);
+                    CloseWizard();
+                    RunAutoFix();
+                }
+                catch
+                {
+                    ShowNotification("Ошибка", "Не удалось запустить Zapret", true);
+                }
+            }
+        });
+
+        AddWizBtn("Отмена", "#ef4444", CloseWizard);
+    }
+
+    // Случай 2: Нет результатов - предлагаем пройти тестирование
+    private void RenderWizardNoConfigs()
+    {
+        WizardContent.Children.Clear();
+        var title = FindChild<TextBlock>(WizardLayer);
+        if (title != null) title.Text = "Мастер настройки Zapret";
+
+        AddWizText("Приложение не обнаружило рабочие конфиги!\n\n" +
+                   "Для поиска оптимальных настроек рекомендую пройти полное тестирование. " +
+                   "Это займёт около 10 минут, но зато в следующий раз, когда что-то сломается, " +
+                   "ты сможешь быстро переключиться на другой конфиг и всё заработает!\n\n" +
+                   "Тебе ничего не нужно делать — приложение само всё протестирует. " +
+                   "Просто подожди 10 минут!");
+
+        AddWizBtn("Пройти тестирование", "#22c55e", () =>
+        {
+            CloseWizard();
+            // Открываем окно тестирования конфигов
+            var configWindow = new ZapretConfigWindow(_settings.ZapretPath, true);
+            configWindow.Owner = this;
+            configWindow.ShowDialog();
+        });
+
+        AddWizBtn("Отмена", "#ef4444", CloseWizard);
     }
 
     private void RenderWizardStep(int step)
