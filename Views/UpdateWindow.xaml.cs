@@ -152,6 +152,8 @@ public partial class UpdateWindow : Window
         {
             PrimaryBtn.IsEnabled = false;
             SecondaryBtn.Content = "Отмена";
+            SecondaryBtn.Width = 100; // Возвращаем обычную ширину
+            this.Height = 260; // Возвращаем обычную высоту
             StartIndeterminateAnimation();
             StatusText.Text = "Скачивание обновления...";
             StatusText.Foreground = Brush("#888888");
@@ -195,6 +197,9 @@ public partial class UpdateWindow : Window
             PrimaryBtn.Background = Brush("#22c55e");
             
             SecondaryBtn.Content = "Я уверен, закрыть";
+            SecondaryBtn.Width = 135; // Увеличиваем кнопку, чтобы текст влез
+            
+            this.Height = 290; // Немного увеличиваем высоту окна, чтобы текст точно поместился
         }
         else
         {
