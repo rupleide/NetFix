@@ -531,7 +531,8 @@ public class ZapretConfigService
         else
         {
             onProgress?.Invoke($"❌ Ошибка: конфиг {configName} не был протестирован");
-            return (false, $"Конфиг {configName} не был протестирован");
+            onProgress?.Invoke($"⚠️ ВОЗМОЖНО У ВАС ЗАПУЩЕН VPN! Закройте VPN и попробуйте ещё раз!");
+            return (false, $"Конфиг {configName} не был протестирован. Возможно, у вас запущен VPN - закройте его и попробуйте снова.");
         }
     }
 
