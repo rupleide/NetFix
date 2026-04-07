@@ -51,13 +51,15 @@ begin
   begin
     if MsgBox('Для работы NetFix требуется .NET Desktop Runtime 8.0.' + #13#10#13#10 +
               'Сейчас будет запущена установка .NET Runtime.' + #13#10 +
+              'Вы увидите окно установки Microsoft .NET.' + #13#10 +
               'Это займёт несколько минут.' + #13#10#13#10 +
               'Продолжить?', mbConfirmation, MB_YESNO) = IDYES then
     begin
       ExtractTemporaryFile('windowsdesktop-runtime-8.0.25-win-x64.exe');
       
+      // Запускаем установщик .NET с видимым окном (убрали /quiet)
       if ShellExec('', ExpandConstant('{tmp}\windowsdesktop-runtime-8.0.25-win-x64.exe'), 
-                   '/install /quiet /norestart', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
+                   '/install /norestart', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
       begin
         if ErrorCode = 0 then
         begin
@@ -70,6 +72,13 @@ begin
           // Уже установлена более новая версия
           MsgBox('.NET Runtime уже установлен.', mbInformation, MB_OK);
           Result := True;
+        end
+        else if ErrorCode = 1602 then
+        begin
+          // Пользователь отменил установку
+          MsgBox('Установка .NET Runtime была отменена.' + #13#10 +
+                 'NetFix не может работать без .NET Runtime.', mbError, MB_OK);
+          Result := False;
         end
         else
         begin
