@@ -132,10 +132,7 @@
                 <Border Grid.Row="1" Height="4" CornerRadius="2" Background="#22222a" ClipToBounds="True">
                     <Border x:Name="ProgressBar" Height="4" CornerRadius="2" HorizontalAlignment="Left" Width="0">
                         <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                <GradientStop Color="#3b82f6" Offset="0"/>
-                                <GradientStop Color="#8b5cf6" Offset="1"/>
-                            </LinearGradientBrush>
+                            <SolidColorBrush Color="#3b82f6"/>
                         </Border.Background>
                         <Border.Effect>
                             <DropShadowEffect Color="#3b82f6" BlurRadius="6" ShadowDepth="0" Opacity="0.7"/>
@@ -199,13 +196,7 @@
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="Button">
-                                                <Border CornerRadius="8">
-                                                    <Border.Background>
-                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                            <GradientStop Color="#3b82f6" Offset="0"/>
-                                                            <GradientStop Color="#6366f1" Offset="1"/>
-                                                        </LinearGradientBrush>
-                                                    </Border.Background>
+                                                <Border CornerRadius="8" Background="#3b82f6">
                                                     <Border.Effect>
                                                         <DropShadowEffect Color="#3b82f6" BlurRadius="12" ShadowDepth="0" Opacity="0.4"/>
                                                     </Border.Effect>
