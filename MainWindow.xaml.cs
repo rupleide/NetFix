@@ -1759,8 +1759,8 @@ public partial class MainWindow : Window
         // 2. Проверяем TgWsProxy
         if (!st.TgWsProxyRunning && !string.IsNullOrWhiteSpace(_settings.TgWsProxyPath) && File.Exists(_settings.TgWsProxyPath))
         {
-            ShowTgProxyWizard();
-            return;
+            StartTgWsProxyWithActivation();
+            // Не возвращаемся, продолжаем RunAutoFix
         }
 
         RunAutoFix();
