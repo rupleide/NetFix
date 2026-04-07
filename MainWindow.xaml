@@ -270,13 +270,18 @@
                                 <StackPanel HorizontalAlignment="Center"
                                             VerticalAlignment="Center"
                                             Margin="0,6,0,0">
-                                    <TextBlock x:Name="BtnIcon"
-                                               Text="&#x23FB;"
-                                               FontSize="36"
-                                               Foreground="#7c6af7"
-                                               HorizontalAlignment="Center"
-                                               FontFamily="Segoe UI Symbol"
-                                               Margin="0,0,0,8"/>
+                                    <Viewbox Width="36"
+                                             Height="36"
+                                             HorizontalAlignment="Center"
+                                             Margin="0,0,0,8">
+                                        <Path Data="{StaticResource PowerIcon}"
+                                              Stroke="#7c6af7"
+                                              StrokeThickness="2.4"
+                                              StrokeStartLineCap="Round"
+                                              StrokeEndLineCap="Round"
+                                              StrokeLineJoin="Round"
+                                              Stretch="Uniform"/>
+                                    </Viewbox>
                                     <TextBlock x:Name="BtnLine1"
                                                Text="Починить"
                                                FontSize="13"
@@ -661,13 +666,7 @@
                             <Button x:Name="FixBtn"
                                     Style="{StaticResource BigBtn}"
                                     WindowChrome.IsHitTestVisibleInChrome="True"
-                                    Click="FixBtn_Click">
-                                <Path Data="{StaticResource PowerIcon}" 
-                                      Stroke="White" 
-                                      StrokeThickness="3" 
-                                      Width="32" Height="32"
-                                      Stretch="Uniform"/>
-                            </Button>
+                                    Click="FixBtn_Click"/>
 
                             <!-- Idle: статические кольца -->
                             <Ellipse x:Name="IdleRingOuter" Width="188" Height="188"
