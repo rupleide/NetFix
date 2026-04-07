@@ -21,6 +21,7 @@ using System.Windows.Threading;
 using NetFix.Models;
 using NetFix.Services;
 using NetFix.Views;
+using System.Runtime.InteropServices;
 
 // Алиасы для разрешения конфликтов между WPF и WinForms
 using Color        = System.Windows.Media.Color;
@@ -40,6 +41,31 @@ namespace NetFix;
 
 public partial class MainWindow : Window
 {
+    // ── Windows API для работы с системным треем ─────────────────────────────
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern IntPtr FindWindow(string? lpClassName, string? lpWindowName);
+    
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string? lpszClass, string? lpszWindow);
+    
+    [DllImport("user32.dll")]
+    private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+    
+    [DllImport("user32.dll")]
+    private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+    
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RECT
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+    
+    private const uint WM_LBUTTONDOWN = 0x0201;
+    private const uint WM_LBUTTONUP = 0x0202;
+    
     // ── State ────────────────────────────────────────────────────────────────
     private AppSettings _settings = SettingsService.Load();
     private bool _settingsOpen = false;
@@ -140,6 +166,45 @@ public partial class MainWindow : Window
         _trayIcon.Visible = false;
         _trayIcon.Dispose();
         System.Windows.Application.Current.Shutdown();
+    }
+
+    // ── Автоматический клик по иконке в трее ──────────────────────────────────
+    private void ClickTrayIcon(string processName)
+    {
+        try
+        {
+            // Находим окно системного трея
+            IntPtr taskbarHandle = FindWindow("Shell_TrayWnd", null);
+            if (taskbarHandle == IntPtr.Zero) return;
+
+            IntPtr trayHandle = FindWindowEx(taskbarHandle, IntPtr.Zero, "TrayNotifyWnd", null);
+            if (trayHandle == IntPtr.Zero) return;
+
+            IntPtr sysPagerHandle = FindWindowEx(trayHandle, IntPtr.Zero, "SysPager", null);
+            if (sysPagerHandle == IntPtr.Zero) return;
+
+            IntPtr notificationAreaHandle = FindWindowEx(sysPagerHandle, IntPtr.Zero, "ToolbarWindow32", null);
+            if (notificationAreaHandle == IntPtr.Zero) return;
+
+            // Получаем координаты области уведомлений
+            if (GetWindowRect(notificationAreaHandle, out RECT rect))
+            {
+                // Кликаем в центр области уведомлений
+                int centerX = (rect.Left + rect.Right) / 2;
+                int centerY = (rect.Top + rect.Bottom) / 2;
+                
+                // Преобразуем координаты в lParam
+                IntPtr lParam = (IntPtr)((centerY << 16) | (centerX & 0xFFFF));
+                
+                // Отправляем клик
+                SendMessage(notificationAreaHandle, WM_LBUTTONDOWN, IntPtr.Zero, lParam);
+                SendMessage(notificationAreaHandle, WM_LBUTTONUP, IntPtr.Zero, lParam);
+            }
+        }
+        catch
+        {
+            // Игнорируем ошибки - если не получилось кликнуть, пользователь сделает это вручную
+        }
     }
 
     // ── Service Control Handlers ───────────────────────────────────────────────────
@@ -256,7 +321,15 @@ public partial class MainWindow : Window
             else
             {
                 if (!string.IsNullOrEmpty(_settings.TgWsProxyPath) && File.Exists(_settings.TgWsProxyPath))
+                {
                     Process.Start(new ProcessStartInfo(_settings.TgWsProxyPath) { UseShellExecute = true });
+                    
+                    // Ждём, пока TgWsProxy создаст иконку в трее
+                    await Task.Delay(1500);
+                    
+                    // Автоматически кликаем по иконке в трее для активации прокси
+                    ClickTrayIcon("TgWsProxy");
+                }
                 else
                 {
                     ShowNotification("tg-ws-proxy", "Путь не указан. Проверьте настройки.", isError: true);
