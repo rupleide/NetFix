@@ -40,29 +40,56 @@ begin
             DirExists(Path + '\8.0.0');
 end;
 
-procedure CurStepChanged(CurStep: TSetupStep);
+function InitializeSetup(): Boolean;
 var
   ResultCode: Integer;
+  ErrorCode: Integer;
 begin
-  if CurStep = ssInstall then
+  Result := True;
+  
+  if not IsDotNet8Installed() then
   begin
-    if not IsDotNet8Installed() then
+    if MsgBox('Для работы NetFix требуется .NET Desktop Runtime 8.0.' + #13#10#13#10 +
+              'Сейчас будет запущена установка .NET Runtime.' + #13#10 +
+              'Это займёт несколько минут.' + #13#10#13#10 +
+              'Продолжить?', mbConfirmation, MB_YESNO) = IDYES then
     begin
-      MsgBox('Сейчас будет установлен .NET Desktop Runtime 8.0.' + #13#10 + 
-             'Это необходимо для работы приложения.' + #13#10#13#10 +
-             'Нажмите OK, и установка начнётся автоматически.', mbInformation, MB_OK);
+      ExtractTemporaryFile('windowsdesktop-runtime-8.0.25-win-x64.exe');
       
-      if not Exec(ExpandConstant('{tmp}\windowsdesktop-runtime-8.0.25-win-x64.exe'),
-        '/install /quiet /norestart', '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then
+      if ShellExec('', ExpandConstant('{tmp}\windowsdesktop-runtime-8.0.25-win-x64.exe'), 
+                   '/install /quiet /norestart', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
       begin
-        MsgBox('Не удалось запустить установку .NET Runtime.' + #13#10 +
-               'Попробуйте установить его вручную с сайта Microsoft.', mbError, MB_OK);
+        if ErrorCode = 0 then
+        begin
+          MsgBox('.NET Runtime успешно установлен!' + #13#10 + 
+                 'Сейчас продолжится установка NetFix.', mbInformation, MB_OK);
+          Result := True;
+        end
+        else if ErrorCode = 1638 then
+        begin
+          // Уже установлена более новая версия
+          MsgBox('.NET Runtime уже установлен.', mbInformation, MB_OK);
+          Result := True;
+        end
+        else
+        begin
+          MsgBox('Установка .NET Runtime завершилась с ошибкой (код: ' + IntToStr(ErrorCode) + ').' + #13#10#13#10 +
+                 'Попробуйте установить .NET Runtime вручную с сайта Microsoft:' + #13#10 +
+                 'https://dotnet.microsoft.com/download/dotnet/8.0', mbError, MB_OK);
+          Result := False;
+        end;
       end
-      else if ResultCode <> 0 then
+      else
       begin
-        MsgBox('Установка .NET Runtime завершилась с ошибкой (код: ' + IntToStr(ResultCode) + ').' + #13#10 +
-               'Попробуйте установить его вручную с сайта Microsoft.', mbError, MB_OK);
+        MsgBox('Не удалось запустить установку .NET Runtime.' + #13#10#13#10 +
+               'Попробуйте установить его вручную с сайта Microsoft:' + #13#10 +
+               'https://dotnet.microsoft.com/download/dotnet/8.0', mbError, MB_OK);
+        Result := False;
       end;
+    end
+    else
+    begin
+      Result := False;
     end;
   end;
 end;
