@@ -2248,7 +2248,7 @@ public partial class MainWindow : Window
 
         AddWizText("Выбери конфиг для запуска и нажми на кнопку «Применить»!");
 
-        // Добавляем список конфигов
+        // Добавляем список конфигов (точно так же как в ZapretConfigWindow)
         var scrollViewer = new ScrollViewer
         {
             MaxHeight = 300,
@@ -2260,64 +2260,133 @@ public partial class MainWindow : Window
         
         foreach (var config in cache.ValidConfigs)
         {
-            var configBtn = new RadioButton
+            var isCurrent = config.Name == cache.CurrentConfig;
+
+            var border = new Border
             {
-                Content = $"{config.Name} (Успешно: {config.SuccessCount}, Пинг: {config.AveragePing}ms)",
-                FontFamily = new FontFamily("Segoe UI"),
-                FontSize = 13,
-                Foreground = Brushes.White,
-                Margin = new Thickness(0, 5, 0, 5),
-                GroupName = "ZapretConfigs",
+                Background = isCurrent
+                    ? new SolidColorBrush(Color.FromRgb(0x1a, 0x25, 0x3a))
+                    : new SolidColorBrush(Color.FromRgb(0x1a, 0x1a, 0x1c)),
+                BorderBrush = isCurrent
+                    ? new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6))
+                    : new SolidColorBrush(Color.FromRgb(0x26, 0x26, 0x2a)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(10),
+                Padding = new Thickness(14, 12, 14, 12),
+                Margin = new Thickness(0, 0, 0, 6),
+                Cursor = Cursors.Hand,
                 Tag = config.Name
             };
 
-            // Выбираем текущий конфиг по умолчанию
-            if (config.Name == cache.CurrentConfig)
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var left = new StackPanel();
+
+            var nameRow = new StackPanel { Orientation = Orientation.Horizontal };
+            var nameText = new TextBlock
             {
-                configBtn.IsChecked = true;
+                Text = config.Name,
+                FontSize = 13,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = Brushes.White,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            nameRow.Children.Add(nameText);
+
+            if (isCurrent)
+            {
+                var activeBadge = new Border
+                {
+                    Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x30, 0x4a)),
+                    CornerRadius = new CornerRadius(4),
+                    Padding = new Thickness(6, 2, 6, 2),
+                    Margin = new Thickness(8, 0, 0, 0),
+                    Child = new TextBlock
+                    {
+                        Text = "активный",
+                        FontSize = 10,
+                        Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6))
+                    }
+                };
+                nameRow.Children.Add(activeBadge);
             }
 
-            configPanel.Children.Add(configBtn);
+            var infoText = new TextBlock
+            {
+                Text = $"Пинг: {config.AveragePing} мс  •  Тесты: {config.SuccessCount}/12",
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58)),
+                Margin = new Thickness(0, 4, 0, 0)
+            };
+
+            left.Children.Add(nameRow);
+            left.Children.Add(infoText);
+
+            // Стрелка справа
+            var arrow = new TextBlock
+            {
+                Text = isCurrent ? "✓" : "→",
+                FontSize = 14,
+                Foreground = isCurrent
+                    ? new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6))
+                    : new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x36)),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+
+            Grid.SetColumn(left, 0);
+            Grid.SetColumn(arrow, 1);
+            grid.Children.Add(left);
+            grid.Children.Add(arrow);
+
+            border.Child = grid;
+
+            // Клик - выбрать конфиг
+            border.MouseLeftButtonDown += (s, e) =>
+            {
+                cache.CurrentConfig = config.Name;
+                ZapretConfigService.SaveCache(cache);
+                RenderWizardConfigSelection(cache); // Перерисовать для обновления активного
+            };
+
+            // Hover эффект
+            border.MouseEnter += (s, e) =>
+            {
+                if (!isCurrent)
+                    border.Background = new SolidColorBrush(Color.FromRgb(0x20, 0x20, 0x23));
+            };
+            border.MouseLeave += (s, e) =>
+            {
+                if (!isCurrent)
+                    border.Background = new SolidColorBrush(Color.FromRgb(0x1a, 0x1a, 0x1c));
+            };
+
+            configPanel.Children.Add(border);
         }
 
         scrollViewer.Content = configPanel;
         WizardContent.Children.Add(scrollViewer);
 
-        // Кнопка применить
-        AddWizBtn("Применить", "#22c55e", () =>
+        // Кнопка применить - использует ApplyConfigAsync как в ZapretConfigWindow
+        AddWizBtn("Применить", "#22c55e", async () =>
         {
-            // Находим выбранный конфиг
-            string? selectedConfig = null;
-            foreach (var child in configPanel.Children)
+            if (!string.IsNullOrEmpty(cache.CurrentConfig))
             {
-                if (child is RadioButton rb && rb.IsChecked == true)
+                // Применяем конфиг (ApplyConfigAsync автоматически останавливает старый сервис и запускает новый)
+                bool success = await ZapretConfigService.ApplyConfigAsync(_settings.ZapretPath, cache.CurrentConfig);
+                
+                if (success)
                 {
-                    selectedConfig = rb.Tag as string;
-                    break;
-                }
-            }
-
-            if (selectedConfig != null)
-            {
-                // Сохраняем выбранный конфиг
-                cache.CurrentConfig = selectedConfig;
-                ZapretConfigService.SaveCache(cache);
-
-                // Запускаем service.bat
-                try
-                {
-                    Process.Start(new ProcessStartInfo(_settings.ZapretPath)
-                    {
-                        UseShellExecute = true,
-                        WorkingDirectory = System.IO.Path.GetDirectoryName(_settings.ZapretPath)
-                    });
-                    ShowNotification("Успешно", $"Zapret запущен с конфигом {selectedConfig}", false);
+                    ShowNotification("Успешно", $"Zapret запущен с конфигом {cache.CurrentConfig}", false);
                     CloseWizard();
-                    RunAutoFix();
+                    // Обновить статус через 1500мс
+                    await Task.Delay(1500);
+                    UpdateActiveApps();
                 }
-                catch
+                else
                 {
-                    ShowNotification("Ошибка", "Не удалось запустить Zapret", true);
+                    ShowNotification("Ошибка", "Не удалось применить конфиг", true);
                 }
             }
         });
