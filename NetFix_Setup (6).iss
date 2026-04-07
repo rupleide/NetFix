@@ -48,9 +48,21 @@ begin
   begin
     if not IsDotNet8Installed() then
     begin
-      MsgBox('Будет установлен .NET Desktop Runtime 8.0. Нажмите OK для продолжения.', mbInformation, MB_OK);
-      Exec(ExpandConstant('{tmp}\windowsdesktop-runtime-8.0.25-win-x64.exe'),
-        '/install /quiet /norestart', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
+      MsgBox('Сейчас будет установлен .NET Desktop Runtime 8.0.' + #13#10 + 
+             'Это необходимо для работы приложения.' + #13#10#13#10 +
+             'Нажмите OK, и установка начнётся автоматически.', mbInformation, MB_OK);
+      
+      if not Exec(ExpandConstant('{tmp}\windowsdesktop-runtime-8.0.25-win-x64.exe'),
+        '/install /quiet /norestart', '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then
+      begin
+        MsgBox('Не удалось запустить установку .NET Runtime.' + #13#10 +
+               'Попробуйте установить его вручную с сайта Microsoft.', mbError, MB_OK);
+      end
+      else if ResultCode <> 0 then
+      begin
+        MsgBox('Установка .NET Runtime завершилась с ошибкой (код: ' + IntToStr(ResultCode) + ').' + #13#10 +
+               'Попробуйте установить его вручную с сайта Microsoft.', mbError, MB_OK);
+      end;
     end;
   end;
 end;
