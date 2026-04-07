@@ -439,7 +439,20 @@ public partial class ZapretConfigWindow : Window
 
     private async void SecondaryBtn_Click(object sender, RoutedEventArgs e)
     {
-        if (SecondaryBtn.Content?.ToString() == "Да, начать")
+        if (SecondaryBtn.Content?.ToString() == "Назад к списку")
+        {
+            LogContainer.Visibility = Visibility.Collapsed;
+            ConfigListScroll.Visibility = Visibility.Visible;
+            PrimaryBtn.Visibility = Visibility.Collapsed;
+            PrimaryBtn.Content = "Проверить конфиг";
+            SecondaryBtn.Content = "Закрыть";
+            
+            // Восстановить обработчик события для PrimaryBtn
+            PrimaryBtn.Click -= PrimaryBtn_Click;
+            PrimaryBtn.Click += PrimaryBtn_Click;
+            return;
+        }
+        else if (SecondaryBtn.Content?.ToString() == "Да, начать")
         {
             await StartTestingAsync();
             return;
@@ -555,19 +568,6 @@ public partial class ZapretConfigWindow : Window
             {
                 ShowConfigList();
             }
-            // Если в логе после тестирования конфига, вернуться к списку
-            else if (LogContainer.Visibility == Visibility.Visible && PrimaryBtn.Content.ToString() == "Назад к списку")
-            {
-                LogContainer.Visibility = Visibility.Collapsed;
-                ConfigListScroll.Visibility = Visibility.Visible;
-                PrimaryBtn.Visibility = Visibility.Collapsed;
-                PrimaryBtn.Content = "Проверить конфиг";
-                SecondaryBtn.Content = "Закрыть";
-                
-                // Восстановить обработчик события
-                SecondaryBtn.Click -= SecondaryBtn_Click;
-                SecondaryBtn.Click += SecondaryBtn_Click;
-            }
             else
             {
                 // Запустить полное тестирование
@@ -624,10 +624,10 @@ public partial class ZapretConfigWindow : Window
         
         // Оставить лог открытым, показать кнопку для возврата к списку
         PrimaryBtn.Visibility = Visibility.Visible;
-        PrimaryBtn.Content = "Назад к списку";
-        SecondaryBtn.Content = "Закрыть";
-        SecondaryBtn.Click -= SecondaryBtn_Click;
-        SecondaryBtn.Click += (s, e) => Close();
+        PrimaryBtn.Content = "Закрыть";
+        PrimaryBtn.Click -= PrimaryBtn_Click;
+        PrimaryBtn.Click += (s, e) => Close();
+        SecondaryBtn.Content = "Назад к списку";
     }
 
     private void CloseBtn_Click(object sender, RoutedEventArgs e)
