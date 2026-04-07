@@ -37,6 +37,7 @@ using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using Brush        = System.Windows.Media.Brush;
 using Panel        = System.Windows.Controls.Panel;
 using Size         = System.Windows.Size;
+using Path         = System.IO.Path;
 
 namespace NetFix;
 
@@ -194,18 +195,77 @@ public partial class MainWindow : Window
     {
         try
         {
-            // Ждём, пока TgWsProxy создаст иконку в трее
-            await Task.Delay(2000);
+            // Ждём, пока TgWsProxy создаст иконку в трее и запустит прокси
+            await Task.Delay(2500);
             
-            // Ищем иконку TgWsProxy в трее и кликаем по ней
-            await Task.Run(() => ClickTrayIconByProcess("TgWsProxy"));
+            // Читаем конфигурацию TgWsProxy и формируем правильную ссылку
+            string? proxyUrl = await Task.Run(() => GetTgWsProxyUrl());
+            
+            if (!string.IsNullOrEmpty(proxyUrl))
+            {
+                // Открываем ссылку в Telegram
+                Process.Start(new ProcessStartInfo(proxyUrl) { UseShellExecute = true });
+            }
+            else
+            {
+                // Если не удалось прочитать конфигурацию, пробуем кликнуть по трею
+                await Task.Run(() => ClickTrayIconByProcess("TgWsProxy"));
+            }
         }
         catch (Exception ex)
         {
-            // Игнорируем ошибки - если не получилось кликнуть автоматически,
+            // Игнорируем ошибки - если не получилось активировать автоматически,
             // пользователь может кликнуть по иконке в трее вручную
-            System.Diagnostics.Debug.WriteLine($"Failed to click tray icon: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Failed to activate TgWsProxy: {ex.Message}");
         }
+    }
+    
+    private string? GetTgWsProxyUrl()
+    {
+        try
+        {
+            // TgWsProxy хранит конфигурацию в %APPDATA%\tg-ws-proxy\config.json
+            string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string configPath = Path.Combine(appData, "tg-ws-proxy", "config.json");
+            
+            if (File.Exists(configPath))
+            {
+                string json = File.ReadAllText(configPath);
+                // Простой парсинг JSON (без зависимостей)
+                string? host = ExtractJsonValue(json, "host");
+                string? port = ExtractJsonValue(json, "port");
+                string? secret = ExtractJsonValue(json, "secret");
+                
+                if (!string.IsNullOrEmpty(host) && !string.IsNullOrEmpty(port) && !string.IsNullOrEmpty(secret))
+                {
+                    // Формируем tg://proxy ссылку
+                    return $"tg://proxy?server={host}&port={port}&secret={secret}";
+                }
+            }
+            
+            // Если конфига нет, пробуем стандартные значения
+            return "tg://proxy?server=127.0.0.1&port=1080&secret=dd";
+        }
+        catch
+        {
+            return null;
+        }
+    }
+    
+    private string? ExtractJsonValue(string json, string key)
+    {
+        try
+        {
+            // Простой парсинг: ищем "key": "value" или "key": number
+            string pattern = $"\"{key}\"\\s*:\\s*\"?([^,\"}}]+)\"?";
+            var match = System.Text.RegularExpressions.Regex.Match(json, pattern);
+            if (match.Success)
+            {
+                return match.Groups[1].Value.Trim();
+            }
+        }
+        catch { }
+        return null;
     }
     
     private void ClickTrayIconByProcess(string processName)
