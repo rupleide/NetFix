@@ -40,9 +40,9 @@ public partial class ZapretConfigWindow : Window
         // Добавить эффект при наведении для PrimaryBtn
         PrimaryBtn.MouseEnter += (s, e) =>
         {
-            PrimaryBtn.Background = new SolidColorBrush(Color.FromRgb(0x3a, 0x3a, 0x3d));
-            PrimaryBtn.BorderBrush = new SolidColorBrush(Color.FromRgb(0x5a, 0x5a, 0x5d));
-            PrimaryBtn.Foreground = new SolidColorBrush(Color.FromRgb(0xaa, 0xaa, 0xaa));
+            PrimaryBtn.Background = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x2d));
+            PrimaryBtn.BorderBrush = new SolidColorBrush(Color.FromRgb(0x4a, 0x4a, 0x4d));
+            PrimaryBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x89));
         };
         PrimaryBtn.MouseLeave += (s, e) =>
         {
