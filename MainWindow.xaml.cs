@@ -2682,14 +2682,18 @@ public partial class MainWindow : Window
                 AddWizText("Закрой все окна. Сейчас я снова запущу service.bat. Набери свою цифру и нажми Enter!");
                 AddWizBtn("Готово!", "#3b82f6", () => {
                     var st = DiagnosticsEngine.CheckAppStatus();
-                    if (!st.TgWsProxyRunning) ShowTgProxyWizard(); else { CloseWizard(); RunAutoFix(); }
+                    if (!st.TgWsProxyRunning) StartTgWsProxyWithActivation(); 
+                    CloseWizard(); 
+                    RunAutoFix();
                 });
                 break;
             case 11:
                 AddWizText("Рад, что ты уже знаешь как им пользоваться!\n\nВ открытом окне выбери:\n1, Install Service\nИ выбери свой рабочий конфиг.");
                 AddWizBtn("Готово!", "#22c55e", () => {
                     var st = DiagnosticsEngine.CheckAppStatus();
-                    if (!st.TgWsProxyRunning) ShowTgProxyWizard(); else { CloseWizard(); RunAutoFix(); }
+                    if (!st.TgWsProxyRunning) StartTgWsProxyWithActivation();
+                    CloseWizard(); 
+                    RunAutoFix();
                 });
                 break;
         }
@@ -2720,6 +2724,30 @@ public partial class MainWindow : Window
                 WorkingDirectory = System.IO.Path.GetDirectoryName(_settings.TgWsProxyPath) 
             });
             ShowNotification("Успешно", "tg-ws-proxy запущен", false);
+        } 
+        catch 
+        {
+            ShowNotification("Ошибка запуска", "Не удалось запустить tg-ws-proxy. Проверьте путь.", true);
+        }
+    }
+
+    private async void StartTgWsProxyWithActivation()
+    {
+        try 
+        { 
+            if (!string.IsNullOrEmpty(_settings.TgWsProxyPath) && File.Exists(_settings.TgWsProxyPath))
+            {
+                Process.Start(new ProcessStartInfo(_settings.TgWsProxyPath) 
+                { 
+                    UseShellExecute = true, 
+                    WorkingDirectory = System.IO.Path.GetDirectoryName(_settings.TgWsProxyPath) 
+                });
+                
+                // Автоматически активируем прокси в Telegram
+                await ActivateTgWsProxyAsync();
+                
+                ShowNotification("Успешно", "TgWsProxy запущен и активирован", false);
+            }
         } 
         catch 
         {
