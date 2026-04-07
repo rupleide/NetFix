@@ -80,33 +80,37 @@ public partial class ZapretConfigWindow : Window
             catch { }
         }
         
-        // Убить все winws.exe и powershell.exe процессы которые могли запуститься во время теста
-        try
+        // Убить все winws.exe и powershell.exe процессы ТОЛЬКО если это режим тестирования
+        // В режиме выбора конфига НЕ трогаем запущенные процессы
+        if (_testMode)
         {
-            var processes = Process.GetProcessesByName("winws");
-            foreach (var proc in processes)
+            try
             {
-                try
+                var processes = Process.GetProcessesByName("winws");
+                foreach (var proc in processes)
                 {
-                    ForceKillProcessTree(proc.Id);
-                    proc.Dispose();
+                    try
+                    {
+                        ForceKillProcessTree(proc.Id);
+                        proc.Dispose();
+                    }
+                    catch { }
                 }
-                catch { }
-            }
-            
-            // Также убить любые PowerShell процессы, запущенные от нашего процесса
-            var powerShellProcs = Process.GetProcessesByName("powershell");
-            foreach (var proc in powerShellProcs)
-            {
-                try
+                
+                // Также убить любые PowerShell процессы, запущенные от нашего процесса
+                var powerShellProcs = Process.GetProcessesByName("powershell");
+                foreach (var proc in powerShellProcs)
                 {
-                    proc.Kill(true);
-                    proc.Dispose();
+                    try
+                    {
+                        proc.Kill(true);
+                        proc.Dispose();
+                    }
+                    catch { }
                 }
-                catch { }
             }
+            catch { }
         }
-        catch { }
     }
 
     private static void ForceKillProcessTree(int pid)
