@@ -7,11 +7,11 @@
 <p><b>Одна кнопка - и интернет снова работает</b></p>
 
 [![Release](https://img.shields.io/github/v/release/rupleide/NetFix?style=flat-square&color=3b82f6&label=версия)](https://github.com/rupleide/NetFix/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/rupleide/NetFix/total?style=flat-square&color=22c55e&label=скачиваний)](https://github.com/rupleide/NetFix/releases)
-[![License](https://img.shields.io/badge/лицензия-MIT-blue?style=flat-square)](LICENSE)
 [![Platform](https://img.shields.io/badge/платформа-Windows-0078d4?style=flat-square&logo=windows)](https://github.com/rupleide/NetFix/releases/latest)
-[![Telegram](https://img.shields.io/badge/Telegram-канал-26A5E4?style=flat-square&logo=telegram)](https://t.me/NetFixRuBi)
+[![Downloads](https://img.shields.io/github/downloads/rupleide/NetFix/total?style=flat-square&color=22c55e&label=скачиваний)](https://github.com/rupleide/NetFix/releases)
 [![VirusTotal](https://img.shields.io/badge/VirusTotal-0%2F72-brightgreen?style=flat-square&logo=virustotal)](https://www.virustotal.com/gui/file/8a5eb3a2ecf231285d2b577daf82750995c83524b17aac022d4395215fe6b983)
+[![Telegram](https://img.shields.io/badge/Telegram-канал-26A5E4?style=flat-square&logo=telegram)](https://t.me/NetFixRuBi)
+[![License](https://img.shields.io/badge/лицензия-MIT-blue?style=flat-square)](LICENSE)
 
 </div>
 
