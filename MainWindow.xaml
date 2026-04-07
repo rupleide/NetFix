@@ -364,19 +364,22 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ProgressBar">
                         <Border Background="{TemplateBinding Background}" CornerRadius="2" ClipToBounds="True">
-                            <Border x:Name="PART_Track" CornerRadius="2">
-                                <Grid x:Name="PART_Indicator">
-                                    <Border Background="{TemplateBinding Foreground}"
-                                            HorizontalAlignment="Left" CornerRadius="2"/>
-                                    <Border x:Name="IndeterminateBar" Background="{TemplateBinding Foreground}"
-                                            Width="50" HorizontalAlignment="Left" CornerRadius="2"
-                                            Visibility="Collapsed">
-                                        <Border.RenderTransform>
-                                            <TranslateTransform X="-50"/>
-                                        </Border.RenderTransform>
-                                    </Border>
-                                </Grid>
-                            </Border>
+                            <Grid x:Name="PART_Track">
+                                <Border x:Name="PART_Indicator" 
+                                        Background="{TemplateBinding Foreground}"
+                                        HorizontalAlignment="Left" 
+                                        CornerRadius="2"/>
+                                <Border x:Name="IndeterminateBar" 
+                                        Background="{TemplateBinding Foreground}"
+                                        Width="50" 
+                                        HorizontalAlignment="Left" 
+                                        CornerRadius="2"
+                                        Visibility="Collapsed">
+                                    <Border.RenderTransform>
+                                        <TranslateTransform X="-50"/>
+                                    </Border.RenderTransform>
+                                </Border>
+                            </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsIndeterminate" Value="True">
