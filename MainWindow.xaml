@@ -371,12 +371,12 @@
                                         CornerRadius="2"/>
                                 <Border x:Name="IndeterminateBar" 
                                         Background="{TemplateBinding Foreground}"
-                                        Width="50" 
+                                        Width="100" 
                                         HorizontalAlignment="Left" 
                                         CornerRadius="2"
                                         Visibility="Collapsed">
                                     <Border.RenderTransform>
-                                        <TranslateTransform X="-50"/>
+                                        <TranslateTransform X="-100"/>
                                     </Border.RenderTransform>
                                 </Border>
                             </Grid>
@@ -388,10 +388,11 @@
                                         <Storyboard RepeatBehavior="Forever">
                                             <DoubleAnimation Storyboard.TargetName="IndeterminateBar"
                                                            Storyboard.TargetProperty="(Border.RenderTransform).(TranslateTransform.X)"
-                                                           From="-50" To="400" Duration="0:0:1.5"/>
+                                                           From="-100" To="500" Duration="0:0:1.2"/>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </Trigger.EnterActions>
+                                <Setter TargetName="PART_Indicator" Property="Visibility" Value="Collapsed"/>
                                 <Setter TargetName="IndeterminateBar" Property="Visibility" Value="Visible"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
