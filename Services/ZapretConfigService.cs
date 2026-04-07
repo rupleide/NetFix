@@ -459,11 +459,11 @@ public class ZapretConfigService
         try
         {
             // Отправить "1\n2\n{номер конфига}\n" для выбора "standard tests" -> "selected configs" -> номер
-            await Task.Delay(1000);
+            await Task.Delay(2000);  // Увеличил с 1000 до 2000мс
             await process.StandardInput.WriteLineAsync("1");  // Standard tests
-            await Task.Delay(500);
+            await Task.Delay(1000);  // Увеличил с 500 до 1000мс
             await process.StandardInput.WriteLineAsync("2");  // Selected configs
-            await Task.Delay(500);
+            await Task.Delay(1000);  // Увеличил с 500 до 1000мс
             
             // Найти номер конфига в списке
             // Получаем список всех .bat файлов, исключая service*.bat
@@ -487,6 +487,7 @@ public class ZapretConfigService
             if (configIndex > 0)
             {
                 await process.StandardInput.WriteLineAsync(configIndex.ToString());
+                await Task.Delay(1000);  // Дополнительная задержка после отправки номера конфига
             }
             else
             {
