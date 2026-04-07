@@ -290,7 +290,7 @@ public class ZapretConfigService
             System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Config: {cfg.Name}, Ping: {cfg.AveragePing}, Success: {cfg.SuccessCount}/12");
         }
 
-        // Сначала идеальные, затем частично рабочие; внутри каждой группы сортировка по пингу
+        // Сначала идеальные, затем частично рабочие; внутри группы сортировка по пингу
         configs = configs
             .OrderByDescending(c => c.IsValid)
             .ThenBy(c => c.AveragePing)
