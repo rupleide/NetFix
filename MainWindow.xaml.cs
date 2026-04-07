@@ -3148,6 +3148,10 @@ public partial class MainWindow : Window
             {
                 if (success)
                 {
+                    // Перезагружаем настройки после успешной установки
+                    _settings = SettingsService.Load();
+                    LoadSettingsToPanel();
+                    
                     progBar.Value = 100;
                     progBar.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
                     progText.Text = "Всё готово!";
