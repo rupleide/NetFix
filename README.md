@@ -11,6 +11,7 @@
 [![License](https://img.shields.io/badge/лицензия-MIT-blue?style=flat-square)](LICENSE)
 [![Platform](https://img.shields.io/badge/платформа-Windows-0078d4?style=flat-square&logo=windows)](https://github.com/rupleide/NetFix/releases/latest)
 [![Telegram](https://img.shields.io/badge/Telegram-канал-26A5E4?style=flat-square&logo=telegram)](https://t.me/NetFixRuBi)
+[![VirusTotal](https://img.shields.io/badge/VirusTotal-0%2F72-brightgreen?style=flat-square&logo=virustotal)](https://www.virustotal.com/gui/file/8a5eb3a2ecf231285d2b577daf82750995c83524b17aac022d4395215fe6b983)
 
 </div>
 
@@ -78,10 +79,11 @@
 
 - **Здесь НЕТ вирусов.** Мне нет никакого смысла заражать компьютеры своих друзей или пользователей.
 - **Чистое ядро:** Приложение использует оригинальные наработки разработчика **[Flowseal](https://github.com/Flowseal)**.
-- **Прозрачность:** NetFix - это просто удобный инструмент управления. Исходный код открыт и доступен для проверки.
+- **Прозрачность:** NetFix — это просто удобный инструмент управления. Исходный код открыт и доступен для проверки.
+- **Проверено VirusTotal:** [![VirusTotal](https://img.shields.io/badge/VirusTotal-0%2F72-brightgreen?style=flat-square&logo=virustotal)](https://www.virustotal.com/gui/file/8a5eb3a2ecf231285d2b577daf82750995c83524b17aac022d4395215fe6b983)
 
 > [!WARNING]
-> WinDivert может вызвать реакцию антивируса. Это нормально - WinDivert используется для перехвата трафика и может детектироваться как `Not-a-virus:RiskTool`. Добавьте папку программы в исключения антивируса.
+> WinDivert может вызвать реакцию антивируса. Это нормально — WinDivert используется для перехвата трафика и может детектироваться как `Not-a-virus:RiskTool`. Добавьте папку программы в исключения антивируса.
 
 ---
 
