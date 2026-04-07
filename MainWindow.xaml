@@ -30,7 +30,7 @@
 
         <!-- ═══ VECTOR ICONS ═══ -->
         <!-- Power Icon (векторная, совместима с Windows 10) -->
-        <PathGeometry x:Key="PowerIcon">M12,4 L12,11 M7.5,7.638 A7,7 0 1,0 16.5,7.638</PathGeometry>
+        <PathGeometry x:Key="PowerIcon">M7.5,7.638 A7,7 0 1,0 16.5,7.638 M12,4 L12,11</PathGeometry>
         
         <!-- Lightning/Bolt Icon -->
         <PathGeometry x:Key="BoltIcon">M13,2 L3,14 L10,14 L9,22 L19,10 L12,10 Z</PathGeometry>

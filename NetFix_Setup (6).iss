@@ -55,9 +55,13 @@ begin
               'Это займёт несколько минут.' + #13#10#13#10 +
               'Продолжить?', mbConfirmation, MB_YESNO) = IDYES then
     begin
+      // Показываем сообщение о начале извлечения
+      MsgBox('Подготовка установки .NET Runtime...' + #13#10 +
+             'Пожалуйста, подождите несколько секунд.', mbInformation, MB_OK);
+      
       ExtractTemporaryFile('windowsdesktop-runtime-8.0.25-win-x64.exe');
       
-      // Запускаем установщик .NET с видимым окном (убрали /quiet)
+      // Запускаем установщик .NET с видимым окном
       if ShellExec('', ExpandConstant('{tmp}\windowsdesktop-runtime-8.0.25-win-x64.exe'), 
                    '/install /norestart', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
       begin
