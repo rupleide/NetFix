@@ -1461,51 +1461,63 @@
                             <Border Background="#252525" CornerRadius="12"
                                     BorderBrush="#333333" BorderThickness="1"
                                     Padding="16,14" Margin="0,0,0,10">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Border Width="38" Height="38" CornerRadius="10"
-                                            Background="#1a2a3a" Margin="0,0,12,0"
-                                            VerticalAlignment="Center">
-                                        <TextBlock Text="T" FontFamily="Segoe UI"
-                                                   FontSize="17" FontWeight="Bold"
-                                                   Foreground="#3b82f6"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"/>
-                                    </Border>
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                        <TextBlock Text="tg-ws-proxy"
-                                                   FontFamily="Segoe UI" FontSize="13"
-                                                   FontWeight="SemiBold" Foreground="White"/>
-                                        <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
-                                            <Ellipse x:Name="TgWsDot2" Width="6" Height="6"
-                                                     Fill="#888888" VerticalAlignment="Center"
-                                                     Margin="0,0,5,0"/>
-                                            <TextBlock x:Name="TgWsStatusLbl"
-                                                       Text="Не запущен"
-                                                       FontFamily="Segoe UI" FontSize="11"
-                                                       Foreground="#888888"/>
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="38" Height="38" CornerRadius="10"
+                                                Background="#1a2a3a" Margin="0,0,12,0"
+                                                VerticalAlignment="Center">
+                                            <TextBlock Text="T" FontFamily="Segoe UI"
+                                                       FontSize="17" FontWeight="Bold"
+                                                       Foreground="#3b82f6"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="tg-ws-proxy"
+                                                       FontFamily="Segoe UI" FontSize="13"
+                                                       FontWeight="SemiBold" Foreground="White"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                                <Ellipse x:Name="TgWsDot2" Width="6" Height="6"
+                                                         Fill="#888888" VerticalAlignment="Center"
+                                                         Margin="0,0,5,0"/>
+                                                <TextBlock x:Name="TgWsStatusLbl"
+                                                           Text="Не запущен"
+                                                           FontFamily="Segoe UI" FontSize="11"
+                                                           Foreground="#888888"/>
+                                            </StackPanel>
                                         </StackPanel>
-                                    </StackPanel>
-                                    <Button x:Name="TgWsToggleBtn" Grid.Column="2"
-                                            Style="{StaticResource AccentBtn}"
-                                            Padding="12,7" FontSize="12"
-                                            WindowChrome.IsHitTestVisibleInChrome="True"
-                                            Click="TgWsToggle_Click">
-                                        <StackPanel Orientation="Horizontal">
-                                            <Path Data="{StaticResource PlayIcon}" 
-                                                  Fill="White"
-                                                  Width="12" Height="12"
-                                                  Stretch="Uniform"
-                                                  Margin="0,0,6,0"
-                                                  VerticalAlignment="Center"/>
-                                            <TextBlock Text="Запустить" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Button>
-                                </Grid>
+                                        <Button x:Name="TgWsToggleBtn" Grid.Column="2"
+                                                Style="{StaticResource AccentBtn}"
+                                                Padding="12,7" FontSize="12"
+                                                WindowChrome.IsHitTestVisibleInChrome="True"
+                                                Click="TgWsToggle_Click">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Data="{StaticResource PlayIcon}" 
+                                                      Fill="White"
+                                                      Width="12" Height="12"
+                                                      Stretch="Uniform"
+                                                      Margin="0,0,6,0"
+                                                      VerticalAlignment="Center"/>
+                                                <TextBlock Text="Запустить" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+                                    
+                                    <!-- Прогресс-бар для переключения TgWsProxy -->
+                                    <ProgressBar x:Name="TgWsToggleProgress"
+                                                 Height="3"
+                                                 Margin="0,8,0,0"
+                                                 IsIndeterminate="True"
+                                                 Visibility="Collapsed"
+                                                 Foreground="#3b82f6"
+                                                 Background="#1a1a1c"
+                                                 BorderThickness="0"/>
+                                </StackPanel>
                             </Border>
 
                             <!-- Zapret Config Buttons -->

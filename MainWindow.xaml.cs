@@ -240,23 +240,39 @@ public partial class MainWindow : Window
         }
     }
 
-    private void TgWsToggle_Click(object s, RoutedEventArgs e)
+    private async void TgWsToggle_Click(object s, RoutedEventArgs e)
     {
-        var st = DiagnosticsEngine.CheckAppStatus();
-        if (st.TgWsProxyRunning)
+        // Показать прогресс-бар
+        TgWsToggleProgress.Visibility = Visibility.Visible;
+        
+        try
         {
-            foreach (var p in Process.GetProcessesByName("TgWsProxy"))
-                try { p.Kill(); } catch { }
-        }
-        else
-        {
-            if (!string.IsNullOrEmpty(_settings.TgWsProxyPath) && File.Exists(_settings.TgWsProxyPath))
-                Process.Start(new ProcessStartInfo(_settings.TgWsProxyPath) { UseShellExecute = true });
+            var st = DiagnosticsEngine.CheckAppStatus();
+            if (st.TgWsProxyRunning)
+            {
+                foreach (var p in Process.GetProcessesByName("TgWsProxy"))
+                    try { p.Kill(); } catch { }
+            }
             else
-                ShowNotification("tg-ws-proxy", "Путь не указан. Проверьте настройки.", isError: true);
-        }
+            {
+                if (!string.IsNullOrEmpty(_settings.TgWsProxyPath) && File.Exists(_settings.TgWsProxyPath))
+                    Process.Start(new ProcessStartInfo(_settings.TgWsProxyPath) { UseShellExecute = true });
+                else
+                {
+                    ShowNotification("tg-ws-proxy", "Путь не указан. Проверьте настройки.", isError: true);
+                    return;
+                }
+            }
 
-        Task.Delay(800).ContinueWith(_ => Dispatcher.Invoke(UpdateActiveApps));
+            // Обновить статус через 1500мс
+            await Task.Delay(1500);
+            UpdateActiveApps();
+        }
+        finally
+        {
+            // Скрыть прогресс-бар в любом случае
+            TgWsToggleProgress.Visibility = Visibility.Collapsed;
+        }
     }
 
     // ── Zapret Config Testing ──────────────────────────────────────────────────
