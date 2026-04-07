@@ -122,9 +122,8 @@ public class ZapretConfigService
                     var totalCount = currentConfig.Tests.Count;
                     var failedTests = totalCount - successCount;
                     
-                    // Конфиг валиден только если: 0 ошибок И минимум 12 успешных тестов
-                    currentConfig.IsValid = currentConfig.ErrorCount == 0 && currentConfig.SuccessCount >= 12;
-                    if (currentConfig.IsValid)
+                    // Добавляем конфиг, если он работает хотя бы частично (SuccessCount > 0)
+                    if (currentConfig.IsValid || currentConfig.SuccessCount > 0)
                     {
                         configs.Add(currentConfig);
                         onProgress?.Invoke($"[HEADER]✅ {currentConfig.Name} - РАБОЧИЙ[/HEADER]");
@@ -207,9 +206,8 @@ public class ZapretConfigService
                 if (testResult.IsSuccess)
                     currentConfig.SuccessCount++;
                 
-                // Любая ошибка или UNSUP - это провал конфига
-                if (httpStatus == "ERROR" || tls12Status == "ERROR" || tls13Status == "ERROR" ||
-                    httpStatus == "UNSUP" || tls12Status == "UNSUP" || tls13Status == "UNSUP")
+                // Любая ошибка - это провал конфига (UNSUP не считаем за фатальную ошибку, это просто сайт не поддерживает TLS)
+                if (httpStatus == "ERROR" || tls12Status == "ERROR" || tls13Status == "ERROR")
                     currentConfig.ErrorCount++;
 
                 // Обновить средний пинг
@@ -278,7 +276,8 @@ public class ZapretConfigService
         {
             // Конфиг валиден только если: 0 ошибок И минимум 12 успешных тестов
             currentConfig.IsValid = currentConfig.ErrorCount == 0 && currentConfig.SuccessCount >= 12;
-            if (currentConfig.IsValid || currentConfig.IsPartiallyUsable)
+            // Добавляем конфиг, если он работает хотя бы частично (SuccessCount > 0)
+            if (currentConfig.IsValid || currentConfig.SuccessCount > 0)
                 configs.Add(currentConfig);
             
             System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Last config: {currentConfig.Name}, Valid: {currentConfig.IsValid}, Success: {currentConfig.SuccessCount}/12, Errors: {currentConfig.ErrorCount}");
@@ -424,9 +423,8 @@ public class ZapretConfigService
                     if (testResult.IsSuccess)
                         currentConfig.SuccessCount++;
                     
-                    // Любая ошибка или UNSUP - это провал конфига
-                    if (httpStatus == "ERROR" || tls12Status == "ERROR" || tls13Status == "ERROR" ||
-                        httpStatus == "UNSUP" || tls12Status == "UNSUP" || tls13Status == "UNSUP")
+                    // Любая ошибка - это провал конфига (UNSUP не считаем за фатальную ошибку)
+                    if (httpStatus == "ERROR" || tls12Status == "ERROR" || tls13Status == "ERROR")
                         currentConfig.ErrorCount++;
 
                     // Обновить средний пинг

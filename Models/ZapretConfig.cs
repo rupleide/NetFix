@@ -11,7 +11,7 @@ public class ZapretConfig
     public int ErrorCount { get; set; }
     public int AveragePing { get; set; }
     public bool IsValid { get; set; }
-    public bool IsPartiallyUsable => !IsValid && ErrorCount == 0 && Tests.Count > 0;
+    public bool IsPartiallyUsable => !IsValid && SuccessCount > 0;
 }
 
 public class ServiceTestResult
@@ -40,5 +40,5 @@ public class ZapretConfigCache
     public List<ZapretConfig> GetSelectableConfigs() =>
         ValidConfigs.Count > 0
             ? ValidConfigs
-            : PartialConfigs.OrderBy(c => c.AveragePing).ToList();
+            : PartialConfigs.OrderByDescending(c => c.SuccessCount).ThenBy(c => c.AveragePing).ToList();
 }
