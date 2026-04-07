@@ -115,6 +115,11 @@ public partial class MainWindow : Window
             FadeIn();
             CheckInternetOnStart();
             StartActiveAppsMonitor();
+            
+            if (_settings.AutoUpdates)
+            {
+                CheckForUpdatesBackgroundAsync();
+            }
         }
         LoadFaqItems();
         UpdateSelectedConfigDisplay();
@@ -2417,7 +2422,27 @@ public partial class MainWindow : Window
     private void CheckUpdateBtn_Click(object sender, RoutedEventArgs e)
     {
         var window = new NetFix.Views.UpdateWindow();
+        window.Owner = this;
         window.ShowDialog();
+    }
+
+    private async void CheckForUpdatesBackgroundAsync()
+    {
+        try
+        {
+            var (hasUpdate, newVersion, downloadUrl, error) = await NetFix.Services.UpdateService.CheckAsync();
+            if (hasUpdate && !string.IsNullOrEmpty(newVersion))
+            {
+                var window = new NetFix.Views.UpdateWindow();
+                window.Owner = this;
+                window.InitWithUpdate(newVersion, downloadUrl);
+                window.ShowDialog();
+            }
+        }
+        catch
+        {
+            // Игнорируем ошибки при фоновой проверке
+        }
     }
 
     private void WizardCloseBtn_Click(object s, RoutedEventArgs e) => CloseWizard();
