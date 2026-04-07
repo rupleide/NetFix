@@ -2588,8 +2588,9 @@ public partial class MainWindow : Window
                     UpdateActiveApps();
                     
                     // Автоматически нажать кнопку "Починить интернет" ещё раз
+                    // Используем FixBtn_Click чтобы снова прошла проверка TgWsProxy
                     await Task.Delay(500);
-                    RunAutoFix();
+                    FixBtn_Click(null, null);
                 }
                 else
                 {
