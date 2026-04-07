@@ -2700,37 +2700,7 @@ public partial class MainWindow : Window
         }
     }
 
-    // ── Мастер TgWsProxy ──────────────────────────────────────────────────────
-    private void ShowTgProxyWizard()
-    {
-        WizardLayer.Visibility = Visibility.Visible;
-        var slideAnim = new DoubleAnimation(50, 0, TimeSpan.FromMilliseconds(220)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
-        var opacityAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(220));
-        WizardTrans.BeginAnimation(TranslateTransform.XProperty, slideAnim);
-        WizardLayer.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
-        
-        // Принудительный запуск при открытии мастера
-        StartTgProxyProcess();
-        
-        RenderTgProxyWizardStep(0);
-    }
-
-    private void StartTgProxyProcess()
-    {
-        try 
-        { 
-            Process.Start(new ProcessStartInfo(_settings.TgWsProxyPath) 
-            { 
-                UseShellExecute = true, 
-                WorkingDirectory = System.IO.Path.GetDirectoryName(_settings.TgWsProxyPath) 
-            });
-            ShowNotification("Успешно", "tg-ws-proxy запущен", false);
-        } 
-        catch 
-        {
-            ShowNotification("Ошибка запуска", "Не удалось запустить tg-ws-proxy. Проверьте путь.", true);
-        }
-    }
+    // ── Запуск TgWsProxy с автоматической активацией ──────────────────────────
 
     private async void StartTgWsProxyWithActivation()
     {
@@ -2773,32 +2743,6 @@ public partial class MainWindow : Window
         }
     }
 
-    private void RenderTgProxyWizardStep(int step)
-    {
-        WizardContent.Children.Clear();
-        if (WizardLayer.FindName("WizardTitle") is TextBlock tb) tb.Text = "Настройка Telegram Proxy";
-
-        switch (step)
-        {
-            case 0:
-                AddWizText("Я запустил TgWsProxy.\n\nПосмотри в правый нижний угол экрана (в трей, где часы и значки). Ты видишь там иконку с буквой «T» на голубом фоне?");
-                AddWizBtn("Да, я вижу", "#22c55e", () => RenderTgProxyWizardStep(1));
-                AddWizBtn("Нет, не вижу", "#ef4444", () => {
-                    // Перезапуск
-                    foreach (var p in Process.GetProcessesByName("TgWsProxy")) try { p.Kill(); } catch {}
-                    StartTgProxyProcess();
-                    RenderTgProxyWizardStep(0);
-                });
-                break;
-            case 1:
-                AddWizText("Отлично!\n\nТеперь нажми на эту иконку ЛЕВОЙ кнопкой мыши.\n\nУ тебя откроется Telegram с предложением добавить прокси. Нажми там кнопку «Включить» (Enable).");
-                AddWizBtn("Я всё сделал, ТГ работает", "#22c55e", () => {
-                    CloseWizard();
-                    RunAutoFix();
-                });
-                break;
-        }
-    }
     private T FindChild<T>(DependencyObject parent) where T : DependencyObject
     {
         if (parent == null) return null;
