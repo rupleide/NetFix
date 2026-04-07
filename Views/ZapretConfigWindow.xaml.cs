@@ -381,7 +381,7 @@ public partial class ZapretConfigWindow : Window
             if (!_isTesting) return; // Отменено
 
             var idealConfigs = configs.Where(c => c.IsValid).OrderBy(c => c.AveragePing).ToList();
-            var partialConfigs = configs.Where(c => c.IsPartiallyUsable).OrderBy(c => c.AveragePing).ToList();
+            var partialConfigs = configs.Where(c => c.IsPartiallyUsable).OrderByDescending(c => c.SuccessCount).ThenBy(c => c.AveragePing).ToList();
 
             if (idealConfigs.Count > 0)
             {
@@ -444,10 +444,10 @@ public partial class ZapretConfigWindow : Window
                     $"{i + 1}. {c.Name} (пинг: {c.AveragePing} мс, тестов: {c.SuccessCount}/12)"));
 
                 StatusText.Text = "Идеальных конфигов не обнаружено.\n\n" +
-                                 $"Но найдено {partialConfigs.Count} частично рабочих конфигов без ошибок и недоступных сервисов.\n" +
+                                 $"Но найдено {partialConfigs.Count} частично рабочих конфигов.\n" +
                                  "Их можно использовать как запасной вариант.\n\n" +
-                                 $"Топ по лучшему пингу:\n\n{topConfigs}\n\n" +
-                                 "Важно: эти конфиги работают частично. Если что-то будет открываться не полностью или начнёт ломаться, просто переключитесь на другой.";
+                                 $"Топ по количеству рабочих сайтов и пингу:\n\n{topConfigs}\n\n" +
+                                 "Важно: эти конфиги работают частично. Если что-то будет работать нестабильно, просто переключитесь на другой.";
 
                 SecondaryBtn.Content = "Закрыть";
                 PrimaryBtn.Content = "Выбрать частичный конфиг";
