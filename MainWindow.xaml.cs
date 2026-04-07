@@ -371,7 +371,7 @@ public partial class MainWindow : Window
                     if (isServiceBat)
                     {
                         // Для service.bat ОБЯЗАТЕЛЬНО нужен выбранный конфиг
-                        if (cache == null || cache.ValidConfigs.Count == 0)
+                        if (cache == null || !cache.HasAnyConfigs)
                         {
                             ShowFullScanRequiredNotification(
                                 "Конфиги Zapret не найдены",
@@ -491,7 +491,7 @@ public partial class MainWindow : Window
 
         // Проверить есть ли кэш с тестами
         var cache = ZapretConfigService.LoadCache();
-        if (cache == null || cache.ValidConfigs.Count == 0)
+        if (cache == null || !cache.HasAnyConfigs)
         {
             // Показать стильное уведомление о необходимости полного сканирования
             ShowFullScanRequiredNotification();
@@ -2450,7 +2450,7 @@ public partial class MainWindow : Window
 
         // Проверяем наличие результатов тестирования
         var cache = ZapretConfigService.LoadCache();
-        if (cache != null && cache.ValidConfigs.Count > 0)
+        if (cache != null && cache.HasAnyConfigs)
         {
             // Случай 1: Есть результаты тестирования - показываем выбор конфига
             RenderWizardConfigSelection(cache);
@@ -2481,7 +2481,13 @@ public partial class MainWindow : Window
 
         var configPanel = new StackPanel();
         
-        foreach (var config in cache.ValidConfigs)
+        var selectableConfigs = cache.GetSelectableConfigs();
+        var usingPartialConfigs = cache.ValidConfigs.Count == 0 && cache.PartialConfigs.Count > 0;
+
+        if (usingPartialConfigs)
+            AddWizText("Идеальных конфигов не найдено. Ниже показаны частично рабочие варианты без ошибок и недоступных сервисов. Если что-то будет работать нестабильно, переключитесь на другой конфиг.");
+
+        foreach (var config in selectableConfigs)
         {
             var isCurrent = config.Name == cache.CurrentConfig;
 
@@ -2538,7 +2544,7 @@ public partial class MainWindow : Window
 
             var infoText = new TextBlock
             {
-                Text = $"Пинг: {config.AveragePing} мс  •  Тесты: {config.SuccessCount}/12",
+                Text = $"Пинг: {config.AveragePing} мс  •  Тесты: {config.SuccessCount}/12" + (config.IsPartiallyUsable ? "  •  частично" : ""),
                 FontSize = 11,
                 Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58)),
                 Margin = new Thickness(0, 4, 0, 0)

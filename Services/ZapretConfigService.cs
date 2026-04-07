@@ -131,6 +131,13 @@ public class ZapretConfigService
                         onProgress?.Invoke($"   🔹 Протестировано: {successCount}/{totalCount}, Пинг: {currentConfig.AveragePing}мс");
                         onProgress?.Invoke(""); // Пустая строка для отступа
                     }
+                    else if (currentConfig.IsPartiallyUsable)
+                    {
+                        configs.Add(currentConfig);
+                        onProgress?.Invoke($"[HEADER]⚠️ {currentConfig.Name} - ЧАСТИЧНО РАБОЧИЙ[/HEADER]");
+                        onProgress?.Invoke($"   🔹 Протестировано: {successCount}/{totalCount}, Пинг: {currentConfig.AveragePing}мс");
+                        onProgress?.Invoke(""); // Пустая строка для отступа
+                    }
                     else
                     {
                         onProgress?.Invoke($"[HEADER]❌ {currentConfig.Name} - НЕРАБОЧИЙ[/HEADER]");
@@ -271,7 +278,7 @@ public class ZapretConfigService
         {
             // Конфиг валиден только если: 0 ошибок И минимум 12 успешных тестов
             currentConfig.IsValid = currentConfig.ErrorCount == 0 && currentConfig.SuccessCount >= 12;
-            if (currentConfig.IsValid)
+            if (currentConfig.IsValid || currentConfig.IsPartiallyUsable)
                 configs.Add(currentConfig);
             
             System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Last config: {currentConfig.Name}, Valid: {currentConfig.IsValid}, Success: {currentConfig.SuccessCount}/12, Errors: {currentConfig.ErrorCount}");
@@ -283,10 +290,15 @@ public class ZapretConfigService
             System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Config: {cfg.Name}, Ping: {cfg.AveragePing}, Success: {cfg.SuccessCount}/12");
         }
 
-        // Отсортировать по среднему пингу (лучший = меньший пинг)
-        configs = configs.OrderBy(c => c.AveragePing).ToList();
+        // Сначала идеальные, затем частично рабочие; внутри каждой группы сортировка по пингу
+        configs = configs
+            .OrderByDescending(c => c.IsValid)
+            .ThenBy(c => c.AveragePing)
+            .ToList();
 
-        onProgress?.Invoke($"Тестирование завершено. Найдено {configs.Count} рабочих конфигов");
+        var idealCount = configs.Count(c => c.IsValid);
+        var partialCount = configs.Count(c => c.IsPartiallyUsable);
+        onProgress?.Invoke($"Тестирование завершено. Найдено {idealCount} идеальных и {partialCount} частично рабочих конфигов");
 
         return (configs, process);
     }
