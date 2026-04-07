@@ -1,12 +1,12 @@
 [Setup]
 AppId={{551BC3CA-4FAC-4797-8E9F-9BAA236BAEE9}
 AppName=NetFix
-AppVersion=1.0.6
+AppVersion=1.0.7
 AppPublisher=rupleide
 DefaultDirName={autopf64}\NetFix
 DefaultGroupName=NetFix
 OutputDir=C:\Users\rubi\Desktop\NetFix_Installer
-OutputBaseFilename=NetFix_Setup_v1.0.6
+OutputBaseFilename=NetFix_Setup_v1.0.7
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
