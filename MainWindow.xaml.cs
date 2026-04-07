@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -21,6 +22,7 @@ using System.Windows.Threading;
 using NetFix.Models;
 using NetFix.Services;
 using NetFix.Views;
+using System.Runtime.InteropServices;
 
 // Алиасы для разрешения конфликтов между WPF и WinForms
 using Color        = System.Windows.Media.Color;
@@ -40,6 +42,51 @@ namespace NetFix;
 
 public partial class MainWindow : Window
 {
+    // ── Windows API для работы с системным треем ─────────────────────────────
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern IntPtr FindWindow(string? lpClassName, string? lpWindowName);
+    
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string? lpszClass, string? lpszWindow);
+    
+    [DllImport("user32.dll")]
+    private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+    
+    [DllImport("user32.dll")]
+    private static extern bool GetClientRect(IntPtr hWnd, out RECT lpRect);
+    
+    [DllImport("user32.dll")]
+    private static extern bool ClientToScreen(IntPtr hWnd, ref POINT lpPoint);
+    
+    [DllImport("user32.dll")]
+    private static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, UIntPtr dwExtraInfo);
+    
+    [DllImport("user32.dll")]
+    private static extern bool SetCursorPos(int X, int Y);
+    
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RECT
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+    
+    [StructLayout(LayoutKind.Sequential)]
+    private struct POINT
+    {
+        public int X;
+        public int Y;
+    }
+    
+    private const uint WM_LBUTTONDOWN = 0x0201;
+    private const uint WM_LBUTTONUP = 0x0202;
+    private const uint WM_MOUSEMOVE = 0x0200;
+    private const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
+    private const uint MOUSEEVENTF_LEFTUP = 0x0004;
+    private const uint TB_BUTTONCOUNT = 0x0418;
+    
     // ── State ────────────────────────────────────────────────────────────────
     private AppSettings _settings = SettingsService.Load();
     private bool _settingsOpen = false;
@@ -142,49 +189,70 @@ public partial class MainWindow : Window
         System.Windows.Application.Current.Shutdown();
     }
 
-    // ── Автоматическая активация прокси TgWsProxy ────────────────────────────
+    // ── Автоматический клик по иконке TgWsProxy в трее ───────────────────────
     private async Task ActivateTgWsProxyAsync()
     {
         try
         {
-            // TgWsProxy обычно создаёт прокси на порту 8080
-            // Пробуем получить информацию о прокси из буфера обмена или напрямую открыть стандартную ссылку
-            
-            // Ждём немного, чтобы TgWsProxy успел запуститься и создать прокси
+            // Ждём, пока TgWsProxy создаст иконку в трее
             await Task.Delay(2000);
             
-            // Пытаемся прочитать ссылку из буфера обмена (TgWsProxy может её туда скопировать)
-            string? proxyLink = null;
-            try
+            // Ищем иконку TgWsProxy в трее и кликаем по ней
+            await Task.Run(() => ClickTrayIconByProcess("TgWsProxy"));
+        }
+        catch (Exception ex)
+        {
+            // Игнорируем ошибки - если не получилось кликнуть автоматически,
+            // пользователь может кликнуть по иконке в трее вручную
+            System.Diagnostics.Debug.WriteLine($"Failed to click tray icon: {ex.Message}");
+        }
+    }
+    
+    private void ClickTrayIconByProcess(string processName)
+    {
+        try
+        {
+            // Находим окно системного трея
+            IntPtr taskbarHandle = FindWindow("Shell_TrayWnd", null);
+            if (taskbarHandle == IntPtr.Zero) return;
+
+            IntPtr trayHandle = FindWindowEx(taskbarHandle, IntPtr.Zero, "TrayNotifyWnd", null);
+            if (trayHandle == IntPtr.Zero) return;
+
+            IntPtr sysPagerHandle = FindWindowEx(trayHandle, IntPtr.Zero, "SysPager", null);
+            if (sysPagerHandle == IntPtr.Zero) return;
+
+            IntPtr notificationAreaHandle = FindWindowEx(sysPagerHandle, IntPtr.Zero, "ToolbarWindow32", null);
+            if (notificationAreaHandle == IntPtr.Zero) return;
+
+            // Получаем количество кнопок в трее
+            int buttonCount = (int)SendMessage(notificationAreaHandle, TB_BUTTONCOUNT, IntPtr.Zero, IntPtr.Zero);
+            
+            if (buttonCount > 0)
             {
-                if (Clipboard.ContainsText())
+                // Получаем координаты области трея
+                if (GetClientRect(notificationAreaHandle, out RECT rect))
                 {
-                    var clipText = Clipboard.GetText();
-                    if (clipText.StartsWith("tg://proxy", StringComparison.OrdinalIgnoreCase))
-                    {
-                        proxyLink = clipText;
-                    }
+                    // Кликаем в центр области трея (где обычно находится последняя добавленная иконка)
+                    int centerX = (rect.Right - rect.Left) / 2;
+                    int centerY = (rect.Bottom - rect.Top) / 2;
+                    
+                    // Преобразуем в экранные координаты
+                    POINT pt = new POINT { X = centerX, Y = centerY };
+                    ClientToScreen(notificationAreaHandle, ref pt);
+                    
+                    // Перемещаем курсор и кликаем
+                    SetCursorPos(pt.X, pt.Y);
+                    Thread.Sleep(100);
+                    mouse_event(MOUSEEVENTF_LEFTDOWN, pt.X, pt.Y, 0, UIntPtr.Zero);
+                    Thread.Sleep(50);
+                    mouse_event(MOUSEEVENTF_LEFTUP, pt.X, pt.Y, 0, UIntPtr.Zero);
                 }
-            }
-            catch { }
-            
-            // Если в буфере нет ссылки, пробуем стандартную конфигурацию TgWsProxy
-            if (string.IsNullOrEmpty(proxyLink))
-            {
-                // TgWsProxy по умолчанию использует порт 8080 и секрет dd
-                proxyLink = "tg://proxy?server=127.0.0.1&port=8080&secret=dd";
-            }
-            
-            // Открываем ссылку в Telegram
-            if (!string.IsNullOrEmpty(proxyLink))
-            {
-                Process.Start(new ProcessStartInfo(proxyLink) { UseShellExecute = true });
             }
         }
         catch
         {
-            // Игнорируем ошибки - если не получилось активировать автоматически, 
-            // пользователь может кликнуть по иконке в трее вручную
+            // Игнорируем ошибки
         }
     }
 
