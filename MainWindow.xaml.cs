@@ -371,7 +371,16 @@ public partial class MainWindow : Window
                     if (isServiceBat)
                     {
                         // Для service.bat ОБЯЗАТЕЛЬНО нужен выбранный конфиг
-                        if (cache == null || string.IsNullOrEmpty(cache.CurrentConfig))
+                        if (cache == null || cache.ValidConfigs.Count == 0)
+                        {
+                            ShowFullScanRequiredNotification(
+                                "Конфиги Zapret не найдены",
+                                "Приложение не смогло обнаружить рабочие конфиги для Zapret.\n\n" +
+                                "Сначала пройдите полное сканирование, чтобы NetFix нашёл доступные конфиги и подготовил запуск сервиса.");
+                            return;
+                        }
+
+                        if (string.IsNullOrEmpty(cache.CurrentConfig))
                         {
                             ShowNotification("Zapret", "Сначала выберите конфиг через 'Выбрать конфиг' в панели управления сервисами.", isError: true);
                             return;
@@ -565,7 +574,11 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ShowFullScanRequiredNotification()
+    private void ShowFullScanRequiredNotification(
+        string title = "Требуется полное сканирование",
+        string description = "Пройдите сначала полное сканирование, чтобы менять конфиги.\n\n" +
+                             "Это займёт около 10 минут, но зато приложение найдёт все рабочие конфиги " +
+                             "и вы сможете легко переключаться между ними когда что-то перестанет работать.")
     {
         // Создаем overlay для затемнения фона
         var overlay = new Border
@@ -638,6 +651,7 @@ public partial class MainWindow : Window
             TextAlignment = TextAlignment.Center,
             Margin = new Thickness(0, 0, 0, 16)
         };
+        titleText.Text = title;
         cardContent.Children.Add(titleText);
 
         // Описание
@@ -653,6 +667,7 @@ public partial class MainWindow : Window
             LineHeight = 22,
             Margin = new Thickness(0, 0, 0, 24)
         };
+        descText.Text = description;
         cardContent.Children.Add(descText);
 
         // Кнопки
