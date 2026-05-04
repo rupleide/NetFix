@@ -2837,6 +2837,9 @@ public partial class MainWindow : Window
                 AppendLog("spacer");
                 AppendLog("Произошла ошибка при установке компонентов.", "error");
                 AppendLog("Попробуйте установить компоненты вручную через настройки.", "error");
+                AppendLog("spacer");
+                AppendLog("Если вы хотите обновить компоненты, перейдите в настройки → «Пройти онбординг заново»,", "info");
+                AppendLog("затем выберите «Ручная установка» и следуйте инструкциям.", "info");
                 PlayErrorRing();
             }
         });
