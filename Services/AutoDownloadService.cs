@@ -72,7 +72,7 @@ public static class AutoDownloadService
                 var zapretInfo = await GetLatestReleaseInfoAsync(ZapretRepo);
                 if (zapretInfo == null)
                 {
-                    onError("❌ Не удалось получить информацию о Zapret с GitHub.\n\nВозможные причины:\n• Нет подключения к интернету\n• GitHub заблокирован\n• Неверный адрес репозитория");
+                    onError("❌ Не удалось получить информацию о Zapret с GitHub.\n\nВозможные причины:\n• Нет подключения к интернету\n• GitHub заблокирован\n• Включен VPN - попробуйте выключить или сменить сервер\n• Включен Zapret - попробуйте выключить или сменить конфиг");
                     return false;
                 }
                 onProgress(0.10);
@@ -87,7 +87,7 @@ public static class AutoDownloadService
 
                 if (zapretArchive == null)
                 {
-                    onError("❌ Не удалось скачать Zapret.\n\nВозможные причины:\n• Нет подключения к интернету\n• GitHub заблокирован\n• Ссылка на скачивание недействительна");
+                    onError("❌ Не удалось скачать Zapret.\n\nВозможные причины:\n• Нет подключения к интернету\n• GitHub заблокирован\n• Включен VPN - попробуйте выключить или сменить сервер\n• Включен Zapret - попробуйте выключить или сменить конфиг");
                     return false;
                 }
 
@@ -135,7 +135,7 @@ public static class AutoDownloadService
                     }
                     else
                     {
-                        onError("❌ Не удалось получить информацию о TgWsProxy с GitHub.\n\nВозможные причины:\n• Нет подключения к интернету\n• GitHub заблокирован\n• Неверный адрес репозитория");
+                        onError("❌ Не удалось получить информацию о TgWsProxy с GitHub.\n\nВозможные причины:\n• Нет подключения к интернету\n• GitHub заблокирован\n• Включен VPN - попробуйте выключить или сменить сервер\n• Включен Zapret - попробуйте выключить или сменить конфиг");
                         return false;
                     }
                 }
@@ -164,7 +164,7 @@ public static class AutoDownloadService
                         }
                         else
                         {
-                            onError("❌ Не удалось скачать TgWsProxy.\n\nВозможные причины:\n• Нет подключения к интернету\n• GitHub заблокирован\n• Ссылка на скачивание недействительна");
+                            onError("❌ Не удалось скачать TgWsProxy.\n\nВозможные причины:\n• Нет подключения к интернету\n• GitHub заблокирован\n• Включен VPN - попробуйте выключить или сменить сервер\n• Включен Zapret - попробуйте выключить или сменить конфиг");
                             return false;
                         }
                     }
