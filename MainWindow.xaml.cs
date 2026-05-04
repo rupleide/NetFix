@@ -538,6 +538,182 @@ public partial class MainWindow : Window
         }
     }
 
+    private void UpdateComponentsBtn_Click(object s, RoutedEventArgs e)
+    {
+        // Показываем диалоговое окно подтверждения
+        ShowUpdateComponentsDialog();
+    }
+
+    private void ShowUpdateComponentsDialog()
+    {
+        // Создаем overlay для затемнения фона
+        var overlay = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+        Grid.SetRowSpan(overlay, 3);
+        MainGrid.Children.Add(overlay);
+
+        // Создаем карточку диалога
+        var dialogCard = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x18)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            BorderThickness = new Thickness(0, 3, 0, 0),
+            CornerRadius = new CornerRadius(14),
+            MaxWidth = 480,
+            Margin = new Thickness(40),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = Colors.Black,
+                BlurRadius = 30,
+                ShadowDepth = 0,
+                Opacity = 0.5
+            }
+        };
+        Grid.SetRowSpan(dialogCard, 3);
+
+        var cardContent = new StackPanel
+        {
+            Margin = new Thickness(32, 28, 32, 28)
+        };
+
+        // Иконка обновления
+        var iconBorder = new Border
+        {
+            Width = 56,
+            Height = 56,
+            CornerRadius = new CornerRadius(28),
+            Background = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)) { Opacity = 0.15 },
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 20)
+        };
+
+        var refreshIcon = new System.Windows.Shapes.Path
+        {
+            Data = Geometry.Parse("M21,11c-0.6,0-1,0.4-1,1c0,2.9-1.5,5.5-4,6.9c-3.8,2.2-8.7,0.9-10.9-2.9C2.9,12.2,4.2,7.3,8,5.1c3.3-1.9,7.3-1.2,9.8,1.4h-2.4c-0.6,0-1,0.4-1,1s0.4,1,1,1h4.5c0.6,0,1-0.4,1-1V3c0-0.6-0.4-1-1-1s-1,0.4-1,1v1.8C17,3,14.6,2,12,2C6.5,2,2,6.5,2,12s4.5,10,10,10c5.5,0,10-4.5,10-10C22,11.4,21.6,11,21,11z"),
+            Fill = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            Width = 28,
+            Height = 28,
+            Stretch = Stretch.Uniform,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        iconBorder.Child = refreshIcon;
+        cardContent.Children.Add(iconBorder);
+
+        // Заголовок
+        var titleText = new TextBlock
+        {
+            Text = "Обновить компоненты?",
+            FontSize = 20,
+            FontWeight = FontWeights.Bold,
+            Foreground = Brushes.White,
+            TextAlignment = TextAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 16)
+        };
+        cardContent.Children.Add(titleText);
+
+        // Описание
+        var descText = new TextBlock
+        {
+            Text = "Приложение скачает и установит последние версии Zapret и TgWsProxy.\n\n" +
+                   "Это может занять несколько секунд. Существующие файлы будут обновлены.",
+            FontSize = 14,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc)),
+            TextAlignment = TextAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+            LineHeight = 22,
+            Margin = new Thickness(0, 0, 0, 24)
+        };
+        cardContent.Children.Add(descText);
+
+        // Кнопки
+        var buttonsPanel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+        };
+
+        var updateBtn = new Button
+        {
+            Content = "Обновить",
+            Width = 140,
+            Height = 40,
+            Margin = new Thickness(0, 0, 10, 0),
+            Foreground = Brushes.White,
+            FontSize = 13,
+            FontWeight = FontWeights.SemiBold,
+            Cursor = System.Windows.Input.Cursors.Hand
+        };
+        updateBtn.Style = (Style)FindResource("AccentBtn");
+        updateBtn.Click += async (s, e) =>
+        {
+            MainGrid.Children.Remove(overlay);
+            MainGrid.Children.Remove(dialogCard);
+            
+            // Закрываем панель сервисов
+            CloseServicesPanel();
+            
+            // Запускаем обновление компонентов
+            await RunAutoInstallAsync();
+        };
+
+        var cancelBtn = new Button
+        {
+            Content = "Отмена",
+            Width = 100,
+            Height = 40,
+            Background = Brushes.Transparent,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+            BorderThickness = new Thickness(1),
+            FontSize = 13,
+            Cursor = System.Windows.Input.Cursors.Hand
+        };
+        cancelBtn.Style = (Style)FindResource("OutlineBtn");
+        cancelBtn.Click += (s, e) =>
+        {
+            MainGrid.Children.Remove(overlay);
+            MainGrid.Children.Remove(dialogCard);
+        };
+
+        buttonsPanel.Children.Add(updateBtn);
+        buttonsPanel.Children.Add(cancelBtn);
+        cardContent.Children.Add(buttonsPanel);
+
+        dialogCard.Child = cardContent;
+        MainGrid.Children.Add(dialogCard);
+
+        // Анимация появления
+        overlay.Opacity = 0;
+        dialogCard.Opacity = 0;
+        dialogCard.RenderTransform = new ScaleTransform(0.9, 0.9);
+        dialogCard.RenderTransformOrigin = new System.Windows.Point(0.5, 0.5);
+
+        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+        var scaleIn = new DoubleAnimation(0.9, 1, TimeSpan.FromMilliseconds(300))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+
+        overlay.BeginAnimation(OpacityProperty, fadeIn);
+        dialogCard.BeginAnimation(OpacityProperty, fadeIn);
+        ((ScaleTransform)dialogCard.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleIn);
+        ((ScaleTransform)dialogCard.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty, scaleIn);
+
+        // Закрытие по клику на overlay
+        overlay.MouseLeftButtonDown += (s, e) =>
+        {
+            MainGrid.Children.Remove(overlay);
+            MainGrid.Children.Remove(dialogCard);
+        };
+    }
+
     private void UpdateSelectedConfigDisplay()
     {
         var cache = ZapretConfigService.LoadCache();
