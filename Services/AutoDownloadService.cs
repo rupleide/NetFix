@@ -181,6 +181,37 @@ public static class AutoDownloadService
                 settings.ZapretPath = serviceBat;
                 settings.TgWsProxyPath = tgWsExe;
                 SettingsService.Save(settings);
+                
+                // Сохраняем версии в файлы для последующей проверки
+                try
+                {
+                    if (zapretInfo != null && !string.IsNullOrEmpty(serviceBat))
+                    {
+                        var zapretDir = Path.GetDirectoryName(serviceBat);
+                        if (!string.IsNullOrEmpty(zapretDir))
+                        {
+                            var versionFile = Path.Combine(zapretDir, "version.txt");
+                            File.WriteAllText(versionFile, zapretInfo.Version);
+                            onLog($"✓ Сохранена версия Zapret: {zapretInfo.Version}");
+                        }
+                    }
+                    
+                    if (tgWsInfo != null && !string.IsNullOrEmpty(tgWsExe))
+                    {
+                        var tgWsDir = Path.GetDirectoryName(tgWsExe);
+                        if (!string.IsNullOrEmpty(tgWsDir))
+                        {
+                            var versionFile = Path.Combine(tgWsDir, "tgwsproxy_version.txt");
+                            File.WriteAllText(versionFile, tgWsInfo.Version);
+                            onLog($"✓ Сохранена версия TgWsProxy: {tgWsInfo.Version}");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    onLog($"⚠️ Не удалось сохранить версии: {ex.Message}");
+                }
+                
                 onProgress(1.0);
 
                 onLog("✓ Установка завершена успешно!");

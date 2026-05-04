@@ -766,6 +766,19 @@ public partial class MainWindow : Window
     {
         try
         {
+            // Показываем состояние загрузки
+            VersionStatusIcon.Data = Geometry.Parse("M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z");
+            VersionStatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+            VersionStatusTitle.Text = "Проверяем...";
+            VersionStatusTitle.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+            
+            ZapretVersionText.Text = "...";
+            ZapretVersionText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+            
+            TgWsProxyVersionText.Text = "...";
+            TgWsProxyVersionText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+            
+            // Получаем информацию о версиях
             var versionInfo = await GetDetailedVersionInfoAsync();
             
             // Обновляем иконку и заголовок статуса
@@ -776,9 +789,6 @@ public partial class MainWindow : Window
                 VersionStatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
                 VersionStatusTitle.Text = "Компоненты обновлены!";
                 VersionStatusTitle.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
-                
-                // Скрываем кнопку обновления или делаем её менее заметной
-                UpdateComponentsBtn.Opacity = 0.6;
             }
             else
             {
@@ -787,9 +797,6 @@ public partial class MainWindow : Window
                 VersionStatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6));
                 VersionStatusTitle.Text = "Нужно обновить!";
                 VersionStatusTitle.Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6));
-                
-                // Показываем кнопку обновления полностью
-                UpdateComponentsBtn.Opacity = 1.0;
             }
             
             // Обновляем информацию о версиях Zapret
@@ -907,16 +914,31 @@ public partial class MainWindow : Window
             if (string.IsNullOrEmpty(zapretDir))
                 return null;
 
-            // Ищем файл version.txt
+            // Ищем файл version.txt (создается при установке)
             var versionFile = Path.Combine(zapretDir, "version.txt");
             if (File.Exists(versionFile))
             {
-                return File.ReadAllText(versionFile).Trim();
+                var version = File.ReadAllText(versionFile).Trim();
+                return version;
             }
 
-            // Если файла версии нет, используем дату модификации
-            var fileInfo = new FileInfo(serviceBatPath);
-            return fileInfo.LastWriteTime.ToString("yyyy.MM.dd");
+            // Если файла версии нет, пытаемся найти в README
+            var readmeFiles = Directory.GetFiles(zapretDir, "README*", SearchOption.TopDirectoryOnly);
+            if (readmeFiles.Length > 0)
+            {
+                var content = File.ReadAllText(readmeFiles[0]);
+                // Ищем версию в формате "1.9.8b" или "v1.9.8b"
+                var versionMatch = System.Text.RegularExpressions.Regex.Match(
+                    content, 
+                    @"(?:version|ver|v)[\s:]*([0-9]+\.[0-9]+\.[0-9]+[a-z]?)", 
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (versionMatch.Success)
+                {
+                    return versionMatch.Groups[1].Value;
+                }
+            }
+
+            return null;
         }
         catch
         {
@@ -931,17 +953,37 @@ public partial class MainWindow : Window
     {
         try
         {
-            var fileInfo = new FileInfo(exePath);
+            // Сначала проверяем файл с версией
+            var dir = Path.GetDirectoryName(exePath);
+            if (!string.IsNullOrEmpty(dir))
+            {
+                var versionFile = Path.Combine(dir, "tgwsproxy_version.txt");
+                if (File.Exists(versionFile))
+                {
+                    return File.ReadAllText(versionFile).Trim();
+                }
+            }
             
             // Пытаемся получить версию из метаданных файла
             var versionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(exePath);
             if (!string.IsNullOrEmpty(versionInfo.FileVersion))
             {
-                return versionInfo.FileVersion;
+                // Убираем лишние нули в конце версии (например, 1.6.5.0 -> 1.6.5)
+                var version = versionInfo.FileVersion;
+                var parts = version.Split('.');
+                
+                // Убираем trailing zeros
+                int lastNonZero = parts.Length - 1;
+                while (lastNonZero > 0 && parts[lastNonZero] == "0")
+                {
+                    lastNonZero--;
+                }
+                
+                // Возвращаем версию без trailing zeros
+                return string.Join(".", parts.Take(lastNonZero + 1));
             }
 
-            // Если метаданных нет, используем дату модификации
-            return fileInfo.LastWriteTime.ToString("yyyy.MM.dd");
+            return null;
         }
         catch
         {
