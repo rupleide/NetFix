@@ -1586,11 +1586,52 @@
                                 <Run x:Name="ActiveConfigName" Text="" Foreground="#22c55e"/>
                             </TextBlock>
 
+                            <!-- Divider -->
+                            <Border Height="1" Background="#2a2a2a" Margin="0,20,0,16"/>
+
+                            <!-- Version Status Section -->
+                            <StackPanel x:Name="VersionStatusSection">
+                                <!-- Status Header -->
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                    <Path x:Name="VersionStatusIcon"
+                                          Width="18" Height="18"
+                                          Stretch="Uniform"
+                                          Margin="0,0,8,0"
+                                          VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="VersionStatusTitle"
+                                               FontFamily="Segoe UI" FontSize="14"
+                                               FontWeight="SemiBold"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <!-- Zapret Version -->
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                    <TextBlock Text="Zapret: " 
+                                               FontFamily="Segoe UI" FontSize="13"
+                                               Foreground="#cccccc"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="ZapretVersionText"
+                                               FontFamily="Segoe UI" FontSize="13"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <!-- TgWsProxy Version -->
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                                    <TextBlock Text="TgWsProxy: " 
+                                               FontFamily="Segoe UI" FontSize="13"
+                                               Foreground="#cccccc"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="TgWsProxyVersionText"
+                                               FontFamily="Segoe UI" FontSize="13"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+
                             <!-- Update Components Button -->
                             <Button x:Name="UpdateComponentsBtn"
                                     Style="{StaticResource OutlineBtn}"
                                     Padding="14,12"
-                                    Margin="0,12,0,0"
+                                    Margin="0,16,0,0"
                                     HorizontalContentAlignment="Left"
                                     WindowChrome.IsHitTestVisibleInChrome="True"
                                     Click="UpdateComponentsBtn_Click">

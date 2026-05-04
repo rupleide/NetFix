@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -324,7 +325,7 @@ public partial class MainWindow : Window
     }
 
     // ── Service Control Handlers ───────────────────────────────────────────────────
-    private void ServicesBtn_Click(object s, RoutedEventArgs e)
+    private async void ServicesBtn_Click(object s, RoutedEventArgs e)
     {
         ServicesLayer.Visibility = Visibility.Visible;
         var anim = new DoubleAnimation(50, 0, TimeSpan.FromMilliseconds(280));
@@ -332,6 +333,9 @@ public partial class MainWindow : Window
         var opacityAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(280));
         ServicesTrans.BeginAnimation(TranslateTransform.XProperty, anim);
         ServicesPanel.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
+        
+        // Обновляем статус версий компонентов
+        await UpdateVersionStatusAsync();
     }
 
     private void CloseServicesPanel()
@@ -752,6 +756,242 @@ public partial class MainWindow : Window
         else
         {
             ActiveConfigText.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    /// <summary>
+    /// Обновляет отображение статуса версий компонентов в панели сервисов
+    /// </summary>
+    private async Task UpdateVersionStatusAsync()
+    {
+        try
+        {
+            var versionInfo = await GetDetailedVersionInfoAsync();
+            
+            // Обновляем иконку и заголовок статуса
+            if (versionInfo.allUpToDate)
+            {
+                // Все актуально - зеленая галочка
+                VersionStatusIcon.Data = Geometry.Parse("M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z");
+                VersionStatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+                VersionStatusTitle.Text = "Компоненты обновлены!";
+                VersionStatusTitle.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+                
+                // Скрываем кнопку обновления или делаем её менее заметной
+                UpdateComponentsBtn.Opacity = 0.6;
+            }
+            else
+            {
+                // Требуется обновление - синяя иконка обновления
+                VersionStatusIcon.Data = Geometry.Parse("M12 6v3l4-4-4-4v3c-4.42 0-8 3.58-8 8 0 1.57.46 3.03 1.24 4.26L6.7 14.8c-.45-.83-.7-1.79-.7-2.8 0-3.31 2.69-6 6-6zm6.76 1.74L17.3 9.2c.44.84.7 1.79.7 2.8 0 3.31-2.69 6-6 6v-3l-4 4 4 4v-3c4.42 0 8-3.58 8-8 0-1.57-.46-3.03-1.24-4.26z");
+                VersionStatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6));
+                VersionStatusTitle.Text = "Нужно обновить!";
+                VersionStatusTitle.Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6));
+                
+                // Показываем кнопку обновления полностью
+                UpdateComponentsBtn.Opacity = 1.0;
+            }
+            
+            // Обновляем информацию о версиях Zapret
+            if (!string.IsNullOrEmpty(versionInfo.zapretCurrent))
+            {
+                if (versionInfo.zapretNeedsUpdate && !string.IsNullOrEmpty(versionInfo.zapretLatest))
+                {
+                    ZapretVersionText.Text = $"{versionInfo.zapretCurrent} → {versionInfo.zapretLatest}";
+                    ZapretVersionText.Foreground = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08));
+                }
+                else
+                {
+                    ZapretVersionText.Text = $"{versionInfo.zapretCurrent} ✓";
+                    ZapretVersionText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+                }
+            }
+            else
+            {
+                ZapretVersionText.Text = "Не установлен";
+                ZapretVersionText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+            }
+            
+            // Обновляем информацию о версиях TgWsProxy
+            if (!string.IsNullOrEmpty(versionInfo.tgWsProxyCurrent))
+            {
+                if (versionInfo.tgWsProxyNeedsUpdate && !string.IsNullOrEmpty(versionInfo.tgWsProxyLatest))
+                {
+                    TgWsProxyVersionText.Text = $"{versionInfo.tgWsProxyCurrent} → {versionInfo.tgWsProxyLatest}";
+                    TgWsProxyVersionText.Foreground = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08));
+                }
+                else
+                {
+                    TgWsProxyVersionText.Text = $"{versionInfo.tgWsProxyCurrent} ✓";
+                    TgWsProxyVersionText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+                }
+            }
+            else
+            {
+                TgWsProxyVersionText.Text = "Не установлен";
+                TgWsProxyVersionText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка обновления статуса версий: {ex.Message}");
+            
+            // В случае ошибки показываем нейтральное состояние
+            VersionStatusIcon.Data = Geometry.Parse("M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z");
+            VersionStatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+            VersionStatusTitle.Text = "Не удалось проверить";
+            VersionStatusTitle.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+            
+            ZapretVersionText.Text = "—";
+            ZapretVersionText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+            
+            TgWsProxyVersionText.Text = "—";
+            TgWsProxyVersionText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+        }
+    }
+
+    /// <summary>
+    /// Получает детальную информацию о версиях компонентов
+    /// </summary>
+    private async Task<(bool allUpToDate, bool zapretNeedsUpdate, bool tgWsProxyNeedsUpdate, 
+                        string zapretCurrent, string zapretLatest, string tgWsProxyCurrent, string tgWsProxyLatest)> 
+        GetDetailedVersionInfoAsync()
+    {
+        bool zapretInstalled = !string.IsNullOrEmpty(_settings.ZapretPath) && File.Exists(_settings.ZapretPath);
+        bool tgWsProxyInstalled = !string.IsNullOrEmpty(_settings.TgWsProxyPath) && File.Exists(_settings.TgWsProxyPath);
+
+        string zapretCurrent = "";
+        string zapretLatest = "";
+        bool zapretNeedsUpdate = false;
+
+        string tgWsProxyCurrent = "";
+        string tgWsProxyLatest = "";
+        bool tgWsProxyNeedsUpdate = false;
+
+        if (zapretInstalled)
+        {
+            zapretCurrent = GetInstalledZapretVersion(_settings.ZapretPath) ?? "";
+            zapretLatest = await GetLatestGitHubVersionAsync("Flowseal/zapret-discord-youtube") ?? "";
+            
+            if (!string.IsNullOrEmpty(zapretLatest) && !string.IsNullOrEmpty(zapretCurrent))
+            {
+                zapretNeedsUpdate = IsNewerVersion(zapretLatest, zapretCurrent);
+            }
+        }
+
+        if (tgWsProxyInstalled)
+        {
+            tgWsProxyCurrent = GetInstalledTgWsProxyVersion(_settings.TgWsProxyPath) ?? "";
+            tgWsProxyLatest = await GetLatestGitHubVersionAsync("Flowseal/tg-ws-proxy") ?? "";
+            
+            if (!string.IsNullOrEmpty(tgWsProxyLatest) && !string.IsNullOrEmpty(tgWsProxyCurrent))
+            {
+                tgWsProxyNeedsUpdate = IsNewerVersion(tgWsProxyLatest, tgWsProxyCurrent);
+            }
+        }
+
+        bool allUpToDate = !zapretNeedsUpdate && !tgWsProxyNeedsUpdate && (zapretInstalled || tgWsProxyInstalled);
+
+        return (allUpToDate, zapretNeedsUpdate, tgWsProxyNeedsUpdate, 
+                zapretCurrent, zapretLatest, tgWsProxyCurrent, tgWsProxyLatest);
+    }
+
+    /// <summary>
+    /// Получает версию установленного Zapret
+    /// </summary>
+    private string? GetInstalledZapretVersion(string serviceBatPath)
+    {
+        try
+        {
+            var zapretDir = Path.GetDirectoryName(serviceBatPath);
+            if (string.IsNullOrEmpty(zapretDir))
+                return null;
+
+            // Ищем файл version.txt
+            var versionFile = Path.Combine(zapretDir, "version.txt");
+            if (File.Exists(versionFile))
+            {
+                return File.ReadAllText(versionFile).Trim();
+            }
+
+            // Если файла версии нет, используем дату модификации
+            var fileInfo = new FileInfo(serviceBatPath);
+            return fileInfo.LastWriteTime.ToString("yyyy.MM.dd");
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Получает версию установленного TgWsProxy
+    /// </summary>
+    private string? GetInstalledTgWsProxyVersion(string exePath)
+    {
+        try
+        {
+            var fileInfo = new FileInfo(exePath);
+            
+            // Пытаемся получить версию из метаданных файла
+            var versionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(exePath);
+            if (!string.IsNullOrEmpty(versionInfo.FileVersion))
+            {
+                return versionInfo.FileVersion;
+            }
+
+            // Если метаданных нет, используем дату модификации
+            return fileInfo.LastWriteTime.ToString("yyyy.MM.dd");
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Получает последнюю версию компонента с GitHub
+    /// </summary>
+    private async Task<string?> GetLatestGitHubVersionAsync(string repo)
+    {
+        try
+        {
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+            http.DefaultRequestHeaders.UserAgent.ParseAdd("NetFix/1.0");
+            
+            var json = await http.GetStringAsync($"https://api.github.com/repos/{repo}/releases/latest");
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            var version = root.GetProperty("tag_name").GetString() ?? "";
+            return version.TrimStart('v');
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Сравнивает две версии
+    /// </summary>
+    private bool IsNewerVersion(string version1, string version2)
+    {
+        try
+        {
+            version1 = version1.TrimStart('v');
+            version2 = version2.TrimStart('v');
+
+            if (Version.TryParse(version1, out var v1) && Version.TryParse(version2, out var v2))
+            {
+                return v1 > v2;
+            }
+
+            return string.Compare(version1, version2, StringComparison.OrdinalIgnoreCase) > 0;
+        }
+        catch
+        {
+            return false;
         }
     }
 
