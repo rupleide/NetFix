@@ -96,6 +96,7 @@ public partial class MainWindow : Window
     private System.Windows.Forms.NotifyIcon _trayIcon = null!;
     private DispatcherTimer? _longCheckTimer = null;
     private bool _checkInProgress = false;
+    private bool _autoFixRunning = false;
 
     // ── Init ─────────────────────────────────────────────────────────────────
     public MainWindow()
@@ -2676,6 +2677,16 @@ public partial class MainWindow : Window
 
     private async void RunAutoFix()
     {
+        // Предотвращаем повторный запуск
+        if (_autoFixRunning)
+        {
+            Console.WriteLine("[RunAutoFix] Уже запущен, пропускаем");
+            return;
+        }
+        
+        _autoFixRunning = true;
+        Console.WriteLine("[RunAutoFix] Начинаем выполнение");
+        
         FixBtn.IsEnabled = false;
         SetupProg.Value = 0;
         SetupProgLbl.Text = "Подготовка...";
@@ -2744,6 +2755,10 @@ public partial class MainWindow : Window
                 // Останавливаем таймер долгой проверки
                 StopLongCheckTimer();
                 _checkInProgress = false;
+                
+                // Сбрасываем флаг выполнения
+                _autoFixRunning = false;
+                Console.WriteLine("[RunAutoFix] Завершено");
                 
                 if (success) {
                     SetupProg.Value = 100;
