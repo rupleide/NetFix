@@ -117,6 +117,9 @@ public partial class MainWindow : Window
             CheckInternetOnStart();
             StartActiveAppsMonitor();
             
+            // Инициализируем файлы версий для уже установленных компонентов
+            InitializeVersionFiles();
+            
             if (_settings.AutoUpdates)
             {
                 CheckForUpdatesBackgroundAsync();
@@ -877,7 +880,9 @@ public partial class MainWindow : Window
 
         if (zapretInstalled)
         {
+            // Получаем текущую версию из сохраненного файла
             zapretCurrent = GetInstalledZapretVersion(_settings.ZapretPath) ?? "";
+            // Получаем последнюю версию с GitHub
             zapretLatest = await GetLatestGitHubVersionAsync("Flowseal/zapret-discord-youtube") ?? "";
             
             if (!string.IsNullOrEmpty(zapretLatest) && !string.IsNullOrEmpty(zapretCurrent))
@@ -888,7 +893,9 @@ public partial class MainWindow : Window
 
         if (tgWsProxyInstalled)
         {
+            // Получаем текущую версию из сохраненного файла
             tgWsProxyCurrent = GetInstalledTgWsProxyVersion(_settings.TgWsProxyPath) ?? "";
+            // Получаем последнюю версию с GitHub
             tgWsProxyLatest = await GetLatestGitHubVersionAsync("Flowseal/tg-ws-proxy") ?? "";
             
             if (!string.IsNullOrEmpty(tgWsProxyLatest) && !string.IsNullOrEmpty(tgWsProxyCurrent))
@@ -904,7 +911,7 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Получает версию установленного Zapret
+    /// Получает версию установленного Zapret из сохраненного файла
     /// </summary>
     private string? GetInstalledZapretVersion(string serviceBatPath)
     {
@@ -914,31 +921,44 @@ public partial class MainWindow : Window
             if (string.IsNullOrEmpty(zapretDir))
                 return null;
 
-            // Ищем файл version.txt (создается при установке)
+            // 1. Проверяем файл version.txt (создается при установке через приложение)
             var versionFile = Path.Combine(zapretDir, "version.txt");
             if (File.Exists(versionFile))
             {
                 var version = File.ReadAllText(versionFile).Trim();
-                return version;
+                if (!string.IsNullOrEmpty(version))
+                    return version;
             }
 
-            // Если файла версии нет, пытаемся найти в README
+            // 2. Ищем в README файлах
             var readmeFiles = Directory.GetFiles(zapretDir, "README*", SearchOption.TopDirectoryOnly);
-            if (readmeFiles.Length > 0)
+            foreach (var readme in readmeFiles)
             {
-                var content = File.ReadAllText(readmeFiles[0]);
-                // Ищем версию в формате "1.9.8b" или "v1.9.8b"
-                var versionMatch = System.Text.RegularExpressions.Regex.Match(
-                    content, 
-                    @"(?:version|ver|v)[\s:]*([0-9]+\.[0-9]+\.[0-9]+[a-z]?)", 
-                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                if (versionMatch.Success)
+                try
                 {
-                    return versionMatch.Groups[1].Value;
+                    var content = File.ReadAllText(readme);
+                    // Ищем версию в разных форматах
+                    var patterns = new[]
+                    {
+                        @"version[:\s]+([0-9]+\.[0-9]+\.[0-9]+[a-z]?)",
+                        @"v([0-9]+\.[0-9]+\.[0-9]+[a-z]?)",
+                        @"([0-9]+\.[0-9]+\.[0-9]+[a-z]?)"
+                    };
+                    
+                    foreach (var pattern in patterns)
+                    {
+                        var match = System.Text.RegularExpressions.Regex.Match(content, pattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        if (match.Success)
+                        {
+                            return match.Groups[1].Value;
+                        }
+                    }
                 }
+                catch { }
             }
 
-            return null;
+            // 3. Если ничего не нашли, возвращаем "установлен" без версии
+            return "установлен";
         }
         catch
         {
@@ -947,29 +967,31 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Получает версию установленного TgWsProxy
+    /// Получает версию установленного TgWsProxy из метаданных файла
     /// </summary>
     private string? GetInstalledTgWsProxyVersion(string exePath)
     {
         try
         {
-            // Сначала проверяем файл с версией
             var dir = Path.GetDirectoryName(exePath);
-            if (!string.IsNullOrEmpty(dir))
-            {
-                var versionFile = Path.Combine(dir, "tgwsproxy_version.txt");
-                if (File.Exists(versionFile))
-                {
-                    return File.ReadAllText(versionFile).Trim();
-                }
-            }
+            if (string.IsNullOrEmpty(dir))
+                return null;
             
-            // Пытаемся получить версию из метаданных файла
-            var versionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(exePath);
-            if (!string.IsNullOrEmpty(versionInfo.FileVersion))
+            // 1. Проверяем файл tgwsproxy_version.txt (создается при установке через приложение)
+            var versionFile = Path.Combine(dir, "tgwsproxy_version.txt");
+            if (File.Exists(versionFile))
             {
-                // Убираем лишние нули в конце версии (например, 1.6.5.0 -> 1.6.5)
-                var version = versionInfo.FileVersion;
+                var version = File.ReadAllText(versionFile).Trim();
+                if (!string.IsNullOrEmpty(version))
+                    return version;
+            }
+
+            // 2. Берем версию из метаданных файла (ProductVersion)
+            var versionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(exePath);
+            if (!string.IsNullOrEmpty(versionInfo.ProductVersion))
+            {
+                // Убираем лишние нули и пробелы
+                var version = versionInfo.ProductVersion.Trim();
                 var parts = version.Split('.');
                 
                 // Убираем trailing zeros
@@ -979,11 +1001,25 @@ public partial class MainWindow : Window
                     lastNonZero--;
                 }
                 
-                // Возвращаем версию без trailing zeros
+                return string.Join(".", parts.Take(lastNonZero + 1));
+            }
+            
+            // 3. Если ProductVersion нет, пробуем FileVersion
+            if (!string.IsNullOrEmpty(versionInfo.FileVersion))
+            {
+                var version = versionInfo.FileVersion.Trim();
+                var parts = version.Split('.');
+                
+                int lastNonZero = parts.Length - 1;
+                while (lastNonZero > 0 && parts[lastNonZero] == "0")
+                {
+                    lastNonZero--;
+                }
+                
                 return string.Join(".", parts.Take(lastNonZero + 1));
             }
 
-            return null;
+            return "установлен";
         }
         catch
         {
@@ -992,7 +1028,7 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Получает последнюю версию компонента с GitHub
+    /// Получает последнюю версию компонента с GitHub (tag_name из latest release)
     /// </summary>
     private async Task<string?> GetLatestGitHubVersionAsync(string repo)
     {
@@ -1005,8 +1041,9 @@ public partial class MainWindow : Window
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
+            // Берем tag_name напрямую, как в AutoDownloadService
             var version = root.GetProperty("tag_name").GetString() ?? "";
-            return version.TrimStart('v');
+            return version; // Возвращаем как есть (с 'v' если есть)
         }
         catch
         {
@@ -1034,6 +1071,95 @@ public partial class MainWindow : Window
         catch
         {
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Инициализирует файлы версий для уже установленных компонентов
+    /// </summary>
+    private async void InitializeVersionFiles()
+    {
+        try
+        {
+            // Проверяем Zapret
+            if (!string.IsNullOrEmpty(_settings.ZapretPath) && File.Exists(_settings.ZapretPath))
+            {
+                var zapretDir = Path.GetDirectoryName(_settings.ZapretPath);
+                if (!string.IsNullOrEmpty(zapretDir))
+                {
+                    var versionFile = Path.Combine(zapretDir, "version.txt");
+                    
+                    // Если файла версии нет, пытаемся получить версию с GitHub и создать файл
+                    if (!File.Exists(versionFile))
+                    {
+                        try
+                        {
+                            var latestVersion = await GetLatestGitHubVersionAsync("Flowseal/zapret-discord-youtube");
+                            if (!string.IsNullOrEmpty(latestVersion))
+                            {
+                                File.WriteAllText(versionFile, latestVersion);
+                                Console.WriteLine($"[InitVersionFiles] Создан файл версии Zapret: {latestVersion}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[InitVersionFiles] Не удалось создать файл версии Zapret: {ex.Message}");
+                        }
+                    }
+                }
+            }
+
+            // Проверяем TgWsProxy
+            if (!string.IsNullOrEmpty(_settings.TgWsProxyPath) && File.Exists(_settings.TgWsProxyPath))
+            {
+                var tgWsDir = Path.GetDirectoryName(_settings.TgWsProxyPath);
+                if (!string.IsNullOrEmpty(tgWsDir))
+                {
+                    var versionFile = Path.Combine(tgWsDir, "tgwsproxy_version.txt");
+                    
+                    // Если файла версии нет, пытаемся получить версию из метаданных или с GitHub
+                    if (!File.Exists(versionFile))
+                    {
+                        try
+                        {
+                            // Сначала пробуем из метаданных файла
+                            var versionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(_settings.TgWsProxyPath);
+                            string? version = null;
+                            
+                            if (!string.IsNullOrEmpty(versionInfo.ProductVersion))
+                            {
+                                var parts = versionInfo.ProductVersion.Trim().Split('.');
+                                int lastNonZero = parts.Length - 1;
+                                while (lastNonZero > 0 && parts[lastNonZero] == "0")
+                                {
+                                    lastNonZero--;
+                                }
+                                version = string.Join(".", parts.Take(lastNonZero + 1));
+                            }
+                            
+                            // Если не получилось из метаданных, берем с GitHub
+                            if (string.IsNullOrEmpty(version))
+                            {
+                                version = await GetLatestGitHubVersionAsync("Flowseal/tg-ws-proxy");
+                            }
+                            
+                            if (!string.IsNullOrEmpty(version))
+                            {
+                                File.WriteAllText(versionFile, version);
+                                Console.WriteLine($"[InitVersionFiles] Создан файл версии TgWsProxy: {version}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[InitVersionFiles] Не удалось создать файл версии TgWsProxy: {ex.Message}");
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[InitVersionFiles] Общая ошибка: {ex.Message}");
         }
     }
 
