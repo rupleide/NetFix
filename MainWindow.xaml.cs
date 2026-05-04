@@ -1765,8 +1765,21 @@ public partial class MainWindow : Window
     }
 
     // ── Auto-setup ───────────────────────────────────────────────────────────
-    private void FixBtn_Click(object s, RoutedEventArgs e)
+    private async void FixBtn_Click(object s, RoutedEventArgs e)
     {
+        // Проверяем, требуется ли обновление компонентов
+        var (needsUpdate, reason) = await ComponentVersionService.CheckIfUpdateNeededAsync(_settings);
+        
+        if (needsUpdate)
+        {
+            Console.WriteLine($"[FixBtn] Обнаружена необходимость обновления: {reason}");
+            // Запускаем автоматическую установку/обновление
+            await RunAutoInstallAsync();
+            return;
+        }
+        
+        Console.WriteLine("[FixBtn] Компоненты актуальны, запускаем стандартную логику");
+        
         var st = DiagnosticsEngine.CheckAppStatus();
         
         // 1. Проверяем Zapret
@@ -1867,6 +1880,71 @@ public partial class MainWindow : Window
                 }
             }),
             settings: _settings);
+    }
+
+    /// <summary>
+    /// Запускает автоматическую установку/обновление компонентов
+    /// </summary>
+    private async Task RunAutoInstallAsync()
+    {
+        FixBtn.IsEnabled = false;
+        SetupProg.Value = 0;
+        SetupProgLbl.Text = "Подготовка к установке...";
+        LogBox.Document.Blocks.Clear();
+
+        string timeStr = DateTime.Now.ToString("HH:mm:ss");
+        AppendLog($"АВТОМАТИЧЕСКАЯ УСТАНОВКА КОМПОНЕНТОВ [ ВРЕМЯ: {timeStr} ]", "system");
+        AppendLog("spacer");
+
+        StartGlow();
+
+        AppendLog("Запуск автоматической установки компонентов...", "info");
+        AppendLog("Это может занять несколько минут.", "info");
+        AppendLog("spacer");
+
+        bool success = await AutoDownloadService.AutoInstallAllAsync(
+            onLog: msg => Dispatcher.Invoke(() => AppendLog(msg, "info")),
+            onProgress: ratio => Dispatcher.Invoke(() => {
+                SetupProg.Value = ratio * 100;
+                SetupProgLbl.Text = $"Установка: {(int)(ratio * 100)}%";
+            }),
+            onError: err => Dispatcher.Invoke(() => {
+                AppendLog("spacer");
+                AppendLog(err, "error");
+            })
+        );
+
+        Dispatcher.Invoke(() => {
+            StopGlow(success);
+            FixBtn.IsEnabled = true;
+            
+            if (success)
+            {
+                // Перезагружаем настройки после успешной установки
+                _settings = SettingsService.Load();
+                LoadSettingsToPanel();
+                
+                SetupProg.Value = 100;
+                SetupProgLbl.Text = "Установка завершена";
+                AppendLog("spacer");
+                AppendLog("✓ Компоненты успешно установлены/обновлены!", "final");
+                AppendLog("Теперь можно запустить сервисы через панель управления.", "ok");
+                AppendLog("Или нажмите кнопку «Починить интернет» ещё раз для автоматического запуска.", "info");
+                PlaySuccessRing();
+                
+                // Обновляем статус активных приложений
+                UpdateActiveApps();
+            }
+            else
+            {
+                SetupProg.Value = 0;
+                SetupProgLbl.Text = "Ошибка установки";
+                AppendLog("spacer");
+                AppendLog("Произошла ошибка при установке компонентов.", "error");
+                AppendLog("Попробуйте установить компоненты вручную через настройки.", "error");
+                PlayErrorRing();
+            }
+        });
     }
 
     private void PlaySuccessRing()
