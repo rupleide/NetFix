@@ -178,19 +178,39 @@ public static class ComponentVersionService
 
     /// <summary>
     /// Сравнивает две версии и определяет, является ли первая новее второй
+    /// Поддерживает версии типа: 1.9.8b, 1.9.9, v1.6.5, 2024.01.15
     /// </summary>
     private static bool IsNewerVersion(string version1, string version2)
     {
         try
         {
             // Убираем префикс 'v' если есть
-            version1 = version1.TrimStart('v');
-            version2 = version2.TrimStart('v');
+            version1 = version1.TrimStart('v').Trim();
+            version2 = version2.TrimStart('v').Trim();
 
-            // Пытаемся распарсить как Version
-            if (Version.TryParse(version1, out var v1) && Version.TryParse(version2, out var v2))
+            // Разделяем версию на числовую часть и суффикс (например, "1.9.8b" -> "1.9.8" и "b")
+            var (numPart1, suffix1) = SplitVersionAndSuffix(version1);
+            var (numPart2, suffix2) = SplitVersionAndSuffix(version2);
+
+            // Сравниваем числовые части
+            if (Version.TryParse(numPart1, out var v1) && Version.TryParse(numPart2, out var v2))
             {
-                return v1 > v2;
+                int comparison = v1.CompareTo(v2);
+                
+                // Если числовые части разные, возвращаем результат
+                if (comparison != 0)
+                    return comparison > 0;
+                
+                // Если числовые части одинаковые, сравниваем суффиксы
+                // Версия без суффикса считается новее версии с суффиксом
+                // Например: 1.9.8 > 1.9.8b
+                if (string.IsNullOrEmpty(suffix1) && !string.IsNullOrEmpty(suffix2))
+                    return true;
+                if (!string.IsNullOrEmpty(suffix1) && string.IsNullOrEmpty(suffix2))
+                    return false;
+                
+                // Если оба суффикса есть, сравниваем их лексикографически
+                return string.Compare(suffix1, suffix2, StringComparison.OrdinalIgnoreCase) > 0;
             }
 
             // Если не получилось распарсить как Version, сравниваем как строки
@@ -200,5 +220,35 @@ public static class ComponentVersionService
         {
             return false;
         }
+    }
+
+    /// <summary>
+    /// Разделяет версию на числовую часть и буквенный суффикс
+    /// Например: "1.9.8b" -> ("1.9.8", "b")
+    /// </summary>
+    private static (string numericPart, string suffix) SplitVersionAndSuffix(string version)
+    {
+        // Ищем первую букву в версии
+        int firstLetterIndex = -1;
+        for (int i = 0; i < version.Length; i++)
+        {
+            if (char.IsLetter(version[i]))
+            {
+                firstLetterIndex = i;
+                break;
+            }
+        }
+
+        if (firstLetterIndex == -1)
+        {
+            // Нет букв, вся строка - числовая часть
+            return (version, "");
+        }
+
+        // Разделяем на числовую часть и суффикс
+        string numericPart = version.Substring(0, firstLetterIndex);
+        string suffix = version.Substring(firstLetterIndex);
+        
+        return (numericPart, suffix);
     }
 }
