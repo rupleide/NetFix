@@ -94,6 +94,8 @@ public partial class MainWindow : Window
     private bool _settingsOpen = false;
     private DispatcherTimer _monitorTimer = null!;
     private System.Windows.Forms.NotifyIcon _trayIcon = null!;
+    private DispatcherTimer? _longCheckTimer = null;
+    private bool _checkInProgress = false;
 
     // ── Init ─────────────────────────────────────────────────────────────────
     public MainWindow()
@@ -777,9 +779,11 @@ public partial class MainWindow : Window
             
             ZapretVersionText.Text = "...";
             ZapretVersionText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+            ZapretVersionIcon.Visibility = Visibility.Collapsed;
             
             TgWsProxyVersionText.Text = "...";
             TgWsProxyVersionText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+            TgWsProxyVersionIcon.Visibility = Visibility.Collapsed;
             
             // Получаем информацию о версиях
             var versionInfo = await GetDetailedVersionInfoAsync();
@@ -809,17 +813,20 @@ public partial class MainWindow : Window
                 {
                     ZapretVersionText.Text = $"{versionInfo.zapretCurrent} → {versionInfo.zapretLatest}";
                     ZapretVersionText.Foreground = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08));
+                    ZapretVersionIcon.Visibility = Visibility.Collapsed;
                 }
                 else
                 {
-                    ZapretVersionText.Text = $"{versionInfo.zapretCurrent} ✓";
+                    ZapretVersionText.Text = versionInfo.zapretCurrent;
                     ZapretVersionText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+                    ZapretVersionIcon.Visibility = Visibility.Visible;
                 }
             }
             else
             {
                 ZapretVersionText.Text = "Не установлен";
                 ZapretVersionText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+                ZapretVersionIcon.Visibility = Visibility.Collapsed;
             }
             
             // Обновляем информацию о версиях TgWsProxy
@@ -829,17 +836,20 @@ public partial class MainWindow : Window
                 {
                     TgWsProxyVersionText.Text = $"{versionInfo.tgWsProxyCurrent} → {versionInfo.tgWsProxyLatest}";
                     TgWsProxyVersionText.Foreground = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08));
+                    TgWsProxyVersionIcon.Visibility = Visibility.Collapsed;
                 }
                 else
                 {
-                    TgWsProxyVersionText.Text = $"{versionInfo.tgWsProxyCurrent} ✓";
+                    TgWsProxyVersionText.Text = versionInfo.tgWsProxyCurrent;
                     TgWsProxyVersionText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+                    TgWsProxyVersionIcon.Visibility = Visibility.Visible;
                 }
             }
             else
             {
                 TgWsProxyVersionText.Text = "Не установлен";
                 TgWsProxyVersionText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+                TgWsProxyVersionIcon.Visibility = Visibility.Collapsed;
             }
         }
         catch (Exception ex)
@@ -854,9 +864,11 @@ public partial class MainWindow : Window
             
             ZapretVersionText.Text = "—";
             ZapretVersionText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+            ZapretVersionIcon.Visibility = Visibility.Collapsed;
             
             TgWsProxyVersionText.Text = "—";
             TgWsProxyVersionText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+            TgWsProxyVersionIcon.Visibility = Visibility.Collapsed;
         }
     }
 
@@ -1161,6 +1173,275 @@ public partial class MainWindow : Window
         {
             Console.WriteLine($"[InitVersionFiles] Общая ошибка: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Запускает таймер для показа диалога о долгой проверке
+    /// </summary>
+    private void StartLongCheckTimer()
+    {
+        // Останавливаем предыдущий таймер если есть
+        StopLongCheckTimer();
+        
+        Console.WriteLine("[LongCheckTimer] Создаем таймер на 10 секунд");
+        
+        // Создаем новый таймер на 10 секунд
+        _longCheckTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(10)
+        };
+        
+        _longCheckTimer.Tick += (s, e) =>
+        {
+            Console.WriteLine($"[LongCheckTimer] Таймер сработал! _checkInProgress={_checkInProgress}, ShowLongCheckDialog={_settings.ShowLongCheckDialog}");
+            StopLongCheckTimer();
+            
+            // Показываем диалог только если проверка все еще идет и настройка включена
+            if (_checkInProgress && _settings.ShowLongCheckDialog)
+            {
+                Console.WriteLine("[LongCheckTimer] Показываем диалог");
+                ShowLongCheckDialog();
+            }
+            else
+            {
+                Console.WriteLine("[LongCheckTimer] Диалог не показан");
+            }
+        };
+        
+        _longCheckTimer.Start();
+        Console.WriteLine("[LongCheckTimer] Таймер запущен");
+    }
+
+    /// <summary>
+    /// Останавливает таймер долгой проверки
+    /// </summary>
+    private void StopLongCheckTimer()
+    {
+        if (_longCheckTimer != null)
+        {
+            Console.WriteLine("[LongCheckTimer] Останавливаем таймер");
+            _longCheckTimer.Stop();
+            _longCheckTimer = null;
+        }
+    }
+
+    /// <summary>
+    /// Показывает диалоговое окно о долгой проверке
+    /// </summary>
+    private void ShowLongCheckDialog()
+    {
+        // Создаем overlay для затемнения фона
+        var overlay = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+        Grid.SetRowSpan(overlay, 3);
+        MainGrid.Children.Add(overlay);
+
+        // Создаем карточку диалога
+        var dialogCard = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x18)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            BorderThickness = new Thickness(0, 3, 0, 0),
+            CornerRadius = new CornerRadius(14),
+            MaxWidth = 520,
+            Margin = new Thickness(40),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = Colors.Black,
+                BlurRadius = 30,
+                ShadowDepth = 0,
+                Opacity = 0.5
+            }
+        };
+        Grid.SetRowSpan(dialogCard, 3);
+
+        var cardContent = new StackPanel
+        {
+            Margin = new Thickness(32, 28, 32, 28)
+        };
+
+        // Иконка часов
+        var iconBorder = new Border
+        {
+            Width = 56,
+            Height = 56,
+            CornerRadius = new CornerRadius(28),
+            Background = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)) { Opacity = 0.15 },
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 20)
+        };
+
+        var clockIcon = new System.Windows.Shapes.Path
+        {
+            Data = Geometry.Parse("M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"),
+            Fill = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            Width = 28,
+            Height = 28,
+            Stretch = Stretch.Uniform,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        iconBorder.Child = clockIcon;
+        cardContent.Children.Add(iconBorder);
+
+        // Заголовок
+        var titleText = new TextBlock
+        {
+            Text = "Проверка продолжается...",
+            FontSize = 20,
+            FontWeight = FontWeights.Bold,
+            Foreground = Brushes.White,
+            TextAlignment = TextAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 16)
+        };
+        cardContent.Children.Add(titleText);
+
+        // Описание
+        var descText = new TextBlock
+        {
+            Text = "Проверка может длиться долго! Если вы нажимаете на эту кнопку не первый раз, " +
+                   "вы можете решить свою проблему быстрее во вкладке \"Сервисы\", не ожидая завершения полной проверки.",
+            FontSize = 14,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc)),
+            TextAlignment = TextAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+            LineHeight = 22,
+            Margin = new Thickness(0, 0, 0, 24)
+        };
+        cardContent.Children.Add(descText);
+
+        // Чекбокс "Показывать это окно в будущем"
+        var checkboxPanel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 20),
+            Cursor = System.Windows.Input.Cursors.Hand
+        };
+
+        // Создаем кастомный чекбокс
+        var checkboxBorder = new Border
+        {
+            Width = 20,
+            Height = 20,
+            CornerRadius = new CornerRadius(4),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            BorderThickness = new Thickness(2),
+            Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
+            Margin = new Thickness(0, 0, 10, 0),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        // Иконка галочки внутри чекбокса
+        var checkIcon = new System.Windows.Shapes.Path
+        {
+            Data = Geometry.Parse("M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"),
+            Fill = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            Width = 14,
+            Height = 14,
+            Stretch = Stretch.Uniform,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Visibility = Visibility.Visible // По умолчанию включен
+        };
+        checkboxBorder.Child = checkIcon;
+
+        var checkboxLabel = new TextBlock
+        {
+            Text = "Показывать это окно в будущем",
+            Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc)),
+            FontSize = 13,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        // Состояние чекбокса
+        bool isChecked = true;
+
+        // Обработчик клика на весь panel
+        checkboxPanel.MouseLeftButtonDown += (s, e) =>
+        {
+            isChecked = !isChecked;
+            checkIcon.Visibility = isChecked ? Visibility.Visible : Visibility.Collapsed;
+            checkboxBorder.Background = isChecked 
+                ? new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e))
+                : new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x18));
+        };
+
+        // Hover эффект
+        checkboxPanel.MouseEnter += (s, e) =>
+        {
+            checkboxBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0x5b, 0xa2, 0xf6));
+        };
+        checkboxPanel.MouseLeave += (s, e) =>
+        {
+            checkboxBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6));
+        };
+
+        checkboxPanel.Children.Add(checkboxBorder);
+        checkboxPanel.Children.Add(checkboxLabel);
+        cardContent.Children.Add(checkboxPanel);
+
+        // Кнопка "Понятно"
+        var okBtn = new Button
+        {
+            Content = "Понятно",
+            Width = 140,
+            Height = 40,
+            Foreground = Brushes.White,
+            FontSize = 13,
+            FontWeight = FontWeights.SemiBold,
+            Cursor = System.Windows.Input.Cursors.Hand,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+        };
+        okBtn.Style = (Style)FindResource("AccentBtn");
+        okBtn.Click += (s, e) =>
+        {
+            // Сохраняем настройку
+            _settings.ShowLongCheckDialog = isChecked;
+            SettingsService.Save(_settings);
+            
+            // Закрываем диалог
+            MainGrid.Children.Remove(overlay);
+            MainGrid.Children.Remove(dialogCard);
+        };
+        cardContent.Children.Add(okBtn);
+
+        dialogCard.Child = cardContent;
+        MainGrid.Children.Add(dialogCard);
+
+        // Анимация появления
+        overlay.Opacity = 0;
+        dialogCard.Opacity = 0;
+        dialogCard.RenderTransform = new ScaleTransform(0.9, 0.9);
+        dialogCard.RenderTransformOrigin = new System.Windows.Point(0.5, 0.5);
+
+        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+        var scaleIn = new DoubleAnimation(0.9, 1, TimeSpan.FromMilliseconds(300))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+
+        overlay.BeginAnimation(OpacityProperty, fadeIn);
+        dialogCard.BeginAnimation(OpacityProperty, fadeIn);
+        ((ScaleTransform)dialogCard.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleIn);
+        ((ScaleTransform)dialogCard.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty, scaleIn);
+
+        // Закрытие по клику на overlay
+        overlay.MouseLeftButtonDown += (s, e) =>
+        {
+            // Сохраняем настройку
+            _settings.ShowLongCheckDialog = isChecked;
+            SettingsService.Save(_settings);
+            
+            MainGrid.Children.Remove(overlay);
+            MainGrid.Children.Remove(dialogCard);
+        };
     }
 
     private void ShowFullScanRequiredNotification(
@@ -2351,13 +2632,20 @@ public partial class MainWindow : Window
     // ── Auto-setup ───────────────────────────────────────────────────────────
     private async void FixBtn_Click(object s, RoutedEventArgs e)
     {
+        // Запускаем таймер на 10 секунд
+        _checkInProgress = true;
+        StartLongCheckTimer();
+        Console.WriteLine("[FixBtn] Таймер запущен, _checkInProgress = true");
+        
         // Проверяем, требуется ли обновление компонентов
         var (needsUpdate, reason) = await ComponentVersionService.CheckIfUpdateNeededAsync(_settings);
         
         if (needsUpdate)
         {
             Console.WriteLine($"[FixBtn] Обнаружена необходимость обновления: {reason}");
-            // Запускаем автоматическую установку/обновление
+            // Останавливаем таймер и запускаем автоматическую установку/обновление
+            StopLongCheckTimer();
+            _checkInProgress = false;
             await RunAutoInstallAsync();
             return;
         }
@@ -2369,6 +2657,8 @@ public partial class MainWindow : Window
         // 1. Проверяем Zapret
         if (!st.ZapretRunning && !string.IsNullOrWhiteSpace(_settings.ZapretPath) && File.Exists(_settings.ZapretPath))
         {
+            StopLongCheckTimer();
+            _checkInProgress = false;
             ShowZapretWizard();
             return;
         }
@@ -2380,6 +2670,7 @@ public partial class MainWindow : Window
             // Не возвращаемся, продолжаем RunAutoFix
         }
 
+        // Таймер остановится в doneCb внутри RunAutoFix
         RunAutoFix();
     }
 
@@ -2449,6 +2740,11 @@ public partial class MainWindow : Window
             doneCb: (success, _) => Dispatcher.Invoke(() => {
                 StopGlow(success);
                 FixBtn.IsEnabled = true;
+                
+                // Останавливаем таймер долгой проверки
+                StopLongCheckTimer();
+                _checkInProgress = false;
+                
                 if (success) {
                     SetupProg.Value = 100;
                     SetupProgLbl.Text = "Готово";

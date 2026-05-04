@@ -1610,9 +1610,19 @@
                                                FontFamily="Segoe UI" FontSize="13"
                                                Foreground="#cccccc"
                                                VerticalAlignment="Center"/>
-                                    <TextBlock x:Name="ZapretVersionText"
-                                               FontFamily="Segoe UI" FontSize="13"
-                                               VerticalAlignment="Center"/>
+                                    <StackPanel x:Name="ZapretVersionPanel" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock x:Name="ZapretVersionText"
+                                                   FontFamily="Segoe UI" FontSize="13"
+                                                   VerticalAlignment="Center"/>
+                                        <Path x:Name="ZapretVersionIcon"
+                                              Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                              Fill="#22c55e"
+                                              Width="14" Height="14"
+                                              Stretch="Uniform"
+                                              Margin="6,0,0,0"
+                                              VerticalAlignment="Center"
+                                              Visibility="Collapsed"/>
+                                    </StackPanel>
                                 </StackPanel>
 
                                 <!-- TgWsProxy Version -->
@@ -1621,9 +1631,19 @@
                                                FontFamily="Segoe UI" FontSize="13"
                                                Foreground="#cccccc"
                                                VerticalAlignment="Center"/>
-                                    <TextBlock x:Name="TgWsProxyVersionText"
-                                               FontFamily="Segoe UI" FontSize="13"
-                                               VerticalAlignment="Center"/>
+                                    <StackPanel x:Name="TgWsProxyVersionPanel" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock x:Name="TgWsProxyVersionText"
+                                                   FontFamily="Segoe UI" FontSize="13"
+                                                   VerticalAlignment="Center"/>
+                                        <Path x:Name="TgWsProxyVersionIcon"
+                                              Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                              Fill="#22c55e"
+                                              Width="14" Height="14"
+                                              Stretch="Uniform"
+                                              Margin="6,0,0,0"
+                                              VerticalAlignment="Center"
+                                              Visibility="Collapsed"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </StackPanel>
 

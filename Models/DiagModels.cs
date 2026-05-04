@@ -104,4 +104,5 @@ public class AppSettings
     public bool AutostartApp { get; set; } = false;
     public bool NotifyIssues { get; set; } = true;
     public bool AutoUpdates { get; set; } = true;
+    public bool ShowLongCheckDialog { get; set; } = true;
 }
