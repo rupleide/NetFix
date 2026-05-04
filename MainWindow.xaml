@@ -1559,6 +1559,7 @@
                             <Button x:Name="TestConfigsBtn"
                                     Style="{StaticResource OutlineBtn}"
                                     Padding="14,12"
+                                    Margin="0,0,0,8"
                                     HorizontalContentAlignment="Left"
                                     WindowChrome.IsHitTestVisibleInChrome="True"
                                     Click="TestConfigsBtn_Click">
@@ -1584,6 +1585,27 @@
                                 <Run Text="Включен конфиг: " Foreground="#888888"/>
                                 <Run x:Name="ActiveConfigName" Text="" Foreground="#22c55e"/>
                             </TextBlock>
+
+                            <!-- Update Components Button -->
+                            <Button x:Name="UpdateComponentsBtn"
+                                    Style="{StaticResource OutlineBtn}"
+                                    Padding="14,12"
+                                    Margin="0,12,0,0"
+                                    HorizontalContentAlignment="Left"
+                                    WindowChrome.IsHitTestVisibleInChrome="True"
+                                    Click="UpdateComponentsBtn_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource RefreshIcon}" 
+                                          Fill="#888888"
+                                          Width="16" Height="16"
+                                          Stretch="Uniform"
+                                          Margin="0,0,10,0"
+                                          VerticalAlignment="Center"/>
+                                    <TextBlock Text="Обновить компоненты" 
+                                               FontFamily="Segoe UI" FontSize="13"
+                                               Foreground="#888888" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
 
                         </StackPanel>
                     </DockPanel>
