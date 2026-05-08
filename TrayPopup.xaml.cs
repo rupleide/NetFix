@@ -37,13 +37,15 @@ public partial class TrayPopup : Window
         Close();
         Application.Current.Dispatcher.BeginInvoke(() =>
         {
-            var main = Application.Current.MainWindow;
+            var main = Application.Current.MainWindow as MainWindow;
             if (main == null) return;
             if (!main.IsVisible) main.Show();
             if (main.WindowState == WindowState.Minimized)
                 main.WindowState = WindowState.Normal;
             main.Activate();
             main.Focus();
+            // Запускаем Aurora анимацию при показе окна из трея
+            main.StartAuroraTimer();
         });
     }
 

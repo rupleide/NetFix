@@ -99,6 +99,7 @@ public partial class MainWindow : Window
     private bool _autoFixRunning = false;
     
     // Aurora state - математическая модель
+    private DispatcherTimer _auroraTimer = null!;
     private double _t = 0;
     private double _splitProgress = 0; // 0 = покой, 1 = шторм
     private double _splitTarget = 0;
@@ -125,7 +126,7 @@ public partial class MainWindow : Window
         InitTray();
         
         // Aurora animation — 30fps, синхронизировано с рендером
-        var _auroraTimer = new DispatcherTimer(DispatcherPriority.Render);
+        _auroraTimer = new DispatcherTimer(DispatcherPriority.Render);
         _auroraTimer.Interval = TimeSpan.FromMilliseconds(33); // 30fps
         _auroraTimer.Tick += (s, e) =>
         {
@@ -285,6 +286,12 @@ public partial class MainWindow : Window
         Show();
         WindowState = WindowState.Normal;
         Activate();
+        _auroraTimer?.Start(); // Запускаем Aurora анимацию при показе окна
+    }
+    
+    public void StartAuroraTimer()
+    {
+        _auroraTimer?.Start();
     }
 
     private void ExitApp()
@@ -1736,7 +1743,12 @@ public partial class MainWindow : Window
     }
 
     private void MinBtn_Click(object s, RoutedEventArgs e) => WindowState = WindowState.Minimized;
-    private void CloseBtn_Click(object s, RoutedEventArgs e) => Hide();
+    
+    private void CloseBtn_Click(object s, RoutedEventArgs e)
+    {
+        _auroraTimer?.Stop(); // Останавливаем Aurora анимацию при скрытии
+        Hide();
+    }
 
     // ── Nav ──────────────────────────────────────────────────────────────────
     private void DiagNavBtn_Click(object s, RoutedEventArgs e)
