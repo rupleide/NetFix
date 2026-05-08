@@ -135,10 +135,11 @@ public partial class MainWindow : Window
             _splitProgress += (_splitTarget - _splitProgress) * 0.05;
             _colorProgress += (_colorTarget - _colorProgress) * 0.03;
             
-            // Обновляем каждый блоб с индивидуальными параметрами (уменьшенная амплитуда)
-            UpdateBlob(AuroraRect1, 0, 0.50, 0.38, 0.08, 0.06, 0.28, 0.22, 0, 1.2);
-            UpdateBlob(AuroraRect2, 1, -0.05, -0.05, 0.10, 0.08, 0.65, 0.48, 2.1, 0.5);
-            UpdateBlob(AuroraRect3, 2, 1.05, 1.00, 0.09, 0.09, 0.55, 0.72, 4.2, 2.8);
+            // Обновляем каждый блоб с индивидуальными параметрами
+            // AuroraRect1 (центральный синий) - больше движения по горизонтали
+            UpdateBlob(AuroraRect1, 0, 0.50, 0.25, 0.15, 0.06, 0.28, 0.22, 0, 1.2, 0x28);
+            UpdateBlob(AuroraRect2, 1, 0.0, 0.0, 0.10, 0.08, 0.65, 0.48, 2.1, 0.5, 0x20);
+            UpdateBlob(AuroraRect3, 2, 1.0, 0.95, 0.09, 0.09, 0.55, 0.72, 4.2, 2.8, 0x20);
         };
         _auroraTimer.Start();
         
@@ -153,7 +154,7 @@ public partial class MainWindow : Window
     }
 
     // ── Aurora Helper Methods ────────────────────────────────────────────────
-    private void UpdateBlob(System.Windows.Shapes.Rectangle rect, int index, double bx, double by, double ampX, double ampY, double freqX, double freqY, double phX, double phY)
+    private void UpdateBlob(System.Windows.Shapes.Rectangle rect, int index, double bx, double by, double ampX, double ampY, double freqX, double freqY, double phX, double phY, byte baseAlpha)
     {
         var brush = (RadialGradientBrush)rect.Fill;
         double ease = EaseInOut(_splitProgress);
@@ -182,8 +183,8 @@ public partial class MainWindow : Window
         brush.RadiusX = radius;
         brush.RadiusY = radius;
         
-        // Меняем цвет только центрального кружка (первый GradientStop)
-        brush.GradientStops[0].Color = Color.FromArgb((byte)(0.35 * 255), currentColor.R, currentColor.G, currentColor.B);
+        // Меняем цвет только центрального кружка с оригинальной прозрачностью из XAML
+        brush.GradientStops[0].Color = Color.FromArgb(baseAlpha, currentColor.R, currentColor.G, currentColor.B);
     }
     
     // Вспомогательные функции математики
