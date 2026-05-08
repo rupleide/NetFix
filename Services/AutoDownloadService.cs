@@ -24,6 +24,72 @@ public static class AutoDownloadService
             onLog("=== Запуск автоматической установки ===");
             onLog("Подготовка папки установки...");
             
+            // ═══ ШАГ 1: ОСТАНОВКА ЗАПУЩЕННЫХ ПРОЦЕССОВ ═══
+            onLog("Проверяю запущенные процессы...");
+            bool zapretWasRunning = false;
+            bool tgWsProxyWasRunning = false;
+            
+            // Проверяем и останавливаем winws.exe (Zapret)
+            var winwsProcesses = System.Diagnostics.Process.GetProcessesByName("winws");
+            if (winwsProcesses.Length > 0)
+            {
+                zapretWasRunning = true;
+                onLog($"⚠️ Обнаружено {winwsProcesses.Length} процессов winws.exe (Zapret)");
+                onLog("Останавливаю Zapret...");
+                
+                foreach (var proc in winwsProcesses)
+                {
+                    try
+                    {
+                        proc.Kill(true); // true = убить дочерние процессы тоже
+                        proc.WaitForExit(3000);
+                        proc.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        onLog($"⚠️ Не удалось остановить процесс winws.exe (PID {proc.Id}): {ex.Message}");
+                    }
+                }
+                
+                // Даем время на завершение
+                await Task.Delay(1000);
+                onLog("✅ Zapret остановлен");
+            }
+            
+            // Проверяем и останавливаем TgWsProxy.exe
+            var tgWsProxyProcesses = System.Diagnostics.Process.GetProcessesByName("TgWsProxy");
+            if (tgWsProxyProcesses.Length > 0)
+            {
+                tgWsProxyWasRunning = true;
+                onLog($"⚠️ Обнаружено {tgWsProxyProcesses.Length} процессов TgWsProxy.exe");
+                onLog("Останавливаю TgWsProxy...");
+                
+                foreach (var proc in tgWsProxyProcesses)
+                {
+                    try
+                    {
+                        proc.Kill(true);
+                        proc.WaitForExit(3000);
+                        proc.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        onLog($"⚠️ Не удалось остановить процесс TgWsProxy.exe (PID {proc.Id}): {ex.Message}");
+                    }
+                }
+                
+                // Даем время на завершение
+                await Task.Delay(1000);
+                onLog("✅ TgWsProxy остановлен");
+            }
+            
+            if (!zapretWasRunning && !tgWsProxyWasRunning)
+            {
+                onLog("✅ Процессы не запущены, продолжаю установку");
+            }
+            
+            // ═══ ШАГ 2: УСТАНОВКА/ОБНОВЛЕНИЕ ═══
+            
             // Используем временную папку для избежания конфликта с файлами
             string mainInstallDir = @"C:\Zapret";
             string tempInstallDir = Path.Combine(Path.GetTempPath(), $"NetFix_Zapret_Temp_{Guid.NewGuid()}");
@@ -212,8 +278,45 @@ public static class AutoDownloadService
                     onLog($"⚠️ Не удалось сохранить версии: {ex.Message}");
                 }
                 
+                // ═══ ШАГ 3: ПЕРЕЗАПУСК ПРОЦЕССОВ ═══
+                onLog("");
+                onLog("Проверяю необходимость перезапуска процессов...");
+                
+                // Zapret НЕ перезапускаем автоматически - пользователь сам запустит через service.bat
+                if (zapretWasRunning)
+                {
+                    onLog("ℹ️ Zapret был остановлен для обновления");
+                    onLog("Вы можете запустить его через панель сервисов или service.bat");
+                }
+                
+                // Перезапускаем TgWsProxy если он был запущен
+                if (tgWsProxyWasRunning && !string.IsNullOrEmpty(tgWsExe))
+                {
+                    onLog("Перезапускаю TgWsProxy...");
+                    try
+                    {
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(tgWsExe)
+                        {
+                            UseShellExecute = true,
+                            WorkingDirectory = Path.GetDirectoryName(tgWsExe)
+                        });
+                        onLog("✅ TgWsProxy перезапущен");
+                    }
+                    catch (Exception ex)
+                    {
+                        onLog($"⚠️ Не удалось перезапустить TgWsProxy: {ex.Message}");
+                        onLog("Вы можете запустить его вручную через панель сервисов");
+                    }
+                }
+                
+                if (!zapretWasRunning && !tgWsProxyWasRunning)
+                {
+                    onLog("ℹ️ Процессы не были запущены, перезапуск не требуется");
+                }
+                
                 onProgress(1.0);
 
+                onLog("");
                 onLog("✓ Установка завершена успешно!");
                 onLog("Можно закрыть окно и начать использовать приложение.");
                 return true;
