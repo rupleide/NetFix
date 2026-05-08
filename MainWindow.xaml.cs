@@ -97,6 +97,24 @@ public partial class MainWindow : Window
     private DispatcherTimer? _longCheckTimer = null;
     private bool _checkInProgress = false;
     private bool _autoFixRunning = false;
+    
+    // Aurora state - математическая модель
+    private double _t = 0;
+    private double _splitProgress = 0; // 0 = покой, 1 = шторм
+    private double _splitTarget = 0;
+    private double _colorProgress = 0; // 0 = база, 1 = результат (успех/ошибка)
+    private double _colorTarget = 0;
+    private bool _finalSuccess = true;
+    
+    // Начальные цвета (Синий, Фиолетовый, Индиго)
+    private Color[] _baseColors = new Color[] 
+    {
+        Color.FromRgb(59, 130, 246),   // Синий
+        Color.FromRgb(139, 92, 246),   // Фиолетовый
+        Color.FromRgb(79, 70, 229)     // Индиго
+    };
+    private Color _successColor = Color.FromRgb(34, 197, 94);   // Зелёный
+    private Color _errorColor = Color.FromRgb(239, 68, 68);     // Красный
 
     // ── Init ─────────────────────────────────────────────────────────────────
     public MainWindow()
@@ -107,24 +125,20 @@ public partial class MainWindow : Window
         InitTray();
         
         // Aurora animation — 30fps, синхронизировано с рендером
-        double _t = 0;
         var _auroraTimer = new DispatcherTimer(DispatcherPriority.Render);
         _auroraTimer.Interval = TimeSpan.FromMilliseconds(33); // 30fps
         _auroraTimer.Tick += (s, e) =>
         {
-            _t += 0.015; // намного быстрее
+            _t += 0.02; // Скорость течения времени
             
-            var b1 = (RadialGradientBrush)AuroraRect1.Fill;
-            var b2 = (RadialGradientBrush)AuroraRect2.Fill;
-            var b3 = (RadialGradientBrush)AuroraRect3.Fill;
+            // Плавное приближение текущих значений к целевым (интерполяция)
+            _splitProgress += (_splitTarget - _splitProgress) * 0.05;
+            _colorProgress += (_colorTarget - _colorProgress) * 0.03;
             
-            var p1 = new System.Windows.Point(0.50 + Math.Sin(_t * 0.3) * 0.02,  0.25 + Math.Cos(_t * 0.25) * 0.015);
-            var p2 = new System.Windows.Point(0.0 + Math.Sin(_t * 0.7) * 0.03, 0.0 + Math.Cos(_t * 0.5) * 0.03);
-            var p3 = new System.Windows.Point(1.0 + Math.Cos(_t * 0.6) * 0.03,  0.95 + Math.Sin(_t * 0.8) * 0.03);
-            
-            b1.Center = p1; b1.GradientOrigin = p1;
-            b2.Center = p2; b2.GradientOrigin = p2;
-            b3.Center = p3; b3.GradientOrigin = p3;
+            // Обновляем каждый блоб с индивидуальными параметрами
+            UpdateBlob(AuroraRect1, 0, 0.50, 0.25, 0.22, 0.18, 0.28, 0.22, 0, 1.2);
+            UpdateBlob(AuroraRect2, 1, 0.0, 0.0, 0.28, 0.22, 0.65, 0.48, 2.1, 0.5);
+            UpdateBlob(AuroraRect3, 2, 1.0, 0.95, 0.25, 0.25, 0.55, 0.72, 4.2, 2.8);
         };
         _auroraTimer.Start();
         
@@ -137,6 +151,47 @@ public partial class MainWindow : Window
                 _auroraTimer.Start();
         };
     }
+
+    // ── Aurora Helper Methods ────────────────────────────────────────────────
+    private void UpdateBlob(System.Windows.Shapes.Rectangle rect, int index, double bx, double by, double ampX, double ampY, double freqX, double freqY, double phX, double phY)
+    {
+        var brush = (RadialGradientBrush)rect.Fill;
+        double ease = EaseInOut(_splitProgress);
+        double colorEase = EaseInOut(_colorProgress);
+        
+        // Амплитуда: в покое почти 0 (0.02), в активе - большая
+        double currentAmpX = Lerp(0.02, ampX, ease);
+        double currentAmpY = Lerp(0.02, ampY, ease);
+        
+        // Вычисляем новые координаты центра
+        double cx = bx + Math.Sin(_t * freqX + phX) * currentAmpX;
+        double cy = by + Math.Cos(_t * freqY + phY) * currentAmpY;
+        
+        // Эффект пульсации радиуса
+        double pulse = 1.0 + Math.Sin(_t * 1.5) * 0.15 * ease;
+        double radius = Lerp(0.3, 0.5, ease) * pulse;
+        
+        // Цвет
+        Color targetColor = _finalSuccess ? _successColor : _errorColor;
+        Color currentColor = LerpColor(_baseColors[index], targetColor, colorEase);
+        
+        // Применяем
+        brush.Center = new System.Windows.Point(cx, cy);
+        brush.GradientOrigin = new System.Windows.Point(cx, cy);
+        brush.RadiusX = radius;
+        brush.RadiusY = radius;
+        brush.GradientStops[0].Color = Color.FromArgb((byte)(0.35 * 255), currentColor.R, currentColor.G, currentColor.B);
+    }
+    
+    // Вспомогательные функции математики
+    private double Lerp(double a, double b, double t) => a + (b - a) * t;
+    
+    private double EaseInOut(double t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    
+    private Color LerpColor(Color c1, Color c2, double t) => Color.FromRgb(
+        (byte)(c1.R + (c2.R - c1.R) * t),
+        (byte)(c1.G + (c2.G - c1.G) * t),
+        (byte)(c1.B + (c2.B - c1.B) * t));
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
@@ -2909,6 +2964,10 @@ public partial class MainWindow : Window
 
     private void StartGlow()
     {
+        // Включаем "энергетический шторм"
+        _splitTarget = 1;
+        _colorTarget = 0;  // Возвращаем базовые цвета
+        
         // Скрываем idle-кольца и другие состояния
         IdleRingOuter.Visibility = Visibility.Collapsed;
         IdleRingInner.Visibility = Visibility.Collapsed;
@@ -2949,6 +3008,11 @@ public partial class MainWindow : Window
 
     private void StopGlow(bool success)
     {
+        // Запоминаем результат и стягиваем пятна обратно
+        _finalSuccess = success;
+        _splitTarget = 0;  // Стягиваем пятна обратно в центр
+        _colorTarget = 1;  // Перекрашиваем в результат (зеленый/красный)
+        
         // Стоп все спиннеры
         SpinOffset.BeginAnimation(RotateTransform.AngleProperty, null);
         SpinRotation2.BeginAnimation(RotateTransform.AngleProperty, null);
