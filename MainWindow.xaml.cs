@@ -105,6 +105,37 @@ public partial class MainWindow : Window
         Loaded += OnLoaded;
         SizeChanged += OnSizeChanged;
         InitTray();
+        
+        // Aurora animation — 30fps, синхронизировано с рендером
+        double _t = 0;
+        var _auroraTimer = new DispatcherTimer(DispatcherPriority.Render);
+        _auroraTimer.Interval = TimeSpan.FromMilliseconds(33); // 30fps
+        _auroraTimer.Tick += (s, e) =>
+        {
+            _t += 0.015; // намного быстрее
+            
+            var b1 = (RadialGradientBrush)AuroraRect1.Fill;
+            var b2 = (RadialGradientBrush)AuroraRect2.Fill;
+            var b3 = (RadialGradientBrush)AuroraRect3.Fill;
+            
+            var p1 = new System.Windows.Point(0.50 + Math.Sin(_t * 0.3) * 0.02,  0.28 + Math.Cos(_t * 0.25) * 0.015);
+            var p2 = new System.Windows.Point(0.0 + Math.Sin(_t * 0.7) * 0.03, 0.0 + Math.Cos(_t * 0.5) * 0.03);
+            var p3 = new System.Windows.Point(1.0 + Math.Cos(_t * 0.6) * 0.03,  0.95 + Math.Sin(_t * 0.8) * 0.03);
+            
+            b1.Center = p1; b1.GradientOrigin = p1;
+            b2.Center = p2; b2.GradientOrigin = p2;
+            b3.Center = p3; b3.GradientOrigin = p3;
+        };
+        _auroraTimer.Start();
+        
+        // Стоп/старт при сворачивании
+        this.StateChanged += (s, e) =>
+        {
+            if (this.WindowState == WindowState.Minimized)
+                _auroraTimer.Stop();
+            else
+                _auroraTimer.Start();
+        };
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)

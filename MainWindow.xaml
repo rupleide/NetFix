@@ -638,8 +638,85 @@
             <Grid Grid.Row="1" x:Name="ContentGrid">
 
                 <!-- ── MAIN PAGE ── -->
-                <ScrollViewer x:Name="MainPage" VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="32,24,32,24">
+                <Grid x:Name="MainPageContainer" ClipToBounds="True">
+                    <!-- Main Page Content -->
+                    <ScrollViewer x:Name="MainPage" VerticalScrollBarVisibility="Auto">
+                        <Grid>
+                            <!-- Aurora Background Effect — скроллится вместе с контентом -->
+                            <Grid IsHitTestVisible="False" ClipToBounds="True" 
+                                  Panel.ZIndex="-1"
+                                  VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                                  RenderOptions.EdgeMode="Aliased">
+                                <!-- Layer 1: Blue (Central Glow) — меньше смещение, меньше радиус -->
+                                <Rectangle x:Name="AuroraRect1" Opacity="1.0">
+                                    <Rectangle.Fill>
+                                        <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                             Center="0.5,0.38" GradientOrigin="0.5,0.38" RadiusX="0.32" RadiusY="0.32">
+                                            <GradientStop Color="#453B82F6" Offset="0.00"/>
+                                            <GradientStop Color="#603B82F6" Offset="0.10"/>
+                                            <GradientStop Color="#4E3B82F6" Offset="0.20"/>
+                                            <GradientStop Color="#3C3B82F6" Offset="0.33"/>
+                                            <GradientStop Color="#2A3B82F6" Offset="0.48"/>
+                                            <GradientStop Color="#1A3B82F6" Offset="0.62"/>
+                                            <GradientStop Color="#0E3B82F6" Offset="0.75"/>
+                                            <GradientStop Color="#063B82F6" Offset="0.87"/>
+                                            <GradientStop Color="#013B82F6" Offset="0.95"/>
+                                            <GradientStop Color="#003B82F6" Offset="1.00"/>
+                                        </RadialGradientBrush>
+                                    </Rectangle.Fill>
+                                </Rectangle>
+                                
+                                <!-- Layer 2: Purple (Left Top Corner) — видно меньше половины, тише -->
+                                <Rectangle x:Name="AuroraRect2" Opacity="1.0">
+                                    <Rectangle.Fill>
+                                        <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                             Center="-0.05,-0.05" GradientOrigin="-0.05,-0.05" RadiusX="0.22" RadiusY="0.24">
+                                            <GradientStop Color="#358B5CF6" Offset="0.00"/>
+                                            <GradientStop Color="#2E8B5CF6" Offset="0.12"/>
+                                            <GradientStop Color="#268B5CF6" Offset="0.26"/>
+                                            <GradientStop Color="#1E8B5CF6" Offset="0.42"/>
+                                            <GradientStop Color="#158B5CF6" Offset="0.58"/>
+                                            <GradientStop Color="#0E8B5CF6" Offset="0.73"/>
+                                            <GradientStop Color="#068B5CF6" Offset="0.86"/>
+                                            <GradientStop Color="#018B5CF6" Offset="0.95"/>
+                                            <GradientStop Color="#008B5CF6" Offset="1.00"/>
+                                        </RadialGradientBrush>
+                                    </Rectangle.Fill>
+                                </Rectangle>
+                                
+                                <!-- Layer 3: Indigo (Right Bottom Corner) — видно меньше половины, тише -->
+                                <Rectangle x:Name="AuroraRect3" Opacity="1.0">
+                                    <Rectangle.Fill>
+                                        <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                             Center="1.05,1.00" GradientOrigin="1.05,1.00" RadiusX="0.22" RadiusY="0.24">
+                                            <GradientStop Color="#354F46E5" Offset="0.00"/>
+                                            <GradientStop Color="#474F46E5" Offset="0.12"/>
+                                            <GradientStop Color="#384F46E5" Offset="0.26"/>
+                                            <GradientStop Color="#294F46E5" Offset="0.42"/>
+                                            <GradientStop Color="#1A4F46E5" Offset="0.58"/>
+                                            <GradientStop Color="#0E4F46E5" Offset="0.73"/>
+                                            <GradientStop Color="#064F46E5" Offset="0.86"/>
+                                            <GradientStop Color="#014F46E5" Offset="0.95"/>
+                                            <GradientStop Color="#004F46E5" Offset="1.00"/>
+                                        </RadialGradientBrush>
+                                    </Rectangle.Fill>
+                                </Rectangle>
+                                
+                                <!-- DITHER LAYER — борьба с бандингом, всегда последний в стеке -->
+                                <Rectangle IsHitTestVisible="False" Opacity="0.04"
+                                           RenderOptions.BitmapScalingMode="NearestNeighbor">
+                                    <Rectangle.Fill>
+                                        <ImageBrush ImageSource="Assets/noise.png"
+                                                    TileMode="Tile"
+                                                    ViewportUnits="Absolute"
+                                                    Viewport="0,0,512,512"
+                                                    Stretch="None"/>
+                                    </Rectangle.Fill>
+                                </Rectangle>
+                            </Grid>
+                            
+                            <!-- Content Layer -->
+                            <StackPanel Margin="32,24,32,24" Panel.ZIndex="1">
 
                         <!-- Title -->
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,4">
@@ -662,7 +739,8 @@
                                    Margin="0,0,0,24"/>
 
                         <!-- Round power button, enhanced animation system -->
-                        <Grid HorizontalAlignment="Center" Width="200" Height="200" Margin="0,0,0,8">
+                        <Grid HorizontalAlignment="Center" Width="200" Height="200" Margin="0,0,0,8"
+                              Panel.ZIndex="10">
 
                             <Button x:Name="FixBtn"
                                     Style="{StaticResource BigBtn}"
@@ -794,7 +872,9 @@
                             <FlowDocument PagePadding="0"/>
                         </RichTextBox>
                     </StackPanel>
+                        </Grid>
                 </ScrollViewer>
+                </Grid>
 
                 <!-- ── FAQ PAGE ── -->
                 <!-- ── FAQ PAGE ── -->
