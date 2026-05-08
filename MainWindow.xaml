@@ -303,7 +303,7 @@
                                 <Setter TargetName="bd" Property="Background" Value="#1e1e38"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.6"/>
+                                <Setter Property="Opacity" Value="1.0"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -739,13 +739,7 @@
                                    Margin="0,0,0,24"/>
 
                         <!-- Round power button, enhanced animation system -->
-                        <Grid HorizontalAlignment="Center" Width="200" Height="200" Margin="0,0,0,8"
-                              Panel.ZIndex="10">
-
-                            <Button x:Name="FixBtn"
-                                    Style="{StaticResource BigBtn}"
-                                    WindowChrome.IsHitTestVisibleInChrome="True"
-                                    Click="FixBtn_Click"/>
+                        <Grid HorizontalAlignment="Center" Width="200" Height="200" Margin="0,0,0,8">
 
                             <!-- Idle: статические кольца -->
                             <Ellipse x:Name="IdleRingOuter" Width="188" Height="188"
@@ -812,6 +806,12 @@
                                 </Ellipse.RenderTransform>
                             </Ellipse>
 
+                            <!-- Error: красное пунктирное кольцо -->
+                            <Ellipse x:Name="ErrorRing" Width="188" Height="188"
+                                     Stroke="#ef4444" StrokeThickness="2.5"
+                                     StrokeDashArray="12 8" Fill="Transparent"
+                                     IsHitTestVisible="False" Visibility="Collapsed" Opacity="0.7"/>
+
                             <!-- Success: галочка -->
                             <Border x:Name="SuccessCheck" 
                                     Background="#22c55e" CornerRadius="12"
@@ -830,16 +830,17 @@
                                       VerticalAlignment="Center"/>
                             </Border>
 
-                            <!-- Error: красное пунктирное кольцо -->
-                            <Ellipse x:Name="ErrorRing" Width="188" Height="188"
-                                     Stroke="#ef4444" StrokeThickness="2.5"
-                                     StrokeDashArray="12 8" Fill="Transparent"
-                                     IsHitTestVisible="False" Visibility="Collapsed" Opacity="0.7"/>
-
                             <!-- Совместимость со старым кодом -->
                             <Border x:Name="GlowOuter" Visibility="Collapsed"/>
                             <Border x:Name="GlowMid"   Visibility="Collapsed"/>
                             <Border x:Name="GlowInner" Visibility="Collapsed"/>
+
+                            <!-- КНОПКА В САМОМ КОНЦЕ - всегда поверх всех анимаций -->
+                            <Button x:Name="FixBtn"
+                                    Style="{StaticResource BigBtn}"
+                                    Panel.ZIndex="999"
+                                    WindowChrome.IsHitTestVisibleInChrome="True"
+                                    Click="FixBtn_Click"/>
                         </Grid>
 
                         <!-- Progress -->

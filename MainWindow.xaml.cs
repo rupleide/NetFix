@@ -118,7 +118,7 @@ public partial class MainWindow : Window
             var b2 = (RadialGradientBrush)AuroraRect2.Fill;
             var b3 = (RadialGradientBrush)AuroraRect3.Fill;
             
-            var p1 = new System.Windows.Point(0.50 + Math.Sin(_t * 0.3) * 0.02,  0.28 + Math.Cos(_t * 0.25) * 0.015);
+            var p1 = new System.Windows.Point(0.50 + Math.Sin(_t * 0.3) * 0.02,  0.25 + Math.Cos(_t * 0.25) * 0.015);
             var p2 = new System.Windows.Point(0.0 + Math.Sin(_t * 0.7) * 0.03, 0.0 + Math.Cos(_t * 0.5) * 0.03);
             var p3 = new System.Windows.Point(1.0 + Math.Cos(_t * 0.6) * 0.03,  0.95 + Math.Sin(_t * 0.8) * 0.03);
             
@@ -2928,18 +2928,22 @@ public partial class MainWindow : Window
             { RepeatBehavior = RepeatBehavior.Forever };
         SpinRotation2.BeginAnimation(RotateTransform.AngleProperty, spin2);
 
-        // Анимация иконки - пульсация цвета
-        var iconGlow = new BrushAnimation();
-        iconGlow.From = new SolidColorBrush(Color.FromRgb(0x7c, 0x6a, 0xf7));
-        iconGlow.To = new SolidColorBrush(Color.FromRgb(0x5b, 0x8d, 0xf5));
-        iconGlow.Duration = new Duration(TimeSpan.FromSeconds(1.8));
-        iconGlow.AutoReverse = true;
-        iconGlow.RepeatBehavior = RepeatBehavior.Forever;
-        
-        // Находим иконку в шаблоне кнопки
+        // ВМЕСТО BrushAnimation используем ColorAnimation на SolidColorBrush.ColorProperty
         if (GetFixButtonIcon() is System.Windows.Shapes.Path iconEl)
         {
-            iconEl.BeginAnimation(System.Windows.Shapes.Path.StrokeProperty, iconGlow);
+            var animBrush = new SolidColorBrush(Color.FromRgb(0x7c, 0x6a, 0xf7));
+            iconEl.Stroke = animBrush;  // сначала ставим кисть...
+            
+            var colorAnim = new ColorAnimation(
+                Color.FromRgb(0x7c, 0x6a, 0xf7),
+                Color.FromRgb(0x5b, 0x8d, 0xf5),
+                new Duration(TimeSpan.FromSeconds(1.8)))
+            {
+                AutoReverse = true,
+                RepeatBehavior = RepeatBehavior.Forever
+            };
+            // ...и анимируем цвет внутри кисти, а не саму кисть
+            animBrush.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
         }
     }
 
@@ -2952,10 +2956,17 @@ public partial class MainWindow : Window
         SpinArc.Visibility  = Visibility.Collapsed;
         SpinArc2.Visibility = Visibility.Collapsed;
         
-        // Возвращаем цвет иконки в нормальное состояние
-        SetFixButtonIconColor(success
-            ? Color.FromRgb(0x22, 0xc5, 0x5e)
-            : Color.FromRgb(0xef, 0x44, 0x44));
+        if (GetFixButtonIcon() is System.Windows.Shapes.Path iconEl)
+        {
+            // Останавливаем анимацию на кисти если она SolidColorBrush
+            if (iconEl.Stroke is SolidColorBrush brush)
+                brush.BeginAnimation(SolidColorBrush.ColorProperty, null);
+            
+            // Ставим новую статичную кисть
+            iconEl.Stroke = new SolidColorBrush(success
+                ? Color.FromRgb(0x22, 0xc5, 0x5e)
+                : Color.FromRgb(0xef, 0x44, 0x44));
+        }
     }
 
     private void PlayErrorRing()
