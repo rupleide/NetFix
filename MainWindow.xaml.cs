@@ -137,9 +137,9 @@ public partial class MainWindow : Window
             
             // Обновляем каждый блоб с индивидуальными параметрами
             // AuroraRect1 (центральный синий) - больше движения по горизонтали
-            UpdateBlob(AuroraRect1, 0, 0.50, 0.25, 0.15, 0.06, 0.28, 0.22, 0, 1.2, 0x28);
-            UpdateBlob(AuroraRect2, 1, 0.0, 0.0, 0.10, 0.08, 0.65, 0.48, 2.1, 0.5, 0x20);
-            UpdateBlob(AuroraRect3, 2, 1.0, 0.95, 0.09, 0.09, 0.55, 0.72, 4.2, 2.8, 0x20);
+            UpdateBlob(AuroraRect1, 0, 0.50, 0.25, 0.15, 0.06, 0.28, 0.22, 0, 1.2, 0x45);
+            UpdateBlob(AuroraRect2, 1, 0.0, 0.0, 0.10, 0.08, 0.65, 0.48, 2.1, 0.5, 0x35);
+            UpdateBlob(AuroraRect3, 2, 1.0, 0.95, 0.09, 0.09, 0.55, 0.72, 4.2, 2.8, 0x35);
         };
         _auroraTimer.Start();
         
@@ -168,10 +168,8 @@ public partial class MainWindow : Window
         double cx = bx + Math.Sin(_t * freqX + phX) * currentAmpX;
         double cy = by + Math.Cos(_t * freqY + phY) * currentAmpY;
         
-        // Эффект пульсации радиуса (умеренный)
-        double pulse = 1.0 + Math.Sin(_t * 1.5) * 0.08 * ease;
+        // Радиус остаётся постоянным (без пульсации и изменения размера)
         double baseRadius = index == 0 ? 0.32 : 0.22; // Базовые размеры из XAML
-        double radius = Lerp(baseRadius, baseRadius * 1.3, ease) * pulse;
         
         // Цвет — меняем ТОЛЬКО центральный кружок (GradientStop[0])
         Color targetColor = _finalSuccess ? _successColor : _errorColor;
@@ -180,8 +178,8 @@ public partial class MainWindow : Window
         // Применяем
         brush.Center = new System.Windows.Point(cx, cy);
         brush.GradientOrigin = new System.Windows.Point(cx, cy);
-        brush.RadiusX = radius;
-        brush.RadiusY = radius;
+        brush.RadiusX = baseRadius;
+        brush.RadiusY = baseRadius;
         
         // Меняем цвет только центрального кружка с оригинальной прозрачностью из XAML
         brush.GradientStops[0].Color = Color.FromArgb(baseAlpha, currentColor.R, currentColor.G, currentColor.B);
