@@ -137,9 +137,9 @@ public partial class MainWindow : Window
             
             // Обновляем каждый блоб с индивидуальными параметрами
             // AuroraRect1 (центральный синий) - больше движения по горизонтали
-            UpdateBlob(AuroraRect1, 0, 0.50, 0.25, 0.15, 0.06, 0.28, 0.22, 0, 1.2, 0x45);
-            UpdateBlob(AuroraRect2, 1, 0.0, 0.0, 0.10, 0.08, 0.65, 0.48, 2.1, 0.5, 0x35);
-            UpdateBlob(AuroraRect3, 2, 1.0, 0.95, 0.09, 0.09, 0.55, 0.72, 4.2, 2.8, 0x35);
+            UpdateBlob(AuroraRect1, 0, 0.50, 0.25, 0.15, 0.06, 0.28, 0.22, 0, 1.2, 0);
+            UpdateBlob(AuroraRect2, 1, 0.0, 0.0, 0.10, 0.08, 0.65, 0.48, 2.1, 0.5, 0);
+            UpdateBlob(AuroraRect3, 2, 1.0, 0.95, 0.09, 0.09, 0.55, 0.72, 4.2, 2.8, 0);
         };
         _auroraTimer.Start();
         
@@ -171,7 +171,7 @@ public partial class MainWindow : Window
         // Радиус остаётся постоянным (без пульсации и изменения размера)
         double baseRadius = index == 0 ? 0.32 : 0.22; // Базовые размеры из XAML
         
-        // Цвет — меняем ТОЛЬКО центральный кружок (GradientStop[0])
+        // Цвет — меняем ВСЕ GradientStop'ы плавно от базового к результату
         Color targetColor = _finalSuccess ? _successColor : _errorColor;
         Color currentColor = LerpColor(_baseColors[index], targetColor, colorEase);
         
@@ -181,8 +181,12 @@ public partial class MainWindow : Window
         brush.RadiusX = baseRadius;
         brush.RadiusY = baseRadius;
         
-        // Меняем цвет только центрального кружка с оригинальной прозрачностью из XAML
-        brush.GradientStops[0].Color = Color.FromArgb(baseAlpha, currentColor.R, currentColor.G, currentColor.B);
+        // Меняем цвет ВСЕХ GradientStop'ов, сохраняя их оригинальную прозрачность
+        foreach (var stop in brush.GradientStops)
+        {
+            byte originalAlpha = stop.Color.A;
+            stop.Color = Color.FromArgb(originalAlpha, currentColor.R, currentColor.G, currentColor.B);
+        }
     }
     
     // Вспомогательные функции математики
