@@ -652,9 +652,9 @@
                                     <Rectangle.Fill>
                                         <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
                                                              Center="0.5,0.25" GradientOrigin="0.5,0.25" RadiusX="0.32" RadiusY="0.32">
-                                            <GradientStop Color="#283B82F6" Offset="0.00"/>
-                                            <GradientStop Color="#453B82F6" Offset="0.10"/>
-                                            <GradientStop Color="#3C3B82F6" Offset="0.20"/>
+                                            <GradientStop Color="#453B82F6" Offset="0.00"/>
+                                            <GradientStop Color="#3E3B82F6" Offset="0.10"/>
+                                            <GradientStop Color="#363B82F6" Offset="0.20"/>
                                             <GradientStop Color="#2E3B82F6" Offset="0.33"/>
                                             <GradientStop Color="#223B82F6" Offset="0.48"/>
                                             <GradientStop Color="#1A3B82F6" Offset="0.62"/>
@@ -671,7 +671,7 @@
                                     <Rectangle.Fill>
                                         <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
                                                              Center="0.0,0.0" GradientOrigin="0.0,0.0" RadiusX="0.22" RadiusY="0.24">
-                                            <GradientStop Color="#208B5CF6" Offset="0.00"/>
+                                            <GradientStop Color="#358B5CF6" Offset="0.00"/>
                                             <GradientStop Color="#2E8B5CF6" Offset="0.12"/>
                                             <GradientStop Color="#268B5CF6" Offset="0.26"/>
                                             <GradientStop Color="#1E8B5CF6" Offset="0.42"/>
@@ -689,10 +689,10 @@
                                     <Rectangle.Fill>
                                         <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
                                                              Center="1.0,0.95" GradientOrigin="1.0,0.95" RadiusX="0.22" RadiusY="0.24">
-                                            <GradientStop Color="#204F46E5" Offset="0.00"/>
-                                            <GradientStop Color="#384F46E5" Offset="0.12"/>
-                                            <GradientStop Color="#2E4F46E5" Offset="0.26"/>
-                                            <GradientStop Color="#244F46E5" Offset="0.42"/>
+                                            <GradientStop Color="#354F46E5" Offset="0.00"/>
+                                            <GradientStop Color="#2E4F46E5" Offset="0.12"/>
+                                            <GradientStop Color="#264F46E5" Offset="0.26"/>
+                                            <GradientStop Color="#1E4F46E5" Offset="0.42"/>
                                             <GradientStop Color="#1A4F46E5" Offset="0.58"/>
                                             <GradientStop Color="#0E4F46E5" Offset="0.73"/>
                                             <GradientStop Color="#064F46E5" Offset="0.86"/>
