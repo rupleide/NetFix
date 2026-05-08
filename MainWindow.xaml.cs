@@ -135,10 +135,10 @@ public partial class MainWindow : Window
             _splitProgress += (_splitTarget - _splitProgress) * 0.05;
             _colorProgress += (_colorTarget - _colorProgress) * 0.03;
             
-            // Обновляем каждый блоб с индивидуальными параметрами
-            UpdateBlob(AuroraRect1, 0, 0.50, 0.25, 0.22, 0.18, 0.28, 0.22, 0, 1.2);
-            UpdateBlob(AuroraRect2, 1, 0.0, 0.0, 0.28, 0.22, 0.65, 0.48, 2.1, 0.5);
-            UpdateBlob(AuroraRect3, 2, 1.0, 0.95, 0.25, 0.25, 0.55, 0.72, 4.2, 2.8);
+            // Обновляем каждый блоб с индивидуальными параметрами (уменьшенная амплитуда)
+            UpdateBlob(AuroraRect1, 0, 0.50, 0.38, 0.08, 0.06, 0.28, 0.22, 0, 1.2);
+            UpdateBlob(AuroraRect2, 1, -0.05, -0.05, 0.10, 0.08, 0.65, 0.48, 2.1, 0.5);
+            UpdateBlob(AuroraRect3, 2, 1.05, 1.00, 0.09, 0.09, 0.55, 0.72, 4.2, 2.8);
         };
         _auroraTimer.Start();
         
@@ -159,19 +159,20 @@ public partial class MainWindow : Window
         double ease = EaseInOut(_splitProgress);
         double colorEase = EaseInOut(_colorProgress);
         
-        // Амплитуда: в покое почти 0 (0.02), в активе - большая
-        double currentAmpX = Lerp(0.02, ampX, ease);
-        double currentAmpY = Lerp(0.02, ampY, ease);
+        // Амплитуда: в покое почти 0 (0.01), в активе - умеренная
+        double currentAmpX = Lerp(0.01, ampX, ease);
+        double currentAmpY = Lerp(0.01, ampY, ease);
         
         // Вычисляем новые координаты центра
         double cx = bx + Math.Sin(_t * freqX + phX) * currentAmpX;
         double cy = by + Math.Cos(_t * freqY + phY) * currentAmpY;
         
-        // Эффект пульсации радиуса
-        double pulse = 1.0 + Math.Sin(_t * 1.5) * 0.15 * ease;
-        double radius = Lerp(0.3, 0.5, ease) * pulse;
+        // Эффект пульсации радиуса (умеренный)
+        double pulse = 1.0 + Math.Sin(_t * 1.5) * 0.08 * ease;
+        double baseRadius = index == 0 ? 0.32 : 0.22; // Базовые размеры из XAML
+        double radius = Lerp(baseRadius, baseRadius * 1.3, ease) * pulse;
         
-        // Цвет
+        // Цвет — меняем ТОЛЬКО центральный кружок (GradientStop[0])
         Color targetColor = _finalSuccess ? _successColor : _errorColor;
         Color currentColor = LerpColor(_baseColors[index], targetColor, colorEase);
         
@@ -180,6 +181,8 @@ public partial class MainWindow : Window
         brush.GradientOrigin = new System.Windows.Point(cx, cy);
         brush.RadiusX = radius;
         brush.RadiusY = radius;
+        
+        // Меняем цвет только центрального кружка (первый GradientStop)
         brush.GradientStops[0].Color = Color.FromArgb((byte)(0.35 * 255), currentColor.R, currentColor.G, currentColor.B);
     }
     
