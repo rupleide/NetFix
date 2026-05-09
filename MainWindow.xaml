@@ -1391,8 +1391,6 @@
                                 <TextBlock Text="ПРОЧЕЕ" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
 
-                                <CheckBox x:Name="NotifyCB" Style="{StaticResource Toggle}"
-                                          Content="Уведомлять о проблемах" Margin="0,0,0,10"/>
                                 <CheckBox x:Name="AutoUpdatesCB" Style="{StaticResource Toggle}"
                                           Content="Автоматические обновления" Margin="0,0,0,20"/>
 

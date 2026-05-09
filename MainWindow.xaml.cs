@@ -513,7 +513,6 @@ public partial class MainWindow : Window
 
                         if (string.IsNullOrEmpty(cache.CurrentConfig))
                         {
-                            ShowNotification("Zapret", "Сначала выберите конфиг через 'Выбрать конфиг' в панели управления сервисами.", isError: true);
                             return;
                         }
 
@@ -528,7 +527,6 @@ public partial class MainWindow : Window
 
                         if (!success)
                         {
-                            ShowNotification("Zapret", "Не удалось установить сервис. Проверьте права администратора.", isError: true);
                             return;
                         }
                     }
@@ -540,7 +538,6 @@ public partial class MainWindow : Window
                 }
                 else
                 {
-                    ShowNotification("Zapret", "Путь не указан. Проверьте настройки.", isError: true);
                     return;
                 }
             }
@@ -580,7 +577,6 @@ public partial class MainWindow : Window
                 }
                 else
                 {
-                    ShowNotification("tg-ws-proxy", "Путь не указан. Проверьте настройки.", isError: true);
                     return;
                 }
             }
@@ -601,7 +597,6 @@ public partial class MainWindow : Window
     {
         if (string.IsNullOrEmpty(_settings.ZapretPath) || !File.Exists(_settings.ZapretPath))
         {
-            ShowNotification("Zapret", "Путь к Zapret не указан. Проверьте настройки.", isError: true);
             return;
         }
 
@@ -616,7 +611,6 @@ public partial class MainWindow : Window
         
         if (string.IsNullOrEmpty(_settings.ZapretPath) || !File.Exists(_settings.ZapretPath))
         {
-            ShowNotification("Zapret", "Путь к Zapret не указан. Проверьте настройки.", isError: true);
             return;
         }
 
@@ -3420,7 +3414,6 @@ public partial class MainWindow : Window
         // AutoZapretCB убран - Zapret больше не в автозапуске
         AutoTgWsCB.IsChecked    = _settings.AutostartTgWsProxy;
         AutoAppCB.IsChecked     = _settings.AutostartApp;
-        NotifyCB.IsChecked      = _settings.NotifyIssues;
         AutoUpdatesCB.IsChecked = _settings.AutoUpdates;
     }
 
@@ -3431,7 +3424,6 @@ public partial class MainWindow : Window
         _settings.AutostartZapret  = false; // Zapret убран из автозапуска
         _settings.AutostartTgWsProxy = AutoTgWsCB.IsChecked == true;
         _settings.AutostartApp     = AutoAppCB.IsChecked == true;
-        _settings.NotifyIssues     = NotifyCB.IsChecked == true;
         _settings.AutoUpdates      = AutoUpdatesCB.IsChecked == true;
         SettingsService.Save(_settings);
         
@@ -3465,36 +3457,6 @@ public partial class MainWindow : Window
     }
 
     // ── Settings actions ─────────────────────────────────────────────────────
-    private void ShowNotification(string title, string message, bool isError = false)
-    {
-        if (_settings.NotifyIssues != true) return;
-
-        // Временно отключаем уведомления если нет сборки System.Windows.Forms
-        // TODO: Добавить NuGet пакет System.Windows.Forms для поддержки уведомлений
-        return;
-        
-        /*
-        Dispatcher.Invoke(() =>
-        {
-            var ni = new System.Windows.Forms.NotifyIcon
-            {
-                Icon = System.Drawing.SystemIcons.Application,
-                Visible = true
-            };
-            ni.ShowBalloonTip(
-                4000,
-                title,
-                message,
-                isError ? System.Windows.Forms.ToolTipIcon.Error
-                        : System.Windows.Forms.ToolTipIcon.Info
-            );
-            var t = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
-            t.Tick += (_, _) => { ni.Dispose(); t.Stop(); };
-            t.Start();
-        });
-        */
-    }
-
     private void ReOnboard_Click(object s, RoutedEventArgs e)
     {
         CloseSettings();
@@ -3761,7 +3723,6 @@ public partial class MainWindow : Window
                 
                 if (success)
                 {
-                    ShowNotification("Успешно", $"Zapret запущен с конфигом {cache.CurrentConfig}", false);
                     CloseWizard();
                     // Обновить статус через 1500мс
                     await Task.Delay(1500);
@@ -3774,7 +3735,6 @@ public partial class MainWindow : Window
                 }
                 else
                 {
-                    ShowNotification("Ошибка", "Не удалось применить конфиг", true);
                 }
             }
         });
@@ -3897,12 +3857,10 @@ public partial class MainWindow : Window
                 // Автоматически активируем прокси в Telegram
                 await ActivateTgWsProxyAsync();
                 
-                ShowNotification("Успешно", "TgWsProxy запущен и активирован", false);
             }
         } 
         catch 
         {
-            ShowNotification("Ошибка запуска", "Не удалось запустить tg-ws-proxy. Проверьте путь.", true);
         }
     }
 
@@ -3915,11 +3873,9 @@ public partial class MainWindow : Window
                 UseShellExecute = true, 
                 WorkingDirectory = System.IO.Path.GetDirectoryName(_settings.ZapretPath) 
             });
-            ShowNotification("Успешно", "Zapret запущен", false);
         } 
         catch 
         {
-            ShowNotification("Ошибка запуска", "Не удалось запустить Zapret. Проверьте путь.", true);
         }
     }
 

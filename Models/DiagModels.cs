@@ -102,7 +102,6 @@ public class AppSettings
     public bool AutostartZapret { get; set; } = false;
     public bool AutostartTgWsProxy { get; set; } = false;
     public bool AutostartApp { get; set; } = false;
-    public bool NotifyIssues { get; set; } = true;
     public bool AutoUpdates { get; set; } = true;
     public bool ShowLongCheckDialog { get; set; } = true;
 }
