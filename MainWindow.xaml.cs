@@ -130,7 +130,7 @@ public partial class MainWindow : Window
         _auroraTimer.Interval = TimeSpan.FromMilliseconds(33); // 30fps
         _auroraTimer.Tick += (s, e) =>
         {
-            _t += 0.02; // Скорость течения времени
+            _t += 0.05; // Скорость течения времени
             
             // Плавное приближение текущих значений к целевым (интерполяция)
             _splitProgress += (_splitTarget - _splitProgress) * 0.05;
@@ -138,9 +138,9 @@ public partial class MainWindow : Window
             
             // Обновляем каждый блоб с индивидуальными параметрами
             // AuroraRect1 (центральный синий) - больше движения по горизонтали
-            UpdateBlob(AuroraRect1, 0, 0.50, 0.25, 0.15, 0.06, 0.28, 0.22, 0, 1.2, 0);
-            UpdateBlob(AuroraRect2, 1, 0.0, 0.0, 0.10, 0.08, 0.65, 0.48, 2.1, 0.5, 0);
-            UpdateBlob(AuroraRect3, 2, 1.0, 0.95, 0.09, 0.09, 0.55, 0.72, 4.2, 2.8, 0);
+            UpdateBlob(AuroraRect1, 0, 0.50, 0.25, 0.15, 0.06, 0.56, 0.44, 0, 1.2, 0);
+            UpdateBlob(AuroraRect2, 1, 0.0, 0.0, 0.10, 0.08, 1.30, 0.96, 2.1, 0.5, 0);
+            UpdateBlob(AuroraRect3, 2, 1.0, 0.95, 0.09, 0.09, 1.10, 1.44, 4.2, 2.8, 0);
         };
         _auroraTimer.Start();
         
@@ -161,9 +161,9 @@ public partial class MainWindow : Window
         double ease = EaseInOut(_splitProgress);
         double colorEase = EaseInOut(_colorProgress);
         
-        // Амплитуда: в покое почти 0 (0.01), в активе - умеренная
-        double currentAmpX = Lerp(0.01, ampX, ease);
-        double currentAmpY = Lerp(0.01, ampY, ease);
+        // Амплитуда: в покое почти 0 (0.03), в активе - умеренная
+        double currentAmpX = Lerp(0.03, ampX, ease);
+        double currentAmpY = Lerp(0.03, ampY, ease);
         
         // Вычисляем новые координаты центра
         double cx = bx + Math.Sin(_t * freqX + phX) * currentAmpX;
@@ -2793,6 +2793,7 @@ public partial class MainWindow : Window
         
         FixBtn.IsEnabled = false;
         SetupProg.Value = 0;
+        SetupProg.Foreground = new SolidColorBrush(Color.FromRgb(59, 130, 246)); // Синий (начальный цвет)
         SetupProgLbl.Text = "Подготовка...";
         LogBox.Document.Blocks.Clear();
 
@@ -2866,6 +2867,7 @@ public partial class MainWindow : Window
                 
                 if (success) {
                     SetupProg.Value = 100;
+                    SetupProg.Foreground = new SolidColorBrush(Color.FromRgb(34, 197, 94)); // Зеленый
                     SetupProgLbl.Text = "Готово";
                     AppendLog("spacer");
                     AppendLog("Всё запущено и всё работает НОРМАЛЬНО!", "final");
@@ -2874,6 +2876,7 @@ public partial class MainWindow : Window
                     AppendLog("Если что-то всё еще не грузит, перейдите во вкладку «Частые вопросы».", "info");
                     PlaySuccessRing();
                 } else {
+                    SetupProg.Foreground = new SolidColorBrush(Color.FromRgb(239, 68, 68)); // Красный
                     AppendLog("Произошла ошибка при автоматической настройке. Проверьте пути в настройках.", "error");
                     PlayErrorRing();
                 }
@@ -2888,6 +2891,7 @@ public partial class MainWindow : Window
     {
         FixBtn.IsEnabled = false;
         SetupProg.Value = 0;
+        SetupProg.Foreground = new SolidColorBrush(Color.FromRgb(59, 130, 246)); // Синий (начальный цвет)
         SetupProgLbl.Text = "Подготовка к установке...";
         LogBox.Document.Blocks.Clear();
 
@@ -2924,6 +2928,7 @@ public partial class MainWindow : Window
                 LoadSettingsToPanel();
                 
                 SetupProg.Value = 100;
+                SetupProg.Foreground = new SolidColorBrush(Color.FromRgb(34, 197, 94)); // Зеленый
                 SetupProgLbl.Text = "Установка завершена";
                 AppendLog("spacer");
                 AppendLog("✓ Компоненты успешно установлены/обновлены!", "final");
@@ -2937,6 +2942,7 @@ public partial class MainWindow : Window
             else
             {
                 SetupProg.Value = 0;
+                SetupProg.Foreground = new SolidColorBrush(Color.FromRgb(239, 68, 68)); // Красный
                 SetupProgLbl.Text = "Ошибка установки";
                 AppendLog("spacer");
                 AppendLog("Произошла ошибка при установке компонентов.", "error");
