@@ -1764,6 +1764,12 @@ public partial class MainWindow : Window
     // ── Nav ──────────────────────────────────────────────────────────────────
     private void DiagNavBtn_Click(object s, RoutedEventArgs e)
     {
+        ShowDiagnosticsTab();
+    }
+    
+    // Публичный метод для открытия вкладки диагностики (используется из TrayPopup)
+    public void ShowDiagnosticsTab()
+    {
         MainPage.Visibility = Visibility.Collapsed;
         FaqPage.Visibility = Visibility.Collapsed;
         SolutionPage.Visibility = Visibility.Collapsed;
@@ -3471,6 +3477,248 @@ public partial class MainWindow : Window
         SettingsService.ResetOnboarding();
         LoadSettingsToPanel();
         CloseSettings();
+    }
+    
+    // ── Export/Import Settings ───────────────────────────────────────────────
+    private void ExportSettings_Click(object s, RoutedEventArgs e)
+    {
+        // Проверяем наличие результатов тестирования
+        var cache = ZapretConfigService.LoadCache();
+        if (cache == null || !cache.HasAnyConfigs)
+        {
+            ShowNotification("❌ Нет данных для экспорта", 
+                "Сначала выполните тестирование конфигов Zapret.\nПерейдите на вкладку 'Серверы' и нажмите 'Тест конфигов'.", 
+                "#ef4444");
+            return;
+        }
+
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Экспортировать результаты тестирования",
+            Filter = "JSON файл (*.json)|*.json",
+            FileName = $"Zapret_TestResults_{DateTime.Now:yyyy-MM-dd_HH-mm}.json"
+        };
+        
+        if (dlg.ShowDialog() == true)
+        {
+            try
+            {
+                // Получаем путь к файлу кэша
+                var cacheFile = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "NetFix", "zapret_configs.json");
+
+                if (!File.Exists(cacheFile))
+                {
+                    ShowNotification("❌ Ошибка", 
+                        "Файл с результатами тестирования не найден", 
+                        "#ef4444");
+                    return;
+                }
+
+                // Копируем файл
+                File.Copy(cacheFile, dlg.FileName, true);
+
+                var validCount = cache.ValidConfigs.Count;
+                var partialCount = cache.PartialConfigs.Count;
+                var currentConfig = string.IsNullOrEmpty(cache.CurrentConfig) ? "не выбран" : cache.CurrentConfig;
+
+                ShowNotification("✅ Экспорт успешен", 
+                    $"Результаты тестирования сохранены в:\n{dlg.FileName}\n\n" +
+                    $"📊 Экспортировано:\n" +
+                    $"• Идеальных конфигов: {validCount}\n" +
+                    $"• Частично рабочих: {partialCount}\n" +
+                    $"• Активный конфиг: {currentConfig}\n" +
+                    $"• Дата тестирования: {cache.LastTested}", 
+                    "#22c55e");
+            }
+            catch (Exception ex)
+            {
+                ShowNotification("❌ Ошибка экспорта", 
+                    $"Не удалось сохранить результаты:\n{ex.Message}", 
+                    "#ef4444");
+            }
+        }
+    }
+    
+    private void ImportSettings_Click(object s, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Импортировать результаты тестирования",
+            Filter = "JSON файл (*.json)|*.json"
+        };
+        
+        if (dlg.ShowDialog() == true)
+        {
+            try
+            {
+                // Проверяем валидность файла
+                var json = File.ReadAllText(dlg.FileName);
+                var importedCache = System.Text.Json.JsonSerializer.Deserialize<ZapretConfigCache>(json);
+                
+                if (importedCache == null || !importedCache.HasAnyConfigs)
+                {
+                    ShowNotification("❌ Ошибка импорта", 
+                        "Файл не содержит валидных результатов тестирования", 
+                        "#ef4444");
+                    return;
+                }
+
+                // Получаем путь к файлу кэша
+                var cacheFile = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "NetFix", "zapret_configs.json");
+
+                var cacheDir = Path.GetDirectoryName(cacheFile);
+                if (!string.IsNullOrEmpty(cacheDir) && !Directory.Exists(cacheDir))
+                {
+                    Directory.CreateDirectory(cacheDir);
+                }
+
+                // Создаём бэкап текущего кэша если он есть
+                if (File.Exists(cacheFile))
+                {
+                    var backupFile = cacheFile + $".backup_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
+                    File.Copy(cacheFile, backupFile, true);
+                }
+
+                // Копируем импортированный файл
+                File.Copy(dlg.FileName, cacheFile, true);
+
+                // Обновляем отображение
+                UpdateSelectedConfigDisplay();
+
+                var validCount = importedCache.ValidConfigs.Count;
+                var partialCount = importedCache.PartialConfigs.Count;
+                var currentConfig = string.IsNullOrEmpty(importedCache.CurrentConfig) ? "не выбран" : importedCache.CurrentConfig;
+
+                ShowNotification("✅ Импорт успешен", 
+                    $"Результаты тестирования успешно загружены!\n\n" +
+                    $"📊 Импортировано:\n" +
+                    $"• Идеальных конфигов: {validCount}\n" +
+                    $"• Частично рабочих: {partialCount}\n" +
+                    $"• Активный конфиг: {currentConfig}\n" +
+                    $"• Дата тестирования: {importedCache.LastTested}\n\n" +
+                    $"Теперь можете выбрать конфиг на вкладке 'Серверы'", 
+                    "#22c55e");
+            }
+            catch (Exception ex)
+            {
+                ShowNotification("❌ Ошибка импорта", 
+                    $"Не удалось загрузить результаты:\n{ex.Message}", 
+                    "#ef4444");
+            }
+        }
+    }
+    
+    private void ShowNotification(string title, string message, string color)
+    {
+        // Создаём overlay
+        var overlay = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = System.Windows.VerticalAlignment.Stretch
+        };
+        Grid.SetRowSpan(overlay, 3);
+        MainGrid.Children.Add(overlay);
+
+        // Создаём карточку уведомления
+        var card = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x18)),
+            BorderBrush = new SolidColorBrush((Color)System.Windows.Media.ColorConverter.ConvertFromString(color)!),
+            BorderThickness = new Thickness(0, 3, 0, 0),
+            CornerRadius = new CornerRadius(14),
+            MaxWidth = 420,
+            Margin = new Thickness(40),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = System.Windows.VerticalAlignment.Center,
+            Effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = Colors.Black,
+                BlurRadius = 30,
+                ShadowDepth = 0,
+                Opacity = 0.5
+            }
+        };
+        Grid.SetRowSpan(card, 3);
+
+        var content = new StackPanel { Margin = new Thickness(28, 24, 28, 24) };
+
+        // Заголовок
+        var titleText = new TextBlock
+        {
+            Text = title,
+            FontSize = 18,
+            FontWeight = FontWeights.Bold,
+            Foreground = Brushes.White,
+            TextAlignment = TextAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 12)
+        };
+        content.Children.Add(titleText);
+
+        // Сообщение
+        var messageText = new TextBlock
+        {
+            Text = message,
+            FontSize = 13,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc)),
+            TextAlignment = TextAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+            LineHeight = 20,
+            Margin = new Thickness(0, 0, 0, 20)
+        };
+        content.Children.Add(messageText);
+
+        // Кнопка OK
+        var baseColor = (Color)System.Windows.Media.ColorConverter.ConvertFromString(color)!;
+        var okBorder = new Border
+        {
+            Width = 120,
+            Height = 36,
+            Background = new SolidColorBrush(baseColor),
+            CornerRadius = new CornerRadius(8),
+            Cursor = Cursors.Hand,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Child = new TextBlock
+            {
+                Text = "OK",
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = System.Windows.VerticalAlignment.Center,
+                Foreground = Brushes.White,
+                FontSize = 13,
+                FontWeight = FontWeights.SemiBold
+            }
+        };
+        
+        // Hover эффекты
+        okBorder.MouseEnter += (_, _) =>
+        {
+            okBorder.Background = new SolidColorBrush(Color.FromArgb(
+                baseColor.A,
+                (byte)(baseColor.R * 0.8),
+                (byte)(baseColor.G * 0.8),
+                (byte)(baseColor.B * 0.8)
+            ));
+        };
+        
+        okBorder.MouseLeave += (_, _) =>
+        {
+            okBorder.Background = new SolidColorBrush(baseColor);
+        };
+        
+        okBorder.MouseLeftButtonUp += (_, _) =>
+        {
+            MainGrid.Children.Remove(overlay);
+            MainGrid.Children.Remove(card);
+        };
+        
+        content.Children.Add(okBorder);
+        card.Child = content;
+
+        MainGrid.Children.Add(card);
     }
 
     // ── Links ────────────────────────────────────────────────────────────────

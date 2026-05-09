@@ -13,7 +13,7 @@
             <DropShadowEffect BlurRadius="20" ShadowDepth="0"
                               Color="Black" Opacity="0.6"/>
         </Border.Effect>
-        <StackPanel Width="180">
+        <StackPanel Width="220">
 
             <!-- Заголовок -->
             <Border Padding="14,10,14,10">
@@ -28,18 +28,91 @@
 
             <Border Height="1" Background="#2a2a2a" Margin="8,0"/>
 
+            <!-- Статус сервисов -->
+            <Border Padding="14,8,14,8">
+                <StackPanel>
+                    <!-- Zapret Status -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                        <Ellipse x:Name="ZapretStatusDot" Width="6" Height="6" 
+                                 Fill="#888888" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock x:Name="ZapretStatusText" Text="Zapret: Остановлен" 
+                                   Foreground="#888888" FontFamily="Segoe UI" FontSize="11"/>
+                    </StackPanel>
+                    
+                    <!-- TgWsProxy Status -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                        <Ellipse x:Name="TgWsStatusDot" Width="6" Height="6" 
+                                 Fill="#888888" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock x:Name="TgWsStatusText" Text="TgWsProxy: Остановлен" 
+                                   Foreground="#888888" FontFamily="Segoe UI" FontSize="11"/>
+                    </StackPanel>
+                    
+                    <!-- Ping -->
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="📶" FontSize="10" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock x:Name="PingText" Text="Пинг: — мс" 
+                                   Foreground="#888888" FontFamily="Segoe UI" FontSize="11"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Height="1" Background="#2a2a2a" Margin="8,0"/>
+
+            <!-- Перезапустить Zapret -->
+            <Border x:Name="RestartZapretBtn" CornerRadius="8" Margin="4,4,4,2"
+                    Padding="12,10" Cursor="Hand"
+                    IsHitTestVisible="True" Background="Transparent"
+                    MouseEnter="RestartZapretBtn_Hover" MouseLeave="RestartZapretBtn_Leave"
+                    MouseLeftButtonUp="RestartZapretBtn_Click">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="🔄" FontSize="12"
+                               VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBlock Text="Перезапустить Zapret" Foreground="#f0f0f0"
+                               FontFamily="Segoe UI" FontSize="12"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Сменить конфиг -->
+            <Border x:Name="ChangeConfigBtn" CornerRadius="8" Margin="4,2,4,2"
+                    Padding="12,10" Cursor="Hand"
+                    IsHitTestVisible="True" Background="Transparent"
+                    MouseEnter="ChangeConfigBtn_Hover" MouseLeave="ChangeConfigBtn_Leave"
+                    MouseLeftButtonUp="ChangeConfigBtn_Click">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="⚙️" FontSize="12"
+                               VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBlock Text="Сменить конфиг" Foreground="#f0f0f0"
+                               FontFamily="Segoe UI" FontSize="12"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Быстрая диагностика -->
+            <Border x:Name="QuickDiagBtn" CornerRadius="8" Margin="4,2,4,2"
+                    Padding="12,10" Cursor="Hand"
+                    IsHitTestVisible="True" Background="Transparent"
+                    MouseEnter="QuickDiagBtn_Hover" MouseLeave="QuickDiagBtn_Leave"
+                    MouseLeftButtonUp="QuickDiagBtn_Click">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="🔍" FontSize="12"
+                               VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBlock Text="Быстрая диагностика" Foreground="#f0f0f0"
+                               FontFamily="Segoe UI" FontSize="12"/>
+                </StackPanel>
+            </Border>
+
+            <Border Height="1" Background="#2a2a2a" Margin="8,4"/>
+
             <!-- Открыть -->
-            <Border x:Name="OpenBtn" CornerRadius="8" Margin="4,4,4,2"
+            <Border x:Name="OpenBtn" CornerRadius="8" Margin="4,2,4,2"
                     Padding="12,10" Cursor="Hand"
                     IsHitTestVisible="True" Background="Transparent"
                     MouseEnter="OpenBtn_Hover" MouseLeave="OpenBtn_Leave"
                     MouseLeftButtonUp="OpenBtn_Click">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="&#xE8AF;" FontFamily="Segoe MDL2 Assets"
-                               FontSize="13" Foreground="#3b82f6"
+                    <TextBlock Text="📖" FontSize="12"
                                VerticalAlignment="Center" Margin="0,0,10,0"/>
-                    <TextBlock Text="Открыть" Foreground="#f0f0f0"
-                               FontFamily="Segoe UI" FontSize="13"/>
+                    <TextBlock Text="Открыть приложение" Foreground="#f0f0f0"
+                               FontFamily="Segoe UI" FontSize="12"/>
                 </StackPanel>
             </Border>
 
@@ -50,11 +123,10 @@
                     MouseEnter="ExitBtn_Hover" MouseLeave="ExitBtn_Leave"
                     MouseLeftButtonUp="ExitBtn_Click">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="&#xE7E8;" FontFamily="Segoe MDL2 Assets"
-                               FontSize="13" Foreground="#ef4444"
+                    <TextBlock Text="❌" FontSize="12"
                                VerticalAlignment="Center" Margin="0,0,10,0"/>
-                    <TextBlock Text="Выйти" Foreground="#ef4444"
-                               FontFamily="Segoe UI" FontSize="13"/>
+                    <TextBlock Text="Выход" Foreground="#ef4444"
+                               FontFamily="Segoe UI" FontSize="12"/>
                 </StackPanel>
             </Border>
 
