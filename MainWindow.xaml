@@ -738,109 +738,314 @@
                                    TextAlignment="Center"
                                    Margin="0,0,0,24"/>
 
-                        <!-- Round power button, enhanced animation system -->
-                        <Grid HorizontalAlignment="Center" Width="200" Height="200" Margin="0,0,0,8">
+                        <!-- Кнопка + статистика справа -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="200"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
 
-                            <!-- Idle: статические кольца -->
-                            <Ellipse x:Name="IdleRingOuter" Width="188" Height="188"
-                                     Stroke="#3b82f6" StrokeThickness="2.5" Fill="Transparent"
-                                     IsHitTestVisible="False" Opacity="0.5"/>
-                            <Ellipse x:Name="IdleRingInner" Width="174" Height="174"
-                                     Stroke="#3b82f6" StrokeThickness="0.8"
-                                     StrokeDashArray="6 8" Fill="Transparent"
-                                     IsHitTestVisible="False" Opacity="0.2"/>
+                            <!-- Кнопка по центру -->
+                            <Grid Grid.Column="1" Width="200" Height="200">
+                                <!-- Idle: статические кольца -->
+                                <Ellipse x:Name="IdleRingOuter" Width="188" Height="188"
+                                         Stroke="#3b82f6" StrokeThickness="2.5" Fill="Transparent"
+                                         IsHitTestVisible="False" Opacity="0.5"/>
+                                <Ellipse x:Name="IdleRingInner" Width="174" Height="174"
+                                         Stroke="#3b82f6" StrokeThickness="0.8"
+                                         StrokeDashArray="6 8" Fill="Transparent"
+                                         IsHitTestVisible="False" Opacity="0.2"/>
 
-                            <!-- Loading: пульсирующие гало -->
-                            <Ellipse x:Name="PulseRing1" Width="180" Height="180"
-                                     Stroke="#5b8df5" StrokeThickness="6" Fill="Transparent"
-                                     IsHitTestVisible="False" Visibility="Collapsed" Opacity="0.15"
-                                     RenderTransformOrigin="0.5,0.5">
-                                <Ellipse.RenderTransform>
-                                    <ScaleTransform x:Name="PulseScale1" ScaleX="1" ScaleY="1"/>
-                                </Ellipse.RenderTransform>
-                            </Ellipse>
-                            <Ellipse x:Name="PulseRing2" Width="210" Height="210"
-                                     Stroke="#5b8df5" StrokeThickness="4" Fill="Transparent"
-                                     IsHitTestVisible="False" Visibility="Collapsed" Opacity="0.08"
-                                     RenderTransformOrigin="0.5,0.5">
-                                <Ellipse.RenderTransform>
-                                    <ScaleTransform x:Name="PulseScale2" ScaleX="1" ScaleY="1"/>
-                                </Ellipse.RenderTransform>
-                            </Ellipse>
+                                <!-- Loading: пульсирующие гало -->
+                                <Ellipse x:Name="PulseRing1" Width="180" Height="180"
+                                         Stroke="#5b8df5" StrokeThickness="6" Fill="Transparent"
+                                         IsHitTestVisible="False" Visibility="Collapsed" Opacity="0.15"
+                                         RenderTransformOrigin="0.5,0.5">
+                                    <Ellipse.RenderTransform>
+                                        <ScaleTransform x:Name="PulseScale1" ScaleX="1" ScaleY="1"/>
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
+                                <Ellipse x:Name="PulseRing2" Width="210" Height="210"
+                                         Stroke="#5b8df5" StrokeThickness="4" Fill="Transparent"
+                                         IsHitTestVisible="False" Visibility="Collapsed" Opacity="0.08"
+                                         RenderTransformOrigin="0.5,0.5">
+                                    <Ellipse.RenderTransform>
+                                        <ScaleTransform x:Name="PulseScale2" ScaleX="1" ScaleY="1"/>
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
 
-                            <!-- Loading: спиннер 1 (синий, по часовой) -->
-                            <Ellipse x:Name="SpinArc" Width="188" Height="188"
-                                     Stroke="#5b8df5" StrokeThickness="3"
-                                     StrokeDashArray="200 430" StrokeDashCap="Round"
-                                     Fill="Transparent" RenderTransformOrigin="0.5,0.5"
-                                     IsHitTestVisible="False" Visibility="Collapsed">
-                                <Ellipse.RenderTransform>
-                                    <TransformGroup>
-                                        <RotateTransform x:Name="SpinRotation" Angle="-90"/>
-                                        <RotateTransform x:Name="SpinOffset" Angle="0"/>
-                                    </TransformGroup>
-                                </Ellipse.RenderTransform>
-                            </Ellipse>
+                                <!-- Loading: спиннер 1 (синий, по часовой) -->
+                                <Ellipse x:Name="SpinArc" Width="188" Height="188"
+                                         Stroke="#5b8df5" StrokeThickness="3"
+                                         StrokeDashArray="200 430" StrokeDashCap="Round"
+                                         Fill="Transparent" RenderTransformOrigin="0.5,0.5"
+                                         IsHitTestVisible="False" Visibility="Collapsed">
+                                    <Ellipse.RenderTransform>
+                                        <TransformGroup>
+                                            <RotateTransform x:Name="SpinRotation" Angle="-90"/>
+                                            <RotateTransform x:Name="SpinOffset" Angle="0"/>
+                                        </TransformGroup>
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
 
-                            <!-- Loading: спиннер 2 (фиолетовый, против часовой) -->
-                            <Ellipse x:Name="SpinArc2" Width="174" Height="174"
-                                     Stroke="#7c6af7" StrokeThickness="2"
-                                     StrokeDashArray="80 550" StrokeDashCap="Round"
-                                     Fill="Transparent" RenderTransformOrigin="0.5,0.5"
-                                     IsHitTestVisible="False" Visibility="Collapsed">
-                                <Ellipse.RenderTransform>
-                                    <TransformGroup>
-                                        <RotateTransform Angle="60"/>
-                                        <RotateTransform x:Name="SpinRotation2" Angle="0"/>
-                                    </TransformGroup>
-                                </Ellipse.RenderTransform>
-                            </Ellipse>
+                                <!-- Loading: спиннер 2 (фиолетовый, против часовой) -->
+                                <Ellipse x:Name="SpinArc2" Width="174" Height="174"
+                                         Stroke="#7c6af7" StrokeThickness="2"
+                                         StrokeDashArray="80 550" StrokeDashCap="Round"
+                                         Fill="Transparent" RenderTransformOrigin="0.5,0.5"
+                                         IsHitTestVisible="False" Visibility="Collapsed">
+                                    <Ellipse.RenderTransform>
+                                        <TransformGroup>
+                                            <RotateTransform Angle="60"/>
+                                            <RotateTransform x:Name="SpinRotation2" Angle="0"/>
+                                        </TransformGroup>
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
 
-                            <!-- Success: заполняющаяся дуга -->
-                            <Ellipse x:Name="SuccessArc" Width="188" Height="188"
-                                     Stroke="#22c55e" StrokeThickness="3" StrokeDashCap="Round"
-                                     Fill="Transparent" RenderTransformOrigin="0.5,0.5"
-                                     IsHitTestVisible="False" Visibility="Collapsed">
-                                <Ellipse.RenderTransform>
-                                    <RotateTransform Angle="-90"/>
-                                </Ellipse.RenderTransform>
-                            </Ellipse>
+                                <!-- Success: заполняющаяся дуга -->
+                                <Ellipse x:Name="SuccessArc" Width="188" Height="188"
+                                         Stroke="#22c55e" StrokeThickness="3" StrokeDashCap="Round"
+                                         Fill="Transparent" RenderTransformOrigin="0.5,0.5"
+                                         IsHitTestVisible="False" Visibility="Collapsed">
+                                    <Ellipse.RenderTransform>
+                                        <RotateTransform Angle="-90"/>
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
 
-                            <!-- Error: красное пунктирное кольцо -->
-                            <Ellipse x:Name="ErrorRing" Width="188" Height="188"
-                                     Stroke="#ef4444" StrokeThickness="2.5"
-                                     StrokeDashArray="12 8" Fill="Transparent"
-                                     IsHitTestVisible="False" Visibility="Collapsed" Opacity="0.7"/>
+                                <!-- Error: красное пунктирное кольцо -->
+                                <Ellipse x:Name="ErrorRing" Width="188" Height="188"
+                                         Stroke="#ef4444" StrokeThickness="2.5"
+                                         StrokeDashArray="12 8" Fill="Transparent"
+                                         IsHitTestVisible="False" Visibility="Collapsed" Opacity="0.7"/>
 
-                            <!-- Success: галочка -->
-                            <Border x:Name="SuccessCheck" 
-                                    Background="#22c55e" CornerRadius="12"
-                                    Width="24" Height="24" IsHitTestVisible="False"
-                                    Visibility="Collapsed" HorizontalAlignment="Right"
-                                    VerticalAlignment="Top" Margin="0,30,30,0"
-                                    RenderTransformOrigin="0.5,0.5">
-                                <Border.RenderTransform>
-                                    <ScaleTransform x:Name="SuccessCheckScale" ScaleX="0" ScaleY="0"/>
-                                </Border.RenderTransform>
-                                <Path Data="{StaticResource CheckmarkIcon}" 
-                                      Fill="White"
-                                      Width="14" Height="14"
-                                      Stretch="Uniform"
-                                      HorizontalAlignment="Center" 
-                                      VerticalAlignment="Center"/>
-                            </Border>
+                                <!-- Success: галочка -->
+                                <Border x:Name="SuccessCheck" 
+                                        Background="#22c55e" CornerRadius="12"
+                                        Width="24" Height="24" IsHitTestVisible="False"
+                                        Visibility="Collapsed" HorizontalAlignment="Right"
+                                        VerticalAlignment="Top" Margin="0,30,30,0"
+                                        RenderTransformOrigin="0.5,0.5">
+                                    <Border.RenderTransform>
+                                        <ScaleTransform x:Name="SuccessCheckScale" ScaleX="0" ScaleY="0"/>
+                                    </Border.RenderTransform>
+                                    <Path Data="{StaticResource CheckmarkIcon}" 
+                                          Fill="White"
+                                          Width="14" Height="14"
+                                          Stretch="Uniform"
+                                          HorizontalAlignment="Center" 
+                                          VerticalAlignment="Center"/>
+                                </Border>
 
-                            <!-- Совместимость со старым кодом -->
-                            <Border x:Name="GlowOuter" Visibility="Collapsed"/>
-                            <Border x:Name="GlowMid"   Visibility="Collapsed"/>
-                            <Border x:Name="GlowInner" Visibility="Collapsed"/>
+                                <!-- Совместимость со старым кодом -->
+                                <Border x:Name="GlowOuter" Visibility="Collapsed"/>
+                                <Border x:Name="GlowMid"   Visibility="Collapsed"/>
+                                <Border x:Name="GlowInner" Visibility="Collapsed"/>
 
-                            <!-- КНОПКА В САМОМ КОНЦЕ - всегда поверх всех анимаций -->
-                            <Button x:Name="FixBtn"
-                                    Style="{StaticResource BigBtn}"
-                                    Panel.ZIndex="999"
-                                    WindowChrome.IsHitTestVisibleInChrome="True"
-                                    Click="FixBtn_Click"/>
+                                <!-- КНОПКА В САМОМ КОНЦЕ - всегда поверх всех анимаций -->
+                                <Button x:Name="FixBtn"
+                                        Style="{StaticResource BigBtn}"
+                                        Panel.ZIndex="999"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="FixBtn_Click"/>
+                            </Grid>
+
+                            <!-- Статистика справа -->
+                            <StackPanel Grid.Column="2"
+                                        VerticalAlignment="Center"
+                                        Margin="0,0,20,0"
+                                        HorizontalAlignment="Right"
+                                        Opacity="0.9">
+
+                                <!-- Download -->
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="32"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Viewbox Grid.Column="0" Width="26" Height="26"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center">
+                                        <Canvas Width="24" Height="24">
+                                            <Path Data="M12 18V6M12 18L7 13M12 18L17 13"
+                                                  Stroke="#aaaaaa" StrokeThickness="2"
+                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                  StrokeLineJoin="Round"/>
+                                        </Canvas>
+                                    </Viewbox>
+
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="Входящий" FontSize="11"
+                                                   Foreground="#555555" FontFamily="Segoe UI"/>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
+                                            <TextBlock x:Name="DownloadLbl" Text="—"
+                                                       FontSize="17" FontWeight="SemiBold"
+                                                       Foreground="#f0f0f0" FontFamily="Segoe UI"/>
+                                            <TextBlock Text="Мбит/с" FontSize="11"
+                                                       Foreground="#555555" FontFamily="Segoe UI"
+                                                       VerticalAlignment="Bottom" Margin="4,0,0,2"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Upload -->
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="32"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Viewbox Grid.Column="0" Width="26" Height="26"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center">
+                                        <Canvas Width="24" Height="24">
+                                            <Path Data="M12 6V18M12 6L7 11M12 6L17 11"
+                                                  Stroke="#aaaaaa" StrokeThickness="2"
+                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                  StrokeLineJoin="Round"/>
+                                        </Canvas>
+                                    </Viewbox>
+
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="Исходящий" FontSize="11"
+                                                   Foreground="#555555" FontFamily="Segoe UI"/>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
+                                            <TextBlock x:Name="UploadLbl" Text="—"
+                                                       FontSize="17" FontWeight="SemiBold"
+                                                       Foreground="#f0f0f0" FontFamily="Segoe UI"/>
+                                            <TextBlock Text="Мбит/с" FontSize="11"
+                                                       Foreground="#555555" FontFamily="Segoe UI"
+                                                       VerticalAlignment="Bottom" Margin="4,0,0,2"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Ping -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="32"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>  <!-- кнопка -->
+                                    </Grid.ColumnDefinitions>
+
+                                    <Viewbox Grid.Column="0" Width="18" Height="18"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center">
+                                        <Canvas Width="512" Height="512">
+                                            <Path Fill="#aaaaaa"
+                                                  Data="M422.957,478.609h-16.696v-89.044c0-58.16-33.276-108.601-81.734-133.565
+                                                        c48.954-25.22,81.734-75.864,81.734-133.565V33.391h16.696c9.217,0,16.696-7.473,16.696-16.696
+                                                        C439.652,7.473,432.174,0,422.957,0C355.995,0,156.678,0,89.044,0c-9.217,0-16.696,7.473-16.696,16.696
+                                                        c0,9.223,7.479,16.696,16.696,16.696h16.696v89.044c0,57.692,32.771,108.341,81.734,133.565
+                                                        c-48.459,24.964-81.734,75.405-81.734,133.565v89.044H89.044c-9.217,0-16.696,7.473-16.696,16.696
+                                                        c0,9.223,7.479,16.696,16.696,16.696c111.521,0,222.498,0,333.913,0c9.217,0,16.696-7.473,16.696-16.696
+                                                        C439.652,486.082,432.174,478.609,422.957,478.609z
+                                                        M139.641,132.511c-0.817-9.509-0.511-5.456-0.511-99.12H372.87
+                                                        c0,93.664,0.306,89.611-0.511,99.12H139.641z
+                                                        M372.87,459.661c-92.104-76.755-88.747-75.372-100.174-79.41v-18.512
+                                                        c0-9.223-7.479-16.696-16.696-16.696s-16.696,7.473-16.696,16.696v18.511
+                                                        c-11.307,3.996-7.768,2.403-100.174,79.41v-70.095c0-58.759,43.63-107.391,100.174-115.536
+                                                        v20.927c0,9.223,7.479,16.696,16.696,16.696s16.696-7.473,16.696-16.696v-20.927
+                                                        c56.544,8.145,100.174,56.777,100.174,115.536V459.661z"/>
+                                        </Canvas>
+                                    </Viewbox>
+
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="Пинг" FontSize="11"
+                                                   Foreground="#555555" FontFamily="Segoe UI"/>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
+                                            <TextBlock x:Name="PingLbl" Text="—"
+                                                       FontSize="17" FontWeight="SemiBold"
+                                                       Foreground="#f0f0f0" FontFamily="Segoe UI"/>
+                                            <TextBlock Text="мс" FontSize="11"
+                                                       Foreground="#555555" FontFamily="Segoe UI"
+                                                       VerticalAlignment="Center" Margin="4,0,0,0"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Кнопка повтора -->
+                                    <Button x:Name="RescanBtn"
+                                            Grid.Column="2"
+                                            VerticalAlignment="Center"
+                                            Margin="8,2,0,0"
+                                            Padding="0"
+                                            Width="22" Height="22"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Cursor="Hand"
+                                            Click="RescanBtn_Click"
+                                            ToolTipService.InitialShowDelay="0"
+                                            ToolTipService.ShowDuration="10000"
+                                            ToolTipService.BetweenShowDelay="0">
+
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Opacity" Value="0.3"/>
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Grid Background="Transparent">
+                                                                <ContentPresenter HorizontalAlignment="Center"
+                                                                                  VerticalAlignment="Center"/>
+                                                            </Grid>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Opacity" Value="1"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+
+                                        <Button.ToolTip>
+                                            <ToolTip Background="Transparent"
+                                                     BorderThickness="0"
+                                                     HasDropShadow="False"
+                                                     Placement="Bottom"
+                                                     VerticalOffset="4">
+                                                <ToolTip.Style>
+                                                    <Style TargetType="ToolTip">
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsOpen" Value="True">
+                                                                <Trigger.EnterActions>
+                                                                    <BeginStoryboard>
+                                                                        <Storyboard>
+                                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                                             From="0" To="1"
+                                                                                             Duration="0:0:0.1"/>
+                                                                        </Storyboard>
+                                                                    </BeginStoryboard>
+                                                                </Trigger.EnterActions>
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </ToolTip.Style>
+                                                <Border Background="#181818"
+                                                        BorderBrush="#252525"
+                                                        BorderThickness="1"
+                                                        CornerRadius="6"
+                                                        Padding="8,5">
+                                                    <TextBlock Text="Просканировать ещё раз"
+                                                               FontFamily="Segoe UI"
+                                                               FontSize="12"
+                                                               Foreground="#aaaaaa"/>
+                                                </Border>
+                                            </ToolTip>
+                                        </Button.ToolTip>
+
+                                        <Viewbox Width="15" Height="15">
+                                            <Canvas Width="24" Height="24">
+                                                <Path Data="M21,11c-0.6,0-1,0.4-1,1c0,2.9-1.5,5.5-4,6.9c-3.8,2.2-8.7,0.9-10.9-2.9C2.9,12.2,4.2,7.3,8,5.1c3.3-1.9,7.3-1.2,9.8,1.4h-2.4c-0.6,0-1,0.4-1,1s0.4,1,1,1h4.5c0.6,0,1-0.4,1-1V3c0-0.6-0.4-1-1-1s-1,0.4-1,1v1.8C17,3,14.6,2,12,2C6.5,2,2,6.5,2,12s4.5,10,10,10c5.5,0,10-4.5,10-10C22,11.4,21.6,11,21,11z"
+                                                      Fill="#aaaaaa"/>
+                                            </Canvas>
+                                        </Viewbox>
+                                    </Button>
+                                </Grid>
+
+                            </StackPanel>
                         </Grid>
 
                         <!-- Progress -->

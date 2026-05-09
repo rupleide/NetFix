@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -97,6 +98,19 @@ public partial class MainWindow : Window
     private DispatcherTimer? _longCheckTimer = null;
     private bool _checkInProgress = false;
     private bool _autoFixRunning = false;
+    
+    // ── Network Monitor ──────────────────────────────────────────────────────
+    private DispatcherTimer _netTimer = null!;
+    private DispatcherTimer _pingTimer = null!;
+    private long _lastBytesReceived = 0;
+    private long _lastBytesSent = 0;
+    private bool _speedTestDone = false;
+    
+    // Для перцентильного расчёта
+    private readonly List<double> _dlSamples = new();
+    private readonly List<double> _ulSamples = new();
+    private double _finalDownloadMbps = 0;
+    private double _finalUploadMbps = 0;
     
     // Aurora state - математическая модель
     private DispatcherTimer _auroraTimer = null!;
@@ -223,6 +237,9 @@ public partial class MainWindow : Window
         }
         LoadFaqItems();
         UpdateSelectedConfigDisplay();
+        
+        // Инициализируем монитор сети
+        InitNetworkMonitor();
     }
 
     private void OnSizeChanged(object sender, SizeChangedEventArgs e)
@@ -4516,6 +4533,302 @@ public partial class MainWindow : Window
         });
 
         return stack;
+    }
+
+    // ── Network Monitor Methods ──────────────────────────────────────────────
+    private void InitNetworkMonitor()
+    {
+        var (rx, tx) = GetNetworkBytes();
+        _lastBytesReceived = rx;
+        _lastBytesSent = tx;
+
+        DownloadLbl.Text = "—";
+        UploadLbl.Text   = "—";
+        PingLbl.Text     = "—";
+
+        // Текущий трафик каждую секунду
+        _netTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _netTimer.Tick += NetTimer_Tick;
+        _netTimer.Start();
+
+        // Пинг каждые 5 секунд
+        _pingTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+        _pingTimer.Tick += async (s, e) => await UpdatePingAsync();
+        _pingTimer.Start();
+
+        this.StateChanged += (s, e) =>
+        {
+            if (this.WindowState == WindowState.Minimized)
+            { _netTimer?.Stop(); _pingTimer?.Stop(); }
+            else
+            { _netTimer?.Start(); _pingTimer?.Start(); }
+        };
+
+        // Запускаем тест и пинг сразу
+        Task.Run(async () => await RunSpeedTestAsync());
+        Task.Run(async () => await UpdatePingAsync());
+    }
+
+    private async Task RunSpeedTestAsync()
+    {
+        _dlSamples.Clear();
+        _ulSamples.Clear();
+        
+        Dispatcher.Invoke(() =>
+        {
+            DownloadLbl.Text = "—";
+            UploadLbl.Text   = "—";
+        });
+
+        // ── ШАГ 1: DOWNLOAD ──────────────────────────────────────────────
+        try
+        {
+            var urls = Enumerable.Repeat("https://speedtest.selectel.ru/100MB", 4).ToArray();
+            long totalDlBytes = 0;
+            var dlSw = System.Diagnostics.Stopwatch.StartNew();
+            var dlCancel = new CancellationTokenSource(TimeSpan.FromSeconds(14));
+
+            // Таймер мгновенных сэмплов каждую секунду
+            long prevBytes = 0;
+            var sampleTimer = new System.Timers.Timer(1000);
+            sampleTimer.Elapsed += (s, e) =>
+            {
+                long now = Interlocked.Read(ref totalDlBytes);
+                double instantMbps = (now - prevBytes) * 8.0 / 1_000_000.0;
+                prevBytes = now;
+                if (instantMbps > 0.1) // отбрасываем нулевые сэмплы прогрева
+                {
+                    lock (_dlSamples) _dlSamples.Add(instantMbps);
+                    double speed = CalcFinalSpeed(_dlSamples);
+                    Dispatcher.Invoke(() => DownloadLbl.Text = $"{speed:0.0}");
+                }
+            };
+            sampleTimer.Start();
+
+            var dlTasks = urls.Select(async url =>
+            {
+                try
+                {
+                    using var c = new HttpClient { Timeout = TimeSpan.FromSeconds(16) };
+                    c.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
+                    using var resp = await c.GetAsync(
+                        url + "?nocache=" + Guid.NewGuid(),
+                        HttpCompletionOption.ResponseHeadersRead,
+                        dlCancel.Token);
+                    using var stream = await resp.Content.ReadAsStreamAsync(dlCancel.Token);
+                    var buf = new byte[131072];
+                    int read;
+                    while ((read = await stream.ReadAsync(buf, dlCancel.Token)) > 0)
+                        Interlocked.Add(ref totalDlBytes, read);
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception ex) { Console.WriteLine($"[DL] {ex.Message}"); }
+            }).ToArray();
+
+            await Task.WhenAll(dlTasks);
+            sampleTimer.Stop();
+            sampleTimer.Dispose();
+
+            _finalDownloadMbps = CalcFinalSpeed(_dlSamples);
+            Dispatcher.Invoke(() => DownloadLbl.Text = _finalDownloadMbps > 0
+                ? $"{_finalDownloadMbps:0.0}" : "—");
+        }
+        catch (Exception ex) { Console.WriteLine($"[DL FATAL] {ex.Message}"); }
+
+        // ── ШАГ 2: UPLOAD ─────────────────────────────────────────────────
+        try
+        {
+            long totalUlBytes = 0;
+            var ulSw = System.Diagnostics.Stopwatch.StartNew();
+            var ulCancel = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+            long prevUlBytes = 0;
+            var ulSampleTimer = new System.Timers.Timer(1000);
+            ulSampleTimer.Elapsed += (s, e) =>
+            {
+                long now = Interlocked.Read(ref totalUlBytes);
+                double instantMbps = (now - prevUlBytes) * 8.0 / 1_000_000.0;
+                prevUlBytes = now;
+                if (instantMbps > 0.1)
+                {
+                    lock (_ulSamples) _ulSamples.Add(instantMbps);
+                    double speed = CalcFinalSpeed(_ulSamples);
+                    Dispatcher.Invoke(() => UploadLbl.Text = $"{speed:0.0}");
+                }
+            };
+            ulSampleTimer.Start();
+
+            var ulTasks = Enumerable.Range(0, 4).Select(async _ =>
+            {
+                try
+                {
+                    using var c = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+                    c.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
+                    var data = new byte[20 * 1024 * 1024];
+                    Random.Shared.NextBytes(data);
+                    while (!ulCancel.Token.IsCancellationRequested)
+                    {
+                        try
+                        {
+                            var content = new ByteArrayContent(data);
+                            await c.PostAsync("https://httpbin.org/post", content, ulCancel.Token);
+                            Interlocked.Add(ref totalUlBytes, data.Length);
+                        }
+                        catch (OperationCanceledException) { break; }
+                        catch { break; }
+                    }
+                }
+                catch { }
+            }).ToArray();
+
+            await Task.WhenAll(ulTasks);
+            ulSampleTimer.Stop();
+            ulSampleTimer.Dispose();
+
+            _finalUploadMbps = CalcFinalSpeed(_ulSamples);
+        }
+        catch (Exception ex) { Console.WriteLine($"[UL FATAL] {ex.Message}"); }
+
+        _speedTestDone = true;
+        Dispatcher.Invoke(() =>
+        {
+            DownloadLbl.Text = _finalDownloadMbps > 0 ? $"{_finalDownloadMbps:0.0}" : "—";
+            UploadLbl.Text   = _finalUploadMbps > 0   ? $"{_finalUploadMbps:0.0}"   : "—";
+        });
+    }
+
+    private void NetTimer_Tick(object? sender, EventArgs e)
+    {
+        var (rx, tx) = GetNetworkBytes();
+        double dlNow = Math.Max(0, rx - _lastBytesReceived);
+        double ulNow = Math.Max(0, tx - _lastBytesSent);
+        _lastBytesReceived = rx;
+        _lastBytesSent = tx;
+
+        // Пока тест не закончен — показываем анимацию, после — результат теста
+        if (_speedTestDone)
+        {
+            DownloadLbl.Text = $"{_finalDownloadMbps:0.0}";
+            UploadLbl.Text   = $"{_finalUploadMbps:0.0}";
+        }
+    }
+
+    private static (long rx, long tx) GetNetworkBytes()
+    {
+        long rx = 0, tx = 0;
+        foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
+        {
+            // Только физические интерфейсы — без loopback и виртуальных
+            if (ni.OperationalStatus != OperationalStatus.Up) continue;
+            if (ni.NetworkInterfaceType == NetworkInterfaceType.Loopback) continue;
+            if (ni.NetworkInterfaceType == NetworkInterfaceType.Tunnel) continue;
+            if (ni.Description.Contains("Virtual", StringComparison.OrdinalIgnoreCase)) continue;
+            if (ni.Description.Contains("Hyper-V", StringComparison.OrdinalIgnoreCase)) continue;
+            if (ni.Description.Contains("VPN", StringComparison.OrdinalIgnoreCase)) continue;
+
+            var stats = ni.GetIPv4Statistics();
+            rx += stats.BytesReceived;
+            tx += stats.BytesSent;
+        }
+        return (rx, tx);
+    }
+
+    private static string FormatSpeed(double bytesPerSec)
+    {
+        double mbps = (bytesPerSec * 8.0) / 1_000_000.0;
+        return mbps >= 1 ? $"{mbps:0.0} Мбит/с" : $"{mbps * 1000:0} Кбит/с";
+    }
+
+    private async Task UpdatePingAsync()
+    {
+        try
+        {
+            using var ping = new System.Net.NetworkInformation.Ping();
+            long total = 0;
+            int count = 0;
+            
+            for (int i = 0; i < 5; i++)
+            {
+                try
+                {
+                    var reply = await ping.SendPingAsync("1.1.1.1", 2000);
+                    Console.WriteLine($"[Ping] attempt {i}: {reply.Status} {reply.RoundtripTime}ms");
+                    if (reply.Status == IPStatus.Success)
+                    {
+                        total += reply.RoundtripTime;
+                        count++;
+                    }
+                    await Task.Delay(200);
+                }
+                catch (Exception ex) { Console.WriteLine($"[Ping] error: {ex.Message}"); }
+            }
+
+            Dispatcher.Invoke(() =>
+            {
+                if (count == 0)
+                {
+                    PingLbl.Text = "—";
+                    PingLbl.Foreground = new SolidColorBrush(Color.FromRgb(0xf0, 0xf0, 0xf0));
+                    return;
+                }
+                
+                long avg = total / count;
+                PingLbl.Text = avg.ToString();
+                
+                bool good = avg < 100;
+                
+                // Цвет цифры
+                PingLbl.Foreground = new SolidColorBrush(good
+                    ? Color.FromRgb(0xf0, 0xf0, 0xf0)   // белый — хороший
+                    : Color.FromRgb(0xf5, 0x9e, 0x0b)); // жёлтый — высокий
+            });
+        }
+        catch (Exception ex) { Console.WriteLine($"[Ping] FATAL: {ex.Message}"); }
+    }
+
+    // Расчёт финальной скорости с компенсацией прогрева TCP
+    private static double CalcFinalSpeed(List<double> samples)
+    {
+        if (samples.Count == 0) return 0;
+        
+        // Отбрасываем первые 2 сэмпла — TCP ещё разгоняется
+        var stable = samples.Count > 2 ? samples.Skip(2).ToList() : samples;
+        if (stable.Count == 0) return 0;
+        
+        // Берём топ-20% самых высоких значений и считаем их среднее.
+        // Это убирает случайные пики вверх, но держится у реального максимума канала.
+        var sorted = stable.OrderByDescending(x => x).ToList();
+        int takeCount = Math.Max(1, (int)(sorted.Count * 0.2));
+        
+        return sorted.Take(takeCount).Average();
+    }
+
+    // Кнопка повтора сканирования
+    private async void RescanBtn_Click(object sender, RoutedEventArgs e)
+    {
+        RescanBtn.IsEnabled = false;
+
+        // Анимация вращения иконки пока идёт скан
+        var rotateAnim = new DoubleAnimation(0, 360, TimeSpan.FromSeconds(1))
+        {
+            RepeatBehavior = RepeatBehavior.Forever
+        };
+        var transform = new RotateTransform();
+        RescanBtn.RenderTransformOrigin = new System.Windows.Point(0.5, 0.5);
+        RescanBtn.RenderTransform = transform;
+        transform.BeginAnimation(RotateTransform.AngleProperty, rotateAnim);
+
+        PingLbl.Text = "…";
+        DownloadLbl.Text = "…";
+        UploadLbl.Text = "…";
+
+        await Task.Run(async () => await RunSpeedTestAsync());
+        await Task.Run(async () => await UpdatePingAsync());
+
+        // Останавливаем вращение
+        transform.BeginAnimation(RotateTransform.AngleProperty, null);
+        RescanBtn.RenderTransform = null;
+        RescanBtn.IsEnabled = true;
     }
 }
 
