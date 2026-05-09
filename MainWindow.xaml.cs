@@ -276,26 +276,34 @@ public partial class MainWindow : Window
 
     private void ShowTrayMenu()
     {
+        // Закрываем старое меню если открыто
+        foreach (Window win in System.Windows.Application.Current.Windows)
+            if (win is TrayPopup) { win.Close(); return; }
+
         var popup = new TrayPopup { Owner = this };
+
+        // Показываем за экраном чтобы WPF успел посчитать размер
+        popup.Left = -9999;
+        popup.Top  = -9999;
+        popup.Show();
+        popup.UpdateLayout();
 
         var pos    = System.Windows.Forms.Cursor.Position;
         var screen = System.Windows.Forms.Screen.FromPoint(pos);
 
-        popup.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        double popupWidth  = 200;
-        double popupHeight = 140;
+        double popupW = popup.ActualWidth;
+        double popupH = popup.ActualHeight;
 
-        double left = pos.X - popupWidth / 2;
-        double top  = screen.WorkingArea.Bottom - popupHeight - 4;
+        // Позиция: правый край у курсора, снизу над панелью задач
+        double left = pos.X - popupW;
+        double top  = screen.WorkingArea.Bottom - popupH;
 
-        if (left + popupWidth > screen.WorkingArea.Right)
-            left = screen.WorkingArea.Right - popupWidth - 4;
-        if (left < screen.WorkingArea.Left)
-            left = screen.WorkingArea.Left + 4;
+        if (left < screen.WorkingArea.Left) left = screen.WorkingArea.Left + 4;
+        if (left + popupW > screen.WorkingArea.Right) left = screen.WorkingArea.Right - popupW - 4;
+        if (top < screen.WorkingArea.Top) top = screen.WorkingArea.Top + 4;
 
         popup.Left = left;
         popup.Top  = top;
-        popup.Show();
     }
 
     private void ShowFromTray()
