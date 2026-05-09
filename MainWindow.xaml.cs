@@ -1818,7 +1818,37 @@ public partial class MainWindow : Window
 
     private void GameNavBtn_Click(object s, RoutedEventArgs e)
     {
-        // Останавливаем игру/редактор если они активны
+        // Если страница игры открыта - работаем как НАЗАД
+        if (GamePage.Visibility == Visibility.Visible)
+        {
+            // Из редактора -> в меню игры
+            if (GameEditorView.Visibility == Visibility.Visible)
+            {
+                StopEditorRecording();
+                ShowGameView(GameMenuView);
+                return;
+            }
+            
+            // Из выбора трека -> в меню игры
+            if (GameTrackSelectView.Visibility == Visibility.Visible)
+            {
+                ShowGameView(GameMenuView);
+                return;
+            }
+            
+            // Из игры -> к выбору трека
+            if (GamePlayView.Visibility == Visibility.Visible)
+            {
+                StopGame();
+                ShowGameView(GameTrackSelectView);
+                return;
+            }
+            
+            // Из меню игры -> ничего не делаем (уже на месте)
+            return;
+        }
+        
+        // Если страница игры не открыта - открываем её
         StopGame();
         StopEditorRecording();
         
@@ -1833,18 +1863,43 @@ public partial class MainWindow : Window
         FaqNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
         DiagNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
 
+        ShowGameView(GameMenuView);
         LoadUserLevels();
     }
 
     private void GameBackBtn_Click(object s, RoutedEventArgs e)
     {
-        StopGame();
-        if (_editorRecording)
+        // Из редактора -> в меню игры
+        if (GameEditorView.Visibility == Visibility.Visible)
+        {
             StopEditorRecording();
-        GamePage.Visibility = Visibility.Collapsed;
-        MainPage.Visibility = Visibility.Visible;
-        ShowGameView(GameMenuView);
-        GameNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+            ShowGameView(GameMenuView);
+            return;
+        }
+        
+        // Из выбора трека -> в меню игры
+        if (GameTrackSelectView.Visibility == Visibility.Visible)
+        {
+            ShowGameView(GameMenuView);
+            return;
+        }
+        
+        // Из игры -> к выбору трека
+        if (GamePlayView.Visibility == Visibility.Visible)
+        {
+            StopGame();
+            ShowGameView(GameTrackSelectView);
+            return;
+        }
+        
+        // Из меню игры -> на главный экран
+        if (GameMenuView.Visibility == Visibility.Visible)
+        {
+            GamePage.Visibility = Visibility.Collapsed;
+            MainPage.Visibility = Visibility.Visible;
+            GameNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+            return;
+        }
     }
 
     // ── FAQ ОБНОВЛЕННАЯ ЛОГИКА ───────────────────────────────────────────────
@@ -3861,21 +3916,10 @@ public partial class MainWindow : Window
         ShowGameView(GameTrackSelectView);
     }
 
-    private void TrackSelectBackBtn_Click(object s, RoutedEventArgs e)
-    {
-        ShowGameView(GameMenuView);
-    }
-
     private void DefaultLevelBtn_Click(object s, MouseButtonEventArgs e)
     {
         ShowGameView(GamePlayView);
         StartDefaultTrack();
-    }
-
-    private void EditorBackBtn_Click(object s, RoutedEventArgs e)
-    {
-        StopEditorRecording();
-        ShowGameView(GameMenuView);
     }
 
     private void LoadUserLevels()
