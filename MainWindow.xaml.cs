@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Net.NetworkInformation;
@@ -98,6 +99,26 @@ public partial class MainWindow : Window
     private DispatcherTimer? _longCheckTimer = null;
     private bool _checkInProgress = false;
     private bool _autoFixRunning = false;
+
+    // ── Игра: состояние ──────────────────────────────────────────────────────
+    private DispatcherTimer? _gameTimer;
+    private List<NoteEntry> _pendingNotes = new();
+    private List<NoteEntry> _activeNotes = new();
+    private int _gameScore, _gameCombo, _totalNotes, _hitNotes;
+    private Stopwatch _gameClock = new();
+    private double _currentFallSec = 1.6;
+    private double _judgeVisibleUntil = -1;
+    private readonly double[] _hitZoneFlashUntil = new double[4];
+
+    private System.Windows.Media.MediaPlayer _editorPlayer = new();
+    private List<NoteEntry> _recordedNotes = new();
+    private string? _editorMp3Path;
+    private bool _editorRecording = false;
+
+    private static readonly string LevelsDir =
+        System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "NetFix", "levels");
     
     // ── Network Monitor ──────────────────────────────────────────────────────
     private DispatcherTimer _netTimer = null!;
@@ -457,6 +478,10 @@ public partial class MainWindow : Window
     // ── Service Control Handlers ───────────────────────────────────────────────────
     private async void ServicesBtn_Click(object s, RoutedEventArgs e)
     {
+        // Останавливаем игру/редактор при открытии панели сервисов
+        StopGame();
+        StopEditorRecording();
+        
         ServicesLayer.Visibility = Visibility.Visible;
         var anim = new DoubleAnimation(50, 0, TimeSpan.FromMilliseconds(280));
         anim.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut };
@@ -1772,6 +1797,9 @@ public partial class MainWindow : Window
     // ── Nav ──────────────────────────────────────────────────────────────────
     private void DiagNavBtn_Click(object s, RoutedEventArgs e)
     {
+        // Останавливаем игру/редактор при переходе на другую вкладку
+        StopGame();
+        StopEditorRecording();
         ShowDiagnosticsTab();
     }
     
@@ -1779,11 +1807,44 @@ public partial class MainWindow : Window
     public void ShowDiagnosticsTab()
     {
         MainPage.Visibility = Visibility.Collapsed;
+        GamePage.Visibility = Visibility.Collapsed;
         FaqPage.Visibility = Visibility.Collapsed;
         SolutionPage.Visibility = Visibility.Collapsed;
         DiagPage.Visibility = Visibility.Visible;
         DiagNavBtn.Foreground = Brushes.White;
+        GameNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
         FaqNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+    }
+
+    private void GameNavBtn_Click(object s, RoutedEventArgs e)
+    {
+        // Останавливаем игру/редактор если они активны
+        StopGame();
+        StopEditorRecording();
+        
+        MainPage.Visibility = Visibility.Collapsed;
+        FaqPage.Visibility = Visibility.Collapsed;
+        DiagPage.Visibility = Visibility.Collapsed;
+        SolutionPage.Visibility = Visibility.Collapsed;
+        GamePage.Visibility = Visibility.Visible;
+
+        GameNavBtn.Foreground = Brushes.White;
+        ServicesBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+        FaqNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+        DiagNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+
+        LoadUserLevels();
+    }
+
+    private void GameBackBtn_Click(object s, RoutedEventArgs e)
+    {
+        StopGame();
+        if (_editorRecording)
+            StopEditorRecording();
+        GamePage.Visibility = Visibility.Collapsed;
+        MainPage.Visibility = Visibility.Visible;
+        ShowGameView(GameMenuView);
+        GameNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
     }
 
     // ── FAQ ОБНОВЛЕННАЯ ЛОГИКА ───────────────────────────────────────────────
@@ -1791,11 +1852,17 @@ public partial class MainWindow : Window
 
     private void FaqNavBtn_Click(object s, RoutedEventArgs e)
     {
+        // Останавливаем игру/редактор при переходе на другую вкладку
+        StopGame();
+        StopEditorRecording();
+        
         MainPage.Visibility = Visibility.Collapsed;
+        GamePage.Visibility = Visibility.Collapsed;
         DiagPage.Visibility = Visibility.Collapsed;
         SolutionPage.Visibility = Visibility.Collapsed;
         FaqPage.Visibility = Visibility.Visible;
         FaqNavBtn.Foreground = Brushes.White;
+        GameNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
         DiagNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
         ShowFaqCategories();
     }
@@ -3765,6 +3832,796 @@ public partial class MainWindow : Window
         var window = new NetFix.Views.UpdateWindow();
         window.Owner = this;
         window.ShowDialog();
+    }
+
+    // ── Игра: меню и навигация ───────────────────────────────────────────────
+    private void PlayMenuBtn_Click(object s, MouseButtonEventArgs e)
+    {
+        LoadUserLevels();
+        ShowGameView(GameTrackSelectView);
+    }
+
+    private void EditorMenuBtn_Click(object s, MouseButtonEventArgs e)
+    {
+        ShowGameView(GameEditorView);
+    }
+
+    private void ShowGameView(UIElement view)
+    {
+        GameMenuView.Visibility = Visibility.Collapsed;
+        GameTrackSelectView.Visibility = Visibility.Collapsed;
+        GamePlayView.Visibility = Visibility.Collapsed;
+        GameEditorView.Visibility = Visibility.Collapsed;
+        view.Visibility = Visibility.Visible;
+    }
+
+    private void ExitGameBtn_Click(object s, RoutedEventArgs e)
+    {
+        StopGame();
+        ShowGameView(GameTrackSelectView);
+    }
+
+    private void TrackSelectBackBtn_Click(object s, RoutedEventArgs e)
+    {
+        ShowGameView(GameMenuView);
+    }
+
+    private void DefaultLevelBtn_Click(object s, MouseButtonEventArgs e)
+    {
+        ShowGameView(GamePlayView);
+        StartDefaultTrack();
+    }
+
+    private void EditorBackBtn_Click(object s, RoutedEventArgs e)
+    {
+        StopEditorRecording();
+        ShowGameView(GameMenuView);
+    }
+
+    private void LoadUserLevels()
+    {
+        Directory.CreateDirectory(LevelsDir);
+        var levels = Directory.GetDirectories(LevelsDir)
+            .Select(d =>
+            {
+                var notesFile = System.IO.Path.Combine(d, "notes.json");
+                if (!File.Exists(notesFile)) return null;
+                try
+                {
+                    return JsonSerializer.Deserialize<NoteMap>(File.ReadAllText(notesFile));
+                }
+                catch
+                {
+                    return null;
+                }
+            })
+            .OfType<NoteMap>()
+            .ToList();
+
+        if (levels.Count == 0)
+        {
+            UserLevelsEmpty.Visibility = Visibility.Visible;
+            UserLevelsList.Visibility = Visibility.Collapsed;
+            UserLevelsList.ItemsSource = null;
+        }
+        else
+        {
+            UserLevelsEmpty.Visibility = Visibility.Collapsed;
+            UserLevelsList.Visibility = Visibility.Visible;
+            UserLevelsList.ItemsSource = levels;
+        }
+    }
+
+    // ── Игра: движок ─────────────────────────────────────────────────────────
+    private const double FALL_SEC = 1.6;
+    private const double REFERENCE_BPM = 140.0;
+    private const double HIT_PERFECT = 0.05;
+    private const double HIT_GOOD = 0.12;
+
+    private static readonly string[] ArrowChars = { "◀", "▼", "▲", "▶" };
+    private static readonly Color[] LaneColors =
+    {
+        Color.FromRgb(0xf4, 0x3f, 0x5e),
+        Color.FromRgb(0xf5, 0x9e, 0x0b),
+        Color.FromRgb(0x22, 0xc5, 0x5e),
+        Color.FromRgb(0x63, 0x66, 0xf1),
+    };
+
+    private void StartDefaultTrack()
+    {
+        var notes = new List<NoteEntry>();
+        int[] pattern = { 0, 2, 1, 3, 0, 1, 2, 3, 1, 0, 3, 2 };
+        double beatSec = 60.0 / REFERENCE_BPM;
+
+        for (int i = 0; i < 48; i++)
+            notes.Add(new NoteEntry { Time = beatSec * (i + 2), Lane = pattern[i % pattern.Length] });
+
+        StartGame(notes, null, "NetFix — Default Beat", REFERENCE_BPM);
+    }
+
+    private void StartGame(List<NoteEntry> notes, string? mp3Path, string title, double bpm)
+    {
+        StopGame();
+
+        _currentFallSec = GetFallSecondsForBpm(bpm);
+        _pendingNotes = notes
+            .Select(n => new NoteEntry { Time = n.Time, Lane = n.Lane })
+            .OrderBy(n => n.Time)
+            .ToList();
+        _activeNotes = new();
+        _gameScore = 0;
+        _gameCombo = 0;
+        _totalNotes = notes.Count;
+        _hitNotes = 0;
+
+        GameScore.Text = "0";
+        GameCombo.Text = "0x";
+        GameAccuracy.Text = "100%";
+        GameTrackTitle.Text = $"{title} · {bpm:0} BPM";
+        JudgeText.Opacity = 0;
+        _judgeVisibleUntil = -1;
+        Array.Fill(_hitZoneFlashUntil, -1);
+        RebuildGameCanvasBase();
+        Dispatcher.BeginInvoke(new Action(RebuildGameCanvasBase), DispatcherPriority.Loaded);
+
+        CountdownOverlay.Visibility = Visibility.Visible;
+        CountdownText.Text = "3";
+        int count = 3;
+        var cdTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        cdTimer.Tick += (_, _) =>
+        {
+            count--;
+            if (count > 0)
+            {
+                CountdownText.Text = count.ToString();
+                return;
+            }
+
+            cdTimer.Stop();
+            CountdownOverlay.Visibility = Visibility.Collapsed;
+
+            if (mp3Path != null)
+            {
+                _editorPlayer.Open(new Uri(mp3Path));
+                _editorPlayer.Play();
+            }
+
+            _gameClock.Restart();
+            CompositionTarget.Rendering -= GameTick;
+            CompositionTarget.Rendering += GameTick;
+            PreviewKeyDown += Game_KeyDown;
+        };
+        cdTimer.Start();
+    }
+
+    private static double GetFallSecondsForBpm(double bpm)
+    {
+        if (bpm <= 0) bpm = REFERENCE_BPM;
+        // Усиливаем влияние BPM: используем степень 1.2 вместо линейной зависимости
+        double ratio = REFERENCE_BPM / bpm;
+        double adjusted = Math.Pow(ratio, 1.2);
+        return Math.Clamp(FALL_SEC * adjusted, 0.6, 2.6);
+    }
+
+    private void RebuildGameCanvasBase()
+    {
+        double canvasH = GameCanvas.ActualHeight > 0 ? GameCanvas.ActualHeight : 500;
+        double hitY = canvasH - 70;
+        GameCanvas.Children.Clear();
+
+        // Все линии убраны для чистого вида
+
+        var triggerLabel = new TextBlock
+        {
+            Text = "PERFECT",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 10,
+            FontWeight = FontWeights.Bold,
+            Foreground = new SolidColorBrush(Color.FromArgb(120, 255, 255, 255)),
+            IsHitTestVisible = false
+        };
+        Canvas.SetLeft(triggerLabel, 96);
+        Canvas.SetTop(triggerLabel, hitY + 29);
+        GameCanvas.Children.Add(triggerLabel);
+
+        for (int i = 0; i < 4; i++)
+        {
+            var hz = new Border
+            {
+                Width = 50,
+                Height = 50,
+                CornerRadius = new CornerRadius(8),
+                BorderThickness = new Thickness(1.5),
+                BorderBrush = new SolidColorBrush(Color.FromArgb(60, LaneColors[i].R, LaneColors[i].G, LaneColors[i].B)),
+                Background = new SolidColorBrush(Color.FromArgb(20, LaneColors[i].R, LaneColors[i].G, LaneColors[i].B)),
+                Child = new TextBlock
+                {
+                    Text = ArrowChars[i],
+                    FontSize = 20,
+                    Foreground = new SolidColorBrush(LaneColors[i]),
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                }
+            };
+            Canvas.SetLeft(hz, 10 + i * 60);
+            Canvas.SetTop(hz, hitY);
+            GameCanvas.Children.Add(hz);
+        }
+    }
+
+    private void GameTick(object? s, EventArgs e)
+    {
+        double now = _gameClock.Elapsed.TotalSeconds;
+        double canvasH = GameCanvas.ActualHeight > 0 ? GameCanvas.ActualHeight : 500;
+        double hitY = canvasH - 70;
+
+        while (_pendingNotes.Count > 0 && _pendingNotes[0].Time - now <= _currentFallSec)
+        {
+            var note = _pendingNotes[0];
+            _pendingNotes.RemoveAt(0);
+
+            var arrow = new Border
+            {
+                Width = 50,
+                Height = 50,
+                CornerRadius = new CornerRadius(8),
+                BorderThickness = new Thickness(1.5),
+                BorderBrush = new SolidColorBrush(LaneColors[note.Lane]),
+                Background = new SolidColorBrush(Color.FromArgb(30, LaneColors[note.Lane].R, LaneColors[note.Lane].G, LaneColors[note.Lane].B)),
+                Tag = note,
+                Child = new TextBlock
+                {
+                    Text = ArrowChars[note.Lane],
+                    FontSize = 20,
+                    Foreground = new SolidColorBrush(LaneColors[note.Lane]),
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                }
+            };
+            Canvas.SetLeft(arrow, 10 + note.Lane * 60);
+            Canvas.SetTop(arrow, -50);
+            GameCanvas.Children.Add(arrow);
+            _activeNotes.Add(note);
+            note.Visual = arrow;
+        }
+
+        var toRemove = new List<NoteEntry>();
+        foreach (var note in _activeNotes)
+        {
+            if (note.Visual == null) continue;
+            double progress = (now - (note.Time - _currentFallSec)) / _currentFallSec;
+            double top = -50 + progress * (hitY + 50);
+            Canvas.SetTop(note.Visual, top);
+
+            if (top > canvasH + 10)
+            {
+                GameCanvas.Children.Remove(note.Visual);
+                toRemove.Add(note);
+                _gameCombo = 0;
+                ShowJudge("MISS", Colors.Gray);
+                UpdateHUD();
+            }
+        }
+        _activeNotes.RemoveAll(toRemove.Contains);
+
+        if (_judgeVisibleUntil > 0 && now >= _judgeVisibleUntil)
+        {
+            JudgeText.Opacity = 0;
+            _judgeVisibleUntil = -1;
+        }
+
+        for (int lane = 0; lane < _hitZoneFlashUntil.Length; lane++)
+        {
+            if (_hitZoneFlashUntil[lane] > 0 && now >= _hitZoneFlashUntil[lane])
+            {
+                SetHitZoneOpacity(lane, 1.0);
+                _hitZoneFlashUntil[lane] = -1;
+            }
+        }
+
+        if (_pendingNotes.Count == 0 && _activeNotes.Count == 0)
+            GameOver();
+    }
+
+    private void Game_KeyDown(object s, System.Windows.Input.KeyEventArgs e)
+    {
+        int lane = GetGameLane(e.Key);
+        if (lane < 0) return;
+        e.Handled = true;
+
+        double now = _gameClock.Elapsed.TotalSeconds;
+        NoteEntry? best = null;
+        double bestDist = double.MaxValue;
+
+        foreach (var note in _activeNotes.Where(n => n.Lane == lane && !n.Hit))
+        {
+            double dist = Math.Abs(note.Time - now);
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                best = note;
+            }
+        }
+
+        if (best == null) return;
+
+        if (bestDist <= HIT_PERFECT)
+        {
+            HitNote(best, lane, 300, "PERFECT", LaneColors[lane]);
+        }
+        else if (bestDist <= HIT_GOOD)
+        {
+            HitNote(best, lane, 100, "GOOD", Color.FromRgb(0xa1, 0xa1, 0xaa));
+        }
+        else
+        {
+            _gameCombo = 0;
+            ShowJudge("MISS", Colors.Gray);
+        }
+
+        UpdateHUD();
+    }
+
+    private void HitNote(NoteEntry note, int lane, int baseScore, string judge, Color color)
+    {
+        note.Hit = true;
+        _gameCombo++;
+        _hitNotes++;
+        _gameScore += baseScore * _gameCombo;
+        ShowJudge(judge, color);
+        FlashHitZone(lane);
+
+        if (note.Visual != null)
+            GameCanvas.Children.Remove(note.Visual);
+
+        _activeNotes.Remove(note);
+    }
+
+    private void UpdateHUD()
+    {
+        GameScore.Text = _gameScore.ToString("N0");
+        GameCombo.Text = _gameCombo + "x";
+        int acc = _totalNotes > 0 ? (int)((double)_hitNotes / _totalNotes * 100) : 100;
+        GameAccuracy.Text = acc + "%";
+    }
+
+    private void ShowJudge(string text, Color color)
+    {
+        JudgeText.Text = text;
+        JudgeText.Foreground = new SolidColorBrush(color);
+        JudgeText.Opacity = 1;
+        _judgeVisibleUntil = _gameClock.Elapsed.TotalSeconds + 0.28;
+    }
+
+    private void FlashHitZone(int lane)
+    {
+        SetHitZoneOpacity(lane, 0.45);
+        _hitZoneFlashUntil[lane] = _gameClock.Elapsed.TotalSeconds + 0.08;
+    }
+
+    private void SetHitZoneOpacity(int lane, double opacity)
+    {
+        foreach (var child in GameCanvas.Children.OfType<Border>())
+        {
+            if (Math.Abs(Canvas.GetLeft(child) - (10 + lane * 60)) < 1 && child.Tag == null)
+            {
+                child.Opacity = opacity;
+                break;
+            }
+        }
+    }
+
+    private void GameOver()
+    {
+        StopGame();
+        int acc = _totalNotes > 0 ? (int)((double)_hitNotes / _totalNotes * 100) : 100;
+        string rank = acc >= 95 ? "S" : acc >= 85 ? "A" : acc >= 70 ? "B" : "C";
+        JudgeText.Text = $"Ранг {rank}  {_gameScore:N0}";
+        JudgeText.Foreground = Brushes.White;
+        JudgeText.Opacity = 1;
+    }
+
+    private void StopGame()
+    {
+        CompositionTarget.Rendering -= GameTick;
+        _gameTimer?.Stop();
+        _gameTimer = null;
+        PreviewKeyDown -= Game_KeyDown;
+        _editorPlayer.Stop();
+        _editorPlayer.SpeedRatio = 1.0;
+        _gameClock.Stop();
+        GameCanvas.Children.Clear();
+    }
+
+    // ── Игра: пользовательские уровни ────────────────────────────────────────
+    private void UserLevelCard_Click(object s, MouseButtonEventArgs e)
+    {
+        if ((s as Border)?.Tag is not NoteMap map) return;
+        var dir = System.IO.Path.Combine(LevelsDir, map.Title ?? "level");
+        var mp3 = System.IO.Path.Combine(dir, map.TrackFile ?? "track.mp3");
+        var bpm = map.Bpm > 0 ? map.Bpm : REFERENCE_BPM;
+        ShowGameView(GamePlayView);
+        StartGame(map.Notes, File.Exists(mp3) ? mp3 : null, map.Title ?? "Custom Level", bpm);
+    }
+
+    private void PlayUserLevel_Click(object s, RoutedEventArgs e)
+    {
+        e.Handled = true; // Предотвращаем всплытие к Border
+        if ((s as Button)?.Tag is not NoteMap map) return;
+        var dir = System.IO.Path.Combine(LevelsDir, map.Title ?? "level");
+        var mp3 = System.IO.Path.Combine(dir, map.TrackFile ?? "track.mp3");
+        var bpm = map.Bpm > 0 ? map.Bpm : REFERENCE_BPM;
+        ShowGameView(GamePlayView);
+        StartGame(map.Notes, File.Exists(mp3) ? mp3 : null, map.Title ?? "Custom Level", bpm);
+    }
+
+    private void ExportUserLevel_Click(object s, RoutedEventArgs e)
+    {
+        e.Handled = true; // Предотвращаем всплытие к Border
+        if ((s as Button)?.Tag is not NoteMap map) return;
+        var dir = System.IO.Path.Combine(LevelsDir, map.Title ?? "level");
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            FileName = map.Title + "_export",
+            DefaultExt = ".zip",
+            Filter = "ZIP Archive|*.zip"
+        };
+        if (dlg.ShowDialog() != true) return;
+        ZipFile.CreateFromDirectory(dir, dlg.FileName);
+    }
+
+    private void DeleteUserLevel_Click(object s, RoutedEventArgs e)
+    {
+        e.Handled = true; // Предотвращаем всплытие к Border
+        if ((s as Button)?.Tag is not NoteMap map) return;
+        
+        ShowConfirmDialog(
+            "Удалить уровень?",
+            $"Уровень «{map.Title}» будет удалён безвозвратно.",
+            confirmed =>
+            {
+                if (!confirmed) return;
+                var dir = System.IO.Path.Combine(LevelsDir, map.Title ?? "level");
+                if (Directory.Exists(dir))
+                {
+                    Directory.Delete(dir, recursive: true);
+                    LoadUserLevels();
+                }
+            });
+    }
+    
+    private void ShowConfirmDialog(string title, string message, Action<bool> callback)
+    {
+        // Создаём оверлей
+        var overlay = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = System.Windows.VerticalAlignment.Stretch
+        };
+        
+        // Диалоговое окно
+        var dialog = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(12),
+            Padding = new Thickness(24),
+            MaxWidth = 400,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = System.Windows.VerticalAlignment.Center
+        };
+        
+        var stack = new StackPanel();
+        
+        // Заголовок
+        var titleBlock = new TextBlock
+        {
+            Text = title,
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 16,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = Brushes.White,
+            Margin = new Thickness(0, 0, 0, 12)
+        };
+        stack.Children.Add(titleBlock);
+        
+        // Сообщение
+        var messageBlock = new TextBlock
+        {
+            Text = message,
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 13,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 20)
+        };
+        stack.Children.Add(messageBlock);
+        
+        // Кнопки
+        var buttonPanel = new StackPanel
+        {
+            Orientation = System.Windows.Controls.Orientation.Horizontal,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Right
+        };
+        
+        var cancelBtn = new Button
+        {
+            Content = "Отмена",
+            Style = (Style)FindResource("OutlineBtn"),
+            Padding = new Thickness(16, 8, 16, 8),
+            Margin = new Thickness(0, 0, 8, 0)
+        };
+        cancelBtn.Click += (_, _) =>
+        {
+            ContentGrid.Children.Remove(overlay);
+            callback(false);
+        };
+        
+        var confirmBtn = new Button
+        {
+            Content = "Удалить",
+            Padding = new Thickness(16, 8, 16, 8),
+            Background = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44)),
+            Foreground = Brushes.White,
+            BorderThickness = new Thickness(0),
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 13,
+            Cursor = Cursors.Hand
+        };
+        
+        // Простой шаблон для кнопки
+        var btnTemplate = new ControlTemplate(typeof(Button));
+        var btnBorder = new FrameworkElementFactory(typeof(Border));
+        btnBorder.SetValue(Border.BackgroundProperty, new TemplateBindingExtension(Button.BackgroundProperty));
+        btnBorder.SetValue(Border.CornerRadiusProperty, new CornerRadius(8));
+        btnBorder.SetValue(Border.PaddingProperty, new TemplateBindingExtension(Button.PaddingProperty));
+        
+        var btnPresenter = new FrameworkElementFactory(typeof(ContentPresenter));
+        btnPresenter.SetValue(ContentPresenter.HorizontalAlignmentProperty, System.Windows.HorizontalAlignment.Center);
+        btnPresenter.SetValue(ContentPresenter.VerticalAlignmentProperty, System.Windows.VerticalAlignment.Center);
+        btnBorder.AppendChild(btnPresenter);
+        btnTemplate.VisualTree = btnBorder;
+        
+        var hoverTrigger = new Trigger { Property = Button.IsMouseOverProperty, Value = true };
+        hoverTrigger.Setters.Add(new Setter(Button.BackgroundProperty, 
+            new SolidColorBrush(Color.FromRgb(0xdc, 0x26, 0x26))));
+        btnTemplate.Triggers.Add(hoverTrigger);
+        
+        confirmBtn.Template = btnTemplate;
+        confirmBtn.Click += (_, _) =>
+        {
+            ContentGrid.Children.Remove(overlay);
+            callback(true);
+        };
+        
+        buttonPanel.Children.Add(cancelBtn);
+        buttonPanel.Children.Add(confirmBtn);
+        stack.Children.Add(buttonPanel);
+        
+        dialog.Child = stack;
+        overlay.Child = dialog;
+        
+        ContentGrid.Children.Add(overlay);
+        Grid.SetRowSpan(overlay, 10);
+    }
+
+    // ── Игра: редактор уровней ───────────────────────────────────────────────
+    private void EditorBrowseTrack_Click(object s, RoutedEventArgs e)
+    {
+        var dlg = new OpenFileDialog { Filter = "MP3 файлы|*.mp3|Все файлы|*.*" };
+        if (dlg.ShowDialog() != true) return;
+        _editorMp3Path = dlg.FileName;
+        EditorTrackPath.Text = System.IO.Path.GetFileName(_editorMp3Path);
+    }
+
+    private void BpmAnalyzerLink_Click(object s, RoutedEventArgs e)
+    {
+        OpenUrl("https://tunebat.com/Analyzer");
+    }
+
+    private bool TryGetEditorBpm(out double bpm)
+    {
+        var text = EditorBpmBox.Text.Trim().Replace(',', '.');
+        if (double.TryParse(
+                text,
+                System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out bpm) &&
+            bpm >= 40 &&
+            bpm <= 240)
+        {
+            return true;
+        }
+
+        bpm = REFERENCE_BPM;
+        return false;
+    }
+
+    private async void EditorStartBtn_Click(object s, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(_editorMp3Path) || !File.Exists(_editorMp3Path))
+        {
+            EditorStatusBox.Visibility = Visibility.Visible;
+            EditorStatusText.Text = "Выбери MP3 файл.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(EditorTrackTitle.Text))
+        {
+            EditorStatusBox.Visibility = Visibility.Visible;
+            EditorStatusText.Text = "Введи название трека.";
+            return;
+        }
+
+        if (!TryGetEditorBpm(out _))
+        {
+            EditorStatusBox.Visibility = Visibility.Visible;
+            EditorStatusText.Text = "Введите BPM числом от 40 до 240.";
+            return;
+        }
+
+        EditorStartBtn.IsEnabled = false;
+        EditorStatusBox.Visibility = Visibility.Visible;
+        EditorCountdownBar.Visibility = Visibility.Visible;
+        EditorResultBox.Visibility = Visibility.Collapsed;
+        EditorRecordingBox.Visibility = Visibility.Collapsed;
+
+        for (int i = 3; i > 0; i--)
+        {
+            EditorStatusText.Text = $"Запись начнётся через {i}...";
+            EditorCountdownBar.Value = 3 - i + 1;
+            await Task.Delay(1000);
+        }
+
+        EditorStatusBox.Visibility = Visibility.Collapsed;
+        EditorRecordingBox.Visibility = Visibility.Visible;
+        EditorNoteCount.Text = "0 нот записано";
+
+        _recordedNotes = new();
+        _editorRecording = true;
+        _gameClock.Restart();
+
+        _editorPlayer.Open(new Uri(_editorMp3Path));
+        _editorPlayer.Play();
+        _editorPlayer.MediaEnded += EditorPlayer_Ended;
+
+        EditorStopBtn.Visibility = Visibility.Visible;
+        PreviewKeyDown += Editor_KeyDown;
+    }
+
+    private void Editor_KeyDown(object s, System.Windows.Input.KeyEventArgs e)
+    {
+        if (!_editorRecording) return;
+        int lane = GetGameLane(e.Key);
+        if (lane < 0) return;
+        e.Handled = true;
+
+        _recordedNotes.Add(new NoteEntry
+        {
+            Time = _gameClock.Elapsed.TotalSeconds,
+            Lane = lane,
+        });
+        
+        // Обновляем счётчик
+        EditorNoteCount.Text = $"{_recordedNotes.Count} нот записано";
+        
+        // Подсвечиваем клавишу
+        Border? keyBorder = lane switch
+        {
+            0 => EditorKeyA,
+            1 => EditorKeyS,
+            2 => EditorKeyK,
+            3 => EditorKeyL,
+            _ => null
+        };
+        
+        if (keyBorder != null)
+        {
+            var originalBg = keyBorder.Background;
+            var flashColor = LaneColors[lane];
+            keyBorder.Background = new SolidColorBrush(Color.FromArgb(80, flashColor.R, flashColor.G, flashColor.B));
+            
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
+            timer.Tick += (_, _) =>
+            {
+                keyBorder.Background = originalBg;
+                timer.Stop();
+            };
+            timer.Start();
+        }
+    }
+
+    private static int GetGameLane(Key key) => key switch
+    {
+        Key.A or Key.Left => 0,
+        Key.S or Key.Down => 1,
+        Key.W or Key.Up => 2,
+        Key.D or Key.Right => 3,
+        _ => -1
+    };
+
+    private void EditorPlayer_Ended(object? s, EventArgs e)
+    {
+        Dispatcher.BeginInvoke(new Action(StopEditorRecording));
+    }
+
+    private void EditorStopBtn_Click(object s, RoutedEventArgs e) => StopEditorRecording();
+
+    private void StopEditorRecording()
+    {
+        if (!_editorRecording && _editorPlayer.Source == null) return;
+
+        _editorRecording = false;
+        _editorPlayer.Stop();
+        _editorPlayer.MediaEnded -= EditorPlayer_Ended;
+        PreviewKeyDown -= Editor_KeyDown;
+        _gameClock.Stop();
+
+        EditorStopBtn.Visibility = Visibility.Collapsed;
+        EditorRecordingBox.Visibility = Visibility.Collapsed;
+
+        if (_recordedNotes.Count == 0)
+        {
+            EditorStatusBox.Visibility = Visibility.Visible;
+            EditorStatusText.Text = "Нот не записано. Попробуй ещё раз.";
+            EditorStartBtn.IsEnabled = true;
+            return;
+        }
+
+        EditorResultBox.Visibility = Visibility.Visible;
+        EditorResultText.Text = $"Записано {_recordedNotes.Count} нот. Готово к сохранению!";
+        EditorStartBtn.IsEnabled = true;
+    }
+
+    private void EditorSaveBtn_Click(object s, RoutedEventArgs e)
+    {
+        var title = EditorTrackTitle.Text.Trim();
+        if (!TryGetEditorBpm(out var bpm))
+        {
+            EditorStatusBox.Visibility = Visibility.Visible;
+            EditorStatusText.Text = "Введите BPM числом от 40 до 240.";
+            return;
+        }
+
+        var dir = System.IO.Path.Combine(LevelsDir, title);
+        Directory.CreateDirectory(dir);
+
+        var destMp3 = System.IO.Path.Combine(dir, "track.mp3");
+        File.Copy(_editorMp3Path!, destMp3, overwrite: true);
+
+        var map = new NoteMap
+        {
+            Title = title,
+            TrackFile = "track.mp3",
+            Bpm = bpm,
+            Notes = _recordedNotes,
+        };
+
+        File.WriteAllText(
+            System.IO.Path.Combine(dir, "notes.json"),
+            JsonSerializer.Serialize(map, new JsonSerializerOptions { WriteIndented = true }));
+
+        EditorStatusText.Text = $"Уровень «{title}» сохранён!";
+        LoadUserLevels();
+    }
+
+    private void EditorExportBtn_Click(object s, RoutedEventArgs e)
+    {
+        var title = EditorTrackTitle.Text.Trim();
+        var dir = System.IO.Path.Combine(LevelsDir, title);
+        if (!Directory.Exists(dir))
+            EditorSaveBtn_Click(s, new RoutedEventArgs());
+
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            FileName = title + "_export",
+            DefaultExt = ".zip",
+            Filter = "ZIP Archive|*.zip"
+        };
+        if (dlg.ShowDialog() != true) return;
+        ZipFile.CreateFromDirectory(dir, dlg.FileName);
     }
 
     private async void CheckForUpdatesBackgroundAsync()
