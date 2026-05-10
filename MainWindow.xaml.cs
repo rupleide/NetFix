@@ -4189,6 +4189,18 @@ public partial class MainWindow : Window
     private const double HIT_PERFECT = 0.05;
     private const double HIT_GOOD = 0.12;
 
+    // Константы размеров игрового поля
+    private const double LANE_WIDTH = 50;
+    private const double LANE_SPACING = 60;
+    private const double LANE_OFFSET = 85;  // (400 - 240) / 2 + 10 = 85 для центрирования дорожек
+    private const double CANVAS_WIDTH = 400;
+    private const double NOTE_SIZE = 50;
+    private const double ARROW_FONT_SIZE = 20;
+
+    // Вспомогательная функция для получения X координаты дорожки
+    private static double GetLaneLeft(int lane) => LANE_OFFSET + lane * LANE_SPACING;
+    private static double GetLaneCenterX(int lane) => GetLaneLeft(lane) + (LANE_WIDTH / 2);
+
     private static readonly string[] ArrowChars = { "◀", "▼", "▲", "▶" };
     private static readonly Color[] LaneColors =
     {
@@ -4685,7 +4697,7 @@ public partial class MainWindow : Window
             // Вертикальная полоса дорожки
             var laneStrip = new System.Windows.Shapes.Rectangle
             {
-                Width = 50,
+                Width = LANE_WIDTH,
                 Height = canvasH,
                 IsHitTestVisible = false
             };
@@ -4697,7 +4709,7 @@ public partial class MainWindow : Window
                     new GradientStop(Color.FromArgb(8, LaneColors[i].R, LaneColors[i].G, LaneColors[i].B), 1),
                 },
                 new System.Windows.Point(0, 0), new System.Windows.Point(0, 1));
-            Canvas.SetLeft(laneStrip, 10 + i * 60);
+            Canvas.SetLeft(laneStrip, GetLaneLeft(i));
             Canvas.SetTop(laneStrip, 0);
             GameCanvas.Children.Add(laneStrip);
 
@@ -4709,7 +4721,7 @@ public partial class MainWindow : Window
                 Fill = new SolidColorBrush(Color.FromArgb(25, LaneColors[i].R, LaneColors[i].G, LaneColors[i].B)),
                 IsHitTestVisible = false
             };
-            Canvas.SetLeft(laneBorder, 10 + i * 60);
+            Canvas.SetLeft(laneBorder, GetLaneLeft(i));
             Canvas.SetTop(laneBorder, 0);
             GameCanvas.Children.Add(laneBorder);
         }
@@ -4717,7 +4729,7 @@ public partial class MainWindow : Window
         // Горизонтальная линия хит-зоны
         var hitLine = new System.Windows.Shapes.Rectangle
         {
-            Width = 240,
+            Width = CANVAS_WIDTH,
             Height = 2,
             IsHitTestVisible = false
         };
@@ -4738,8 +4750,8 @@ public partial class MainWindow : Window
         {
             var hz = new Border
             {
-                Width = 50,
-                Height = 50,
+                Width = NOTE_SIZE,
+                Height = NOTE_SIZE,
                 CornerRadius = new CornerRadius(8),
                 BorderThickness = new Thickness(1.5),
                 BorderBrush = new SolidColorBrush(Color.FromArgb(80, LaneColors[i].R, LaneColors[i].G, LaneColors[i].B)),
@@ -4747,7 +4759,7 @@ public partial class MainWindow : Window
                 Child = new TextBlock
                 {
                     Text = ArrowChars[i],
-                    FontSize = 20,
+                    FontSize = ARROW_FONT_SIZE,
                     Foreground = new SolidColorBrush(Color.FromArgb(180, LaneColors[i].R, LaneColors[i].G, LaneColors[i].B)),
                     HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Center,
@@ -4760,7 +4772,7 @@ public partial class MainWindow : Window
                     Opacity = 0.3
                 }
             };
-            Canvas.SetLeft(hz, 10 + i * 60);
+            Canvas.SetLeft(hz, GetLaneLeft(i));
             Canvas.SetTop(hz, hitY);
             GameCanvas.Children.Add(hz);
         }
@@ -4788,7 +4800,7 @@ public partial class MainWindow : Window
 
             var arrow = new Border
             {
-                Width = 50, Height = 50,
+                Width = NOTE_SIZE, Height = NOTE_SIZE,
                 CornerRadius = new CornerRadius(8),
                 BorderThickness = new Thickness(1.5),
                 // Используем кэшированные кисти — не создаём новые каждый раз
@@ -4797,14 +4809,14 @@ public partial class MainWindow : Window
                 Tag = note,
                 Child = new TextBlock
                 {
-                    Text = ArrowChars[note.Lane], FontSize = 20,
+                    Text = ArrowChars[note.Lane], FontSize = ARROW_FONT_SIZE,
                     Foreground = _laneBrushes[note.Lane],
                     HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Center,
                 },
                 Effect = effect
             };
-            Canvas.SetLeft(arrow, 10 + note.Lane * 60);
+            Canvas.SetLeft(arrow, GetLaneLeft(note.Lane));
             Canvas.SetTop(arrow, -50);
             GameCanvas.Children.Add(arrow);
             _activeNotes.Add(note);
@@ -5440,8 +5452,8 @@ public partial class MainWindow : Window
     {
         double canvasH = GameCanvas.ActualHeight > 0 ? GameCanvas.ActualHeight : 500;
         double hitY = canvasH - 70;
-        double centerX = 10 + lane * 60 + 25;
-        double centerY = hitY + 25;
+        double centerX = GetLaneCenterX(lane);
+        double centerY = hitY + (NOTE_SIZE / 2);
 
         // 1. Вспышка-круг
         var flash = new Ellipse
@@ -5570,7 +5582,7 @@ public partial class MainWindow : Window
     {
         foreach (var child in GameCanvas.Children.OfType<Border>())
         {
-            if (Math.Abs(Canvas.GetLeft(child) - (10 + lane * 60)) < 1 && child.Tag == null)
+            if (Math.Abs(Canvas.GetLeft(child) - GetLaneLeft(lane)) < 1 && child.Tag == null)
             {
                 child.Opacity = opacity;
                 break;
