@@ -27,4 +27,7 @@ public class NoteEntry
 
     [JsonIgnore]
     public Border? Visual { get; set; }
+
+    [JsonIgnore]
+    public System.Windows.Media.Effects.DropShadowEffect? Effect { get; set; }
 }

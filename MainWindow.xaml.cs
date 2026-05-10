@@ -115,6 +115,28 @@ public partial class MainWindow : Window
     private DispatcherTimer? _auroraGameTimer;
     private int _lastComboAuraLevel = 0; // 0=нет, 1=x5, 2=x10, 3=x20+
 
+    private bool _halfwayTriggered = false;
+    private bool _dangerModeActive = false;
+    private DispatcherTimer? _dangerPulseTimer;
+    private int _perfectStreak = 0; // подряд PERFECT
+
+    // Перформанс: очередь эффектов вне GameTick
+    private readonly System.Collections.Concurrent.ConcurrentQueue<Action> _effectQueue = new();
+    private DispatcherTimer? _effectTimer;
+
+    // Перформанс: кэшируем кисти чтобы не создавать каждый кадр
+    private readonly SolidColorBrush[] _laneBrushes = LaneColors
+        .Select(c => new SolidColorBrush(c)).ToArray();
+    private readonly LinearGradientBrush[] _noteGradients = LaneColors
+        .Select(c => new LinearGradientBrush(
+            Color.FromArgb(80, c.R, c.G, c.B),
+            Color.FromArgb(20, c.R, c.G, c.B), 90))
+        .ToArray();
+
+    // Визуал: таймер для звёздочек
+    private DispatcherTimer? _starTimer;
+    private int _starBurst = 0; // сколько ещё burst-итераций осталось
+
     private System.Windows.Media.MediaPlayer _editorPlayer = new();
     private List<NoteEntry> _recordedNotes = new();
     private string? _editorMp3Path;
@@ -4030,6 +4052,18 @@ public partial class MainWindow : Window
             CompositionTarget.Rendering += GameTick;
             PreviewKeyDown += Game_KeyDown;
         };
+
+        // Запускаем диспетчер эффектов отдельно от GameTick
+        _effectTimer?.Stop();
+        _effectTimer = new DispatcherTimer(DispatcherPriority.Background)
+            { Interval = TimeSpan.FromMilliseconds(16) };
+        _effectTimer.Tick += (_, _) => {
+            // Выполняем до 3 эффектов за тик чтобы не копились
+            for (int i = 0; i < 3 && _effectQueue.TryDequeue(out var action); i++)
+                action();
+        };
+        _effectTimer.Start();
+
         cdTimer.Start();
     }
 
@@ -4141,46 +4175,47 @@ public partial class MainWindow : Window
         double canvasH = GameCanvas.ActualHeight > 0 ? GameCanvas.ActualHeight : 500;
         double hitY = canvasH - 70;
 
+        // Спавн новых нот — используем кэшированные кисти
         while (_pendingNotes.Count > 0 && _pendingNotes[0].Time - now <= _currentFallSec)
         {
             var note = _pendingNotes[0];
             _pendingNotes.RemoveAt(0);
 
+            var effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = LaneColors[note.Lane],
+                BlurRadius = 12,
+                ShadowDepth = 0,
+                Opacity = 0.6
+            };
+
             var arrow = new Border
             {
-                Width = 50,
-                Height = 50,
+                Width = 50, Height = 50,
                 CornerRadius = new CornerRadius(8),
                 BorderThickness = new Thickness(1.5),
-                BorderBrush = new SolidColorBrush(LaneColors[note.Lane]),
-                Background = new LinearGradientBrush(
-                    Color.FromArgb(80, LaneColors[note.Lane].R, LaneColors[note.Lane].G, LaneColors[note.Lane].B),
-                    Color.FromArgb(20, LaneColors[note.Lane].R, LaneColors[note.Lane].G, LaneColors[note.Lane].B),
-                    90),
+                // Используем кэшированные кисти — не создаём новые каждый раз
+                BorderBrush = _laneBrushes[note.Lane],
+                Background = _noteGradients[note.Lane],
                 Tag = note,
                 Child = new TextBlock
                 {
-                    Text = ArrowChars[note.Lane],
-                    FontSize = 20,
-                    Foreground = new SolidColorBrush(LaneColors[note.Lane]),
+                    Text = ArrowChars[note.Lane], FontSize = 20,
+                    Foreground = _laneBrushes[note.Lane],
                     HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Center,
                 },
-                Effect = new System.Windows.Media.Effects.DropShadowEffect
-                {
-                    Color = LaneColors[note.Lane],
-                    BlurRadius = 12,
-                    ShadowDepth = 0,
-                    Opacity = 0.6
-                }
+                Effect = effect
             };
             Canvas.SetLeft(arrow, 10 + note.Lane * 60);
             Canvas.SetTop(arrow, -50);
             GameCanvas.Children.Add(arrow);
             _activeNotes.Add(note);
             note.Visual = arrow;
+            note.Effect = effect; // сохраняем ссылку на эффект в NoteEntry
         }
 
+        // Обновляем позиции — никаких new объектов
         var toRemove = new List<NoteEntry>();
         foreach (var note in _activeNotes)
         {
@@ -4189,13 +4224,13 @@ public partial class MainWindow : Window
             double top = -50 + progress * (hitY + 50);
             Canvas.SetTop(note.Visual, top);
 
-            // Усиливаем свечение при приближении к хит-зоне
+            // Свечение при приближении — обновляем существующий effect
             double distToHit = Math.Abs(top - hitY);
-            if (distToHit < 90 && note.Visual.Effect is System.Windows.Media.Effects.DropShadowEffect dse)
+            if (distToHit < 90 && note.Effect != null)
             {
                 double proximity = 1.0 - (distToHit / 90.0);
-                dse.BlurRadius = 12 + proximity * 22;
-                dse.Opacity = 0.6 + proximity * 0.35;
+                note.Effect.BlurRadius = 12 + proximity * 22;
+                note.Effect.Opacity = 0.6 + proximity * 0.35;
             }
 
             if (top > canvasH + 10)
@@ -4206,10 +4241,10 @@ public partial class MainWindow : Window
                 _missCount++;
                 _consecutiveMisses++;
                 ShowJudge("MISS", Colors.Gray);
-                UpdateComboAura();
+                // Эффекты в очередь — не в game loop
+                _effectQueue.Enqueue(() => UpdateComboAura());
                 UpdateHUD();
 
-                // Проигрыш: 10 промахов всего или 10 подряд
                 if ((_missCount >= 10 || _consecutiveMisses >= 10) && !_gameOverTriggered)
                 {
                     _gameOverTriggered = true;
@@ -4218,14 +4253,16 @@ public partial class MainWindow : Window
                 }
             }
         }
-        _activeNotes.RemoveAll(toRemove.Contains);
+        foreach (var n in toRemove) _activeNotes.Remove(n);
 
+        // Judge fade — просто Opacity, без аллокаций
         if (_judgeVisibleUntil > 0 && now >= _judgeVisibleUntil)
         {
             JudgeText.Opacity = 0;
             _judgeVisibleUntil = -1;
         }
 
+        // HitZone restore
         for (int lane = 0; lane < _hitZoneFlashUntil.Length; lane++)
         {
             if (_hitZoneFlashUntil[lane] > 0 && now >= _hitZoneFlashUntil[lane])
@@ -4285,10 +4322,35 @@ public partial class MainWindow : Window
         _hitNotes++;
         _consecutiveMisses = 0;
         _gameScore += baseScore * _gameCombo;
+
+        // Считаем серию PERFECT
+        if (judge == "PERFECT")
+        {
+            _perfectStreak++;
+            // Каждые 10 PERFECT подряд — спецэффект
+            if (_perfectStreak > 0 && _perfectStreak % 10 == 0)
+            {
+                _effectQueue.Enqueue(() =>
+                    SpawnMilestoneAnnounce($"PERFECT ×{_perfectStreak}! ✨",
+                        Color.FromRgb(0xff, 0xd7, 0x00)));
+            }
+        }
+        else
+        {
+            _perfectStreak = 0;
+        }
+
         ShowJudge(judge, color);
         FlashHitZone(lane);
-        SpawnHitEffect(lane, judge);
-        UpdateComboAura();
+
+        // Тяжёлые эффекты — в очередь, не блокируем GameTick
+        int capturedLane = lane;
+        string capturedJudge = judge;
+        _effectQueue.Enqueue(() =>
+        {
+            SpawnHitEffect(capturedLane, capturedJudge);
+            UpdateComboAura();
+        });
 
         if (note.Visual != null)
             GameCanvas.Children.Remove(note.Visual);
@@ -4322,105 +4384,403 @@ public partial class MainWindow : Window
                     EasingFunction = new ElasticEase { EasingMode = EasingMode.EaseOut, Oscillations = 1, Springiness = 4 }
                 });
         }
+
+        // Проверяем игровые события
+        CheckGameEvents();
     }
 
     private void UpdateComboAura()
     {
-        int newLevel = _gameCombo >= 20 ? 3 : _gameCombo >= 10 ? 2 : _gameCombo >= 5 ? 1 : 0;
+        // Уровень каждые 7-8 комбо (округляем), максимум 15 уровней (до комбо ~112)
+        int newLevel = Math.Min(15, (_gameCombo + 3) / 7);
         if (newLevel == _lastComboAuraLevel) return;
         _lastComboAuraLevel = newLevel;
 
-        // Убираем старую ауру
-        var oldAuras = GamePlayView.Children.OfType<System.Windows.Shapes.Rectangle>()
+        // Плавный fade-out старых
+        var oldAuras = GamePlayView.Children
+            .OfType<System.Windows.Shapes.Rectangle>()
             .Where(r => r.Tag?.ToString() == "combo_aura").ToList();
-        foreach (var a in oldAuras) GamePlayView.Children.Remove(a);
         _auroraGameTimer?.Stop();
+        foreach (var old in oldAuras)
+        {
+            var fo = new DoubleAnimation(old.Opacity, 0, TimeSpan.FromMilliseconds(500))
+                { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+            fo.Completed += (_, _) => GamePlayView.Children.Remove(old);
+            old.BeginAnimation(UIElement.OpacityProperty, fo);
+        }
 
         if (newLevel == 0) return;
 
-        // Цвета ауры по уровню комбо
-        Color[] auraColors = {
-            Color.FromRgb(0x63, 0x66, 0xf1), // x5 — индиго
-            Color.FromRgb(0xf5, 0x9e, 0x0b), // x10 — золото
-            Color.FromRgb(0xf4, 0x3f, 0x5e), // x20 — красный/розовый
+        // ── Таблица уровней ─────────────────────────────────────────────
+        var levels = new (Color main, Color? accent, string announce, byte alpha)[]
+        {
+            // 1  x7-8   — холодный синий
+            (Color.FromRgb(0x38, 0xbf, 0xf8), null, "COMBO ×7", 60),
+            // 2  x14-15 — индиго
+            (Color.FromRgb(0x63, 0x66, 0xf1), null, "COMBO ×15!", 70),
+            // 3  x21-22 — мятный
+            (Color.FromRgb(0x10, 0xb9, 0x81), null, "COMBO ×22!", 75),
+            // 4  x28-30 — золотой, первые звёздочки
+            (Color.FromRgb(0xf5, 0x9e, 0x0b), null, "COMBO ×30! ⚡", 80),
+            // 5  x35-37 — оранжевый
+            (Color.FromRgb(0xf9, 0x73, 0x16), null, "COMBO ×37! 🔥", 85),
+            // 6  x42-45 — красно-розовый
+            (Color.FromRgb(0xf4, 0x3f, 0x5e), null, "COMBO ×45! 💥", 90),
+            // 7  x49-52 — алый
+            (Color.FromRgb(0xef, 0x44, 0x44), null, "COMBO ×52!", 95),
+            // 8  x56-60 — пурпурный
+            (Color.FromRgb(0xa8, 0x55, 0xf7), null, "COMBO ×60!", 100),
+            // 9  x63-67 — неоново-розовый
+            (Color.FromRgb(0xec, 0x4e, 0xff), null, "COMBO ×67! 🌸", 105),
+            // 10 x70-75 — двухцветный: розовый + синий акцент
+            (Color.FromRgb(0xff, 0x6b, 0xb5), Color.FromRgb(0x38, 0xbf, 0xf8), "COMBO ×75! 🌈", 110),
+            // 11 x77-82 — белое золото
+            (Color.FromRgb(0xff, 0xeb, 0x3b), Color.FromRgb(0xff, 0xa0, 0x00), "COMBO ×82! 👑", 115),
+            // 12 x84-90 — ультрафиолет
+            (Color.FromRgb(0x7c, 0x3a, 0xed), Color.FromRgb(0xec, 0x4e, 0xff), "COMBO ×90! ⚡💜", 120),
+            // 13 x91-97 — огненный градиент
+            (Color.FromRgb(0xff, 0x45, 0x00), Color.FromRgb(0xff, 0xd7, 0x00), "COMBO ×97! 🔥👑", 125),
+            // 14 x98-105 — ледяной cyan
+            (Color.FromRgb(0x00, 0xff, 0xff), Color.FromRgb(0x00, 0x80, 0xff), "COMBO ×105! ❄️", 130),
+            // 15 x106-112+ — RAINBOW
+            (Color.FromRgb(0xff, 0xff, 0xff), Color.FromRgb(0xff, 0x6b, 0xb5), "MAX COMBO!! 🌟✨🔥", 140),
         };
-        Color auraColor = auraColors[newLevel - 1];
-        byte alpha = (byte)(newLevel == 3 ? 80 : newLevel == 2 ? 60 : 40);
 
-        // Слой 1: нижнее свечение (как на главном экране)
-        var aura1 = new System.Windows.Shapes.Rectangle
+        var (mainColor, accentColor, announceText, alpha) = levels[newLevel - 1];
+        Color c = mainColor;
+
+        // Создаём виньетку (как danger mode, но цветную)
+        var vignette = new System.Windows.Shapes.Rectangle
         {
             Tag = "combo_aura",
-            IsHitTestVisible = false
-        };
-        aura1.Fill = new RadialGradientBrush(new GradientStopCollection
-        {
-            new GradientStop(Color.FromArgb(alpha, auraColor.R, auraColor.G, auraColor.B), 0),
-            new GradientStop(Color.FromArgb((byte)(alpha / 2), auraColor.R, auraColor.G, auraColor.B), 0.4),
-            new GradientStop(Color.FromArgb(0, auraColor.R, auraColor.G, auraColor.B), 1),
-        })
-        {
-            Center = new System.Windows.Point(0.5, 1.0),
-            GradientOrigin = new System.Windows.Point(0.5, 1.0),
-            RadiusX = 0.6, RadiusY = 0.5
+            IsHitTestVisible = false,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Opacity = 0
         };
 
-        // Слой 2: верхнее свечение
-        var aura2 = new System.Windows.Shapes.Rectangle
+        // Виньетка — цветная по краям, прозрачная в центре
+        // Для высоких уровней (10+) добавляем акцентный цвет в центре
+        var stops = new GradientStopCollection();
+        
+        if (newLevel >= 10 && accentColor.HasValue)
         {
-            Tag = "combo_aura",
-            IsHitTestVisible = false
-        };
-        aura2.Fill = new RadialGradientBrush(new GradientStopCollection
+            // Двухцветная виньетка: акцент в центре, основной по краям
+            stops.Add(new GradientStop(Color.FromArgb((byte)(alpha * 0.15), accentColor.Value.R, accentColor.Value.G, accentColor.Value.B), 0.00));
+            stops.Add(new GradientStop(Color.FromArgb((byte)(alpha * 0.08), accentColor.Value.R, accentColor.Value.G, accentColor.Value.B), 0.35));
+            stops.Add(new GradientStop(Color.FromArgb(0, c.R, c.G, c.B), 0.45));
+            stops.Add(new GradientStop(Color.FromArgb((byte)(alpha * 0.25), c.R, c.G, c.B), 0.60));
+            stops.Add(new GradientStop(Color.FromArgb((byte)(alpha * 0.50), c.R, c.G, c.B), 0.75));
+            stops.Add(new GradientStop(Color.FromArgb((byte)(alpha * 0.75), c.R, c.G, c.B), 0.88));
+            stops.Add(new GradientStop(Color.FromArgb(alpha, c.R, c.G, c.B), 1.00));
+        }
+        else
         {
-            new GradientStop(Color.FromArgb((byte)(alpha / 2), auraColor.R, auraColor.G, auraColor.B), 0),
-            new GradientStop(Color.FromArgb(0, auraColor.R, auraColor.G, auraColor.B), 1),
-        })
+            // Обычная виньетка: прозрачный центр, цвет по краям
+            stops.Add(new GradientStop(Color.FromArgb(0, c.R, c.G, c.B), 0.00));
+            stops.Add(new GradientStop(Color.FromArgb(0, c.R, c.G, c.B), 0.45));
+            stops.Add(new GradientStop(Color.FromArgb((byte)(alpha * 0.20), c.R, c.G, c.B), 0.60));
+            stops.Add(new GradientStop(Color.FromArgb((byte)(alpha * 0.45), c.R, c.G, c.B), 0.75));
+            stops.Add(new GradientStop(Color.FromArgb((byte)(alpha * 0.70), c.R, c.G, c.B), 0.88));
+            stops.Add(new GradientStop(Color.FromArgb(alpha, c.R, c.G, c.B), 1.00));
+        }
+
+        vignette.Fill = new RadialGradientBrush(stops)
         {
-            Center = new System.Windows.Point(0.5, 0.0),
-            GradientOrigin = new System.Windows.Point(0.5, 0.0),
-            RadiusX = 0.5, RadiusY = 0.35
+            ColorInterpolationMode = ColorInterpolationMode.ScRgbLinearInterpolation,
+            Center = new System.Windows.Point(0.5, 0.5),
+            GradientOrigin = new System.Windows.Point(0.5, 0.5),
+            RadiusX = 0.85, RadiusY = 0.85
         };
 
-        GamePlayView.Children.Insert(0, aura1);
-        GamePlayView.Children.Insert(0, aura2);
+        GamePlayView.Children.Add(vignette);
 
-        // Анимация пульсации ауры
-        double _auraPulse = 0;
-        _auroraGameTimer = new DispatcherTimer(DispatcherPriority.Render)
-            { Interval = TimeSpan.FromMilliseconds(33) };
+        // Fade-in виньетки
+        vignette.BeginAnimation(UIElement.OpacityProperty,
+            new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(600))
+            { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
+
+        // Пульсация — скорость и амплитуда растут с уровнем
+        double pulse = 0;
+        double speed = 0.025 + newLevel * 0.010;
+        double ampli = 0.15 + newLevel * 0.010; // max ~0.30
+
+        _auroraGameTimer = new DispatcherTimer(DispatcherPriority.Background)
+            { Interval = TimeSpan.FromMilliseconds(40) };
         _auroraGameTimer.Tick += (_, _) =>
         {
-            _auraPulse += 0.04;
-            double pulse = 0.85 + Math.Sin(_auraPulse) * 0.15;
-            byte a1 = (byte)(alpha * pulse);
-            byte a2 = (byte)(alpha / 2 * pulse);
-
-            if (aura1.Fill is RadialGradientBrush b1 && b1.GradientStops.Count >= 2)
-            {
-                var c = b1.GradientStops[0].Color;
-                b1.GradientStops[0].Color = Color.FromArgb(a1, c.R, c.G, c.B);
-            }
-            if (aura2.Fill is RadialGradientBrush b2 && b2.GradientStops.Count >= 1)
-            {
-                var c = b2.GradientStops[0].Color;
-                b2.GradientStops[0].Color = Color.FromArgb(a2, c.R, c.G, c.B);
-            }
+            pulse += speed;
+            double p = 1.0 - ampli + Math.Sin(pulse) * ampli;
+            vignette.Opacity = p;
         };
         _auroraGameTimer.Start();
 
-        // Всплывающее уведомление о комбо
-        SpawnComboAnnounce(newLevel, auraColor);
+        // Звёздочки с уровня 4+
+        if (newLevel >= 4) StartStarBurst(c, Math.Min(newLevel - 3, 4));
+
+        // Анонс
+        SpawnComboAnnounce(newLevel, c, announceText);
     }
 
-    private void SpawnComboAnnounce(int level, Color color)
+    private void StartStarBurst(Color color, int level)
     {
-        string[] texts = { "COMBO ×5! 🔥", "COMBO ×10! ⚡", "COMBO ×20! 💥" };
+        _starTimer?.Stop();
+        _starBurst = level >= 3 ? 12 : 8; // сколько волн частиц
+
+        var rng = new Random();
+        _starTimer = new DispatcherTimer(DispatcherPriority.Background)
+            { Interval = TimeSpan.FromMilliseconds(level >= 3 ? 120 : 180) };
+
+        _starTimer.Tick += (_, _) =>
+        {
+            if (_starBurst <= 0 || _lastComboAuraLevel < 2)
+            {
+                _starTimer?.Stop();
+                return;
+            }
+            _starBurst--;
+
+            // Спавним 3–6 звёздочек за тик
+            int count = level >= 3 ? 6 : 3;
+            for (int i = 0; i < count; i++)
+            {
+                double startX = rng.NextDouble() * GamePlayView.ActualWidth;
+                double startY = GamePlayView.ActualHeight + 10;
+                double endX   = startX + rng.Next(-120, 120);
+                double endY   = rng.Next(20, (int)(GamePlayView.ActualHeight * 0.6));
+                double size   = rng.Next(6, level >= 3 ? 18 : 14);
+                double dur    = 600 + rng.Next(0, 400);
+
+                var star = new TextBlock
+                {
+                    Text = rng.Next(3) switch { 0 => "★", 1 => "✦", _ => "✧" },
+                    FontSize = size,
+                    Foreground = new SolidColorBrush(Color.FromArgb(
+                        (byte)rng.Next(180, 255), color.R, color.G, color.B)),
+                    IsHitTestVisible = false,
+                    RenderTransformOrigin = new System.Windows.Point(0.5, 0.5),
+                    RenderTransform = new TransformGroup
+                    {
+                        Children =
+                        {
+                            new TranslateTransform(),
+                            new RotateTransform(),
+                            new ScaleTransform(0.3, 0.3)
+                        }
+                    },
+                    Effect = new System.Windows.Media.Effects.DropShadowEffect
+                    {
+                        Color = color, BlurRadius = 10, ShadowDepth = 0, Opacity = 0.8
+                    }
+                };
+
+                Canvas.SetLeft(star, startX);
+                Canvas.SetTop(star, startY);
+
+                // Используем Canvas внутри GamePlayView — добавляем через отдельный canvas
+                GamePlayView.Children.Add(star);
+
+                var tg = (TransformGroup)star.RenderTransform;
+                var translate = (TranslateTransform)tg.Children[0];
+                var rotate    = (RotateTransform)tg.Children[1];
+                var scale     = (ScaleTransform)tg.Children[2];
+
+                // Движение вверх
+                var moveX = new DoubleAnimation(0, endX - startX,
+                    TimeSpan.FromMilliseconds(dur))
+                    { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+                var moveY = new DoubleAnimation(0, endY - startY,
+                    TimeSpan.FromMilliseconds(dur))
+                    { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+
+                // Вращение
+                var spin = new DoubleAnimation(0, rng.Next(180, 540),
+                    TimeSpan.FromMilliseconds(dur));
+
+                // Масштаб — вырастает и уменьшается
+                var scaleUp = new DoubleAnimation(0.3, 1.2,
+                    TimeSpan.FromMilliseconds(dur * 0.4));
+                var scaleDown = new DoubleAnimation(1.2, 0,
+                    TimeSpan.FromMilliseconds(dur * 0.6))
+                    { BeginTime = TimeSpan.FromMilliseconds(dur * 0.4) };
+
+                // Fade out
+                var fade = new DoubleAnimation(1, 0,
+                    TimeSpan.FromMilliseconds(dur * 0.5))
+                    { BeginTime = TimeSpan.FromMilliseconds(dur * 0.5) };
+                fade.Completed += (_, _) => GamePlayView.Children.Remove(star);
+
+                translate.BeginAnimation(TranslateTransform.XProperty, moveX);
+                translate.BeginAnimation(TranslateTransform.YProperty, moveY);
+                rotate.BeginAnimation(RotateTransform.AngleProperty, spin);
+                scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleUp);
+                scale.BeginAnimation(ScaleTransform.ScaleYProperty,
+                    new DoubleAnimation(0.3, 1.2, TimeSpan.FromMilliseconds(dur * 0.4)));
+                scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleDown);
+                scale.BeginAnimation(ScaleTransform.ScaleYProperty,
+                    new DoubleAnimation(1.2, 0, TimeSpan.FromMilliseconds(dur * 0.6))
+                    { BeginTime = TimeSpan.FromMilliseconds(dur * 0.4) });
+                star.BeginAnimation(UIElement.OpacityProperty, fade);
+            }
+        };
+        _starTimer.Start();
+    }
+
+    private void CheckGameEvents()
+    {
+        if (_gameOverTriggered) return;
+        int totalPlayed = _hitNotes + _missCount;
+
+        // ── Полтрека пройдено ────────────────────────────────────────────
+        if (!_halfwayTriggered && _totalNotes > 0 && totalPlayed >= _totalNotes / 2)
+        {
+            _halfwayTriggered = true;
+            SpawnMilestoneAnnounce("ПОЛПУТИ! 🎯", Color.FromRgb(0x06, 0xb6, 0xd4));
+            FlashScreenOnce(Color.FromArgb(30, 0x06, 0xb6, 0xd4), 800);
+        }
+
+        // ── Опасность: осталось 3 или меньше жизней (из 10) ──────────────────────
+        int livesLeft = 10 - _missCount;
+        bool danger = livesLeft <= 3 && livesLeft > 0 && !_gameOverTriggered;
+        if (danger && !_dangerModeActive)
+        {
+            _dangerModeActive = true;
+            StartDangerMode();
+        }
+        else if (!danger && _dangerModeActive)
+        {
+            _dangerModeActive = false;
+            StopDangerMode();
+        }
+    }
+
+    private void SpawnMilestoneAnnounce(string text, Color color)
+    {
+        var tb = new TextBlock
+        {
+            Text = text,
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 18,
+            FontWeight = FontWeights.Bold,
+            Foreground = new SolidColorBrush(color),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            IsHitTestVisible = false,
+            Opacity = 0,
+            Margin = new Thickness(0, 120, 0, 0),
+            RenderTransformOrigin = new System.Windows.Point(0.5, 0.5),
+            RenderTransform = new ScaleTransform(0.7, 0.7),
+            Effect = new System.Windows.Media.Effects.DropShadowEffect
+                { Color = color, BlurRadius = 16, ShadowDepth = 0, Opacity = 1 }
+        };
+        GamePlayView.Children.Add(tb);
+
+        var st = (ScaleTransform)tb.RenderTransform;
+        tb.BeginAnimation(UIElement.OpacityProperty,
+            new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(250)));
+        st.BeginAnimation(ScaleTransform.ScaleXProperty,
+            new DoubleAnimation(0.7, 1.05, TimeSpan.FromMilliseconds(300))
+            { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.3 } });
+        st.BeginAnimation(ScaleTransform.ScaleYProperty,
+            new DoubleAnimation(0.7, 1.05, TimeSpan.FromMilliseconds(300))
+            { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.3 } });
+
+        var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(400))
+            { BeginTime = TimeSpan.FromMilliseconds(1400) };
+        fadeOut.Completed += (_, _) => GamePlayView.Children.Remove(tb);
+        tb.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+    }
+
+    private void FlashScreenOnce(Color color, int durationMs)
+    {
+        var flash = new System.Windows.Shapes.Rectangle
+        {
+            Fill = new SolidColorBrush(color),
+            IsHitTestVisible = false,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Opacity = 0
+        };
+        GamePlayView.Children.Add(flash);
+
+        var up = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(durationMs * 0.3));
+        var down = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(durationMs * 0.7))
+            { BeginTime = TimeSpan.FromMilliseconds(durationMs * 0.3) };
+        down.Completed += (_, _) => GamePlayView.Children.Remove(flash);
+        flash.BeginAnimation(UIElement.OpacityProperty, up);
+        flash.BeginAnimation(UIElement.OpacityProperty, down);
+    }
+
+    private void StartDangerMode()
+    {
+        SpawnMilestoneAnnounce("⚠️ ОСТОРОЖНО!", Color.FromRgb(0xef, 0x44, 0x44));
+
+        // Красная пульсирующая рамка по краям экрана
+        var danger = new System.Windows.Shapes.Rectangle
+        {
+            Tag = "danger_vignette",
+            IsHitTestVisible = false,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Opacity = 0
+        };
+
+        // Виньетка — красная по краям, прозрачная в центре
+        danger.Fill = new RadialGradientBrush(new GradientStopCollection
+        {
+            new GradientStop(Color.FromArgb(0,   0xef, 0x44, 0x44), 0.00),
+            new GradientStop(Color.FromArgb(0,   0xef, 0x44, 0x44), 0.45),
+            new GradientStop(Color.FromArgb(15,  0xef, 0x44, 0x44), 0.60),
+            new GradientStop(Color.FromArgb(35,  0xef, 0x44, 0x44), 0.75),
+            new GradientStop(Color.FromArgb(60,  0xef, 0x44, 0x44), 0.88),
+            new GradientStop(Color.FromArgb(80,  0xef, 0x44, 0x44), 1.00),
+        })
+        {
+            ColorInterpolationMode = ColorInterpolationMode.ScRgbLinearInterpolation,
+            Center = new System.Windows.Point(0.5, 0.5),
+            GradientOrigin = new System.Windows.Point(0.5, 0.5),
+            RadiusX = 0.85, RadiusY = 0.85
+        };
+
+        GamePlayView.Children.Add(danger);
+
+        // Пульсация рамки
+        _dangerPulseTimer?.Stop();
+        double dp = 0;
+        _dangerPulseTimer = new DispatcherTimer(DispatcherPriority.Background)
+            { Interval = TimeSpan.FromMilliseconds(50) };
+        _dangerPulseTimer.Tick += (_, _) =>
+        {
+            dp += 0.08;
+            danger.Opacity = 0.5 + Math.Sin(dp) * 0.5; // от 0 до 1
+        };
+        _dangerPulseTimer.Start();
+    }
+
+    private void StopDangerMode()
+    {
+        _dangerPulseTimer?.Stop();
+        _dangerPulseTimer = null;
+
+        var vigsToRemove = GamePlayView.Children.OfType<System.Windows.Shapes.Rectangle>()
+            .Where(r => r.Tag?.ToString() == "danger_vignette").ToList();
+        foreach (var v in vigsToRemove)
+        {
+            var fo = new DoubleAnimation(v.Opacity, 0, TimeSpan.FromMilliseconds(500));
+            fo.Completed += (_, _) => GamePlayView.Children.Remove(v);
+            v.BeginAnimation(UIElement.OpacityProperty, fo);
+        }
+    }
+
+    private void SpawnComboAnnounce(int level, Color color, string text)
+    {
+        double fontSize = Math.Min(14 + level * 1.2, 32);
+
         var announce = new TextBlock
         {
-            Text = texts[level - 1],
+            Text = text,
             FontFamily = new FontFamily("Segoe UI"),
-            FontSize = 22,
+            FontSize = fontSize,
             FontWeight = FontWeights.Bold,
             Foreground = new SolidColorBrush(color),
             HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
@@ -4429,33 +4789,42 @@ public partial class MainWindow : Window
             Opacity = 0,
             RenderTransformOrigin = new System.Windows.Point(0.5, 0.5),
             RenderTransform = new ScaleTransform(0.5, 0.5),
+            Margin = new Thickness(0, level >= 8 ? 55 : 75, 0, 0),
             Effect = new System.Windows.Media.Effects.DropShadowEffect
             {
-                Color = color, BlurRadius = 20, ShadowDepth = 0, Opacity = 1
+                Color = color,
+                BlurRadius = 8 + level * 2,
+                ShadowDepth = 0,
+                Opacity = 0.9
             }
         };
-
-        // Позиционируем через Margin чтобы не ломать layout
-        announce.Margin = new Thickness(0, 80, 0, 0);
         GamePlayView.Children.Add(announce);
 
-        // Появление
-        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
-        var scaleIn = new DoubleAnimation(0.5, 1.1, TimeSpan.FromMilliseconds(250))
-            { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.4 } };
-        var scaleBack = new DoubleAnimation(1.1, 1.0, TimeSpan.FromMilliseconds(150));
-        scaleBack.BeginTime = TimeSpan.FromMilliseconds(250);
+        double amplitude = 0.25 + Math.Min(level * 0.05, 0.4);
+        double peakScale = 1.0 + amplitude;
+        var st = (ScaleTransform)announce.RenderTransform;
 
-        // Исчезновение через 1.2с
-        var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300));
-        fadeOut.BeginTime = TimeSpan.FromMilliseconds(900);
+        announce.BeginAnimation(UIElement.OpacityProperty,
+            new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180)));
+        st.BeginAnimation(ScaleTransform.ScaleXProperty,
+            new DoubleAnimation(0.5, peakScale, TimeSpan.FromMilliseconds(300))
+            { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = amplitude } });
+        st.BeginAnimation(ScaleTransform.ScaleYProperty,
+            new DoubleAnimation(0.5, peakScale, TimeSpan.FromMilliseconds(300))
+            { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = amplitude } });
+
+        // Отскок назад
+        var scaleBack = new DoubleAnimation(peakScale, 1.0, TimeSpan.FromMilliseconds(200))
+            { BeginTime = TimeSpan.FromMilliseconds(300) };
+        st.BeginAnimation(ScaleTransform.ScaleXProperty, scaleBack);
+        st.BeginAnimation(ScaleTransform.ScaleYProperty,
+            new DoubleAnimation(peakScale, 1.0, TimeSpan.FromMilliseconds(200))
+            { BeginTime = TimeSpan.FromMilliseconds(300) });
+
+        int holdMs = 800 + Math.Min(level * 60, 600);
+        var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(350))
+            { BeginTime = TimeSpan.FromMilliseconds(holdMs) };
         fadeOut.Completed += (_, _) => GamePlayView.Children.Remove(announce);
-
-        announce.BeginAnimation(UIElement.OpacityProperty, fadeIn);
-        ((ScaleTransform)announce.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleIn);
-        ((ScaleTransform)announce.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty,
-            new DoubleAnimation(0.5, 1.1, TimeSpan.FromMilliseconds(250))
-            { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.4 } });
         announce.BeginAnimation(UIElement.OpacityProperty, fadeOut);
     }
 
@@ -4882,6 +5251,34 @@ public partial class MainWindow : Window
         _auroraGameTimer?.Stop();
         _auroraGameTimer = null;
         _lastComboAuraLevel = 0;
+        
+        _effectTimer?.Stop();
+        _effectTimer = null;
+        while (_effectQueue.TryDequeue(out _)) { } // очищаем очередь
+        
+        _starTimer?.Stop();
+        _starTimer = null;
+        
+        _dangerPulseTimer?.Stop();
+        _dangerPulseTimer = null;
+        _halfwayTriggered = false;
+        _dangerModeActive = false;
+        _perfectStreak = 0;
+        
+        // Убираем виньетку опасности
+        var vigs = GamePlayView.Children.OfType<System.Windows.Shapes.Rectangle>()
+            .Where(r => r.Tag?.ToString() == "danger_vignette").ToList();
+        foreach (var v in vigs) GamePlayView.Children.Remove(v);
+        
+        // Плавно скрываем combo-ауры
+        var auras = GamePlayView.Children.OfType<System.Windows.Shapes.Rectangle>()
+            .Where(r => r.Tag?.ToString() == "combo_aura").ToList();
+        foreach (var aura in auras)
+        {
+            var fadeOut = new DoubleAnimation(aura.Opacity, 0, TimeSpan.FromMilliseconds(600));
+            fadeOut.Completed += (_, _) => GamePlayView.Children.Remove(aura);
+            aura.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+        }
         
         // Сброс заголовка и HUD
         GameHeaderTitle.Text = "Мини-игра";
