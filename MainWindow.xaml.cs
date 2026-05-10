@@ -109,6 +109,11 @@ public partial class MainWindow : Window
     private double _currentFallSec = 1.6;
     private double _judgeVisibleUntil = -1;
     private readonly double[] _hitZoneFlashUntil = new double[4];
+    private int _missCount = 0;
+    private int _consecutiveMisses = 0;
+    private bool _gameOverTriggered = false;
+    private DispatcherTimer? _auroraGameTimer;
+    private int _lastComboAuraLevel = 0; // 0=нет, 1=x5, 2=x10, 3=x20+
 
     private System.Windows.Media.MediaPlayer _editorPlayer = new();
     private List<NoteEntry> _recordedNotes = new();
@@ -3910,12 +3915,6 @@ public partial class MainWindow : Window
         view.Visibility = Visibility.Visible;
     }
 
-    private void ExitGameBtn_Click(object s, RoutedEventArgs e)
-    {
-        StopGame();
-        ShowGameView(GameTrackSelectView);
-    }
-
     private void DefaultLevelBtn_Click(object s, MouseButtonEventArgs e)
     {
         ShowGameView(GamePlayView);
@@ -3997,11 +3996,16 @@ public partial class MainWindow : Window
         _gameCombo = 0;
         _totalNotes = notes.Count;
         _hitNotes = 0;
+        _missCount = 0;
+        _consecutiveMisses = 0;
+        _gameOverTriggered = false;
+        _lastComboAuraLevel = 0;
 
         GameScore.Text = "0";
         GameCombo.Text = "0x";
         GameAccuracy.Text = "100%";
-        GameTrackTitle.Text = $"{title} · {bpm:0} BPM";
+        GameHeaderTitle.Text = $"{title} · {bpm:0} BPM";
+        GameHUDPanel.Visibility = Visibility.Visible;
         JudgeText.Opacity = 0;
         _judgeVisibleUntil = -1;
         Array.Fill(_hitZoneFlashUntil, -1);
@@ -4015,20 +4019,11 @@ public partial class MainWindow : Window
         cdTimer.Tick += (_, _) =>
         {
             count--;
-            if (count > 0)
-            {
-                CountdownText.Text = count.ToString();
-                return;
-            }
-
+            if (count > 0) { CountdownText.Text = count.ToString(); return; }
             cdTimer.Stop();
             CountdownOverlay.Visibility = Visibility.Collapsed;
 
-            if (mp3Path != null)
-            {
-                _editorPlayer.Open(new Uri(mp3Path));
-                _editorPlayer.Play();
-            }
+            if (mp3Path != null) { _editorPlayer.Open(new Uri(mp3Path)); _editorPlayer.Play(); }
 
             _gameClock.Restart();
             CompositionTarget.Rendering -= GameTick;
@@ -4053,21 +4048,61 @@ public partial class MainWindow : Window
         double hitY = canvasH - 70;
         GameCanvas.Children.Clear();
 
-        // Все линии убраны для чистого вида
-
-        var triggerLabel = new TextBlock
+        // Aurora-фон игрового поля
+        for (int i = 0; i < 4; i++)
         {
-            Text = "PERFECT",
-            FontFamily = new FontFamily("Segoe UI"),
-            FontSize = 10,
-            FontWeight = FontWeights.Bold,
-            Foreground = new SolidColorBrush(Color.FromArgb(120, 255, 255, 255)),
+            // Вертикальная полоса дорожки
+            var laneStrip = new System.Windows.Shapes.Rectangle
+            {
+                Width = 50,
+                Height = canvasH,
+                IsHitTestVisible = false
+            };
+            laneStrip.Fill = new LinearGradientBrush(
+                new GradientStopCollection
+                {
+                    new GradientStop(Color.FromArgb(0, LaneColors[i].R, LaneColors[i].G, LaneColors[i].B), 0),
+                    new GradientStop(Color.FromArgb(18, LaneColors[i].R, LaneColors[i].G, LaneColors[i].B), 0.5),
+                    new GradientStop(Color.FromArgb(8, LaneColors[i].R, LaneColors[i].G, LaneColors[i].B), 1),
+                },
+                new System.Windows.Point(0, 0), new System.Windows.Point(0, 1));
+            Canvas.SetLeft(laneStrip, 10 + i * 60);
+            Canvas.SetTop(laneStrip, 0);
+            GameCanvas.Children.Add(laneStrip);
+
+            // Левая граница дорожки
+            var laneBorder = new System.Windows.Shapes.Rectangle
+            {
+                Width = 1,
+                Height = canvasH,
+                Fill = new SolidColorBrush(Color.FromArgb(25, LaneColors[i].R, LaneColors[i].G, LaneColors[i].B)),
+                IsHitTestVisible = false
+            };
+            Canvas.SetLeft(laneBorder, 10 + i * 60);
+            Canvas.SetTop(laneBorder, 0);
+            GameCanvas.Children.Add(laneBorder);
+        }
+
+        // Горизонтальная линия хит-зоны
+        var hitLine = new System.Windows.Shapes.Rectangle
+        {
+            Width = 240,
+            Height = 2,
             IsHitTestVisible = false
         };
-        Canvas.SetLeft(triggerLabel, 96);
-        Canvas.SetTop(triggerLabel, hitY + 29);
-        GameCanvas.Children.Add(triggerLabel);
+        hitLine.Fill = new LinearGradientBrush(
+            new GradientStopCollection
+            {
+                new GradientStop(Color.FromArgb(0, 255, 255, 255), 0),
+                new GradientStop(Color.FromArgb(50, 255, 255, 255), 0.5),
+                new GradientStop(Color.FromArgb(0, 255, 255, 255), 1),
+            },
+            new System.Windows.Point(0, 0), new System.Windows.Point(1, 0));
+        Canvas.SetLeft(hitLine, 0);
+        Canvas.SetTop(hitLine, hitY + 24);
+        GameCanvas.Children.Add(hitLine);
 
+        // Кнопки хит-зоны
         for (int i = 0; i < 4; i++)
         {
             var hz = new Border
@@ -4076,15 +4111,22 @@ public partial class MainWindow : Window
                 Height = 50,
                 CornerRadius = new CornerRadius(8),
                 BorderThickness = new Thickness(1.5),
-                BorderBrush = new SolidColorBrush(Color.FromArgb(60, LaneColors[i].R, LaneColors[i].G, LaneColors[i].B)),
-                Background = new SolidColorBrush(Color.FromArgb(20, LaneColors[i].R, LaneColors[i].G, LaneColors[i].B)),
+                BorderBrush = new SolidColorBrush(Color.FromArgb(80, LaneColors[i].R, LaneColors[i].G, LaneColors[i].B)),
+                Background = new SolidColorBrush(Color.FromArgb(25, LaneColors[i].R, LaneColors[i].G, LaneColors[i].B)),
                 Child = new TextBlock
                 {
                     Text = ArrowChars[i],
                     FontSize = 20,
-                    Foreground = new SolidColorBrush(LaneColors[i]),
+                    Foreground = new SolidColorBrush(Color.FromArgb(180, LaneColors[i].R, LaneColors[i].G, LaneColors[i].B)),
                     HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Center,
+                },
+                Effect = new System.Windows.Media.Effects.DropShadowEffect
+                {
+                    Color = LaneColors[i],
+                    BlurRadius = 10,
+                    ShadowDepth = 0,
+                    Opacity = 0.3
                 }
             };
             Canvas.SetLeft(hz, 10 + i * 60);
@@ -4111,7 +4153,10 @@ public partial class MainWindow : Window
                 CornerRadius = new CornerRadius(8),
                 BorderThickness = new Thickness(1.5),
                 BorderBrush = new SolidColorBrush(LaneColors[note.Lane]),
-                Background = new SolidColorBrush(Color.FromArgb(30, LaneColors[note.Lane].R, LaneColors[note.Lane].G, LaneColors[note.Lane].B)),
+                Background = new LinearGradientBrush(
+                    Color.FromArgb(80, LaneColors[note.Lane].R, LaneColors[note.Lane].G, LaneColors[note.Lane].B),
+                    Color.FromArgb(20, LaneColors[note.Lane].R, LaneColors[note.Lane].G, LaneColors[note.Lane].B),
+                    90),
                 Tag = note,
                 Child = new TextBlock
                 {
@@ -4120,6 +4165,13 @@ public partial class MainWindow : Window
                     Foreground = new SolidColorBrush(LaneColors[note.Lane]),
                     HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Center,
+                },
+                Effect = new System.Windows.Media.Effects.DropShadowEffect
+                {
+                    Color = LaneColors[note.Lane],
+                    BlurRadius = 12,
+                    ShadowDepth = 0,
+                    Opacity = 0.6
                 }
             };
             Canvas.SetLeft(arrow, 10 + note.Lane * 60);
@@ -4137,13 +4189,33 @@ public partial class MainWindow : Window
             double top = -50 + progress * (hitY + 50);
             Canvas.SetTop(note.Visual, top);
 
+            // Усиливаем свечение при приближении к хит-зоне
+            double distToHit = Math.Abs(top - hitY);
+            if (distToHit < 90 && note.Visual.Effect is System.Windows.Media.Effects.DropShadowEffect dse)
+            {
+                double proximity = 1.0 - (distToHit / 90.0);
+                dse.BlurRadius = 12 + proximity * 22;
+                dse.Opacity = 0.6 + proximity * 0.35;
+            }
+
             if (top > canvasH + 10)
             {
                 GameCanvas.Children.Remove(note.Visual);
                 toRemove.Add(note);
                 _gameCombo = 0;
+                _missCount++;
+                _consecutiveMisses++;
                 ShowJudge("MISS", Colors.Gray);
+                UpdateComboAura();
                 UpdateHUD();
+
+                // Проигрыш: 10 промахов всего или 10 подряд
+                if ((_missCount >= 10 || _consecutiveMisses >= 10) && !_gameOverTriggered)
+                {
+                    _gameOverTriggered = true;
+                    GameOver(failed: true);
+                    return;
+                }
             }
         }
         _activeNotes.RemoveAll(toRemove.Contains);
@@ -4163,8 +4235,8 @@ public partial class MainWindow : Window
             }
         }
 
-        if (_pendingNotes.Count == 0 && _activeNotes.Count == 0)
-            GameOver();
+        if (!_gameOverTriggered && _pendingNotes.Count == 0 && _activeNotes.Count == 0)
+            GameOver(failed: false);
     }
 
     private void Game_KeyDown(object s, System.Windows.Input.KeyEventArgs e)
@@ -4211,9 +4283,12 @@ public partial class MainWindow : Window
         note.Hit = true;
         _gameCombo++;
         _hitNotes++;
+        _consecutiveMisses = 0;
         _gameScore += baseScore * _gameCombo;
         ShowJudge(judge, color);
         FlashHitZone(lane);
+        SpawnHitEffect(lane, judge);
+        UpdateComboAura();
 
         if (note.Visual != null)
             GameCanvas.Children.Remove(note.Visual);
@@ -4227,20 +4302,309 @@ public partial class MainWindow : Window
         GameCombo.Text = _gameCombo + "x";
         int acc = _totalNotes > 0 ? (int)((double)_hitNotes / _totalNotes * 100) : 100;
         GameAccuracy.Text = acc + "%";
+
+        // Пульс комбо при росте
+        if (_gameCombo > 1)
+        {
+            if (GameCombo.RenderTransform is not ScaleTransform)
+            {
+                GameCombo.RenderTransform = new ScaleTransform(1, 1);
+                GameCombo.RenderTransformOrigin = new System.Windows.Point(0.5, 0.5);
+            }
+            var pulse = new DoubleAnimation(1.35, 1.0, TimeSpan.FromMilliseconds(220))
+            {
+                EasingFunction = new ElasticEase { EasingMode = EasingMode.EaseOut, Oscillations = 1, Springiness = 4 }
+            };
+            ((ScaleTransform)GameCombo.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty, pulse);
+            ((ScaleTransform)GameCombo.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty,
+                new DoubleAnimation(1.35, 1.0, TimeSpan.FromMilliseconds(220))
+                {
+                    EasingFunction = new ElasticEase { EasingMode = EasingMode.EaseOut, Oscillations = 1, Springiness = 4 }
+                });
+        }
+    }
+
+    private void UpdateComboAura()
+    {
+        int newLevel = _gameCombo >= 20 ? 3 : _gameCombo >= 10 ? 2 : _gameCombo >= 5 ? 1 : 0;
+        if (newLevel == _lastComboAuraLevel) return;
+        _lastComboAuraLevel = newLevel;
+
+        // Убираем старую ауру
+        var oldAuras = GamePlayView.Children.OfType<System.Windows.Shapes.Rectangle>()
+            .Where(r => r.Tag?.ToString() == "combo_aura").ToList();
+        foreach (var a in oldAuras) GamePlayView.Children.Remove(a);
+        _auroraGameTimer?.Stop();
+
+        if (newLevel == 0) return;
+
+        // Цвета ауры по уровню комбо
+        Color[] auraColors = {
+            Color.FromRgb(0x63, 0x66, 0xf1), // x5 — индиго
+            Color.FromRgb(0xf5, 0x9e, 0x0b), // x10 — золото
+            Color.FromRgb(0xf4, 0x3f, 0x5e), // x20 — красный/розовый
+        };
+        Color auraColor = auraColors[newLevel - 1];
+        byte alpha = (byte)(newLevel == 3 ? 80 : newLevel == 2 ? 60 : 40);
+
+        // Слой 1: нижнее свечение (как на главном экране)
+        var aura1 = new System.Windows.Shapes.Rectangle
+        {
+            Tag = "combo_aura",
+            IsHitTestVisible = false
+        };
+        aura1.Fill = new RadialGradientBrush(new GradientStopCollection
+        {
+            new GradientStop(Color.FromArgb(alpha, auraColor.R, auraColor.G, auraColor.B), 0),
+            new GradientStop(Color.FromArgb((byte)(alpha / 2), auraColor.R, auraColor.G, auraColor.B), 0.4),
+            new GradientStop(Color.FromArgb(0, auraColor.R, auraColor.G, auraColor.B), 1),
+        })
+        {
+            Center = new System.Windows.Point(0.5, 1.0),
+            GradientOrigin = new System.Windows.Point(0.5, 1.0),
+            RadiusX = 0.6, RadiusY = 0.5
+        };
+
+        // Слой 2: верхнее свечение
+        var aura2 = new System.Windows.Shapes.Rectangle
+        {
+            Tag = "combo_aura",
+            IsHitTestVisible = false
+        };
+        aura2.Fill = new RadialGradientBrush(new GradientStopCollection
+        {
+            new GradientStop(Color.FromArgb((byte)(alpha / 2), auraColor.R, auraColor.G, auraColor.B), 0),
+            new GradientStop(Color.FromArgb(0, auraColor.R, auraColor.G, auraColor.B), 1),
+        })
+        {
+            Center = new System.Windows.Point(0.5, 0.0),
+            GradientOrigin = new System.Windows.Point(0.5, 0.0),
+            RadiusX = 0.5, RadiusY = 0.35
+        };
+
+        GamePlayView.Children.Insert(0, aura1);
+        GamePlayView.Children.Insert(0, aura2);
+
+        // Анимация пульсации ауры
+        double _auraPulse = 0;
+        _auroraGameTimer = new DispatcherTimer(DispatcherPriority.Render)
+            { Interval = TimeSpan.FromMilliseconds(33) };
+        _auroraGameTimer.Tick += (_, _) =>
+        {
+            _auraPulse += 0.04;
+            double pulse = 0.85 + Math.Sin(_auraPulse) * 0.15;
+            byte a1 = (byte)(alpha * pulse);
+            byte a2 = (byte)(alpha / 2 * pulse);
+
+            if (aura1.Fill is RadialGradientBrush b1 && b1.GradientStops.Count >= 2)
+            {
+                var c = b1.GradientStops[0].Color;
+                b1.GradientStops[0].Color = Color.FromArgb(a1, c.R, c.G, c.B);
+            }
+            if (aura2.Fill is RadialGradientBrush b2 && b2.GradientStops.Count >= 1)
+            {
+                var c = b2.GradientStops[0].Color;
+                b2.GradientStops[0].Color = Color.FromArgb(a2, c.R, c.G, c.B);
+            }
+        };
+        _auroraGameTimer.Start();
+
+        // Всплывающее уведомление о комбо
+        SpawnComboAnnounce(newLevel, auraColor);
+    }
+
+    private void SpawnComboAnnounce(int level, Color color)
+    {
+        string[] texts = { "COMBO ×5! 🔥", "COMBO ×10! ⚡", "COMBO ×20! 💥" };
+        var announce = new TextBlock
+        {
+            Text = texts[level - 1],
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 22,
+            FontWeight = FontWeights.Bold,
+            Foreground = new SolidColorBrush(color),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            IsHitTestVisible = false,
+            Opacity = 0,
+            RenderTransformOrigin = new System.Windows.Point(0.5, 0.5),
+            RenderTransform = new ScaleTransform(0.5, 0.5),
+            Effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = color, BlurRadius = 20, ShadowDepth = 0, Opacity = 1
+            }
+        };
+
+        // Позиционируем через Margin чтобы не ломать layout
+        announce.Margin = new Thickness(0, 80, 0, 0);
+        GamePlayView.Children.Add(announce);
+
+        // Появление
+        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+        var scaleIn = new DoubleAnimation(0.5, 1.1, TimeSpan.FromMilliseconds(250))
+            { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.4 } };
+        var scaleBack = new DoubleAnimation(1.1, 1.0, TimeSpan.FromMilliseconds(150));
+        scaleBack.BeginTime = TimeSpan.FromMilliseconds(250);
+
+        // Исчезновение через 1.2с
+        var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300));
+        fadeOut.BeginTime = TimeSpan.FromMilliseconds(900);
+        fadeOut.Completed += (_, _) => GamePlayView.Children.Remove(announce);
+
+        announce.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+        ((ScaleTransform)announce.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleIn);
+        ((ScaleTransform)announce.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty,
+            new DoubleAnimation(0.5, 1.1, TimeSpan.FromMilliseconds(250))
+            { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.4 } });
+        announce.BeginAnimation(UIElement.OpacityProperty, fadeOut);
     }
 
     private void ShowJudge(string text, Color color)
     {
-        JudgeText.Text = text;
-        JudgeText.Foreground = new SolidColorBrush(color);
-        JudgeText.Opacity = 1;
-        _judgeVisibleUntil = _gameClock.Elapsed.TotalSeconds + 0.28;
+        // MISS показываем статично, PERFECT/GOOD — через SpawnHitEffect
+        if (text == "MISS")
+        {
+            JudgeText.Text = "MISS";
+            JudgeText.Foreground = new SolidColorBrush(Color.FromArgb(180, 0x88, 0x88, 0x88));
+            JudgeText.Opacity = 1;
+            _judgeVisibleUntil = _gameClock.Elapsed.TotalSeconds + 0.35;
+        }
     }
 
     private void FlashHitZone(int lane)
     {
         SetHitZoneOpacity(lane, 0.45);
         _hitZoneFlashUntil[lane] = _gameClock.Elapsed.TotalSeconds + 0.08;
+    }
+
+    private void SpawnHitEffect(int lane, string judge)
+    {
+        double canvasH = GameCanvas.ActualHeight > 0 ? GameCanvas.ActualHeight : 500;
+        double hitY = canvasH - 70;
+        double centerX = 10 + lane * 60 + 25;
+        double centerY = hitY + 25;
+
+        // 1. Вспышка-круг
+        var flash = new Ellipse
+        {
+            Width = 60,
+            Height = 60,
+            Fill = new RadialGradientBrush(
+                Color.FromArgb(200, LaneColors[lane].R, LaneColors[lane].G, LaneColors[lane].B),
+                Color.FromArgb(0, LaneColors[lane].R, LaneColors[lane].G, LaneColors[lane].B)),
+            IsHitTestVisible = false,
+            RenderTransformOrigin = new System.Windows.Point(0.5, 0.5),
+            RenderTransform = new ScaleTransform(0.2, 0.2)
+        };
+        Canvas.SetLeft(flash, centerX - 30);
+        Canvas.SetTop(flash, centerY - 30);
+        GameCanvas.Children.Add(flash);
+
+        var scaleX = new DoubleAnimation(0.2, 2.2, TimeSpan.FromMilliseconds(350))
+            { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+        var scaleY = new DoubleAnimation(0.2, 2.2, TimeSpan.FromMilliseconds(350))
+            { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+        var fadeFlash = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(350));
+        fadeFlash.Completed += (_, _) => GameCanvas.Children.Remove(flash);
+        ((ScaleTransform)flash.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleX);
+        ((ScaleTransform)flash.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty, scaleY);
+        flash.BeginAnimation(UIElement.OpacityProperty, fadeFlash);
+
+        // 2. Расширяющееся кольцо
+        var ring = new Ellipse
+        {
+            Width = 50,
+            Height = 50,
+            Stroke = new SolidColorBrush(Color.FromArgb(180, LaneColors[lane].R, LaneColors[lane].G, LaneColors[lane].B)),
+            StrokeThickness = 2,
+            Fill = Brushes.Transparent,
+            IsHitTestVisible = false,
+            RenderTransformOrigin = new System.Windows.Point(0.5, 0.5),
+            RenderTransform = new ScaleTransform(1, 1)
+        };
+        Canvas.SetLeft(ring, centerX - 25);
+        Canvas.SetTop(ring, centerY - 25);
+        GameCanvas.Children.Add(ring);
+
+        var ringScale = new DoubleAnimation(1, 2.8, TimeSpan.FromMilliseconds(450))
+            { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+        var fadeRing = new DoubleAnimation(0.8, 0, TimeSpan.FromMilliseconds(450));
+        fadeRing.Completed += (_, _) => GameCanvas.Children.Remove(ring);
+        ((ScaleTransform)ring.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty, ringScale);
+        ((ScaleTransform)ring.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty,
+            new DoubleAnimation(1, 2.8, TimeSpan.FromMilliseconds(450))
+            { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
+        ring.BeginAnimation(UIElement.OpacityProperty, fadeRing);
+
+        // 3. Частицы — разлетаются во все стороны
+        var rng = new Random();
+        int particleCount = judge == "PERFECT" ? 8 : 5;
+        for (int p = 0; p < particleCount; p++)
+        {
+            double angle = (p * 360.0 / particleCount) + rng.Next(-15, 15);
+            double rad = angle * Math.PI / 180.0;
+            double dist = 35 + rng.Next(15, 35);
+            double size = judge == "PERFECT" ? rng.Next(5, 9) : rng.Next(3, 7);
+
+            var particle = new Ellipse
+            {
+                Width = size,
+                Height = size,
+                Fill = new SolidColorBrush(LaneColors[lane]),
+                IsHitTestVisible = false,
+                RenderTransform = new TranslateTransform()
+            };
+            Canvas.SetLeft(particle, centerX - size / 2);
+            Canvas.SetTop(particle, centerY - size / 2);
+            GameCanvas.Children.Add(particle);
+
+            var tx = new DoubleAnimation(0, Math.Cos(rad) * dist, TimeSpan.FromMilliseconds(420))
+                { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+            var ty = new DoubleAnimation(0, Math.Sin(rad) * dist - 15, TimeSpan.FromMilliseconds(420))
+                { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+            var fadeP = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(420));
+            fadeP.Completed += (_, _) => GameCanvas.Children.Remove(particle);
+
+            ((TranslateTransform)particle.RenderTransform).BeginAnimation(TranslateTransform.XProperty, tx);
+            ((TranslateTransform)particle.RenderTransform).BeginAnimation(TranslateTransform.YProperty, ty);
+            particle.BeginAnimation(UIElement.OpacityProperty, fadeP);
+        }
+
+        // 4. Всплывающий текст PERFECT / GOOD
+        if (judge == "PERFECT" || judge == "GOOD")
+        {
+            var judgeColor = judge == "PERFECT" ? LaneColors[lane] : Color.FromRgb(0xa1, 0xa1, 0xaa);
+            var floatText = new TextBlock
+            {
+                Text = judge,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = judge == "PERFECT" ? 16 : 13,
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(judgeColor),
+                IsHitTestVisible = false,
+                Effect = new System.Windows.Media.Effects.DropShadowEffect
+                {
+                    Color = judgeColor,
+                    BlurRadius = 12,
+                    ShadowDepth = 0,
+                    Opacity = 0.9
+                }
+            };
+
+            // Измеряем размер перед добавлением
+            floatText.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
+            Canvas.SetLeft(floatText, centerX - floatText.DesiredSize.Width / 2);
+            Canvas.SetTop(floatText, hitY - 15);
+            GameCanvas.Children.Add(floatText);
+
+            var moveUp = new DoubleAnimation(hitY - 15, hitY - 65, TimeSpan.FromMilliseconds(650))
+                { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+            var fadeText = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(650));
+            fadeText.Completed += (_, _) => GameCanvas.Children.Remove(floatText);
+
+            floatText.BeginAnimation(Canvas.TopProperty, moveUp);
+            floatText.BeginAnimation(UIElement.OpacityProperty, fadeText);
+        }
     }
 
     private void SetHitZoneOpacity(int lane, double opacity)
@@ -4255,14 +4619,253 @@ public partial class MainWindow : Window
         }
     }
 
-    private void GameOver()
+    private void GameOver(bool failed = false)
     {
-        StopGame();
+        CompositionTarget.Rendering -= GameTick;
+        PreviewKeyDown -= Game_KeyDown;
+        _editorPlayer.Stop();
+        _gameClock.Stop();
+        _auroraGameTimer?.Stop();
+
         int acc = _totalNotes > 0 ? (int)((double)_hitNotes / _totalNotes * 100) : 100;
-        string rank = acc >= 95 ? "S" : acc >= 85 ? "A" : acc >= 70 ? "B" : "C";
-        JudgeText.Text = $"Ранг {rank}  {_gameScore:N0}";
-        JudgeText.Foreground = Brushes.White;
-        JudgeText.Opacity = 1;
+        string rank = failed ? "F" : acc >= 95 ? "S" : acc >= 85 ? "A" : acc >= 70 ? "B" : acc >= 50 ? "C" : "D";
+
+        // Цвет ранга
+        Color rankColor = rank switch
+        {
+            "S" => Color.FromRgb(0xff, 0xd7, 0x00),
+            "A" => Color.FromRgb(0x22, 0xc5, 0x5e),
+            "B" => Color.FromRgb(0x3b, 0x82, 0xf6),
+            "C" => Color.FromRgb(0xf5, 0x9e, 0x0b),
+            "D" => Color.FromRgb(0x88, 0x88, 0x88),
+            "F" => Color.FromRgb(0xef, 0x44, 0x44),
+            _ => Color.FromRgb(0x88, 0x88, 0x88)
+        };
+
+        // Оверлей результатов
+        var overlay = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(220, 0x05, 0x05, 0x0f)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Opacity = 0
+        };
+
+        // Aurora-фон результатов
+        var auroraBg = new System.Windows.Shapes.Rectangle
+        {
+            IsHitTestVisible = false,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+        auroraBg.Fill = new RadialGradientBrush(new GradientStopCollection
+        {
+            new GradientStop(Color.FromArgb(60, rankColor.R, rankColor.G, rankColor.B), 0),
+            new GradientStop(Color.FromArgb(20, rankColor.R, rankColor.G, rankColor.B), 0.5),
+            new GradientStop(Color.FromArgb(0, rankColor.R, rankColor.G, rankColor.B), 1),
+        })
+        { Center = new System.Windows.Point(0.5, 0.4), GradientOrigin = new System.Windows.Point(0.5, 0.4), RadiusX = 0.7, RadiusY = 0.6 };
+
+        var content = new StackPanel
+        {
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Opacity = 0,
+            RenderTransformOrigin = new System.Windows.Point(0.5, 0.5),
+            RenderTransform = new TranslateTransform(0, 30)
+        };
+
+        // Заголовок
+        var headerText = new TextBlock
+        {
+            Text = failed ? "ПРОВАЛ" : "РЕЗУЛЬТАТЫ",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 14,
+            FontWeight = FontWeights.Bold,
+            Foreground = new SolidColorBrush(Color.FromArgb(150, 0xff, 0xff, 0xff)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 16)
+        };
+        content.Children.Add(headerText);
+
+        // Большой ранг
+        var rankBorder = new Border
+        {
+            Width = 120, Height = 120,
+            CornerRadius = new CornerRadius(60),
+            BorderBrush = new SolidColorBrush(rankColor),
+            BorderThickness = new Thickness(3),
+            Background = new SolidColorBrush(Color.FromArgb(30, rankColor.R, rankColor.G, rankColor.B)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 20),
+            Effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = rankColor, BlurRadius = 30, ShadowDepth = 0, Opacity = 0.8
+            },
+            RenderTransformOrigin = new System.Windows.Point(0.5, 0.5),
+            RenderTransform = new ScaleTransform(0, 0)
+        };
+        rankBorder.Child = new TextBlock
+        {
+            Text = rank,
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 56,
+            FontWeight = FontWeights.Bold,
+            Foreground = new SolidColorBrush(rankColor),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        content.Children.Add(rankBorder);
+
+        // Карточки со статистикой
+        var statsGrid = new Grid { Margin = new Thickness(0, 0, 0, 24) };
+        statsGrid.ColumnDefinitions.Add(new ColumnDefinition());
+        statsGrid.ColumnDefinitions.Add(new ColumnDefinition());
+        statsGrid.ColumnDefinitions.Add(new ColumnDefinition());
+        statsGrid.RowDefinitions.Add(new RowDefinition());
+        statsGrid.RowDefinitions.Add(new RowDefinition());
+
+        void AddStat(int col, int row, string label, string value, Color color)
+        {
+            var card = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(60, 0xff, 0xff, 0xff)),
+                CornerRadius = new CornerRadius(12),
+                Padding = new Thickness(16, 12, 16, 12),
+                Margin = new Thickness(4),
+                BorderBrush = new SolidColorBrush(Color.FromArgb(40, color.R, color.G, color.B)),
+                BorderThickness = new Thickness(1)
+            };
+            var sp = new StackPanel { HorizontalAlignment = System.Windows.HorizontalAlignment.Center };
+            sp.Children.Add(new TextBlock
+            {
+                Text = label, FontFamily = new FontFamily("Segoe UI"), FontSize = 10,
+                Foreground = new SolidColorBrush(Color.FromArgb(150, 0xff, 0xff, 0xff)),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                FontWeight = FontWeights.Bold
+            });
+            sp.Children.Add(new TextBlock
+            {
+                Text = value, FontFamily = new FontFamily("Segoe UI"), FontSize = 22,
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(color),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                Effect = new System.Windows.Media.Effects.DropShadowEffect
+                {
+                    Color = color, BlurRadius = 8, ShadowDepth = 0, Opacity = 0.6
+                }
+            });
+            card.Child = sp;
+            Grid.SetColumn(card, col);
+            Grid.SetRow(card, row);
+            statsGrid.Children.Add(card);
+        }
+
+        int perfect = _hitNotes; // упрощение
+        int misses = _missCount;
+        int maxCombo = _gameCombo; // не идеально но без отдельного поля
+
+        AddStat(0, 0, "СЧЁТ", _gameScore.ToString("N0"), Color.FromRgb(0xff, 0xff, 0xff));
+        AddStat(1, 0, "ТОЧНОСТЬ", $"{acc}%", acc >= 90 ? Color.FromRgb(0x22, 0xc5, 0x5e) : Color.FromRgb(0xf5, 0x9e, 0x0b));
+        AddStat(2, 0, "КОМБО", $"{_gameCombo}x", Color.FromRgb(0x63, 0x66, 0xf1));
+        AddStat(0, 1, "ВСЕГО НОТ", _totalNotes.ToString(), Color.FromRgb(0xaa, 0xaa, 0xaa));
+        AddStat(1, 1, "ПОПАДАНИЙ", _hitNotes.ToString(), Color.FromRgb(0x22, 0xc5, 0x5e));
+        AddStat(2, 1, "ПРОМАХОВ", misses.ToString(), Color.FromRgb(0xef, 0x44, 0x44));
+
+        content.Children.Add(statsGrid);
+
+        // Мотивационный текст
+        string motivation = rank switch
+        {
+            "S" => "Абсолютное мастерство! 🌟",
+            "A" => "Отличная игра! 🔥",
+            "B" => "Хороший результат! 👍",
+            "C" => "Неплохо, но можно лучше",
+            "D" => "Тренируйся ещё!",
+            _ => failed ? "Слишком много промахов..." : "Продолжай пробовать!"
+        };
+
+        content.Children.Add(new TextBlock
+        {
+            Text = motivation,
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 15,
+            Foreground = new SolidColorBrush(Color.FromArgb(200, 0xff, 0xff, 0xff)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 28)
+        });
+
+        // Кнопки
+        var btnPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = System.Windows.HorizontalAlignment.Center };
+
+        var retryBtn = new Button
+        {
+            Content = "▶  Ещё раз",
+            Style = (Style)FindResource("AccentBtn"),
+            Width = 130, Height = 42,
+            Margin = new Thickness(0, 0, 10, 0),
+            FontSize = 14
+        };
+        retryBtn.Click += (_, _) =>
+        {
+            GamePlayView.Children.Remove(overlay);
+            // Перезапуск с теми же настройками — возвращаем к выбору трека
+            ShowGameView(GameTrackSelectView);
+            StopGame();
+        };
+
+        var menuBtn = new Button
+        {
+            Content = "В меню",
+            Style = (Style)FindResource("OutlineBtn"),
+            Width = 110, Height = 42,
+            FontSize = 14,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xf0, 0xf0, 0xf0))
+        };
+        menuBtn.Click += (_, _) =>
+        {
+            GamePlayView.Children.Remove(overlay);
+            StopGame();
+            ShowGameView(GameMenuView);
+        };
+
+        btnPanel.Children.Add(retryBtn);
+        btnPanel.Children.Add(menuBtn);
+        content.Children.Add(btnPanel);
+
+        // Собираем оверлей
+        var overlayGrid = new Grid();
+        overlayGrid.Children.Add(auroraBg);
+        overlayGrid.Children.Add(content);
+        overlay.Child = overlayGrid;
+        GamePlayView.Children.Add(overlay);
+
+        // Анимация появления оверлея
+        overlay.BeginAnimation(UIElement.OpacityProperty,
+            new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(400)));
+        content.BeginAnimation(UIElement.OpacityProperty,
+            new DoubleAnimation(0, 1, new Duration(TimeSpan.FromMilliseconds(500)))
+            { BeginTime = TimeSpan.FromMilliseconds(200) });
+        ((TranslateTransform)content.RenderTransform).BeginAnimation(TranslateTransform.YProperty,
+            new DoubleAnimation(30, 0, TimeSpan.FromMilliseconds(500))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(200),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            });
+
+        // Ранг появляется с пружиной
+        var rankScale = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(600))
+        {
+            BeginTime = TimeSpan.FromMilliseconds(400),
+            EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.5 }
+        };
+        ((ScaleTransform)rankBorder.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty, rankScale);
+        ((ScaleTransform)rankBorder.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty,
+            new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(600))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(400),
+                EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.5 }
+            });
     }
 
     private void StopGame()
@@ -4275,6 +4878,14 @@ public partial class MainWindow : Window
         _editorPlayer.SpeedRatio = 1.0;
         _gameClock.Stop();
         GameCanvas.Children.Clear();
+        
+        _auroraGameTimer?.Stop();
+        _auroraGameTimer = null;
+        _lastComboAuraLevel = 0;
+        
+        // Сброс заголовка и HUD
+        GameHeaderTitle.Text = "Мини-игра";
+        GameHUDPanel.Visibility = Visibility.Collapsed;
     }
 
     // ── Игра: пользовательские уровни ────────────────────────────────────────
@@ -4312,6 +4923,233 @@ public partial class MainWindow : Window
         };
         if (dlg.ShowDialog() != true) return;
         ZipFile.CreateFromDirectory(dir, dlg.FileName);
+    }
+
+    private void ImportLevel_Click(object s, RoutedEventArgs e)
+    {
+        var dlg = new OpenFileDialog
+        {
+            Title = "Выбрать архив с треком",
+            Filter = "ZIP Archive|*.zip",
+            DefaultExt = ".zip"
+        };
+        
+        if (dlg.ShowDialog() != true) return;
+        
+        try
+        {
+            // Создаём временную директорию для распаковки
+            var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(tempDir);
+            
+            // Распаковываем архив
+            ZipFile.ExtractToDirectory(dlg.FileName, tempDir);
+            
+            // Ищем notes.json в распакованной директории
+            var notesJsonPath = System.IO.Path.Combine(tempDir, "notes.json");
+            if (!File.Exists(notesJsonPath))
+            {
+                ShowNotification("Ошибка импорта", "Архив не содержит файл notes.json", isError: true);
+                Directory.Delete(tempDir, true);
+                return;
+            }
+            
+            // Читаем метаданные уровня
+            var json = File.ReadAllText(notesJsonPath);
+            var map = JsonSerializer.Deserialize<NoteMap>(json);
+            if (map == null || string.IsNullOrEmpty(map.Title))
+            {
+                ShowNotification("Ошибка импорта", "Некорректный формат файла notes.json", isError: true);
+                Directory.Delete(tempDir, true);
+                return;
+            }
+            
+            // Проверяем, не существует ли уже уровень с таким названием
+            var targetDir = System.IO.Path.Combine(LevelsDir, map.Title);
+            if (Directory.Exists(targetDir))
+            {
+                ShowConfirmDialog(
+                    "Уровень уже существует",
+                    $"Уровень «{map.Title}» уже существует. Заменить его?",
+                    confirmed =>
+                    {
+                        if (!confirmed)
+                        {
+                            Directory.Delete(tempDir, true);
+                            return;
+                        }
+                        
+                        // Удаляем старый уровень
+                        Directory.Delete(targetDir, true);
+                        
+                        // Перемещаем новый уровень
+                        Directory.Move(tempDir, targetDir);
+                        
+                        // Обновляем список
+                        LoadUserLevels();
+                        ShowNotification("Успешно", $"Трек «{map.Title}» импортирован", isError: false);
+                    });
+            }
+            else
+            {
+                // Создаём директорию для уровней если её нет
+                if (!Directory.Exists(LevelsDir))
+                    Directory.CreateDirectory(LevelsDir);
+                
+                // Перемещаем уровень
+                Directory.Move(tempDir, targetDir);
+                
+                // Обновляем список
+                LoadUserLevels();
+                ShowNotification("Успешно", $"Трек «{map.Title}» импортирован", isError: false);
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowNotification("Ошибка импорта", $"Не удалось импортировать трек: {ex.Message}", isError: true);
+        }
+    }
+    
+    private void ShowNotification(string title, string message, bool isError)
+    {
+        // Создаём оверлей для затемнения фона
+        var overlay = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(180, 0, 0, 0)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+        Grid.SetRowSpan(overlay, 3);
+        MainGrid.Children.Add(overlay);
+
+        // Создаём карточку уведомления
+        var notificationCard = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x18)),
+            BorderBrush = new SolidColorBrush(isError 
+                ? Color.FromRgb(0xef, 0x44, 0x44) 
+                : Color.FromRgb(0x22, 0xc5, 0x5e)),
+            BorderThickness = new Thickness(0, 3, 0, 0),
+            CornerRadius = new CornerRadius(14),
+            MaxWidth = 480,
+            Margin = new Thickness(40),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = Colors.Black,
+                BlurRadius = 30,
+                ShadowDepth = 0,
+                Opacity = 0.5
+            }
+        };
+        Grid.SetRowSpan(notificationCard, 3);
+
+        var cardContent = new StackPanel
+        {
+            Margin = new Thickness(32, 28, 32, 28)
+        };
+
+        // Иконка (ошибка или успех)
+        var iconBorder = new Border
+        {
+            Width = 56,
+            Height = 56,
+            CornerRadius = new CornerRadius(28),
+            Background = new SolidColorBrush(isError 
+                ? Color.FromRgb(0xef, 0x44, 0x44) 
+                : Color.FromRgb(0x22, 0xc5, 0x5e)) { Opacity = 0.15 },
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 20)
+        };
+
+        var icon = new System.Windows.Shapes.Path
+        {
+            Data = Geometry.Parse(isError 
+                ? "M6,6 L18,18 M18,6 L6,18" // Крестик для ошибки
+                : "M4,12 L9,17 L20,6"), // Галочка для успеха
+            Stroke = new SolidColorBrush(isError 
+                ? Color.FromRgb(0xef, 0x44, 0x44) 
+                : Color.FromRgb(0x22, 0xc5, 0x5e)),
+            StrokeThickness = 2.5,
+            Width = 28,
+            Height = 28,
+            Stretch = Stretch.Uniform,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        iconBorder.Child = icon;
+        cardContent.Children.Add(iconBorder);
+
+        // Заголовок
+        var titleText = new TextBlock
+        {
+            Text = title,
+            FontSize = 20,
+            FontWeight = FontWeights.Bold,
+            Foreground = Brushes.White,
+            TextAlignment = TextAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 16)
+        };
+        cardContent.Children.Add(titleText);
+
+        // Описание
+        var descText = new TextBlock
+        {
+            Text = message,
+            FontSize = 14,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc)),
+            TextAlignment = TextAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+            LineHeight = 22,
+            Margin = new Thickness(0, 0, 0, 24)
+        };
+        cardContent.Children.Add(descText);
+
+        // Кнопка OK
+        var okBtn = new Button
+        {
+            Content = "Понятно",
+            Width = 140,
+            Height = 40,
+            Foreground = Brushes.White,
+            Background = new SolidColorBrush(isError 
+                ? Color.FromRgb(0xef, 0x44, 0x44) 
+                : Color.FromRgb(0x22, 0xc5, 0x5e)),
+            BorderThickness = new Thickness(0),
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 14,
+            FontWeight = FontWeights.SemiBold,
+            Cursor = Cursors.Hand,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+        };
+
+        // Шаблон для кнопки с закруглёнными углами
+        var btnTemplate = new ControlTemplate(typeof(Button));
+        var btnBorder = new FrameworkElementFactory(typeof(Border));
+        btnBorder.SetValue(Border.BackgroundProperty, new TemplateBindingExtension(Button.BackgroundProperty));
+        btnBorder.SetValue(Border.CornerRadiusProperty, new CornerRadius(10));
+        btnBorder.SetValue(Border.PaddingProperty, new TemplateBindingExtension(Button.PaddingProperty));
+
+        var btnPresenter = new FrameworkElementFactory(typeof(ContentPresenter));
+        btnPresenter.SetValue(ContentPresenter.HorizontalAlignmentProperty, System.Windows.HorizontalAlignment.Center);
+        btnPresenter.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
+        btnBorder.AppendChild(btnPresenter);
+        btnTemplate.VisualTree = btnBorder;
+
+        var hoverTrigger = new Trigger { Property = Button.IsMouseOverProperty, Value = true };
+        hoverTrigger.Setters.Add(new Setter(Button.OpacityProperty, 0.9));
+        btnTemplate.Triggers.Add(hoverTrigger);
+
+        okBtn.Template = btnTemplate;
+        okBtn.Click += (_, _) =>
+        {
+            MainGrid.Children.Remove(overlay);
+        };
+
+        cardContent.Children.Add(okBtn);
+        notificationCard.Child = cardContent;
+        overlay.Child = notificationCard;
     }
 
     private void DeleteUserLevel_Click(object s, RoutedEventArgs e)
