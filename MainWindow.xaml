@@ -1496,7 +1496,7 @@
                             <Grid x:Name="GameField" Margin="0,0,0,52">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="240"/>
+                                    <ColumnDefinition Width="400"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
 
