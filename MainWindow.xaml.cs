@@ -4110,13 +4110,77 @@ public partial class MainWindow : Window
     // ── Игра: меню и навигация ───────────────────────────────────────────────
     private void PlayMenuBtn_Click(object s, MouseButtonEventArgs e)
     {
+        // Блокируем навигационные кнопки во время загрузки треков (как во время игры)
+        ServicesBtn.IsEnabled = false;
+        GameNavBtn.IsEnabled = false;
+        FaqNavBtn.IsEnabled = false;
+        DiagNavBtn.IsEnabled = false;
+        SettingsBtn.IsEnabled = false;
+        
         LoadUserLevels();
         ShowGameView(GameTrackSelectView);
+        
+        // Разблокируем навигационные кнопки после загрузки
+        ServicesBtn.IsEnabled = true;
+        GameNavBtn.IsEnabled = true;
+        FaqNavBtn.IsEnabled = true;
+        DiagNavBtn.IsEnabled = true;
+        SettingsBtn.IsEnabled = true;
+    }
+
+    private void PlayMenuBtn_MouseEnter(object s, System.Windows.Input.MouseEventArgs e)
+    {
+        PlayMenuBorder.Background = new LinearGradientBrush
+        {
+            StartPoint = new System.Windows.Point(0, 0),
+            EndPoint = new System.Windows.Point(1, 1),
+            GradientStops = new GradientStopCollection
+            {
+                new GradientStop(Color.FromRgb(0x1e, 0x24, 0x42), 0),
+                new GradientStop(Color.FromRgb(0x25, 0x2a, 0x4a), 1)
+            }
+        };
+    }
+
+    private void PlayMenuBtn_MouseLeave(object s, System.Windows.Input.MouseEventArgs e)
+    {
+        PlayMenuBorder.Background = new LinearGradientBrush
+        {
+            StartPoint = new System.Windows.Point(0, 0),
+            EndPoint = new System.Windows.Point(1, 1),
+            GradientStops = new GradientStopCollection
+            {
+                new GradientStop(Color.FromRgb(0x17, 0x1b, 0x32), 0),
+                new GradientStop(Color.FromRgb(0x20, 0x21, 0x3a), 1)
+            }
+        };
     }
 
     private void EditorMenuBtn_Click(object s, MouseButtonEventArgs e)
     {
         ShowGameView(GameEditorView);
+    }
+
+    private void EditorMenuBtn_MouseEnter(object s, System.Windows.Input.MouseEventArgs e)
+    {
+        EditorMenuBtn.Background = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x2a));
+    }
+
+    private void EditorMenuBtn_MouseLeave(object s, System.Windows.Input.MouseEventArgs e)
+    {
+        EditorMenuBtn.Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e));
+    }
+
+    private void UserLevelCard_MouseEnter(object s, System.Windows.Input.MouseEventArgs e)
+    {
+        if (s is Border border)
+            border.Background = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x2a));
+    }
+
+    private void UserLevelCard_MouseLeave(object s, System.Windows.Input.MouseEventArgs e)
+    {
+        if (s is Border border)
+            border.Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e));
     }
 
     private void ShowGameView(UIElement view)
@@ -4392,6 +4456,13 @@ public partial class MainWindow : Window
     {
         if (_gameOverlayPanel != null) return;
 
+        // Блокируем навигационные кнопки во время оверлея
+        ServicesBtn.IsEnabled = false;
+        GameNavBtn.IsEnabled = false;
+        FaqNavBtn.IsEnabled = false;
+        DiagNavBtn.IsEnabled = false;
+        SettingsBtn.IsEnabled = false;
+
         // Блюр + затемнение главного контента
         var blurEffect = new System.Windows.Media.Effects.BlurEffect { Radius = 6 };
         MainPage.Effect = blurEffect;
@@ -4432,6 +4503,13 @@ public partial class MainWindow : Window
     private void HideGameOverlay()
     {
         if (_gameOverlayPanel == null) return;
+
+        // Разблокируем навигационные кнопки
+        ServicesBtn.IsEnabled = true;
+        GameNavBtn.IsEnabled = true;
+        FaqNavBtn.IsEnabled = true;
+        DiagNavBtn.IsEnabled = true;
+        SettingsBtn.IsEnabled = true;
 
         // Убираем блюр
         MainPage.Effect = null;
