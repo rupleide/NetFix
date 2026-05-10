@@ -1369,7 +1369,7 @@
                                     <Grid Grid.Column="0">
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
                                         <TextBlock Grid.Row="0" Text="ТРЕКИ NETFIX" FontFamily="Segoe UI" FontSize="11"
                                                    Foreground="#666666" FontWeight="Bold" Margin="0,0,0,10"/>
@@ -1406,7 +1406,7 @@
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
                                         <TextBlock Grid.Row="0" Text="ПОЛЬЗОВАТЕЛЬСКИЕ ТРЕКИ" FontFamily="Segoe UI" FontSize="11"
                                                    Foreground="#666666" FontWeight="Bold" Margin="0,0,0,10"/>
@@ -1438,14 +1438,16 @@
                                                         <DataTemplate>
                                                             <Border Background="#1e1e1e" CornerRadius="8" Margin="0,0,0,6"
                                                                     Padding="12,10" BorderBrush="#333333" BorderThickness="1"
-                                                                    Cursor="Hand" Tag="{Binding}"
-                                                                    MouseLeftButtonUp="UserLevelCard_Click">
+                                                                    Tag="{Binding}">
                                                                 <Grid>
                                                                     <Grid.ColumnDefinitions>
                                                                         <ColumnDefinition Width="*"/>
                                                                         <ColumnDefinition Width="Auto"/>
                                                                     </Grid.ColumnDefinitions>
-                                                                    <StackPanel VerticalAlignment="Center">
+                                                                    <StackPanel VerticalAlignment="Center" 
+                                                                                Cursor="Hand"
+                                                                                MouseLeftButtonUp="UserLevelCard_Click"
+                                                                                Tag="{Binding}">
                                                                         <TextBlock Text="{Binding Title}" FontFamily="Segoe UI"
                                                                                    FontSize="13" Foreground="White" FontWeight="SemiBold"/>
                                                                         <TextBlock Text="{Binding NoteCount, StringFormat='{}{0} нот'}"
@@ -1453,28 +1455,28 @@
                                                                     </StackPanel>
                                                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                                                         <Button Style="{StaticResource FlatBtn}"
-                                                                                Padding="8" Margin="0,0,4,0"
-                                                                                MinWidth="34" MinHeight="34"
+                                                                                Padding="10" Margin="0,0,4,0"
+                                                                                MinWidth="40" MinHeight="40"
                                                                                 Tag="{Binding}" Click="ExportUserLevel_Click"
                                                                                 Cursor="Hand">
-                                                                            <Path Data="{StaticResource ExportIcon}" 
-                                                                                  Stroke="#777777"
-                                                                                  StrokeThickness="2"
-                                                                                  Fill="Transparent"
-                                                                                  Width="18" Height="18"
-                                                                                  Stretch="Uniform"/>
+                                                                            <Border Background="Transparent" Width="20" Height="20">
+                                                                                <Path Data="{StaticResource ExportIcon}" 
+                                                                                      Stroke="#777777"
+                                                                                      StrokeThickness="2"
+                                                                                      Stretch="Uniform"/>
+                                                                            </Border>
                                                                         </Button>
                                                                         <Button Style="{StaticResource FlatBtn}"
-                                                                                Padding="8"
-                                                                                MinWidth="34" MinHeight="34"
+                                                                                Padding="10" Margin="0,0,0,0"
+                                                                                MinWidth="40" MinHeight="40"
                                                                                 Tag="{Binding}" Click="DeleteUserLevel_Click"
                                                                                 Cursor="Hand">
-                                                                            <Path Data="{StaticResource CloseIcon}" 
-                                                                                  Stroke="#ef4444"
-                                                                                  StrokeThickness="2"
-                                                                                  Fill="Transparent"
-                                                                                  Width="18" Height="18"
-                                                                                  Stretch="Uniform"/>
+                                                                            <Border Background="Transparent" Width="20" Height="20">
+                                                                                <Path Data="{StaticResource CloseIcon}" 
+                                                                                      Stroke="#ef4444"
+                                                                                      StrokeThickness="2"
+                                                                                      Stretch="Uniform"/>
+                                                                            </Border>
                                                                         </Button>
                                                                     </StackPanel>
                                                                 </Grid>
