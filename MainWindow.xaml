@@ -1272,7 +1272,7 @@
                                            FontSize="13" Foreground="#888888" HorizontalAlignment="Center"
                                            Margin="0,0,0,32"/>
 
-                                <Border CornerRadius="10" Width="320" Margin="0,0,0,12">
+                                <Border x:Name="PlayMenuBorder" CornerRadius="10" Width="320" Margin="0,0,0,12">
                                     <Border.Background>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                                             <GradientStop Color="#171b32" Offset="0"/>
@@ -1282,7 +1282,9 @@
                                     <Border BorderBrush="#343a78" BorderThickness="1" CornerRadius="10">
                                         <StackPanel>
                                             <Grid x:Name="PlayMenuBtn" Cursor="Hand" Height="68"
-                                                  MouseLeftButtonUp="PlayMenuBtn_Click">
+                                                  MouseLeftButtonUp="PlayMenuBtn_Click"
+                                                  MouseEnter="PlayMenuBtn_MouseEnter"
+                                                  MouseLeave="PlayMenuBtn_MouseLeave">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="68"/>
                                                     <ColumnDefinition Width="*"/>
@@ -1308,6 +1310,8 @@
                                 <Border x:Name="EditorMenuBtn" CornerRadius="12" Cursor="Hand"
                                         Width="320" Height="68"
                                         MouseLeftButtonUp="EditorMenuBtn_Click"
+                                        MouseEnter="EditorMenuBtn_MouseEnter"
+                                        MouseLeave="EditorMenuBtn_MouseLeave"
                                         Background="#1e1e1e">
                                     <Border BorderBrush="#333333" BorderThickness="1" CornerRadius="12">
                                         <Grid>
@@ -1420,7 +1424,9 @@
                                                                     Padding="12,10" BorderBrush="#333333" BorderThickness="1"
                                                                     Cursor="Hand"
                                                                     Tag="{Binding}"
-                                                                    MouseLeftButtonUp="UserLevelCard_Click">
+                                                                    MouseLeftButtonUp="UserLevelCard_Click"
+                                                                    MouseEnter="UserLevelCard_MouseEnter"
+                                                                    MouseLeave="UserLevelCard_MouseLeave">
                                                                 <Grid>
                                                                     <Grid.ColumnDefinitions>
                                                                         <ColumnDefinition Width="*"/>
