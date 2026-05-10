@@ -147,6 +147,10 @@ public partial class MainWindow : Window
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "NetFix", "levels");
     
+    // Игровой оверлей поверх главного экрана
+    private Border? _gameOverlayPanel = null;
+    private bool _gameOverlayActive = false;
+    
     // ── Network Monitor ──────────────────────────────────────────────────────
     private DispatcherTimer _netTimer = null!;
     private DispatcherTimer _pingTimer = null!;
@@ -1896,6 +1900,22 @@ public partial class MainWindow : Window
 
     private void GameBackBtn_Click(object s, RoutedEventArgs e)
     {
+        if (_gameOverlayActive)
+        {
+            // Закрываем игровой оверлей, возвращаемся к главной
+            _gameOverlayActive = false;
+            StopGame();
+            GamePage.Visibility = Visibility.Collapsed;
+            Panel.SetZIndex(GamePage, 0);
+            GamePage.Opacity = 1;
+            GamePage.Background = new SolidColorBrush(Color.FromRgb(0x0a, 0x0a, 0x0f));
+            
+            // Снимаем блюр
+            MainPage.Effect = null;
+            MainPage.Opacity = 1.0;
+            return;
+        }
+        
         // Из редактора -> в меню игры
         if (GameEditorView.Visibility == Visibility.Visible)
         {
@@ -2899,6 +2919,150 @@ public partial class MainWindow : Window
 
     private void ClearLog_Click(object s, RoutedEventArgs e) => LogBox.Document.Blocks.Clear();
 
+    private void ShowPlayWhileScanDialog()
+    {
+        // Создаем overlay
+        var overlay = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(160, 0, 0, 0)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = System.Windows.VerticalAlignment.Stretch
+        };
+        Grid.SetRowSpan(overlay, 3);
+        MainGrid.Children.Add(overlay);
+
+        // Карточка диалога
+        var dialogCard = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x18)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x63, 0x66, 0xf1)),
+            BorderThickness = new Thickness(0, 3, 0, 0),
+            CornerRadius = new CornerRadius(14),
+            MaxWidth = 400,
+            Margin = new Thickness(40),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = System.Windows.VerticalAlignment.Center,
+            Effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = Colors.Black,
+                BlurRadius = 30,
+                ShadowDepth = 0,
+                Opacity = 0.6
+            }
+        };
+        Grid.SetRowSpan(dialogCard, 3);
+
+        var content = new StackPanel { Margin = new Thickness(28, 24, 28, 24) };
+
+        // Иконка
+        var iconBorder = new Border
+        {
+            Width = 52,
+            Height = 52,
+            CornerRadius = new CornerRadius(26),
+            Background = new SolidColorBrush(Color.FromArgb(30, 0x63, 0x66, 0xf1)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 16)
+        };
+        iconBorder.Child = new TextBlock
+        {
+            Text = "🎮",
+            FontSize = 26,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = System.Windows.VerticalAlignment.Center,
+            FontFamily = new FontFamily("Segoe UI Emoji")
+        };
+        content.Children.Add(iconBorder);
+
+        content.Children.Add(new TextBlock
+        {
+            Text = "Скучно ждать?",
+            FontSize = 19,
+            FontWeight = FontWeights.Bold,
+            Foreground = Brushes.White,
+            TextAlignment = TextAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 10)
+        });
+
+        content.Children.Add(new TextBlock
+        {
+            Text = "Сканирование займёт время. Хочешь поиграть пока идёт проверка?",
+            FontSize = 13,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xaa, 0xaa, 0xaa)),
+            TextAlignment = TextAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 22)
+        });
+
+        var btnPanel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+        };
+
+        var yesBtn = new Button
+        {
+            Width = 130,
+            Height = 40,
+            Margin = new Thickness(0, 0, 10, 0),
+            Style = (Style)FindResource("AccentBtn"),
+            Background = new SolidColorBrush(Color.FromRgb(0x63, 0x66, 0xf1)),
+            Foreground = Brushes.White,
+            FontSize = 13,
+            FontWeight = FontWeights.SemiBold
+        };
+        yesBtn.Content = "Поиграть!";
+        yesBtn.Click += (_, _) =>
+        {
+            MainGrid.Children.Remove(overlay);
+            MainGrid.Children.Remove(dialogCard);
+            ShowGameOverlay();
+        };
+
+        var noBtn = new Button
+        {
+            Width = 90,
+            Height = 40,
+            Style = (Style)FindResource("OutlineBtn"),
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            FontSize = 13
+        };
+        noBtn.Content = "Нет";
+        noBtn.Click += (_, _) =>
+        {
+            MainGrid.Children.Remove(overlay);
+            MainGrid.Children.Remove(dialogCard);
+        };
+
+        btnPanel.Children.Add(yesBtn);
+        btnPanel.Children.Add(noBtn);
+        content.Children.Add(btnPanel);
+
+        dialogCard.Child = content;
+        MainGrid.Children.Add(dialogCard);
+
+        // Анимация появления
+        overlay.Opacity = 0;
+        dialogCard.Opacity = 0;
+        dialogCard.RenderTransform = new ScaleTransform(0.92, 0.92);
+        dialogCard.RenderTransformOrigin = new System.Windows.Point(0.5, 0.5);
+
+        overlay.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180)));
+        dialogCard.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(240)));
+        ((ScaleTransform)dialogCard.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty,
+            new DoubleAnimation(0.92, 1.0, TimeSpan.FromMilliseconds(280))
+            { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
+        ((ScaleTransform)dialogCard.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty,
+            new DoubleAnimation(0.92, 1.0, TimeSpan.FromMilliseconds(280))
+            { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
+
+        overlay.MouseLeftButtonDown += (_, _) =>
+        {
+            MainGrid.Children.Remove(overlay);
+            MainGrid.Children.Remove(dialogCard);
+        };
+    }
+
     private void CopyLog_Click(object s, RoutedEventArgs e)
     {
         var textRange = new System.Windows.Documents.TextRange(LogBox.Document.ContentStart, LogBox.Document.ContentEnd);
@@ -2911,6 +3075,9 @@ public partial class MainWindow : Window
     // ── Auto-setup ───────────────────────────────────────────────────────────
     private async void FixBtn_Click(object s, RoutedEventArgs e)
     {
+        // Показываем предложение поиграть
+        ShowPlayWhileScanDialog();
+        
         // Запускаем таймер на 10 секунд
         _checkInProgress = true;
         StartLongCheckTimer();
@@ -3977,6 +4144,24 @@ public partial class MainWindow : Window
         }
     }
 
+    private List<NoteMap> GetUserLevelMaps()
+    {
+        var result = new List<NoteMap>();
+        if (!Directory.Exists(LevelsDir)) return result;
+        foreach (var dir in Directory.GetDirectories(LevelsDir))
+        {
+            var f = System.IO.Path.Combine(dir, "notes.json");
+            if (!File.Exists(f)) continue;
+            try
+            {
+                var m = JsonSerializer.Deserialize<NoteMap>(File.ReadAllText(f));
+                if (m != null) result.Add(m);
+            }
+            catch { }
+        }
+        return result;
+    }
+
     // ── Игра: движок ─────────────────────────────────────────────────────────
     private const double FALL_SEC = 1.6;
     private const double REFERENCE_BPM = 140.0;
@@ -4002,6 +4187,371 @@ public partial class MainWindow : Window
             notes.Add(new NoteEntry { Time = beatSec * (i + 2), Lane = pattern[i % pattern.Length] });
 
         StartGame(notes, null, "NetFix — Default Beat", REFERENCE_BPM);
+    }
+
+    private void ShowGameOverlay()
+    {
+        if (_gameOverlayPanel != null) return;
+
+        // Блюр + затемнение главного контента
+        var blurEffect = new System.Windows.Media.Effects.BlurEffect { Radius = 6 };
+        MainPage.Effect = blurEffect;
+        MainPage.Opacity = 0.45;
+
+        // Полупрозрачный оверлей с игрой
+        _gameOverlayPanel = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(210, 0x0d, 0x0d, 0x18)),
+            VerticalAlignment = System.Windows.VerticalAlignment.Stretch,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            Opacity = 0
+        };
+        Panel.SetZIndex(_gameOverlayPanel, 8);
+
+        // Внутренний контейнер с закруглёнными краями
+        var innerBorder = new Border
+        {
+            CornerRadius = new CornerRadius(12),
+            ClipToBounds = true,
+            Margin = new Thickness(0)
+        };
+
+        // Создаём мини-версию выбора трека
+        var trackSelectGrid = BuildInlineTrackSelect();
+        innerBorder.Child = trackSelectGrid;
+        _gameOverlayPanel.Child = innerBorder;
+
+        Grid.SetRow(_gameOverlayPanel, 1);
+        ContentGrid.Children.Add(_gameOverlayPanel);
+
+        // Fade in
+        _gameOverlayPanel.BeginAnimation(OpacityProperty,
+            new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300))
+            { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
+    }
+
+    private void HideGameOverlay()
+    {
+        if (_gameOverlayPanel == null) return;
+
+        // Убираем блюр
+        MainPage.Effect = null;
+        MainPage.Opacity = 1.0;
+
+        var panel = _gameOverlayPanel;
+        _gameOverlayPanel = null;
+
+        var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(220));
+        fadeOut.Completed += (_, _) => ContentGrid.Children.Remove(panel);
+        panel.BeginAnimation(OpacityProperty, fadeOut);
+    }
+
+    private Grid BuildInlineTrackSelect()
+    {
+        var root = new Grid { Background = Brushes.Transparent };
+        root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+
+        // Шапка с кнопкой закрытия
+        var header = new Grid { Margin = new Thickness(24, 18, 24, 0) };
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var titleBlock = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = System.Windows.VerticalAlignment.Center };
+        titleBlock.Children.Add(new TextBlock
+        {
+            Text = "🎮  Выбор трека",
+            FontFamily = new FontFamily("Segoe UI Emoji"),
+            FontSize = 18,
+            FontWeight = FontWeights.Bold,
+            Foreground = Brushes.White
+        });
+        titleBlock.Children.Add(new TextBlock
+        {
+            Text = "  · сканирование идёт в фоне",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 12,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x77)),
+            VerticalAlignment = System.Windows.VerticalAlignment.Bottom,
+            Margin = new Thickness(0, 0, 0, 2)
+        });
+        Grid.SetColumn(titleBlock, 0);
+        header.Children.Add(titleBlock);
+
+        var closeBtn = new Button
+        {
+            Style = (Style)FindResource("FlatBtnCentered"),
+            Width = 32,
+            Height = 32,
+            Padding = new Thickness(0)
+        };
+        closeBtn.Content = new System.Windows.Shapes.Path
+        {
+            Data = (Geometry)FindResource("CloseIcon"),
+            Stroke = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x66)),
+            StrokeThickness = 2,
+            Width = 12,
+            Height = 12,
+            Stretch = Stretch.Uniform
+        };
+        closeBtn.Click += (_, _) =>
+        {
+            StopGame();
+            HideGameOverlay();
+        };
+        Grid.SetColumn(closeBtn, 1);
+        header.Children.Add(closeBtn);
+
+        // Горизонтальный разделитель
+        var sep = new Border
+        {
+            Height = 1,
+            Background = new SolidColorBrush(Color.FromRgb(0x22, 0x22, 0x33)),
+            Margin = new Thickness(0, 12, 0, 0)
+        };
+
+        // Объединяем header и separator в один StackPanel
+        var headerStack = new StackPanel();
+        headerStack.Children.Add(header);
+        headerStack.Children.Add(sep);
+        Grid.SetRow(headerStack, 0);
+        root.Children.Add(headerStack);
+
+        var bodyScroll = new ScrollViewer
+        {
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            Margin = new Thickness(24, 16, 24, 24)
+        };
+
+        var body = new StackPanel();
+
+        // ── Предупреждение об эпилепсии ──
+        var warnBorder = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x1a, 0x17, 0x10)),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(12, 8, 12, 8),
+            Margin = new Thickness(0, 0, 0, 18),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(80, 0xf5, 0x9e, 0x0b)),
+            BorderThickness = new Thickness(1)
+        };
+        warnBorder.Child = new TextBlock
+        {
+            Text = "⚠️ Игра содержит мигающие эффекты. Не рекомендуется при эпилепсии.",
+            FontFamily = new FontFamily("Segoe UI Emoji"),
+            FontSize = 11,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x77, 0x55)),
+            TextWrapping = TextWrapping.Wrap
+        };
+        body.Children.Add(warnBorder);
+
+        // ── Встроенный трек ──
+        var section1 = new TextBlock
+        {
+            Text = "ВСТРОЕННЫЕ ТРЕКИ",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 10,
+            FontWeight = FontWeights.Bold,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x44, 0x44, 0x55)),
+            Margin = new Thickness(0, 0, 0, 8)
+        };
+        body.Children.Add(section1);
+
+        var defaultCard = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x17, 0x1b, 0x32)),
+            CornerRadius = new CornerRadius(10),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x34, 0x3a, 0x78)),
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(14, 12, 14, 12),
+            Margin = new Thickness(0, 0, 0, 16),
+            Cursor = Cursors.Hand
+        };
+
+        var defaultCardGrid = new Grid();
+        defaultCardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        defaultCardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        defaultCardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var playIconBorder = new Border
+        {
+            Width = 36, Height = 36,
+            CornerRadius = new CornerRadius(18),
+            Background = new SolidColorBrush(Color.FromRgb(0x20, 0x27, 0x5a)),
+            Margin = new Thickness(0, 0, 12, 0),
+            VerticalAlignment = System.Windows.VerticalAlignment.Center
+        };
+        playIconBorder.Child = new System.Windows.Shapes.Path
+        {
+            Data = Geometry.Parse("M8,5 L8,19 L19,12 Z"),
+            Fill = new SolidColorBrush(Color.FromRgb(0x81, 0x8c, 0xf8)),
+            Width = 14, Height = 14,
+            Stretch = Stretch.Uniform,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = System.Windows.VerticalAlignment.Center
+        };
+
+        var defaultInfo = new StackPanel { VerticalAlignment = System.Windows.VerticalAlignment.Center };
+        defaultInfo.Children.Add(new TextBlock
+        {
+            Text = "NetFix — Default Beat",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 14, FontWeight = FontWeights.SemiBold,
+            Foreground = Brushes.White
+        });
+        defaultInfo.Children.Add(new TextBlock
+        {
+            Text = "48 нот · 140 BPM · WASD",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 11,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x81, 0x8c, 0xf8))
+        });
+
+        var playBtn = new Button
+        {
+            Style = (Style)FindResource("AccentBtn"),
+            Padding = new Thickness(14, 7, 14, 7),
+            FontSize = 12,
+            VerticalAlignment = System.Windows.VerticalAlignment.Center
+        };
+        playBtn.Content = "Играть";
+
+        Grid.SetColumn(playIconBorder, 0);
+        Grid.SetColumn(defaultInfo, 1);
+        Grid.SetColumn(playBtn, 2);
+        defaultCardGrid.Children.Add(playIconBorder);
+        defaultCardGrid.Children.Add(defaultInfo);
+        defaultCardGrid.Children.Add(playBtn);
+        defaultCard.Child = defaultCardGrid;
+
+        // Hover эффект
+        defaultCard.MouseEnter += (_, _) => defaultCard.Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x24, 0x42));
+        defaultCard.MouseLeave += (_, _) => defaultCard.Background = new SolidColorBrush(Color.FromRgb(0x17, 0x1b, 0x32));
+
+        Action startDefault = () =>
+        {
+            HideGameOverlay();
+            ShowGameInOverlay(() => StartDefaultTrack());
+        };
+
+        defaultCard.MouseLeftButtonUp += (_, _) => startDefault();
+        playBtn.Click += (_, _) => startDefault();
+        body.Children.Add(defaultCard);
+
+        // ── Пользовательские треки ──
+        var userLevels = GetUserLevelMaps();
+        if (userLevels.Count > 0)
+        {
+            body.Children.Add(new TextBlock
+            {
+                Text = "ПОЛЬЗОВАТЕЛЬСКИЕ ТРЕКИ",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 10, FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x44, 0x44, 0x55)),
+                Margin = new Thickness(0, 0, 0, 8)
+            });
+
+            foreach (var map in userLevels)
+            {
+                var uCard = new Border
+                {
+                    Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
+                    CornerRadius = new CornerRadius(8),
+                    BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+                    BorderThickness = new Thickness(1),
+                    Padding = new Thickness(14, 10, 14, 10),
+                    Margin = new Thickness(0, 0, 0, 6),
+                    Cursor = Cursors.Hand
+                };
+                var uGrid = new Grid();
+                uGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                uGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                var uInfo = new StackPanel { VerticalAlignment = System.Windows.VerticalAlignment.Center };
+                uInfo.Children.Add(new TextBlock
+                {
+                    Text = map.Title ?? "Без названия",
+                    FontFamily = new FontFamily("Segoe UI"),
+                    FontSize = 13, FontWeight = FontWeights.SemiBold,
+                    Foreground = Brushes.White
+                });
+                uInfo.Children.Add(new TextBlock
+                {
+                    Text = $"{map.Notes?.Count ?? 0} нот · {map.Bpm:0} BPM",
+                    FontFamily = new FontFamily("Segoe UI"),
+                    FontSize = 11,
+                    Foreground = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x66))
+                });
+
+                var uPlayBtn = new Button
+                {
+                    Style = (Style)FindResource("OutlineBtn"),
+                    Padding = new Thickness(12, 6, 12, 6),
+                    FontSize = 12,
+                    Foreground = new SolidColorBrush(Color.FromRgb(0xaa, 0xaa, 0xaa)),
+                    VerticalAlignment = System.Windows.VerticalAlignment.Center
+                };
+                uPlayBtn.Content = "▶";
+
+                Grid.SetColumn(uInfo, 0);
+                Grid.SetColumn(uPlayBtn, 1);
+                uGrid.Children.Add(uInfo);
+                uGrid.Children.Add(uPlayBtn);
+                uCard.Child = uGrid;
+
+                var capturedMap = map;
+                Action startUser = () =>
+                {
+                    HideGameOverlay();
+                    ShowGameInOverlay(() =>
+                    {
+                        var dir = System.IO.Path.Combine(LevelsDir, capturedMap.Title ?? "level");
+                        var mp3 = System.IO.Path.Combine(dir, capturedMap.TrackFile ?? "track.mp3");
+                        var bpm = capturedMap.Bpm > 0 ? capturedMap.Bpm : REFERENCE_BPM;
+                        StartGame(capturedMap.Notes, File.Exists(mp3) ? mp3 : null, capturedMap.Title ?? "Custom", bpm);
+                    });
+                };
+                uCard.MouseLeftButtonUp += (_, _) => startUser();
+                uPlayBtn.Click += (_, _) => startUser();
+
+                uCard.MouseEnter += (_, _) => uCard.Background = new SolidColorBrush(Color.FromRgb(0x26, 0x26, 0x26));
+                uCard.MouseLeave += (_, _) => uCard.Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e));
+
+                body.Children.Add(uCard);
+            }
+        }
+
+        bodyScroll.Content = body;
+        Grid.SetRow(bodyScroll, 1);
+        root.Children.Add(bodyScroll);
+
+        return root;
+    }
+
+    private void ShowGameInOverlay(Action startGameAction)
+    {
+        // Блюрим главную страницу
+        MainPage.Effect = new System.Windows.Media.Effects.BlurEffect { Radius = 5 };
+        MainPage.Opacity = 0.35;
+
+        // Показываем GamePage как оверлей
+        GamePage.Background = new SolidColorBrush(Colors.Transparent);
+        GamePage.Visibility = Visibility.Visible;
+        Panel.SetZIndex(GamePage, 9);
+
+        // Показываем GamePlayView
+        ShowGameView(GamePlayView);
+
+        // Обновляем флаг оверлея
+        _gameOverlayActive = true;
+
+        // Fade-in
+        GamePage.Opacity = 0;
+        GamePage.BeginAnimation(OpacityProperty,
+            new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300))
+            { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
+
+        startGameAction();
     }
 
     private void StartGame(List<NoteEntry> notes, string? mp3Path, string title, double bpm)
