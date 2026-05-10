@@ -154,6 +154,12 @@ public partial class MainWindow : Window
     // Таймер обратного отсчёта перед игрой
     private DispatcherTimer? _countdownTimer = null;
     
+    // Параметры последней игры для перезапуска
+    private List<NoteEntry>? _lastGameNotes = null;
+    private string? _lastGameMp3Path = null;
+    private string? _lastGameTitle = null;
+    private double _lastGameBpm = 0;
+    
     // ── Network Monitor ──────────────────────────────────────────────────────
     private DispatcherTimer _netTimer = null!;
     private DispatcherTimer _pingTimer = null!;
@@ -4561,6 +4567,12 @@ public partial class MainWindow : Window
     {
         StopGame();
 
+        // Сохраняем параметры для перезапуска
+        _lastGameNotes = notes.Select(n => new NoteEntry { Time = n.Time, Lane = n.Lane }).ToList();
+        _lastGameMp3Path = mp3Path;
+        _lastGameTitle = title;
+        _lastGameBpm = bpm;
+
         _currentFallSec = GetFallSecondsForBpm(bpm);
         _pendingNotes = notes
             .Select(n => new NoteEntry { Time = n.Time, Lane = n.Lane })
@@ -5732,9 +5744,17 @@ public partial class MainWindow : Window
         retryBtn.Click += (_, _) =>
         {
             GamePlayView.Children.Remove(overlay);
-            // Перезапуск с теми же настройками — возвращаем к выбору трека
-            ShowGameView(GameTrackSelectView);
-            StopGame();
+            // Перезапускаем ту же игру
+            if (_lastGameNotes != null && _lastGameTitle != null)
+            {
+                StartGame(_lastGameNotes, _lastGameMp3Path, _lastGameTitle, _lastGameBpm);
+            }
+            else
+            {
+                // Если параметры не сохранены, возвращаемся к выбору
+                ShowGameView(GameTrackSelectView);
+                StopGame();
+            }
         };
 
         var menuBtn = new Button
