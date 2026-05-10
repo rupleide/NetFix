@@ -5580,6 +5580,7 @@ public partial class MainWindow : Window
         // Оверлей результатов
         var overlay = new Border
         {
+            Tag = "game_results_overlay",
             Background = new SolidColorBrush(Color.FromArgb(220, 0x05, 0x05, 0x0f)),
             HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch,
@@ -5857,6 +5858,14 @@ public partial class MainWindow : Window
             var fadeOut = new DoubleAnimation(aura.Opacity, 0, TimeSpan.FromMilliseconds(600));
             fadeOut.Completed += (_, _) => GamePlayView.Children.Remove(aura);
             aura.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+        }
+        
+        // Удаляем оверлей результатов если он есть
+        var resultsOverlays = GamePlayView.Children.OfType<Border>()
+            .Where(b => b.Tag?.ToString() == "game_results_overlay").ToList();
+        foreach (var overlay in resultsOverlays)
+        {
+            GamePlayView.Children.Remove(overlay);
         }
         
         // Сброс заголовка и HUD
