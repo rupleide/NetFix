@@ -136,6 +136,7 @@ public partial class MainWindow : Window
     // Визуал: таймер для звёздочек
     private DispatcherTimer? _starTimer;
     private int _starBurst = 0; // сколько ещё burst-итераций осталось
+    private static readonly string[] StarChars = { "★", "✦", "✧" };
 
     private System.Windows.Media.MediaPlayer _editorPlayer = new();
     private List<NoteEntry> _recordedNotes = new();
@@ -5121,11 +5122,11 @@ public partial class MainWindow : Window
     private void StartStarBurst(Color color, int level)
     {
         _starTimer?.Stop();
-        _starBurst = level >= 3 ? 12 : 8; // сколько волн частиц
+        _starBurst = level >= 3 ? 12 : 8;
 
         var rng = new Random();
         _starTimer = new DispatcherTimer(DispatcherPriority.Background)
-            { Interval = TimeSpan.FromMilliseconds(level >= 3 ? 120 : 180) };
+            { Interval = TimeSpan.FromMilliseconds(level >= 3 ? 130 : 190) };
 
         _starTimer.Tick += (_, _) =>
         {
@@ -5136,23 +5137,28 @@ public partial class MainWindow : Window
             }
             _starBurst--;
 
-            // Спавним 3–6 звёздочек за тик
             int count = level >= 3 ? 6 : 3;
+            double viewWidth  = GameCanvas.ActualWidth;   // 240px — только игровое поле
+            double viewHeight = GameCanvas.ActualHeight;  // без нижней панели
+
             for (int i = 0; i < count; i++)
             {
-                double startX = rng.NextDouble() * GamePlayView.ActualWidth;
-                double startY = GamePlayView.ActualHeight + 10;
-                double endX   = startX + rng.Next(-120, 120);
-                double endY   = rng.Next(20, (int)(GamePlayView.ActualHeight * 0.6));
+                double startX = rng.NextDouble() * viewWidth;
+                double startY = viewHeight + 10;
+                double endX   = startX + rng.Next(-80, 80);
+                double endY   = rng.Next((int)(viewHeight * 0.2), (int)(viewHeight * 0.7)); // в пределах канваса
                 double size   = rng.Next(6, level >= 3 ? 18 : 14);
-                double dur    = 600 + rng.Next(0, 400);
+                double dur    = 1200 + rng.Next(0, 600);
 
                 var star = new TextBlock
                 {
-                    Text = rng.Next(3) switch { 0 => "★", 1 => "✦", _ => "✧" },
+                    Text = StarChars[rng.Next(StarChars.Length)],
                     FontSize = size,
                     Foreground = new SolidColorBrush(Color.FromArgb(
-                        (byte)rng.Next(180, 255), color.R, color.G, color.B)),
+                        (byte)rng.Next(200, 255),
+                        (byte)Math.Min(255, color.R + 40),
+                        (byte)Math.Min(255, color.G + 40),
+                        (byte)Math.Min(255, color.B + 40))),
                     IsHitTestVisible = false,
                     RenderTransformOrigin = new System.Windows.Point(0.5, 0.5),
                     RenderTransform = new TransformGroup
@@ -5163,62 +5169,50 @@ public partial class MainWindow : Window
                             new RotateTransform(),
                             new ScaleTransform(0.3, 0.3)
                         }
-                    },
-                    Effect = new System.Windows.Media.Effects.DropShadowEffect
-                    {
-                        Color = color, BlurRadius = 10, ShadowDepth = 0, Opacity = 0.8
                     }
                 };
 
                 Canvas.SetLeft(star, startX);
-                Canvas.SetTop(star, startY);
+                Canvas.SetTop(star, endY);
+                GameCanvas.Children.Add(star); // <-- GameCanvas, не GamePlayView!
 
-                // Используем Canvas внутри GamePlayView — добавляем через отдельный canvas
-                GamePlayView.Children.Add(star);
-
-                var tg = (TransformGroup)star.RenderTransform;
+                var tg        = (TransformGroup)star.RenderTransform;
                 var translate = (TranslateTransform)tg.Children[0];
                 var rotate    = (RotateTransform)tg.Children[1];
                 var scale     = (ScaleTransform)tg.Children[2];
 
-                // Движение вверх
-                var moveX = new DoubleAnimation(0, endX - startX,
-                    TimeSpan.FromMilliseconds(dur))
-                    { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
-                var moveY = new DoubleAnimation(0, endY - startY,
-                    TimeSpan.FromMilliseconds(dur))
-                    { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+                var easeOut = new CubicEase { EasingMode = EasingMode.EaseOut };
 
-                // Вращение
-                var spin = new DoubleAnimation(0, rng.Next(180, 540),
+                var moveX = new DoubleAnimation(endX - startX, 0,
+                    TimeSpan.FromMilliseconds(dur)) { EasingFunction = easeOut };
+                var moveY = new DoubleAnimation(startY - endY, 0,
+                    TimeSpan.FromMilliseconds(dur)) { EasingFunction = easeOut };
+
+                var spin = new DoubleAnimation(0, rng.Next(90, 270),
                     TimeSpan.FromMilliseconds(dur));
 
-                // Масштаб — вырастает и уменьшается
-                var scaleUp = new DoubleAnimation(0.3, 1.2,
-                    TimeSpan.FromMilliseconds(dur * 0.4));
-                var scaleDown = new DoubleAnimation(1.2, 0,
-                    TimeSpan.FromMilliseconds(dur * 0.6))
-                    { BeginTime = TimeSpan.FromMilliseconds(dur * 0.4) };
+                var scaleAnim = new DoubleAnimationUsingKeyFrames();
+                scaleAnim.KeyFrames.Add(new LinearDoubleKeyFrame(0.3, KeyTime.FromPercent(0)));
+                scaleAnim.KeyFrames.Add(new EasingDoubleKeyFrame(1.2, KeyTime.FromPercent(0.35),
+                    new CubicEase { EasingMode = EasingMode.EaseOut }));
+                scaleAnim.KeyFrames.Add(new EasingDoubleKeyFrame(0, KeyTime.FromPercent(1.0),
+                    new CubicEase { EasingMode = EasingMode.EaseIn }));
+                scaleAnim.Duration = TimeSpan.FromMilliseconds(dur);
 
-                // Fade out
                 var fade = new DoubleAnimation(1, 0,
-                    TimeSpan.FromMilliseconds(dur * 0.5))
-                    { BeginTime = TimeSpan.FromMilliseconds(dur * 0.5) };
-                fade.Completed += (_, _) => GamePlayView.Children.Remove(star);
+                    TimeSpan.FromMilliseconds(dur * 0.4))
+                    { BeginTime = TimeSpan.FromMilliseconds(dur * 0.6) };
+                fade.Completed += (_, _) => GameCanvas.Children.Remove(star); // <-- тоже GameCanvas
 
                 translate.BeginAnimation(TranslateTransform.XProperty, moveX);
                 translate.BeginAnimation(TranslateTransform.YProperty, moveY);
                 rotate.BeginAnimation(RotateTransform.AngleProperty, spin);
-                scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleUp);
-                scale.BeginAnimation(ScaleTransform.ScaleYProperty,
-                    new DoubleAnimation(0.3, 1.2, TimeSpan.FromMilliseconds(dur * 0.4)));
-                scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleDown);
-                scale.BeginAnimation(ScaleTransform.ScaleYProperty,
-                    new DoubleAnimation(1.2, 0, TimeSpan.FromMilliseconds(dur * 0.6))
-                    { BeginTime = TimeSpan.FromMilliseconds(dur * 0.4) });
+                scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
+                scale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim.Clone());
                 star.BeginAnimation(UIElement.OpacityProperty, fade);
             }
         };
+
         _starTimer.Start();
     }
 
