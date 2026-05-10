@@ -1841,16 +1841,6 @@ public partial class MainWindow : Window
         StopGame();
         StopEditorRecording();
         
-        // Закрываем игровой оверлей если он активен
-        if (_gameOverlayActive)
-        {
-            _gameOverlayActive = false;
-            HideGameOverlay();
-            GamePage.Visibility = Visibility.Collapsed;
-            Panel.SetZIndex(GamePage, 0);
-            GamePage.Background = new SolidColorBrush(Color.FromRgb(0x0a, 0x0a, 0x0f));
-        }
-        
         ShowDiagnosticsTab();
     }
     
@@ -1869,17 +1859,6 @@ public partial class MainWindow : Window
 
     private void GameNavBtn_Click(object s, RoutedEventArgs e)
     {
-        // Закрываем игровой оверлей если он активен
-        if (_gameOverlayActive)
-        {
-            _gameOverlayActive = false;
-            StopGame();
-            HideGameOverlay();
-            GamePage.Visibility = Visibility.Collapsed;
-            Panel.SetZIndex(GamePage, 0);
-            GamePage.Background = new SolidColorBrush(Color.FromRgb(0x0a, 0x0a, 0x0f));
-        }
-        
         // Если страница игры открыта - работаем как НАЗАД
         if (GamePage.Visibility == Visibility.Visible)
         {
@@ -1944,6 +1923,11 @@ public partial class MainWindow : Window
             // Снимаем блюр
             MainPage.Effect = null;
             MainPage.Opacity = 1.0;
+            
+            // Показываем навигационные кнопки обратно
+            GameNavBtn.Visibility = Visibility.Visible;
+            FaqNavBtn.Visibility = Visibility.Visible;
+            DiagNavBtn.Visibility = Visibility.Visible;
             return;
         }
         
@@ -1988,16 +1972,6 @@ public partial class MainWindow : Window
         // Останавливаем игру/редактор при переходе на другую вкладку
         StopGame();
         StopEditorRecording();
-        
-        // Закрываем игровой оверлей если он активен
-        if (_gameOverlayActive)
-        {
-            _gameOverlayActive = false;
-            HideGameOverlay();
-            GamePage.Visibility = Visibility.Collapsed;
-            Panel.SetZIndex(GamePage, 0);
-            GamePage.Background = new SolidColorBrush(Color.FromRgb(0x0a, 0x0a, 0x0f));
-        }
         
         MainPage.Visibility = Visibility.Collapsed;
         GamePage.Visibility = Visibility.Collapsed;
@@ -4574,6 +4548,11 @@ public partial class MainWindow : Window
         // Блюрим главную страницу
         MainPage.Effect = new System.Windows.Media.Effects.BlurEffect { Radius = 5 };
         MainPage.Opacity = 0.35;
+
+        // Скрываем навигационные кнопки
+        GameNavBtn.Visibility = Visibility.Collapsed;
+        FaqNavBtn.Visibility = Visibility.Collapsed;
+        DiagNavBtn.Visibility = Visibility.Collapsed;
 
         // Показываем GamePage как оверлей
         GamePage.Background = new SolidColorBrush(Colors.Transparent);
