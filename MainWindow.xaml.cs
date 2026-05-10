@@ -1840,6 +1840,17 @@ public partial class MainWindow : Window
         // Останавливаем игру/редактор при переходе на другую вкладку
         StopGame();
         StopEditorRecording();
+        
+        // Закрываем игровой оверлей если он активен
+        if (_gameOverlayActive)
+        {
+            _gameOverlayActive = false;
+            HideGameOverlay();
+            GamePage.Visibility = Visibility.Collapsed;
+            Panel.SetZIndex(GamePage, 0);
+            GamePage.Background = new SolidColorBrush(Color.FromRgb(0x0a, 0x0a, 0x0f));
+        }
+        
         ShowDiagnosticsTab();
     }
     
@@ -1858,6 +1869,17 @@ public partial class MainWindow : Window
 
     private void GameNavBtn_Click(object s, RoutedEventArgs e)
     {
+        // Закрываем игровой оверлей если он активен
+        if (_gameOverlayActive)
+        {
+            _gameOverlayActive = false;
+            StopGame();
+            HideGameOverlay();
+            GamePage.Visibility = Visibility.Collapsed;
+            Panel.SetZIndex(GamePage, 0);
+            GamePage.Background = new SolidColorBrush(Color.FromRgb(0x0a, 0x0a, 0x0f));
+        }
+        
         // Если страница игры открыта - работаем как НАЗАД
         if (GamePage.Visibility == Visibility.Visible)
         {
@@ -1966,6 +1988,16 @@ public partial class MainWindow : Window
         // Останавливаем игру/редактор при переходе на другую вкладку
         StopGame();
         StopEditorRecording();
+        
+        // Закрываем игровой оверлей если он активен
+        if (_gameOverlayActive)
+        {
+            _gameOverlayActive = false;
+            HideGameOverlay();
+            GamePage.Visibility = Visibility.Collapsed;
+            Panel.SetZIndex(GamePage, 0);
+            GamePage.Background = new SolidColorBrush(Color.FromRgb(0x0a, 0x0a, 0x0f));
+        }
         
         MainPage.Visibility = Visibility.Collapsed;
         GamePage.Visibility = Visibility.Collapsed;
