@@ -34,4 +34,11 @@
   <ItemGroup>
     <Resource Include="Assets\noise.png" />
   </ItemGroup>
+
+  <!-- Копируем папку Tracks в выходную директорию -->
+  <ItemGroup>
+    <None Include="Tracks\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

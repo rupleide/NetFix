@@ -148,6 +148,9 @@ public partial class MainWindow : Window
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "NetFix", "levels");
     
+    private static readonly string BuiltInTracksDir =
+        System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Tracks");
+    
     // Игровой оверлей поверх главного экрана
     private Border? _gameOverlayPanel = null;
     private bool _gameOverlayActive = false;
@@ -4163,6 +4166,125 @@ public partial class MainWindow : Window
             UserLevelsList.Visibility = Visibility.Visible;
             UserLevelsList.ItemsSource = levels;
         }
+        
+        // Загружаем встроенные треки NetFix
+        LoadBuiltInTracks();
+    }
+
+    private void LoadBuiltInTracks()
+    {
+        var builtInTracks = GetBuiltInTracks();
+        
+        // Очищаем список
+        BuiltInTracksList.Children.Clear();
+        
+        // Добавляем встроенные треки
+        foreach (var map in builtInTracks)
+        {
+            var card = new Border
+            {
+                Background = new SolidColorBrush(Color.FromRgb(0x17, 0x1b, 0x32)),
+                CornerRadius = new CornerRadius(10),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(0x34, 0x3a, 0x78)),
+                BorderThickness = new Thickness(1),
+                Padding = new Thickness(14),
+                Margin = new Thickness(0, 0, 0, 6),
+                Cursor = Cursors.Hand,
+                Tag = map
+            };
+
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(44) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            var iconBorder = new Border
+            {
+                Width = 32, Height = 32,
+                CornerRadius = new CornerRadius(16),
+                Background = new SolidColorBrush(Color.FromRgb(0x20, 0x27, 0x5a)),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+                VerticalAlignment = System.Windows.VerticalAlignment.Center
+            };
+            iconBorder.Child = new TextBlock
+            {
+                Text = "♪",
+                FontSize = 18,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x81, 0x8c, 0xf8)),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = System.Windows.VerticalAlignment.Center
+            };
+
+            var info = new StackPanel { VerticalAlignment = System.Windows.VerticalAlignment.Center };
+            info.Children.Add(new TextBlock
+            {
+                Text = map.Title ?? "Без названия",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 14,
+                Foreground = Brushes.White,
+                FontWeight = FontWeights.SemiBold
+            });
+            info.Children.Add(new TextBlock
+            {
+                Text = $"{map.Notes?.Count ?? 0} нот · {map.Bpm:0} BPM",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x81, 0x8c, 0xf8))
+            });
+
+            Grid.SetColumn(iconBorder, 0);
+            Grid.SetColumn(info, 1);
+            grid.Children.Add(iconBorder);
+            grid.Children.Add(info);
+            card.Child = grid;
+
+            card.MouseLeftButtonUp += BuiltInTrackCard_Click;
+            card.MouseEnter += (_, _) => card.Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x24, 0x42));
+            card.MouseLeave += (_, _) => card.Background = new SolidColorBrush(Color.FromRgb(0x17, 0x1b, 0x32));
+
+            BuiltInTracksList.Children.Add(card);
+        }
+    }
+
+    private void BuiltInTrackCard_Click(object s, MouseButtonEventArgs e)
+    {
+        if ((s as Border)?.Tag is not NoteMap map) return;
+        
+        // Извлекаем трек из zip во временную папку
+        var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "NetFix_Tracks", map.Title ?? "track");
+        Directory.CreateDirectory(tempDir);
+        
+        try
+        {
+            using var archive = ZipFile.OpenRead(map.LevelDir!);
+            
+            // Извлекаем mp3 (ищем без учёта вложенности)
+            var mp3Entry = archive.Entries.FirstOrDefault(e => 
+                e.Name.Equals(map.TrackFile ?? "track.mp3", StringComparison.OrdinalIgnoreCase) ||
+                e.FullName.EndsWith(map.TrackFile ?? "track.mp3", StringComparison.OrdinalIgnoreCase));
+            
+            string? mp3Path = null;
+            if (mp3Entry != null)
+            {
+                mp3Path = System.IO.Path.Combine(tempDir, mp3Entry.Name);
+                mp3Entry.ExtractToFile(mp3Path, overwrite: true);
+            }
+            
+            var bpm = map.Bpm > 0 ? map.Bpm : REFERENCE_BPM;
+            
+            // Переключаемся на игровой вид
+            GamePage.Visibility = Visibility.Visible;
+            ShowGameView(GamePlayView);
+            StartGame(map.Notes, mp3Path, map.Title ?? "NetFix Track", bpm);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Ошибка запуска трека: {ex.Message}");
+            // Если не удалось извлечь, запускаем без музыки
+            var bpm = map.Bpm > 0 ? map.Bpm : REFERENCE_BPM;
+            GamePage.Visibility = Visibility.Visible;
+            ShowGameView(GamePlayView);
+            StartGame(map.Notes, null, map.Title ?? "NetFix Track", bpm);
+        }
     }
 
     private List<NoteMap> GetUserLevelMaps()
@@ -4183,11 +4305,55 @@ public partial class MainWindow : Window
         return result;
     }
 
+    private List<NoteMap> GetBuiltInTracks()
+    {
+        var result = new List<NoteMap>();
+        if (!Directory.Exists(BuiltInTracksDir)) return result;
+
+        // Ищем все .zip файлы в папке Tracks
+        var zipFiles = Directory.GetFiles(BuiltInTracksDir, "*.zip");
+        
+        foreach (var zipPath in zipFiles)
+        {
+            try
+            {
+                using var archive = ZipFile.OpenRead(zipPath);
+                
+                // Ищем notes.json в архиве (без учёта регистра и вложенности)
+                var notesEntry = archive.Entries.FirstOrDefault(e => 
+                    e.Name.Equals("notes.json", StringComparison.OrdinalIgnoreCase) ||
+                    e.FullName.EndsWith("notes.json", StringComparison.OrdinalIgnoreCase));
+                
+                if (notesEntry == null) continue;
+
+                // Читаем notes.json
+                using var stream = notesEntry.Open();
+                using var reader = new StreamReader(stream);
+                var json = reader.ReadToEnd();
+                
+                var map = JsonSerializer.Deserialize<NoteMap>(json);
+                if (map != null)
+                {
+                    // Сохраняем путь к zip-архиву для последующего извлечения
+                    map.LevelDir = zipPath;
+                    result.Add(map);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Логируем ошибку для отладки
+                Debug.WriteLine($"Ошибка загрузки трека {System.IO.Path.GetFileName(zipPath)}: {ex.Message}");
+            }
+        }
+        
+        return result;
+    }
+
     // ── Игра: движок ─────────────────────────────────────────────────────────
     private const double FALL_SEC = 1.6;
     private const double REFERENCE_BPM = 140.0;
-    private const double HIT_PERFECT = 0.05;
-    private const double HIT_GOOD = 0.12;
+    private const double HIT_PERFECT = 0.06;
+    private const double HIT_GOOD = 0.15;
 
     // Константы размеров игрового поля
     private const double LANE_WIDTH = 50;
@@ -4390,86 +4556,133 @@ public partial class MainWindow : Window
         };
         body.Children.Add(section1);
 
-        var defaultCard = new Border
+        // ── Встроенные треки NetFix ──
+        var builtInTracks = GetBuiltInTracks();
+        if (builtInTracks.Count > 0)
         {
-            Background = new SolidColorBrush(Color.FromRgb(0x17, 0x1b, 0x32)),
-            CornerRadius = new CornerRadius(10),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(0x34, 0x3a, 0x78)),
-            BorderThickness = new Thickness(1),
-            Padding = new Thickness(14, 12, 14, 12),
-            Margin = new Thickness(0, 0, 0, 16),
-            Cursor = Cursors.Hand
-        };
+            body.Children.Add(new TextBlock
+            {
+                Text = "ТРЕКИ NETFIX",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 10, FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+                Margin = new Thickness(0, 0, 0, 8)
+            });
 
-        var defaultCardGrid = new Grid();
-        defaultCardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        defaultCardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        defaultCardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            foreach (var map in builtInTracks)
+            {
+                var bCard = new Border
+                {
+                    Background = new SolidColorBrush(Color.FromRgb(0x17, 0x1b, 0x32)),
+                    CornerRadius = new CornerRadius(8),
+                    BorderBrush = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+                    BorderThickness = new Thickness(1),
+                    Padding = new Thickness(14, 10, 14, 10),
+                    Margin = new Thickness(0, 0, 0, 6),
+                    Cursor = Cursors.Hand
+                };
+                var bGrid = new Grid();
+                bGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                bGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                bGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-        var playIconBorder = new Border
-        {
-            Width = 36, Height = 36,
-            CornerRadius = new CornerRadius(18),
-            Background = new SolidColorBrush(Color.FromRgb(0x20, 0x27, 0x5a)),
-            Margin = new Thickness(0, 0, 12, 0),
-            VerticalAlignment = System.Windows.VerticalAlignment.Center
-        };
-        playIconBorder.Child = new System.Windows.Shapes.Path
-        {
-            Data = Geometry.Parse("M8,5 L8,19 L19,12 Z"),
-            Fill = new SolidColorBrush(Color.FromRgb(0x81, 0x8c, 0xf8)),
-            Width = 14, Height = 14,
-            Stretch = Stretch.Uniform,
-            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
-            VerticalAlignment = System.Windows.VerticalAlignment.Center
-        };
+                var bIconBorder = new Border
+                {
+                    Width = 32, Height = 32,
+                    CornerRadius = new CornerRadius(6),
+                    Background = new SolidColorBrush(Color.FromRgb(0x20, 0x27, 0x5a)),
+                    Margin = new Thickness(0, 0, 10, 0),
+                    VerticalAlignment = System.Windows.VerticalAlignment.Center
+                };
+                bIconBorder.Child = new TextBlock
+                {
+                    Text = "♪",
+                    FontSize = 18,
+                    Foreground = new SolidColorBrush(Color.FromRgb(0x81, 0x8c, 0xf8)),
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                    VerticalAlignment = System.Windows.VerticalAlignment.Center
+                };
 
-        var defaultInfo = new StackPanel { VerticalAlignment = System.Windows.VerticalAlignment.Center };
-        defaultInfo.Children.Add(new TextBlock
-        {
-            Text = "NetFix — Default Beat",
-            FontFamily = new FontFamily("Segoe UI"),
-            FontSize = 14, FontWeight = FontWeights.SemiBold,
-            Foreground = Brushes.White
-        });
-        defaultInfo.Children.Add(new TextBlock
-        {
-            Text = "48 нот · 140 BPM · WASD",
-            FontFamily = new FontFamily("Segoe UI"),
-            FontSize = 11,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x81, 0x8c, 0xf8))
-        });
+                var bInfo = new StackPanel { VerticalAlignment = System.Windows.VerticalAlignment.Center };
+                bInfo.Children.Add(new TextBlock
+                {
+                    Text = map.Title ?? "Без названия",
+                    FontFamily = new FontFamily("Segoe UI"),
+                    FontSize = 13, FontWeight = FontWeights.SemiBold,
+                    Foreground = Brushes.White
+                });
+                bInfo.Children.Add(new TextBlock
+                {
+                    Text = $"{map.Notes?.Count ?? 0} нот · {map.Bpm:0} BPM · {map.Author ?? "NetFix"}",
+                    FontFamily = new FontFamily("Segoe UI"),
+                    FontSize = 11,
+                    Foreground = new SolidColorBrush(Color.FromRgb(0x81, 0x8c, 0xf8))
+                });
 
-        var playBtn = new Button
-        {
-            Style = (Style)FindResource("AccentBtn"),
-            Padding = new Thickness(14, 7, 14, 7),
-            FontSize = 12,
-            VerticalAlignment = System.Windows.VerticalAlignment.Center
-        };
-        playBtn.Content = "Играть";
+                var bPlayBtn = new Button
+                {
+                    Style = (Style)FindResource("AccentBtn"),
+                    Padding = new Thickness(12, 6, 12, 6),
+                    FontSize = 12,
+                    VerticalAlignment = System.Windows.VerticalAlignment.Center
+                };
+                bPlayBtn.Content = "▶";
 
-        Grid.SetColumn(playIconBorder, 0);
-        Grid.SetColumn(defaultInfo, 1);
-        Grid.SetColumn(playBtn, 2);
-        defaultCardGrid.Children.Add(playIconBorder);
-        defaultCardGrid.Children.Add(defaultInfo);
-        defaultCardGrid.Children.Add(playBtn);
-        defaultCard.Child = defaultCardGrid;
+                Grid.SetColumn(bIconBorder, 0);
+                Grid.SetColumn(bInfo, 1);
+                Grid.SetColumn(bPlayBtn, 2);
+                bGrid.Children.Add(bIconBorder);
+                bGrid.Children.Add(bInfo);
+                bGrid.Children.Add(bPlayBtn);
+                bCard.Child = bGrid;
 
-        // Hover эффект
-        defaultCard.MouseEnter += (_, _) => defaultCard.Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x24, 0x42));
-        defaultCard.MouseLeave += (_, _) => defaultCard.Background = new SolidColorBrush(Color.FromRgb(0x17, 0x1b, 0x32));
+                var capturedMap = map;
+                Action startBuiltIn = () =>
+                {
+                    HideGameOverlay();
+                    ShowGameInOverlay(() =>
+                    {
+                        // Извлекаем трек из zip во временную папку
+                        var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "NetFix_Tracks", capturedMap.Title ?? "track");
+                        Directory.CreateDirectory(tempDir);
+                        
+                        try
+                        {
+                            using var archive = ZipFile.OpenRead(capturedMap.LevelDir!);
+                            
+                            // Извлекаем mp3 (ищем без учёта вложенности)
+                            var mp3Entry = archive.Entries.FirstOrDefault(e => 
+                                e.Name.Equals(capturedMap.TrackFile ?? "track.mp3", StringComparison.OrdinalIgnoreCase) ||
+                                e.FullName.EndsWith(capturedMap.TrackFile ?? "track.mp3", StringComparison.OrdinalIgnoreCase));
+                            
+                            string? mp3Path = null;
+                            if (mp3Entry != null)
+                            {
+                                mp3Path = System.IO.Path.Combine(tempDir, mp3Entry.Name);
+                                mp3Entry.ExtractToFile(mp3Path, overwrite: true);
+                            }
+                            
+                            var bpm = capturedMap.Bpm > 0 ? capturedMap.Bpm : REFERENCE_BPM;
+                            StartGame(capturedMap.Notes, mp3Path, capturedMap.Title ?? "NetFix Track", bpm);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Ошибка запуска трека: {ex.Message}");
+                            // Если не удалось извлечь, запускаем без музыки
+                            var bpm = capturedMap.Bpm > 0 ? capturedMap.Bpm : REFERENCE_BPM;
+                            StartGame(capturedMap.Notes, null, capturedMap.Title ?? "NetFix Track", bpm);
+                        }
+                    });
+                };
+                bCard.MouseLeftButtonUp += (_, _) => startBuiltIn();
+                bPlayBtn.Click += (_, _) => startBuiltIn();
 
-        Action startDefault = () =>
-        {
-            HideGameOverlay();
-            ShowGameInOverlay(() => StartDefaultTrack());
-        };
+                bCard.MouseEnter += (_, _) => bCard.Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x24, 0x42));
+                bCard.MouseLeave += (_, _) => bCard.Background = new SolidColorBrush(Color.FromRgb(0x17, 0x1b, 0x32));
 
-        defaultCard.MouseLeftButtonUp += (_, _) => startDefault();
-        playBtn.Click += (_, _) => startDefault();
-        body.Children.Add(defaultCard);
+                body.Children.Add(bCard);
+            }
+        }
 
         // ── Пользовательские треки ──
         var userLevels = GetUserLevelMaps();
@@ -4887,25 +5100,25 @@ public partial class MainWindow : Window
 
     private void Game_KeyDown(object s, System.Windows.Input.KeyEventArgs e)
     {
+        // Игнорируем автоповтор при удержании клавиши
+        if (e.IsRepeat)
+            return;
+
         int lane = GetGameLane(e.Key);
         if (lane < 0) return;
         e.Handled = true;
 
         double now = _gameClock.Elapsed.TotalSeconds;
-        NoteEntry? best = null;
-        double bestDist = double.MaxValue;
-
-        foreach (var note in _activeNotes.Where(n => n.Lane == lane && !n.Hit))
-        {
-            double dist = Math.Abs(note.Time - now);
-            if (dist < bestDist)
-            {
-                bestDist = dist;
-                best = note;
-            }
-        }
+        
+        // Берём первую нехитную ноту на дорожке по порядку времени
+        var best = _activeNotes
+            .Where(n => n.Lane == lane && !n.Hit)
+            .OrderBy(n => n.Time)
+            .FirstOrDefault();
 
         if (best == null) return;
+
+        double bestDist = Math.Abs(best.Time - now);
 
         if (bestDist <= HIT_PERFECT)
         {
@@ -5134,11 +5347,13 @@ public partial class MainWindow : Window
     private void StartStarBurst(Color color, int level)
     {
         _starTimer?.Stop();
-        _starBurst = level >= 3 ? 12 : 8;
+        
+        // На максимальном уровне (15) — НАМНОГО больше звёзд
+        _starBurst = level >= 12 ? 20 : (level >= 3 ? 12 : 8);
 
         var rng = new Random();
         _starTimer = new DispatcherTimer(DispatcherPriority.Background)
-            { Interval = TimeSpan.FromMilliseconds(level >= 3 ? 130 : 190) };
+            { Interval = TimeSpan.FromMilliseconds(level >= 12 ? 80 : (level >= 3 ? 130 : 190)) };
 
         _starTimer.Tick += (_, _) =>
         {
@@ -5149,7 +5364,7 @@ public partial class MainWindow : Window
             }
             _starBurst--;
 
-            int count = level >= 3 ? 6 : 3;
+            int count = level >= 12 ? 10 : (level >= 3 ? 6 : 3);
             double viewWidth  = GameCanvas.ActualWidth;   // 240px — только игровое поле
             double viewHeight = GameCanvas.ActualHeight;  // без нижней панели
 
@@ -5162,15 +5377,37 @@ public partial class MainWindow : Window
                 double size   = rng.Next(6, level >= 3 ? 18 : 14);
                 double dur    = 1200 + rng.Next(0, 600);
 
+                // Для белого цвета (максимальное комбо) — используем радужные цвета
+                Color starColor;
+                if (color.R >= 250 && color.G >= 250 && color.B >= 250)
+                {
+                    // Радужные звёзды для белого комбо
+                    var rainbowColors = new[]
+                    {
+                        Color.FromRgb(0xff, 0x6b, 0xb5), // розовый
+                        Color.FromRgb(0xff, 0xd7, 0x00), // золотой
+                        Color.FromRgb(0x00, 0xff, 0xff), // cyan
+                        Color.FromRgb(0xff, 0x45, 0x00), // оранжевый
+                        Color.FromRgb(0xec, 0x4e, 0xff), // фиолетовый
+                        Color.FromRgb(0x22, 0xc5, 0x5e), // зелёный
+                    };
+                    starColor = rainbowColors[rng.Next(rainbowColors.Length)];
+                }
+                else
+                {
+                    // Обычные звёзды — светлее основного цвета
+                    starColor = Color.FromArgb(
+                        (byte)rng.Next(200, 255),
+                        (byte)Math.Min(255, color.R + 40),
+                        (byte)Math.Min(255, color.G + 40),
+                        (byte)Math.Min(255, color.B + 40));
+                }
+
                 var star = new TextBlock
                 {
                     Text = StarChars[rng.Next(StarChars.Length)],
                     FontSize = size,
-                    Foreground = new SolidColorBrush(Color.FromArgb(
-                        (byte)rng.Next(200, 255),
-                        (byte)Math.Min(255, color.R + 40),
-                        (byte)Math.Min(255, color.G + 40),
-                        (byte)Math.Min(255, color.B + 40))),
+                    Foreground = new SolidColorBrush(starColor),
                     IsHitTestVisible = false,
                     RenderTransformOrigin = new System.Windows.Point(0.5, 0.5),
                     RenderTransform = new TransformGroup
@@ -5701,18 +5938,18 @@ public partial class MainWindow : Window
         {
             var card = new Border
             {
-                Background = new SolidColorBrush(Color.FromArgb(60, 0xff, 0xff, 0xff)),
+                Background = new SolidColorBrush(Color.FromArgb(80, 0x25, 0x25, 0x25)),
                 CornerRadius = new CornerRadius(12),
                 Padding = new Thickness(16, 12, 16, 12),
                 Margin = new Thickness(4),
-                BorderBrush = new SolidColorBrush(Color.FromArgb(40, color.R, color.G, color.B)),
+                BorderBrush = new SolidColorBrush(Color.FromArgb(100, 0x33, 0x33, 0x33)),
                 BorderThickness = new Thickness(1)
             };
             var sp = new StackPanel { HorizontalAlignment = System.Windows.HorizontalAlignment.Center };
             sp.Children.Add(new TextBlock
             {
                 Text = label, FontFamily = new FontFamily("Segoe UI"), FontSize = 10,
-                Foreground = new SolidColorBrush(Color.FromArgb(150, 0xff, 0xff, 0xff)),
+                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
                 HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
                 FontWeight = FontWeights.Bold
             });
