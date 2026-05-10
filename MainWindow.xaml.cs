@@ -1924,10 +1924,15 @@ public partial class MainWindow : Window
             MainPage.Effect = null;
             MainPage.Opacity = 1.0;
             
-            // Показываем навигационные кнопки обратно
-            GameNavBtn.Visibility = Visibility.Visible;
-            FaqNavBtn.Visibility = Visibility.Visible;
-            DiagNavBtn.Visibility = Visibility.Visible;
+            // Включаем навигационные кнопки обратно
+            ServicesBtn.IsEnabled = true;
+            GameNavBtn.IsEnabled = true;
+            FaqNavBtn.IsEnabled = true;
+            DiagNavBtn.IsEnabled = true;
+            SettingsBtn.IsEnabled = true;
+            
+            // Показываем кнопку "Создать уровень" обратно
+            EditorMenuBtn.Visibility = Visibility.Visible;
             return;
         }
         
@@ -4549,10 +4554,15 @@ public partial class MainWindow : Window
         MainPage.Effect = new System.Windows.Media.Effects.BlurEffect { Radius = 5 };
         MainPage.Opacity = 0.35;
 
-        // Скрываем навигационные кнопки
-        GameNavBtn.Visibility = Visibility.Collapsed;
-        FaqNavBtn.Visibility = Visibility.Collapsed;
-        DiagNavBtn.Visibility = Visibility.Collapsed;
+        // Делаем навигационные кнопки неактивными (видимыми, но не кликабельными)
+        ServicesBtn.IsEnabled = false;
+        GameNavBtn.IsEnabled = false;
+        FaqNavBtn.IsEnabled = false;
+        DiagNavBtn.IsEnabled = false;
+        SettingsBtn.IsEnabled = false;
+
+        // Скрываем кнопку "Создать уровень" в оверлей режиме
+        EditorMenuBtn.Visibility = Visibility.Collapsed;
 
         // Показываем GamePage как оверлей
         GamePage.Background = new SolidColorBrush(Colors.Transparent);
@@ -4583,6 +4593,15 @@ public partial class MainWindow : Window
         _lastGameMp3Path = mp3Path;
         _lastGameTitle = title;
         _lastGameBpm = bpm;
+
+        // Отключаем навигационные кнопки во время игры (если не в оверлей режиме)
+        if (!_gameOverlayActive)
+        {
+            ServicesBtn.IsEnabled = false;
+            FaqNavBtn.IsEnabled = false;
+            DiagNavBtn.IsEnabled = false;
+            SettingsBtn.IsEnabled = false;
+        }
 
         _currentFallSec = GetFallSecondsForBpm(bpm);
         _pendingNotes = notes
@@ -5877,6 +5896,15 @@ public partial class MainWindow : Window
         foreach (var overlay in resultsOverlays)
         {
             GamePlayView.Children.Remove(overlay);
+        }
+        
+        // Включаем навигационные кнопки обратно (если не в оверлей режиме)
+        if (!_gameOverlayActive)
+        {
+            ServicesBtn.IsEnabled = true;
+            FaqNavBtn.IsEnabled = true;
+            DiagNavBtn.IsEnabled = true;
+            SettingsBtn.IsEnabled = true;
         }
         
         // Сброс заголовка и HUD

@@ -616,7 +616,7 @@
                             <TextBlock Text="Игра" VerticalAlignment="Center"/>
                         </Button>
 
-                        <Button Style="{StaticResource FlatBtn}"
+                        <Button x:Name="SettingsBtn" Style="{StaticResource FlatBtn}"
                                 Width="36" Padding="0"
                                 WindowChrome.IsHitTestVisibleInChrome="True"
                                 Click="SettingsBtn_Click" Margin="4,0,0,0">
