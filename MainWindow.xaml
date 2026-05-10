@@ -1156,27 +1156,108 @@
 
                     <Border Grid.Row="1" Height="1" Background="#333333" Margin="32,14,32,0"/>
 
+                    <!-- ═══ GAME PAGE AURORA (общий фон для всей страницы игры) ═══ -->
+                    <Grid Grid.Row="2" IsHitTestVisible="False" Panel.ZIndex="-1">
+                        <!-- Layer 1: нижнее индиго свечение -->
+                        <Rectangle x:Name="GameAurora1" Opacity="0.5">
+                            <Rectangle.Fill>
+                                <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                     Center="0.5,1.0" GradientOrigin="0.5,1.0"
+                                                     RadiusX="0.55" RadiusY="0.45">
+                                    <GradientStop Color="#506366f1" Offset="0.000"/>
+                                    <GradientStop Color="#4D6366f1" Offset="0.053"/>
+                                    <GradientStop Color="#476366f1" Offset="0.105"/>
+                                    <GradientStop Color="#416366f1" Offset="0.158"/>
+                                    <GradientStop Color="#3A6366f1" Offset="0.211"/>
+                                    <GradientStop Color="#346366f1" Offset="0.263"/>
+                                    <GradientStop Color="#2D6366f1" Offset="0.316"/>
+                                    <GradientStop Color="#276366f1" Offset="0.368"/>
+                                    <GradientStop Color="#216366f1" Offset="0.421"/>
+                                    <GradientStop Color="#1B6366f1" Offset="0.474"/>
+                                    <GradientStop Color="#166366f1" Offset="0.526"/>
+                                    <GradientStop Color="#116366f1" Offset="0.579"/>
+                                    <GradientStop Color="#0D6366f1" Offset="0.632"/>
+                                    <GradientStop Color="#096366f1" Offset="0.684"/>
+                                    <GradientStop Color="#066366f1" Offset="0.737"/>
+                                    <GradientStop Color="#046366f1" Offset="0.789"/>
+                                    <GradientStop Color="#026366f1" Offset="0.842"/>
+                                    <GradientStop Color="#016366f1" Offset="0.895"/>
+                                    <GradientStop Color="#006366f1" Offset="0.947"/>
+                                    <GradientStop Color="#006366f1" Offset="1.000"/>
+                                </RadialGradientBrush>
+                            </Rectangle.Fill>
+                        </Rectangle>
+                        <!-- Layer 2: верхний фиолетовый -->
+                        <Rectangle x:Name="GameAurora2" Opacity="0.4">
+                            <Rectangle.Fill>
+                                <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                     Center="0.1,0.1" GradientOrigin="0.1,0.1"
+                                                     RadiusX="0.35" RadiusY="0.30">
+                                    <GradientStop Color="#308B5CF6" Offset="0.000"/>
+                                    <GradientStop Color="#2E8B5CF6" Offset="0.053"/>
+                                    <GradientStop Color="#298B5CF6" Offset="0.105"/>
+                                    <GradientStop Color="#248B5CF6" Offset="0.158"/>
+                                    <GradientStop Color="#1F8B5CF6" Offset="0.211"/>
+                                    <GradientStop Color="#1A8B5CF6" Offset="0.263"/>
+                                    <GradientStop Color="#168B5CF6" Offset="0.316"/>
+                                    <GradientStop Color="#128B5CF6" Offset="0.368"/>
+                                    <GradientStop Color="#0E8B5CF6" Offset="0.421"/>
+                                    <GradientStop Color="#0B8B5CF6" Offset="0.474"/>
+                                    <GradientStop Color="#088B5CF6" Offset="0.526"/>
+                                    <GradientStop Color="#068B5CF6" Offset="0.579"/>
+                                    <GradientStop Color="#048B5CF6" Offset="0.632"/>
+                                    <GradientStop Color="#038B5CF6" Offset="0.684"/>
+                                    <GradientStop Color="#028B5CF6" Offset="0.737"/>
+                                    <GradientStop Color="#018B5CF6" Offset="0.789"/>
+                                    <GradientStop Color="#018B5CF6" Offset="0.842"/>
+                                    <GradientStop Color="#008B5CF6" Offset="0.895"/>
+                                    <GradientStop Color="#008B5CF6" Offset="0.947"/>
+                                    <GradientStop Color="#008B5CF6" Offset="1.000"/>
+                                </RadialGradientBrush>
+                            </Rectangle.Fill>
+                        </Rectangle>
+                        <!-- Layer 3: правый нижний индиго -->
+                        <Rectangle x:Name="GameAurora3" Opacity="0.3">
+                            <Rectangle.Fill>
+                                <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                     Center="0.9,0.8" GradientOrigin="0.9,0.8"
+                                                     RadiusX="0.30" RadiusY="0.25">
+                                    <GradientStop Color="#284F46E5" Offset="0.000"/>
+                                    <GradientStop Color="#264F46E5" Offset="0.053"/>
+                                    <GradientStop Color="#234F46E5" Offset="0.105"/>
+                                    <GradientStop Color="#1F4F46E5" Offset="0.158"/>
+                                    <GradientStop Color="#1C4F46E5" Offset="0.211"/>
+                                    <GradientStop Color="#184F46E5" Offset="0.263"/>
+                                    <GradientStop Color="#154F46E5" Offset="0.316"/>
+                                    <GradientStop Color="#124F46E5" Offset="0.368"/>
+                                    <GradientStop Color="#0F4F46E5" Offset="0.421"/>
+                                    <GradientStop Color="#0C4F46E5" Offset="0.474"/>
+                                    <GradientStop Color="#094F46E5" Offset="0.526"/>
+                                    <GradientStop Color="#074F46E5" Offset="0.579"/>
+                                    <GradientStop Color="#054F46E5" Offset="0.632"/>
+                                    <GradientStop Color="#044F46E5" Offset="0.684"/>
+                                    <GradientStop Color="#034F46E5" Offset="0.737"/>
+                                    <GradientStop Color="#024F46E5" Offset="0.789"/>
+                                    <GradientStop Color="#014F46E5" Offset="0.842"/>
+                                    <GradientStop Color="#014F46E5" Offset="0.895"/>
+                                    <GradientStop Color="#004F46E5" Offset="0.947"/>
+                                    <GradientStop Color="#004F46E5" Offset="1.000"/>
+                                </RadialGradientBrush>
+                            </Rectangle.Fill>
+                        </Rectangle>
+                        <!-- noise усиленный -->
+                        <Rectangle IsHitTestVisible="False" Opacity="0.07"
+                                   RenderOptions.BitmapScalingMode="NearestNeighbor">
+                            <Rectangle.Fill>
+                                <ImageBrush ImageSource="Assets/noise.png"
+                                            TileMode="Tile" ViewportUnits="Absolute"
+                                            Viewport="0,0,512,512" Stretch="None"/>
+                            </Rectangle.Fill>
+                        </Rectangle>
+                    </Grid>
+
                     <Grid Grid.Row="2" x:Name="GameContent">
                         <Grid x:Name="GameMenuView">
-                            <!-- Aurora фон -->
-                            <Rectangle x:Name="GameMenuAurora1" IsHitTestVisible="False">
-                                <Rectangle.Fill>
-                                    <RadialGradientBrush Center="0.5,1.0" GradientOrigin="0.5,1.0" RadiusX="0.6" RadiusY="0.5">
-                                        <GradientStop Color="#206366f1" Offset="0"/>
-                                        <GradientStop Color="#106366f1" Offset="0.4"/>
-                                        <GradientStop Color="#006366f1" Offset="1"/>
-                                    </RadialGradientBrush>
-                                </Rectangle.Fill>
-                            </Rectangle>
-                            <Rectangle x:Name="GameMenuAurora2" IsHitTestVisible="False">
-                                <Rectangle.Fill>
-                                    <RadialGradientBrush Center="0.5,0.0" GradientOrigin="0.5,0.0" RadiusX="0.5" RadiusY="0.4">
-                                        <GradientStop Color="#106366f1" Offset="0"/>
-                                        <GradientStop Color="#006366f1" Offset="1"/>
-                                    </RadialGradientBrush>
-                                </Rectangle.Fill>
-                            </Rectangle>
-
                             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                                 <TextBlock Text="Ритм-игра NetFix" FontFamily="Segoe UI" FontSize="22"
                                            FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"
@@ -1382,7 +1463,7 @@
                             </StackPanel>
                         </Grid>
 
-                        <Grid x:Name="GamePlayView" Visibility="Collapsed" Background="#0a0a0f">
+                        <Grid x:Name="GamePlayView" Visibility="Collapsed" Background="Transparent">
                             <Grid x:Name="GameField" Margin="0,0,0,52">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
