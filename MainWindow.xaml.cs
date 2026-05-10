@@ -151,6 +151,9 @@ public partial class MainWindow : Window
     private Border? _gameOverlayPanel = null;
     private bool _gameOverlayActive = false;
     
+    // Таймер обратного отсчёта перед игрой
+    private DispatcherTimer? _countdownTimer = null;
+    
     // ── Network Monitor ──────────────────────────────────────────────────────
     private DispatcherTimer _netTimer = null!;
     private DispatcherTimer _pingTimer = null!;
@@ -4587,12 +4590,13 @@ public partial class MainWindow : Window
         CountdownOverlay.Visibility = Visibility.Visible;
         CountdownText.Text = "3";
         int count = 3;
-        var cdTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        cdTimer.Tick += (_, _) =>
+        _countdownTimer?.Stop();
+        _countdownTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _countdownTimer.Tick += (_, _) =>
         {
             count--;
             if (count > 0) { CountdownText.Text = count.ToString(); return; }
-            cdTimer.Stop();
+            _countdownTimer.Stop();
             CountdownOverlay.Visibility = Visibility.Collapsed;
 
             if (mp3Path != null) { _editorPlayer.Open(new Uri(mp3Path)); _editorPlayer.Play(); }
@@ -4614,7 +4618,7 @@ public partial class MainWindow : Window
         };
         _effectTimer.Start();
 
-        cdTimer.Start();
+        _countdownTimer.Start();
     }
 
     private static double GetFallSecondsForBpm(double bpm)
@@ -5797,6 +5801,11 @@ public partial class MainWindow : Window
         _editorPlayer.SpeedRatio = 1.0;
         _gameClock.Stop();
         GameCanvas.Children.Clear();
+        
+        // Останавливаем countdown если он активен
+        _countdownTimer?.Stop();
+        _countdownTimer = null;
+        CountdownOverlay.Visibility = Visibility.Collapsed;
         
         _auroraGameTimer?.Stop();
         _auroraGameTimer = null;

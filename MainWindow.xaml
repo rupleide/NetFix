@@ -1335,14 +1335,15 @@
                         </Grid>
 
                         <Grid x:Name="GameTrackSelectView" Visibility="Collapsed">
-                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="40">
-                                <!-- Заголовок по центру -->
-                                <TextBlock Text="Выбор трека" FontFamily="Segoe UI" FontSize="22"
-                                           FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"
-                                           Margin="0,0,0,6"/>
-                                <TextBlock Text="Выбери встроенный трек NetFix или свой уровень" FontFamily="Segoe UI"
-                                           FontSize="13" Foreground="#888888" TextAlignment="Center"
-                                           TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center" Margin="40">
+                                    <!-- Заголовок по центру -->
+                                    <TextBlock Text="Выбор трека" FontFamily="Segoe UI" FontSize="22"
+                                               FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"
+                                               Margin="0,0,0,6"/>
+                                    <TextBlock Text="Выбери встроенный трек NetFix или свой уровень" FontFamily="Segoe UI"
+                                               FontSize="13" Foreground="#888888" TextAlignment="Center"
+                                               TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,0,0,12"/>
 
                                 <!-- Предупреждение о здоровье -->
                                 <Border Background="#1a1a1a" CornerRadius="8" Padding="12,10" Margin="0,0,0,24" MaxWidth="600">
@@ -1438,16 +1439,15 @@
                                                         <DataTemplate>
                                                             <Border Background="#1e1e1e" CornerRadius="8" Margin="0,0,0,6"
                                                                     Padding="12,10" BorderBrush="#333333" BorderThickness="1"
-                                                                    Tag="{Binding}">
+                                                                    Cursor="Hand"
+                                                                    Tag="{Binding}"
+                                                                    MouseLeftButtonUp="UserLevelCard_Click">
                                                                 <Grid>
                                                                     <Grid.ColumnDefinitions>
                                                                         <ColumnDefinition Width="*"/>
                                                                         <ColumnDefinition Width="Auto"/>
                                                                     </Grid.ColumnDefinitions>
-                                                                    <StackPanel VerticalAlignment="Center" 
-                                                                                Cursor="Hand"
-                                                                                MouseLeftButtonUp="UserLevelCard_Click"
-                                                                                Tag="{Binding}">
+                                                                    <StackPanel VerticalAlignment="Center">
                                                                         <TextBlock Text="{Binding Title}" FontFamily="Segoe UI"
                                                                                    FontSize="13" Foreground="White" FontWeight="SemiBold"/>
                                                                         <TextBlock Text="{Binding NoteCount, StringFormat='{}{0} нот'}"
@@ -1489,6 +1489,7 @@
                                     </Grid>
                                 </Grid>
                             </StackPanel>
+                            </ScrollViewer>
                         </Grid>
 
                         <Grid x:Name="GamePlayView" Visibility="Collapsed" Background="Transparent">
