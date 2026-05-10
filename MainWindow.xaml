@@ -1375,29 +1375,8 @@
                                         <TextBlock Grid.Row="0" Text="ТРЕКИ NETFIX" FontFamily="Segoe UI" FontSize="11"
                                                    Foreground="#666666" FontWeight="Bold" Margin="0,0,0,10"/>
                                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MaxHeight="400">
-                                            <StackPanel>
-                                                <Border x:Name="DefaultLevelBtn" CornerRadius="10" Cursor="Hand"
-                                                        Background="#171b32" BorderBrush="#343a78" BorderThickness="1"
-                                                        Padding="14" MouseLeftButtonUp="DefaultLevelBtn_Click">
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="44"/>
-                                                            <ColumnDefinition Width="*"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <Border Width="32" Height="32" CornerRadius="16" Background="#20275a"
-                                                                HorizontalAlignment="Left" VerticalAlignment="Center">
-                                                            <Path Data="M8,5 L8,19 L19,12 Z" Fill="#818cf8"
-                                                                  Width="13" Height="13" Stretch="Uniform"
-                                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                        </Border>
-                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                            <TextBlock Text="NetFix — Default Beat" FontFamily="Segoe UI"
-                                                                       FontSize="14" Foreground="White" FontWeight="SemiBold"/>
-                                                            <TextBlock Text="48 нот · WASD или стрелки" FontFamily="Segoe UI"
-                                                                       FontSize="11" Foreground="#818cf8"/>
-                                                        </StackPanel>
-                                                    </Grid>
-                                                </Border>
+                                            <StackPanel x:Name="BuiltInTracksList">
+                                                <!-- Встроенные треки загружаются динамически -->
                                             </StackPanel>
                                         </ScrollViewer>
                                     </Grid>

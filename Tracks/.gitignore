@@ -1,0 +1,7 @@
+# Игнорируем все zip-архивы с треками (они могут быть большими)
+*.zip
+
+# Но сохраняем документацию
+!README.md
+!EXAMPLE_TRACK_STRUCTURE.txt
+!.gitignore
