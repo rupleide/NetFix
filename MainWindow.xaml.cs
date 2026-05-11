@@ -124,6 +124,15 @@ public partial class MainWindow : Window
     private readonly System.Collections.Concurrent.ConcurrentQueue<Action> _effectQueue = new();
     private DispatcherTimer? _effectTimer;
 
+    // Discord Rich Presence
+    private readonly DiscordRpcService _discord = new();
+    private DateTime _gameStartDateTime;
+    private DispatcherTimer? _discordGameTimer;
+    private DispatcherTimer? _discordEditorTimer;
+    private int _maxCombo = 0;
+    private string _currentTrackTitle = "";
+    private bool _isInGame = false; // Флаг для надежной проверки состояния игры
+
     // Перформанс: кэшируем кисти чтобы не создавать каждый кадр
     private readonly SolidColorBrush[] _laneBrushes = LaneColors
         .Select(c => new SolidColorBrush(c)).ToArray();
@@ -281,6 +290,7 @@ public partial class MainWindow : Window
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        _discord.Initialize();
         UpdateMainGridClip();
         LoadSettingsToPanel();
 
@@ -1811,6 +1821,7 @@ public partial class MainWindow : Window
 
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
     {
+        _discord.Dispose();
         _trayIcon.Visible = false;
         _trayIcon.Dispose();
         base.OnClosing(e);
@@ -2817,6 +2828,10 @@ public partial class MainWindow : Window
                     NetLbl.Text = "Нет сети";
                     NetLbl.Foreground = redBrush;
                 }
+                
+                // Обновляем Discord только если не в игре И не идет сканирование
+                if (!_isInGame && !_discord.IsScanning)
+                    _discord.SetAllGood(st.ZapretRunning, st.TgWsProxyRunning);
             });
         });
     }
@@ -3210,6 +3225,10 @@ public partial class MainWindow : Window
         AppendLog("spacer");
 
         StartGlow();
+        
+        // Блокируем авто-обновления Discord во время чинки
+        _discord.IsScanning = true;
+        _discord.SetFixing();
 
         // --- ЭТАП 1: СЕТЬ ---
         AppendLog("СЕТЕВАЯ СРЕДА", "system");
@@ -3262,6 +3281,14 @@ public partial class MainWindow : Window
             }),
             doneCb: (success, _) => Dispatcher.Invoke(() => {
                 StopGlow(success);
+                
+                // Разблокируем авто-обновления Discord
+                _discord.IsScanning = false;
+                
+                if (success) _discord.SetAllGood(
+                    DiagnosticsEngine.CheckAppStatus().ZapretRunning,
+                    DiagnosticsEngine.CheckAppStatus().TgWsProxyRunning);
+                else _discord.SetProblems("Ошибка автонастройки");
                 FixBtn.IsEnabled = true;
                 
                 // Останавливаем таймер долгой проверки
@@ -3504,6 +3531,10 @@ public partial class MainWindow : Window
 
     private void DiagRunBtn_Click(object s, RoutedEventArgs e)
     {
+        // Блокируем авто-обновления Discord во время сканирования
+        _discord.IsScanning = true;
+        _discord.SetDiagnostics(0, 0);
+        
         DiagRunBtn.IsEnabled = false;
         DiagRunBtn.Content = "⏳  Проверяю…";
         DiagProg.Value = 0;
@@ -3613,6 +3644,12 @@ public partial class MainWindow : Window
         DiagProgLbl.Text = "Готово";
         DiagRunBtn.IsEnabled = true;
         DiagRunBtn.Content = CreateButtonContentWithIcon("RefreshIcon", "Проверить снова", Brushes.White);
+        
+        // Разблокируем авто-обновления и обновляем Discord статус
+        _discord.IsScanning = false;
+        _discord.SetAllGood(
+            r.AppStatus?.ZapretRunning == true,
+            r.AppStatus?.TgWsProxyRunning == true);
     }
 
     private Color ColorFromKey(string ck) => ck switch
@@ -4992,6 +5029,11 @@ public partial class MainWindow : Window
         _consecutiveMisses = 0;
         _gameOverTriggered = false;
         _lastComboAuraLevel = 0;
+        _maxCombo = 0;
+        _currentTrackTitle = title;
+        _gameStartDateTime = DateTime.Now;
+        _isInGame = true;
+        _discord.IsPriorityMode = true;
 
         GameScore.Text = "0";
         GameCombo.Text = "0x";
@@ -5036,6 +5078,17 @@ public partial class MainWindow : Window
         _effectTimer.Start();
 
         _countdownTimer.Start();
+        
+        // Discord Rich Presence - обновление статуса игры
+        _discordGameTimer?.Stop();
+        _discordGameTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+        _discordGameTimer.Tick += (_, _) => {
+            int acc = _totalNotes > 0 ? (int)((double)_hitNotes / _totalNotes * 100) : 100;
+            _discord.SetGamePlaying(_currentTrackTitle, _gameCombo, acc, _gameStartDateTime);
+        };
+        _discordGameTimer.Start();
+        // Первое обновление сразу
+        _discord.SetGamePlaying(_currentTrackTitle, 0, 100, _gameStartDateTime);
     }
 
     private static double GetFallSecondsForBpm(double bpm)
@@ -5290,6 +5343,7 @@ public partial class MainWindow : Window
     {
         note.Hit = true;
         _gameCombo++;
+        if (_gameCombo > _maxCombo) _maxCombo = _gameCombo;
         _hitNotes++;
         _consecutiveMisses = 0;
         _gameScore += baseScore * _gameCombo;
@@ -5987,6 +6041,13 @@ public partial class MainWindow : Window
         int acc = _totalNotes > 0 ? (int)((double)_hitNotes / _totalNotes * 100) : 100;
         string rank = failed ? "F" : acc >= 95 ? "S" : acc >= 85 ? "A" : acc >= 70 ? "B" : acc >= 50 ? "C" : "D";
 
+        // Discord - обновляем статус с результатами
+        _discordGameTimer?.Stop();
+        _discordGameTimer = null;
+        _discord.SetGameResults(_currentTrackTitle, rank, _gameScore, acc, _maxCombo);
+        // НЕ сбрасываем флаги здесь - пользователь все еще смотрит на результаты
+        // _isInGame остается true, _discord.IsPriorityMode остается true
+
         // Цвет ранга
         Color rankColor = rank switch
         {
@@ -6167,6 +6228,11 @@ public partial class MainWindow : Window
         retryBtn.Click += (_, _) =>
         {
             GamePlayView.Children.Remove(overlay);
+            
+            // Сбрасываем Discord флаги перед перезапуском игры
+            _isInGame = false;
+            _discord.IsPriorityMode = false;
+            
             // Перезапускаем ту же игру
             if (_lastGameNotes != null && _lastGameTitle != null)
             {
@@ -6191,6 +6257,11 @@ public partial class MainWindow : Window
         menuBtn.Click += (_, _) =>
         {
             GamePlayView.Children.Remove(overlay);
+            
+            // Сбрасываем Discord флаги и возвращаем статус в главное меню
+            _isInGame = false;
+            _discord.IsPriorityMode = false;
+            
             StopGame();
             ShowGameView(GameMenuView);
         };
@@ -6266,6 +6337,13 @@ public partial class MainWindow : Window
         _halfwayTriggered = false;
         _dangerModeActive = false;
         _perfectStreak = 0;
+        
+        // Discord - возвращаемся в главное меню
+        _discordGameTimer?.Stop();
+        _discordGameTimer = null;
+        _isInGame = false;
+        _discord.IsPriorityMode = false;
+        _discord.SetMainMenu();
         
         // Убираем виньетку опасности
         var vigs = GamePlayView.Children.OfType<System.Windows.Shapes.Rectangle>()
@@ -6782,6 +6860,20 @@ public partial class MainWindow : Window
         _gameClock.Restart();
 
         _editorPlayer.Open(new Uri(_editorMp3Path));
+        
+        // Discord Rich Presence - обновление статуса редактора
+        var editorStartTime = DateTime.Now;
+        var trackTitle = EditorTrackTitle.Text.Trim();
+        _discordEditorTimer?.Stop();
+        _discordEditorTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+        _discordEditorTimer.Tick += (_, _) => {
+            _discord.SetLevelEditor(trackTitle, _recordedNotes.Count, editorStartTime);
+        };
+        _discordEditorTimer.Start();
+        
+        // Первое обновление сразу
+        _discord.SetLevelEditor(trackTitle, 0, editorStartTime);
+        
         _editorPlayer.Play();
         _editorPlayer.MediaEnded += EditorPlayer_Ended;
 
@@ -6851,6 +6943,11 @@ public partial class MainWindow : Window
     {
         if (!_editorRecording && _editorPlayer.Source == null) return;
 
+        // Останавливаем Discord таймер и возвращаем статус в главное меню
+        _discordEditorTimer?.Stop();
+        _discordEditorTimer = null;
+        _discord.SetMainMenu();
+        
         _editorRecording = false;
         _editorPlayer.Stop();
         _editorPlayer.MediaEnded -= EditorPlayer_Ended;
@@ -8147,6 +8244,7 @@ public partial class MainWindow : Window
                 
                 long avg = total / count;
                 PingLbl.Text = avg.ToString();
+                _discord.UpdatePing((int)avg);
                 
                 bool good = avg < 100;
                 
