@@ -1282,6 +1282,7 @@
                                     <Border BorderBrush="#343a78" BorderThickness="1" CornerRadius="10">
                                         <StackPanel>
                                             <Grid x:Name="PlayMenuBtn" Cursor="Hand" Height="68"
+                                                  Background="Transparent"
                                                   MouseLeftButtonUp="PlayMenuBtn_Click"
                                                   MouseEnter="PlayMenuBtn_MouseEnter"
                                                   MouseLeave="PlayMenuBtn_MouseLeave">
@@ -1291,12 +1292,13 @@
                                                 </Grid.ColumnDefinitions>
                                                 <Border Width="34" Height="34" CornerRadius="17"
                                                         Background="#20275a"
+                                                        IsHitTestVisible="False"
                                                         HorizontalAlignment="Center" VerticalAlignment="Center">
                                                     <Path Data="M8,5 L8,19 L19,12 Z" Fill="#818cf8"
                                                           Width="14" Height="14" Stretch="Uniform"
                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
-                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" IsHitTestVisible="False">
                                                     <TextBlock Text="Играть" FontFamily="Segoe UI" FontSize="15"
                                                                FontWeight="SemiBold" Foreground="White"/>
                                                     <TextBlock Text="Выбрать трек" FontFamily="Segoe UI"
@@ -1313,7 +1315,7 @@
                                         MouseEnter="EditorMenuBtn_MouseEnter"
                                         MouseLeave="EditorMenuBtn_MouseLeave"
                                         Background="#1e1e1e">
-                                    <Border BorderBrush="#333333" BorderThickness="1" CornerRadius="12">
+                                    <Border BorderBrush="#333333" BorderThickness="1" CornerRadius="12" IsHitTestVisible="False">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="68"/>
@@ -1351,15 +1353,24 @@
 
                                 <!-- Предупреждение о здоровье -->
                                 <Border Background="#1a1a1a" CornerRadius="8" Padding="12,10" Margin="0,0,0,24" MaxWidth="600">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Path Data="M12,2 L22,20 L2,20 Z M12,9 L12,14 M12,16 L12,18" 
-                                              Stroke="#f59e0b" StrokeThickness="2" Width="16" Height="16" 
-                                              Stretch="Uniform" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                        <TextBlock FontFamily="Segoe UI" FontSize="11" Foreground="#888" TextWrapping="Wrap">
-                                            <Run Text="⚠️ Предупреждение:" Foreground="#f59e0b" FontWeight="SemiBold"/>
-                                            <Run Text=" Игра содержит мигающие эффекты. Не рекомендуется людям с эпилепсией."/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <Path Grid.Column="0" Data="M12,2 L22,20 L2,20 Z M12,9 L12,14 M12,16 L12,18" 
+                                              Stroke="#f59e0b" StrokeThickness="2" Width="20" Height="20" 
+                                              Stretch="Uniform" Margin="0,4,10,0" VerticalAlignment="Top"/>
+                                        
+                                        <TextBlock Grid.Column="1" FontFamily="Segoe UI" FontSize="11" Foreground="#888" TextWrapping="Wrap">
+                                            <Run Text="ВНИМАНИЕ" Foreground="#f59e0b" FontWeight="Bold"/>
+                                            <LineBreak/>
+                                            <Run Text="Игра содержит мигающие эффекты и не рекомендуется лицам, подверженным эпилептическим припадкам."/>
+                                            <LineBreak/>
+                                            <Run Text="Продолжительное использование может привести к головокружению и возникновению зрительных иллюзий. Пожалуйста, соблюдайте режим отдыха и ограничьте время непрерывной игры."/>
                                         </TextBlock>
-                                    </StackPanel>
+                                    </Grid>
                                 </Border>
 
                                 <!-- Две колонки: Треки NetFix слева, Пользовательские справа -->
@@ -1391,6 +1402,7 @@
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
                                         <TextBlock Grid.Row="0" Text="ПОЛЬЗОВАТЕЛЬСКИЕ ТРЕКИ" FontFamily="Segoe UI" FontSize="11"
                                                    Foreground="#666666" FontWeight="Bold" Margin="0,0,0,10"/>
@@ -1409,8 +1421,57 @@
                                                            VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
+
+                                        <!-- Инструкция по загрузке -->
+                                        <Border Grid.Row="2" Background="#1a1a1a" CornerRadius="8" Padding="14,12" Margin="0,0,0,12"
+                                                BorderBrush="#2a2a3a" BorderThickness="1">
+                                            <StackPanel>
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                                    <Path Data="{StaticResource ImportIcon}" 
+                                                          Fill="#3b82f6" Width="14" Height="14" 
+                                                          Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="ИНСТРУКЦИЯ ПО ЗАГРУЗКЕ ТРЕКОВ" FontFamily="Segoe UI" FontSize="11" 
+                                                               Foreground="#3b82f6" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                                
+                                                <TextBlock FontFamily="Segoe UI" FontSize="11" Foreground="#aaa" 
+                                                           TextWrapping="Wrap" LineHeight="16" Margin="0,0,0,10">
+                                                    <Run Text="Для загрузки собственного трека вам потребуется "/>
+                                                    <Run Text="ZIP или RAR архив" FontWeight="SemiBold" Foreground="#ddd"/><Run Text=". Такой архив создается автоматически при экспорте ваших кастомных уровней. Вы можете создавать уровни самостоятельно или использовать файлы, полученные от друзей."/>
+                                                </TextBlock>
+                                                
+                                                <Border Background="#0f1419" CornerRadius="6" Padding="10,8" 
+                                                        BorderBrush="#3b82f6" BorderThickness="1" Opacity="0.8">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        
+                                                        <Path Grid.Column="0" Data="{StaticResource TelegramIcon}" 
+                                                              Fill="#3b82f6" Width="14" Height="14" 
+                                                              Stretch="Uniform" Margin="0,2,8,0" VerticalAlignment="Top"/>
+                                                        
+                                                        <TextBlock Grid.Column="1" FontFamily="Segoe UI" FontSize="11" Foreground="#aaa" 
+                                                                   TextWrapping="Wrap" LineHeight="16">
+                                                            <Run Text="Лучшие кастомные уровни со временем будут публиковаться в "/>
+                                                            <Hyperlink NavigateUri="https://t.me/NetFixRuBi" RequestNavigate="Hyperlink_RequestNavigate" 
+                                                                       TextDecorations="None" Foreground="#3b82f6">
+                                                                <Run Text="Telegram-канале NetFix" FontWeight="SemiBold"/>
+                                                            </Hyperlink><Run Text=". Кроме того, самые качественные версии я буду добавлять в список официальных треков от "/>
+                                                            <Hyperlink NavigateUri="https://t.me/NetFixRuBi" RequestNavigate="Hyperlink_RequestNavigate" 
+                                                                       TextDecorations="None" Foreground="#3b82f6">
+                                                                <Run Text="NetFix" FontWeight="SemiBold"/>
+                                                            </Hyperlink><Run Text=" с указанием вашего авторства!"/>
+                                                            <LineBreak/>
+                                                            <Run Text="Если хотите поиграть в классные новинки от других людей или увидеть свой уровень в игре, обязательно подписывайтесь на канал."/>
+                                                        </TextBlock>
+                                                    </Grid>
+                                                </Border>
+                                            </StackPanel>
+                                        </Border>
                                         
-                                        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" MaxHeight="400">
+                                        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" MaxHeight="400">
                                             <StackPanel>
                                                 <Border x:Name="UserLevelsEmpty" Background="#1a1a1a" CornerRadius="8"
                                                         Padding="16" BorderBrush="#333333" BorderThickness="1">
@@ -1615,9 +1676,13 @@
                                     <!-- Описание редактора -->
                                     <Border Background="#1a1a1a" CornerRadius="8" Padding="14" Margin="0,0,0,16">
                                         <StackPanel>
-                                            <TextBlock FontFamily="Segoe UI" FontSize="12" Foreground="#888" TextWrapping="Wrap" Margin="0,0,0,8">
-                                                <Run Text="💡 Как создать уровень:" Foreground="#6366f1" FontWeight="SemiBold"/>
-                                            </TextBlock>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                                <Path Data="{StaticResource BoltIcon}" 
+                                                      Fill="#6366f1" Width="14" Height="14" 
+                                                      Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Как создать уровень:" FontFamily="Segoe UI" FontSize="12" 
+                                                           Foreground="#6366f1" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            </StackPanel>
                                             <TextBlock FontFamily="Segoe UI" FontSize="11" Foreground="#666" TextWrapping="Wrap" Margin="0,0,0,4">
                                                 <Run Text="1."/>
                                                 <Run Text=" Загрузите MP3 файл и укажите BPM трека"/>
@@ -1628,11 +1693,11 @@
                                             </TextBlock>
                                             <TextBlock FontFamily="Segoe UI" FontSize="11" Foreground="#666" TextWrapping="Wrap" Margin="0,0,0,4">
                                                 <Run Text="3."/>
-                                                <Run Text=" Нажимайте J/K/L (или стрелки) в такт музыке"/>
+                                                <Run Text=" Нажимайте WASD либо стрелочки в такт музыке"/>
                                             </TextBlock>
                                             <TextBlock FontFamily="Segoe UI" FontSize="11" Foreground="#666" TextWrapping="Wrap">
                                                 <Run Text="4."/>
-                                                <Run Text=" Завершите запись и экспортируйте уровень"/>
+                                                <Run Text=" Завершите запись и нажмите сохранить - трек появится в пользовательской папке"/>
                                             </TextBlock>
                                         </StackPanel>
                                     </Border>
