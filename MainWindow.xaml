@@ -1451,22 +1451,24 @@
                                                         <Path Grid.Column="0" Data="{StaticResource TelegramIcon}" 
                                                               Fill="#3b82f6" Width="14" Height="14" 
                                                               Stretch="Uniform" Margin="0,2,8,0" VerticalAlignment="Top"/>
-                                                        
-                                                        <TextBlock Grid.Column="1" FontFamily="Segoe UI" FontSize="11" Foreground="#aaa" 
-                                                                   TextWrapping="Wrap" LineHeight="16">
-                                                            <Run Text="Лучшие кастомные уровни со временем будут публиковаться в "/>
-                                                            <Hyperlink NavigateUri="https://t.me/NetFixRuBi" RequestNavigate="Hyperlink_RequestNavigate" 
-                                                                       TextDecorations="None" Foreground="#3b82f6">
-                                                                <Run Text="Telegram-канале NetFix" FontWeight="SemiBold"/>
-                                                            </Hyperlink><Run Text=". Кроме того, самые качественные версии я буду добавлять в список официальных треков от "/>
-                                                            <Hyperlink NavigateUri="https://t.me/NetFixRuBi" RequestNavigate="Hyperlink_RequestNavigate" 
-                                                                       TextDecorations="None" Foreground="#3b82f6">
-                                                                <Run Text="NetFix" FontWeight="SemiBold"/>
-                                                            </Hyperlink><Run Text=" с указанием вашего авторства!"/>
-                                                            <LineBreak/>
-                                                            <Run Text="Если хотите поиграть в классные новинки от других людей или увидеть свой уровень в игре, обязательно подписывайтесь на канал."/>
-                                                        </TextBlock>
-                                                    </Grid>
+
+                                                            <TextBlock Grid.Column="1" FontFamily="Segoe UI" FontSize="11" Foreground="#aaa" 
+                                                                       TextWrapping="Wrap" LineHeight="16">
+                                                                <Run Text="Вы можете отправлять архивы со своими уровнями в комментарии под постами в нашем "/>
+                                                                <Hyperlink NavigateUri="https://t.me/NetFixRuBi" RequestNavigate="Hyperlink_RequestNavigate" 
+                                                                           TextDecorations="None" Foreground="#3b82f6">
+                                                                    <Run Text="Telegram-канале NetFix" FontWeight="SemiBold"/>
+                                                                </Hyperlink><Run Text=". Я обязательно посмотрю каждую работу!"/>
+                                                                <LineBreak/>
+                                                                <Run Text="Лучшие кастомные уровни будут опубликованы в канале, а самые качественные из них я добавлю в список официальных треков "/>
+                                                                <Hyperlink NavigateUri="https://t.me/NetFixRuBi" RequestNavigate="Hyperlink_RequestNavigate" 
+                                                                           TextDecorations="None" Foreground="#3b82f6">
+                                                                    <Run Text="NetFix" FontWeight="SemiBold"/>
+                                                                </Hyperlink><Run Text=" с указанием вашего авторства."/>
+                                                                <LineBreak/>
+                                                                <Run Text="Подписывайтесь, чтобы играть в классные новинки и делиться своим творчеством!"/>
+                                                            </TextBlock>
+                                                        </Grid>
                                                 </Border>
                                             </StackPanel>
                                         </Border>
