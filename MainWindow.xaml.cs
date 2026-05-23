@@ -8230,14 +8230,15 @@ public partial class MainWindow : Window
         });
     }
 
-    private void NetTimer_Tick(object? sender, EventArgs e)
+    private async void NetTimer_Tick(object? sender, EventArgs e)
     {
-        var (rx, tx) = GetNetworkBytes();
+        // Переносим тяжёлый системный вызов в фоновый поток
+        var (rx, tx) = await Task.Run(GetNetworkBytes);
         double dlNow = Math.Max(0, rx - _lastBytesReceived);
         double ulNow = Math.Max(0, tx - _lastBytesSent);
         _lastBytesReceived = rx;
         _lastBytesSent = tx;
-
+ 
         // Пока тест не закончен — показываем анимацию, после — результат теста
         if (_speedTestDone)
         {
