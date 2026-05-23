@@ -1949,6 +1949,14 @@ public partial class MainWindow : Window
         _previewPlayer.Stop();
         _previewPlaying = false;
         
+        if (GameSettingsView.Visibility == Visibility.Visible)
+        {
+            GameSettingsView.Visibility = Visibility.Collapsed;
+            GameMenuView.Visibility = Visibility.Visible;
+            _listeningLane = -1;
+            return;
+        }
+        
         if (_gameOverlayActive)
         {
             // Закрываем игровой оверлей, возвращаемся к главной
@@ -3878,6 +3886,7 @@ public partial class MainWindow : Window
         double linear = Math.Pow(_settings.GameVolume, 3);
         _editorPlayer.Volume = linear;
         _previewPlayer.Volume = linear;
+        LoadKeyLabels();
     }
 
     private void SaveSettings_Click(object s, RoutedEventArgs e)
@@ -6986,14 +6995,27 @@ public partial class MainWindow : Window
         }
     }
 
-    private static int GetGameLane(Key key) => key switch
+    private int GetGameLane(Key key)
     {
-        Key.A or Key.Left => 0,
-        Key.S or Key.Down => 1,
-        Key.W or Key.Up => 2,
-        Key.D or Key.Right => 3,
-        _ => -1
-    };
+        string keyStr = key.ToString();
+        if (keyStr.StartsWith("D") && keyStr.Length == 2)
+            keyStr = keyStr[1..]; // D1 -> 1
+        
+        if (keyStr.Equals(_settings.KeyLane0, StringComparison.OrdinalIgnoreCase)) return 0;
+        if (keyStr.Equals(_settings.KeyLane1, StringComparison.OrdinalIgnoreCase)) return 1;
+        if (keyStr.Equals(_settings.KeyLane2, StringComparison.OrdinalIgnoreCase)) return 2;
+        if (keyStr.Equals(_settings.KeyLane3, StringComparison.OrdinalIgnoreCase)) return 3;
+
+        // Стрелки как дублирующие
+        return key switch
+        {
+            Key.Left => 0,
+            Key.Down => 1,
+            Key.Up => 2,
+            Key.Right => 3,
+            _ => -1
+        };
+    }
 
     private void EditorPlayer_Ended(object? s, EventArgs e)
     {
@@ -8364,6 +8386,118 @@ public partial class MainWindow : Window
         transform.BeginAnimation(RotateTransform.AngleProperty, null);
         RescanBtn.RenderTransform = null;
         RescanBtn.IsEnabled = true;
+    }
+
+    private int _listeningLane = -1; // какой лейн ждёт нажатия
+
+    private void GameSettingsMenuBtn_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        GameMenuView.Visibility = Visibility.Collapsed;
+        GameSettingsView.Visibility = Visibility.Visible;
+        LoadKeyLabels();
+    }
+
+    private void GameSettingsMenuBtn_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        => ((Border)sender).Background = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x2a));
+
+    private void GameSettingsMenuBtn_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        => ((Border)sender).Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e));
+
+    private void LoadKeyLabels()
+    {
+        KeyLabelLane0.Text = _settings.KeyLane0;
+        KeyLabelLane1.Text = _settings.KeyLane1;
+        KeyLabelLane2.Text = _settings.KeyLane2;
+        KeyLabelLane3.Text = _settings.KeyLane3;
+        UpdateKeyHints();
+    }
+
+    private void UpdateKeyHints()
+    {
+        KeyHint0.Text = $"{_settings.KeyLane0} / ←";
+        KeyHint1.Text = $"{_settings.KeyLane1} / ↓";
+        KeyHint2.Text = $"{_settings.KeyLane2} / ↑";
+        KeyHint3.Text = $"{_settings.KeyLane3} / →";
+    }
+
+    private void KeyBtn_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        _listeningLane = int.Parse((string)((Border)sender).Tag);
+
+        TextBlock[] labels = [KeyLabelLane0, KeyLabelLane1, KeyLabelLane2, KeyLabelLane3];
+        Border[] btns = [KeyBtnLane0, KeyBtnLane1, KeyBtnLane2, KeyBtnLane3];
+
+        // Сбросить все кнопки
+        for (int i = 0; i < btns.Length; i++)
+        {
+            btns[i].BorderThickness = new Thickness(0);
+            labels[i].Text = i switch
+            {
+                0 => _settings.KeyLane0,
+                1 => _settings.KeyLane1,
+                2 => _settings.KeyLane2,
+                3 => _settings.KeyLane3,
+                _ => ""
+            };
+        }
+
+        // Подсветить активную и показать "..."
+        btns[_listeningLane].BorderThickness = new Thickness(1);
+        btns[_listeningLane].BorderBrush = new SolidColorBrush(Colors.White);
+        labels[_listeningLane].Text = "...";
+
+        // Мигание через таймер
+        var blinkTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
+        bool visible = true;
+        blinkTimer.Tick += (_, _) =>
+        {
+            if (_listeningLane < 0) { blinkTimer.Stop(); return; }
+            visible = !visible;
+            labels[_listeningLane].Opacity = visible ? 1.0 : 0.2;
+        };
+        blinkTimer.Start();
+
+        GameSettingsView.Focus();
+    }
+
+    private void GameSettingsView_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (_listeningLane < 0) return;
+
+        string keyStr = e.Key.ToString();
+        // Фильтр — только одиночные буквы/цифры
+        if (keyStr.Length > 1 && !keyStr.StartsWith("D") && keyStr != "Space") return;
+        if (keyStr.StartsWith("D") && keyStr.Length == 2) keyStr = keyStr[1..]; // D1→1
+
+        switch (_listeningLane)
+        {
+            case 0: _settings.KeyLane0 = keyStr; KeyLabelLane0.Text = keyStr; break;
+            case 1: _settings.KeyLane1 = keyStr; KeyLabelLane1.Text = keyStr; break;
+            case 2: _settings.KeyLane2 = keyStr; KeyLabelLane2.Text = keyStr; break;
+            case 3: _settings.KeyLane3 = keyStr; KeyLabelLane3.Text = keyStr; break;
+        }
+
+        _listeningLane = -1;
+        Border[] btns = [KeyBtnLane0, KeyBtnLane1, KeyBtnLane2, KeyBtnLane3];
+        foreach (var b in btns) b.BorderThickness = new Thickness(0);
+
+        SettingsService.Save(_settings);
+
+        TextBlock[] labels = [KeyLabelLane0, KeyLabelLane1, KeyLabelLane2, KeyLabelLane3];
+        foreach (var l in labels) l.Opacity = 1.0;
+
+        UpdateKeyHints();
+        e.Handled = true;
+    }
+
+    private void ResetKeysBtn_Click(object sender, RoutedEventArgs e)
+    {
+        _settings.KeyLane0 = "A";
+        _settings.KeyLane1 = "S";
+        _settings.KeyLane2 = "W";
+        _settings.KeyLane3 = "D";
+        SettingsService.Save(_settings);
+        LoadKeyLabels();
     }
 }
 

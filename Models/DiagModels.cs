@@ -106,4 +106,8 @@ public class AppSettings
     public bool ShowLongCheckDialog { get; set; } = true;
     public bool DiscordRpcEnabled { get; set; } = true;
     public double GameVolume { get; set; } = 0.5;
+    public string KeyLane0 { get; set; } = "A";
+    public string KeyLane1 { get; set; } = "S";
+    public string KeyLane2 { get; set; } = "W";
+    public string KeyLane3 { get; set; } = "D";
 }
