@@ -521,6 +521,61 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- ═══ VOLUME SLIDER ═══ -->
+        <ControlTemplate x:Key="SliderRepeatBtnTemplate" TargetType="RepeatButton">
+            <Border Background="Transparent"/>
+        </ControlTemplate>
+
+        <Style x:Key="VolumeSliderStyle" TargetType="Slider">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid Height="20" VerticalAlignment="Center">
+                            <Border Height="3" CornerRadius="1.5"
+                                    Background="#2a2a2a"
+                                    VerticalAlignment="Center"/>
+                            <Track x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge"
+                                                  Background="Transparent" BorderThickness="0"
+                                                  Focusable="False" Height="20"
+                                                  Template="{StaticResource SliderRepeatBtnTemplate}"/>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Width="14" Height="14">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Ellipse Fill="White" Width="14" Height="14"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="Slider.IncreaseLarge"
+                                                  Background="Transparent" BorderThickness="0"
+                                                  Focusable="False" Height="20"
+                                                  Template="{StaticResource SliderRepeatBtnTemplate}"/>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                            <!-- Заполненная часть поверх фона -->
+                            <Border x:Name="TrackFill"
+                                    Height="3" CornerRadius="1.5"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Left"
+                                    IsHitTestVisible="False">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#6366f1" Offset="0"/>
+                                        <GradientStop Color="#818cf8" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <!-- ═══════════════════════════════════════════════════════════════════ -->
@@ -1132,29 +1187,50 @@
                             <TextBlock x:Name="GameHeaderTitle" Text="Мини-игра"
                                        FontFamily="Segoe UI" FontSize="18"
                                        FontWeight="Bold" Foreground="White"
-                                       VerticalAlignment="Center" Margin="16,0,0,0"/>
+                                       VerticalAlignment="Center" Margin="16,0,0,0"
+                                       TextTrimming="CharacterEllipsis"
+                                       MaxWidth="300"/>
+                        </StackPanel>
+
+                        <!-- Правая часть: громкость -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
+                            <Path Data="M3,9 L3,15 L7,15 L13,20 L13,4 L7,9 Z M16,12 Q19,12 19,12 M16,7 Q22,7 22,12 Q22,17 16,17"
+                                  Stroke="#666666" StrokeThickness="1.5"
+                                  Width="16" Height="16" Stretch="Uniform"
+                                  VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <Slider x:Name="VolumeSlider"
+                                    Minimum="0" Maximum="1" Value="0.5"
+                                    Width="90" VerticalAlignment="Center"
+                                    ValueChanged="VolumeSlider_Changed"
+                                    Style="{StaticResource VolumeSliderStyle}"/>
                         </StackPanel>
 
                         <!-- Центр: Счёт/Комбо/Точность (видны только во время игры) -->
                         <StackPanel Grid.Column="1" x:Name="GameHUDPanel"
                                     Orientation="Horizontal" HorizontalAlignment="Center"
                                     Visibility="Collapsed">
-                            <StackPanel Margin="0,0,24,0" HorizontalAlignment="Center">
+                            <StackPanel Margin="0,0,20,0" HorizontalAlignment="Center">
                                 <TextBlock Text="СЧЁТ" FontFamily="Segoe UI" FontSize="10"
                                            Foreground="#444" HorizontalAlignment="Center"/>
-                                <TextBlock x:Name="GameScore" Text="0" FontFamily="Segoe UI" FontSize="18"
+                                <TextBlock x:Name="GameScore" Text="0" FontFamily="Segoe UI" FontSize="16"
                                            FontWeight="Light" Foreground="White" HorizontalAlignment="Center"/>
                             </StackPanel>
-                            <StackPanel Margin="0,0,24,0">
+                            <StackPanel Margin="0,0,20,0" HorizontalAlignment="Center">
+                                <TextBlock Text="BPM" FontFamily="Segoe UI" FontSize="10"
+                                           Foreground="#444" HorizontalAlignment="Center"/>
+                                <TextBlock x:Name="GameBpm" Text="—" FontFamily="Segoe UI" FontSize="16"
+                                           FontWeight="Light" Foreground="White" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,20,0">
                                 <TextBlock Text="КОМБО" FontFamily="Segoe UI" FontSize="10"
                                            Foreground="#444" HorizontalAlignment="Center"/>
-                                <TextBlock x:Name="GameCombo" Text="0x" FontFamily="Segoe UI" FontSize="18"
+                                <TextBlock x:Name="GameCombo" Text="0x" FontFamily="Segoe UI" FontSize="16"
                                            FontWeight="Light" Foreground="#6366f1" HorizontalAlignment="Center"/>
                             </StackPanel>
                             <StackPanel>
                                 <TextBlock Text="ТОЧНОСТЬ" FontFamily="Segoe UI" FontSize="10"
                                            Foreground="#444" HorizontalAlignment="Center"/>
-                                <TextBlock x:Name="GameAccuracy" Text="100%" FontFamily="Segoe UI" FontSize="18"
+                                <TextBlock x:Name="GameAccuracy" Text="100%" FontFamily="Segoe UI" FontSize="16"
                                            FontWeight="Light" Foreground="White" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </StackPanel>
