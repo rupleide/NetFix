@@ -1521,6 +1521,28 @@
                 </ScrollViewer>
             </Grid>
 
+            <!-- Выбор сложности .osz -->
+            <Grid x:Name="OszDifficultyView" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" HorizontalAlignment="Center" MinWidth="320" Margin="0,24,0,16">
+                    <TextBlock Text="Выбор сложности" FontFamily="Segoe UI" FontSize="22"
+                               FontWeight="SemiBold" Foreground="White"
+                               HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                    <TextBlock x:Name="OszDifficultySubtext"
+                               FontFamily="Segoe UI" FontSize="13" Foreground="#888888"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel x:Name="OszDifficultyPanel"
+                                HorizontalAlignment="Center" MinWidth="320" Margin="0,0,0,24"/>
+                </ScrollViewer>
+            </Grid>
+
             <Grid x:Name="GameSettingsView" Visibility="Collapsed" Focusable="True" KeyDown="GameSettingsView_KeyDown">
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MinWidth="320">
                     <TextBlock Text="Настройки управления" FontFamily="Segoe UI" FontSize="22"

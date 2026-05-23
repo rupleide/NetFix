@@ -176,6 +176,7 @@ public partial class MainWindow : Window
     private string? _lastGameMp3Path = null;
     private string? _lastGameTitle = null;
     private double _lastGameBpm = 0;
+    private string? _pendingOszPath;
     
     // ── Network Monitor ──────────────────────────────────────────────────────
     private DispatcherTimer _netTimer = null!;
@@ -1950,6 +1951,13 @@ public partial class MainWindow : Window
     {
         _previewPlayer.Stop();
         _previewPlaying = false;
+
+        if (OszDifficultyView.Visibility == Visibility.Visible)
+        {
+            ShowGameView(GameMenuView);
+            _pendingOszPath = null;
+            return;
+        }
 
         if (GameStatsDetailView.Visibility == Visibility.Visible)
         {
@@ -4349,6 +4357,9 @@ public partial class MainWindow : Window
         GameTrackSelectView.Visibility = Visibility.Collapsed;
         GamePlayView.Visibility = Visibility.Collapsed;
         GameEditorView.Visibility = Visibility.Collapsed;
+        GameStatsView.Visibility = Visibility.Collapsed;
+        GameStatsDetailView.Visibility = Visibility.Collapsed;
+        OszDifficultyView.Visibility = Visibility.Collapsed;
         view.Visibility = Visibility.Visible;
     }
 
@@ -6558,84 +6569,363 @@ public partial class MainWindow : Window
     {
         var dlg = new OpenFileDialog
         {
-            Title = "Выбрать архив с треком",
-            Filter = "ZIP Archive|*.zip",
+            Title = "Выбрать уровень",
+            Filter = "Уровни|*.zip;*.osz|ZIP архив NetFix|*.zip|osu!mania архив|*.osz",
             DefaultExt = ".zip"
         };
-        
         if (dlg.ShowDialog() != true) return;
-        
+
+        var ext = Path.GetExtension(dlg.FileName).ToLowerInvariant();
+        if (ext == ".osz")
+        {
+            StartOszImport(dlg.FileName);
+            return;
+        }
+
         try
         {
-            // Создаём временную директорию для распаковки
-            var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), Guid.NewGuid().ToString());
+            var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             Directory.CreateDirectory(tempDir);
-            
-            // Распаковываем архив
             ZipFile.ExtractToDirectory(dlg.FileName, tempDir);
-            
-            // Ищем notes.json в распакованной директории
-            var notesJsonPath = System.IO.Path.Combine(tempDir, "notes.json");
+
+            var notesJsonPath = Path.Combine(tempDir, "notes.json");
             if (!File.Exists(notesJsonPath))
             {
                 ShowNotification("Ошибка импорта", "Архив не содержит файл notes.json", isError: true);
                 Directory.Delete(tempDir, true);
                 return;
             }
-            
-            // Читаем метаданные уровня
             var json = File.ReadAllText(notesJsonPath);
             var map = JsonSerializer.Deserialize<NoteMap>(json);
-            if (map == null || string.IsNullOrEmpty(map.Title))
+            if (map is null || string.IsNullOrEmpty(map.Title))
             {
-                ShowNotification("Ошибка импорта", "Некорректный формат файла notes.json", isError: true);
+                ShowNotification("Ошибка импорта", "Некорректный формат notes.json", isError: true);
                 Directory.Delete(tempDir, true);
                 return;
             }
-            
-            // Проверяем, не существует ли уже уровень с таким названием
-            var targetDir = System.IO.Path.Combine(LevelsDir, map.Title);
-            if (Directory.Exists(targetDir))
-            {
-                ShowConfirmDialog(
-                    "Уровень уже существует",
-                    $"Уровень «{map.Title}» уже существует. Заменить его?",
-                    confirmed =>
-                    {
-                        if (!confirmed)
-                        {
-                            Directory.Delete(tempDir, true);
-                            return;
-                        }
-                        
-                        // Удаляем старый уровень
-                        Directory.Delete(targetDir, true);
-                        
-                        // Перемещаем новый уровень
-                        Directory.Move(tempDir, targetDir);
-                        
-                        // Обновляем список
-                        LoadUserLevels();
-                        ShowNotification("Успешно", $"Трек «{map.Title}» импортирован", isError: false);
-                    });
-            }
-            else
-            {
-                // Создаём директорию для уровней если её нет
-                if (!Directory.Exists(LevelsDir))
-                    Directory.CreateDirectory(LevelsDir);
-                
-                // Перемещаем уровень
-                Directory.Move(tempDir, targetDir);
-                
-                // Обновляем список
-                LoadUserLevels();
-                ShowNotification("Успешно", $"Трек «{map.Title}» импортирован", isError: false);
-            }
+            FinishLevelImport(map, tempDir);
         }
         catch (Exception ex)
         {
             ShowNotification("Ошибка импорта", $"Не удалось импортировать трек: {ex.Message}", isError: true);
+        }
+    }
+
+    private void StartOszImport(string oszPath)
+    {
+        System.Diagnostics.Debug.WriteLine($"[OSZ] StartOszImport path='{oszPath}'");
+
+        try
+        {
+            var difficulties = new List<(string Name, string FileName, int KeyCount)>();
+
+            using (var archive = ZipFile.OpenRead(oszPath))
+            {
+                foreach (var entry in archive.Entries
+                    .Where(e => e.Name.EndsWith(".osu", StringComparison.OrdinalIgnoreCase)))
+                {
+                    string diffName = entry.Name;
+                    int keyCount = 4;
+                    int mode = -1;
+
+                    using var reader = new StreamReader(entry.Open());
+                    string? line;
+                    string section = "";
+                    while ((line = reader.ReadLine()) is not null)
+                    {
+                        line = line.Trim();
+                        if (line.StartsWith('[')) { section = line; continue; }
+                        if (section == "[General]" && line.StartsWith("Mode:"))
+                            int.TryParse(line["Mode:".Length..].Trim(), out mode);
+                        if (section == "[Difficulty]" && line.StartsWith("CircleSize:"))
+                            int.TryParse(line["CircleSize:".Length..].Trim(), out keyCount);
+                        if (section == "[Metadata]" && line.StartsWith("Version:"))
+                            diffName = line["Version:".Length..].Trim();
+                    }
+
+                    if (mode == 3)
+                        difficulties.Add((diffName, entry.Name, keyCount));
+                }
+            }
+
+            if (difficulties.Count == 0)
+            {
+                ShowNotification("Ошибка", "В архиве нет osu!mania карт (Mode=3)", isError: true);
+                return;
+            }
+
+            if (difficulties.Count == 1)
+            {
+                ExecuteOszImport(oszPath, difficulties[0].FileName, difficulties[0].KeyCount);
+                return;
+            }
+
+            _pendingOszPath = oszPath;
+            ShowOszDifficultyPicker(difficulties);
+        }
+        catch (Exception ex)
+        {
+            ShowNotification("Ошибка импорта", ex.Message, isError: true);
+        }
+    }
+
+    private void ShowOszDifficultyPicker(List<(string Name, string FileName, int KeyCount)> difficulties)
+    {
+        OszDifficultyPanel.Children.Clear();
+        OszDifficultySubtext.Text = $"{difficulties.Count} сложностей — выбери одну для импорта";
+
+        foreach (var diff in difficulties)
+        {
+            var captured = diff;
+            var btn = new Border
+            {
+                CornerRadius = new CornerRadius(10),
+                Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
+                Margin = new Thickness(0, 0, 0, 8),
+                Cursor = Cursors.Hand
+            };
+            var inner = new Border
+            {
+                BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(10),
+                Padding = new Thickness(16, 14, 16, 14)
+            };
+
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var nameBlock = new TextBlock
+            {
+                Text = captured.Name,
+                FontSize = 15, FontWeight = FontWeights.SemiBold,
+                FontFamily = new FontFamily("Segoe UI"),
+                Foreground = Brushes.White,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(nameBlock, 0);
+
+            var keysBlock = new TextBlock
+            {
+                Text = $"{captured.KeyCount}K",
+                FontSize = 13,
+                FontFamily = new FontFamily("Segoe UI"),
+                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(keysBlock, 1);
+
+            grid.Children.Add(nameBlock);
+            grid.Children.Add(keysBlock);
+            inner.Child = grid;
+            btn.Child = inner;
+
+            btn.MouseEnter += (s, _) =>
+                ((Border)s).Background = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x2a));
+            btn.MouseLeave += (s, _) =>
+                ((Border)s).Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e));
+            btn.MouseLeftButtonUp += (_, _) =>
+            {
+                OszDifficultyView.Visibility = Visibility.Collapsed;
+                GameMenuView.Visibility = Visibility.Visible;
+                if (_pendingOszPath is not null)
+                    ExecuteOszImport(_pendingOszPath, captured.FileName, captured.KeyCount);
+                _pendingOszPath = null;
+            };
+
+            OszDifficultyPanel.Children.Add(btn);
+        }
+
+        ShowGameView(OszDifficultyView);
+    }
+
+    private void ExecuteOszImport(string oszPath, string osuFileName, int keyCount)
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "NetFix_osu_" + Guid.NewGuid());
+        Directory.CreateDirectory(tempDir);
+
+        NoteMap? map = null;
+
+        try
+        {
+            string audioFilename = "audio.mp3";
+            string title = "Unknown", artist = "", version = "";
+            var notes = new List<NoteEntry>();
+
+            using (var archive = ZipFile.OpenRead(oszPath))
+            {
+                var osuEntry = archive.Entries.First(e =>
+                    e.Name.Equals(osuFileName, StringComparison.OrdinalIgnoreCase));
+
+                using (var reader = new StreamReader(osuEntry.Open()))
+                {
+                    string? line;
+                    string section = "";
+                    while ((line = reader.ReadLine()) is not null)
+                    {
+                        line = line.Trim();
+                        if (line.StartsWith('[')) { section = line; continue; }
+
+                        if (section == "[General]" && line.StartsWith("AudioFilename:"))
+                            audioFilename = line["AudioFilename:".Length..].Trim();
+                        else if (section == "[Metadata]")
+                        {
+                            if (line.StartsWith("Title:"))
+                                title = line["Title:".Length..].Trim();
+                            else if (line.StartsWith("Artist:"))
+                                artist = line["Artist:".Length..].Trim();
+                            else if (line.StartsWith("Version:"))
+                                version = line["Version:".Length..].Trim();
+                        }
+                        else if (section == "[HitObjects]" &&
+                                 line.Length > 0 && !line.StartsWith("//"))
+                        {
+                            var parts = line.Split(',');
+                            if (parts.Length < 3) continue;
+                            if (!int.TryParse(parts[0], out int x)) continue;
+                            if (!int.TryParse(parts[2], out int timeMs)) continue;
+
+                            int sourceLane = (int)Math.Floor((double)x * keyCount / 512.0);
+                            sourceLane = Math.Clamp(sourceLane, 0, keyCount - 1);
+
+                            // равномерный маппинг sourceLane → 0..3: round, не floor
+                            int targetLane = keyCount > 1
+                                ? (int)Math.Round((double)sourceLane * 3.0 / (keyCount - 1))
+                                : 0;
+                            targetLane = Math.Clamp(targetLane, 0, 3);
+
+                            notes.Add(new NoteEntry { Time = timeMs / 1000.0, Lane = targetLane });
+                        }
+                    }
+                }
+
+                var audioEntry = archive.Entries.FirstOrDefault(e =>
+                    e.Name.Equals(audioFilename, StringComparison.OrdinalIgnoreCase));
+                if (audioEntry is null)
+                {
+                    Directory.Delete(tempDir, true);
+                    ShowNotification("Ошибка", $"Аудио '{audioFilename}' не найдено в архиве", isError: true);
+                    return;
+                }
+
+                var audioExt = Path.GetExtension(audioFilename).ToLowerInvariant();
+                var audioDestPath = Path.Combine(tempDir, "track" + audioExt);
+                audioEntry.ExtractToFile(audioDestPath);
+
+                if (audioExt == ".ogg")
+                {
+                    var ffmpegPath = Path.Combine(AppContext.BaseDirectory, "ffmpeg.exe");
+                    System.Diagnostics.Debug.WriteLine($"[FFmpeg] looking at: '{ffmpegPath}' exists={File.Exists(ffmpegPath)}");
+                    if (!File.Exists(ffmpegPath))
+                    {
+                        Directory.Delete(tempDir, true);
+                        ShowNotification("FFmpeg не найден",
+                            "Положи ffmpeg.exe рядом с NetFix.exe для поддержки .ogg аудио",
+                            isError: true);
+                        return;
+                    }
+
+                    var mp3DestPath = Path.Combine(tempDir, "track.mp3");
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = ffmpegPath,
+                        Arguments = $"-i \"{audioDestPath}\" -q:a 2 \"{mp3DestPath}\"",
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        RedirectStandardError = true
+                    };
+
+                    using var proc = Process.Start(psi)!;
+                    proc.WaitForExit(30_000);
+
+                    if (!File.Exists(mp3DestPath) || new FileInfo(mp3DestPath).Length == 0)
+                    {
+                        Directory.Delete(tempDir, true);
+                        ShowNotification("Ошибка конвертации",
+                            "FFmpeg не смог конвертировать аудио", isError: true);
+                        return;
+                    }
+
+                    File.Delete(audioDestPath);
+                    audioDestPath = mp3DestPath;
+                    audioExt = ".mp3";
+                }
+
+                var trackTitle = string.IsNullOrWhiteSpace(artist) ? title : $"{artist} - {title}";
+                if (!string.IsNullOrWhiteSpace(version))
+                    trackTitle += $" [{version}]";
+                trackTitle = string.Concat(trackTitle.Split(Path.GetInvalidFileNameChars()));
+
+                map = new NoteMap
+                {
+                    Title = trackTitle,
+                    Author = "osu!",
+                    TrackFile = Path.GetFileName(audioDestPath),
+                    Bpm = 160,
+                    Notes = RemoveLaneDuplicates(notes.OrderBy(n => n.Time).ToList())
+                };
+
+                File.WriteAllText(Path.Combine(tempDir, "notes.json"),
+                    JsonSerializer.Serialize(map, new JsonSerializerOptions { WriteIndented = true }));
+
+            } // using archive закрыт — файл разлочен
+
+            // Архив закрыт, можно безопасно вызывать FinishLevelImport
+            FinishLevelImport(map, tempDir);
+        }
+        catch (Exception ex)
+        {
+            if (Directory.Exists(tempDir))
+                try { Directory.Delete(tempDir, true); } catch { }
+            ShowNotification("Ошибка импорта", ex.Message, isError: true);
+        }
+    }
+
+    private static List<NoteEntry> RemoveLaneDuplicates(List<NoteEntry> sorted)
+    {
+        const double minGap = 0.030;
+        double[] lastTime = [-999, -999, -999, -999];
+        var result = new List<NoteEntry>(sorted.Count);
+
+        foreach (var note in sorted)
+        {
+            if (note.Time - lastTime[note.Lane] >= minGap)
+            {
+                result.Add(note);
+                lastTime[note.Lane] = note.Time;
+            }
+        }
+        return result;
+    }
+
+    private void FinishLevelImport(NoteMap map, string tempDir)
+    {
+        System.Diagnostics.Debug.WriteLine($"[OSZ] FinishLevelImport called title='{map.Title}' tempDir='{tempDir}' tempDirExists={Directory.Exists(tempDir)}");
+        System.Diagnostics.Debug.WriteLine($"[OSZ] notes.json in tempDir exists={File.Exists(Path.Combine(tempDir, "notes.json"))}");
+        System.Diagnostics.Debug.WriteLine($"[OSZ] audio in tempDir: {string.Join(", ", Directory.GetFiles(tempDir))}");
+
+        var targetDir = Path.Combine(LevelsDir, map.Title!);
+        if (Directory.Exists(targetDir))
+        {
+            ShowConfirmDialog("Уровень уже существует",
+                $"Уровень «{map.Title}» уже существует. Заменить его?",
+                confirmed =>
+                {
+                    if (!confirmed) { Directory.Delete(tempDir, true); return; }
+                    Directory.Delete(targetDir, true);
+                    Directory.Move(tempDir, targetDir);
+                    LoadUserLevels();
+                    ShowNotification("Успешно", $"Трек «{map.Title}» импортирован", isError: false);
+                });
+        }
+        else
+        {
+            if (!Directory.Exists(LevelsDir))
+                Directory.CreateDirectory(LevelsDir);
+            Directory.Move(tempDir, targetDir);
+            LoadUserLevels();
+            ShowNotification("Успешно", $"Трек «{map.Title}» импортирован", isError: false);
         }
     }
     
