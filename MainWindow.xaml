@@ -2058,6 +2058,10 @@
                                 <TextBlock Text="ПРОЧЕЕ" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
 
+                                <CheckBox x:Name="DiscordRpcCB" Style="{StaticResource Toggle}"
+                                          Content="Интеграция с Discord" Margin="0,0,0,10"
+                                          Checked="DiscordRpcCB_Checked"
+                                          Unchecked="DiscordRpcCB_Unchecked"/>
                                 <CheckBox x:Name="AutoUpdatesCB" Style="{StaticResource Toggle}"
                                           Content="Автоматические обновления" Margin="0,0,0,20"/>
 
@@ -2228,7 +2232,7 @@
                                         Padding="12,8" Margin="0,0,0,6"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
                                         Click="ExportSettings_Click">
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                         <Path Data="{StaticResource ExportIcon}" 
                                               Stroke="#666666"
                                               StrokeThickness="2"
@@ -2243,7 +2247,7 @@
                                         Padding="12,8" Margin="0,0,0,16"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
                                         Click="ImportSettings_Click">
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                         <Path Data="{StaticResource ImportIcon}" 
                                               Stroke="#666666"
                                               StrokeThickness="2"

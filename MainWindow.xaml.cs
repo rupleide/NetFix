@@ -290,7 +290,8 @@ public partial class MainWindow : Window
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        _discord.Initialize();
+        if (_settings.DiscordRpcEnabled)
+            _discord.Initialize();
         UpdateMainGridClip();
         LoadSettingsToPanel();
 
@@ -3847,6 +3848,7 @@ public partial class MainWindow : Window
         // AutoZapretCB убран - Zapret больше не в автозапуске
         AutoTgWsCB.IsChecked    = _settings.AutostartTgWsProxy;
         AutoAppCB.IsChecked     = _settings.AutostartApp;
+        DiscordRpcCB.IsChecked  = _settings.DiscordRpcEnabled;
         AutoUpdatesCB.IsChecked = _settings.AutoUpdates;
     }
 
@@ -3864,6 +3866,20 @@ public partial class MainWindow : Window
         SetAutostart(_settings.AutostartApp);
         
         CloseSettings();
+    }
+
+    private void DiscordRpcCB_Checked(object sender, RoutedEventArgs e)
+    {
+        _settings.DiscordRpcEnabled = true;
+        _discord.Enable();
+        SettingsService.Save(_settings);
+    }
+
+    private void DiscordRpcCB_Unchecked(object sender, RoutedEventArgs e)
+    {
+        _settings.DiscordRpcEnabled = false;
+        _discord.Disable();
+        SettingsService.Save(_settings);
     }
 
     // ── Browse buttons ───────────────────────────────────────────────────────

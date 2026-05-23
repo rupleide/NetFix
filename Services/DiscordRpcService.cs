@@ -8,18 +8,16 @@ public class DiscordRpcService : IDisposable
     private DiscordRpcClient? _client;
     private readonly DateTime _startTime = DateTime.UtcNow;
     private int _ping;
+    private bool _enabled = true;
 
-    // Флаг приоритетного режима (игра, диагностика)
     public bool IsPriorityMode { get; set; } = false;
-    
-    // Флаг сканирования (блокирует обновления из UpdateActiveApps)
     public bool IsScanning { get; set; } = false;
 
-    // discord.com/developers/applications → Application ID
     private const string APP_ID = "1503332623546716240";
 
     public void Initialize()
     {
+        if (!_enabled) return;
         _client = new DiscordRpcClient(APP_ID);
         _client.Logger = new ConsoleLogger { Level = LogLevel.Warning };
         _client.OnReady += (sender, e) => Console.WriteLine($"[Discord] Connected: {e.User.Username}");
@@ -27,9 +25,23 @@ public class DiscordRpcService : IDisposable
         SetMainMenu();
     }
 
-    public void UpdatePing(int ping) => _ping = ping;
+    public void Enable()
+    {
+        if (_enabled) return;
+        _enabled = true;
+        Initialize();
+    }
 
-    // ── Вспомогалки ──────────────────────────────────────────────────────────
+    public void Disable()
+    {
+        if (!_enabled) return;
+        _enabled = false;
+        _client?.ClearPresence();
+        _client?.Dispose();
+        _client = null;
+    }
+
+    public void UpdatePing(int ping) => _ping = ping;
 
     private string P => _ping > 0 ? $"{_ping}мс" : "—";
 
@@ -41,7 +53,6 @@ public class DiscordRpcService : IDisposable
         return "только запущен";
     }
 
-    // Картинка всегда NetFix
     private static Assets Logo() => new()
     {
         LargeImageKey  = "netfix_logo_v2",
@@ -56,7 +67,7 @@ public class DiscordRpcService : IDisposable
 
     private void Set(string details, string state, Timestamps? ts = null, bool priority = false)
     {
-        // Если сейчас включен приоритетный режим (игра), а мы пытаемся поставить обычный статус — игнорируем
+        if (!_enabled) return;
         if (IsPriorityMode && !priority)
         {
             Console.WriteLine($"[Discord] Skipped non-priority update: {details}");
@@ -73,28 +84,21 @@ public class DiscordRpcService : IDisposable
         });
     }
 
-    // ── Все состояния ─────────────────────────────────────────────────────────
-
     public void SetMainMenu()
-        => Set("Чилит в NetFix",
-               $"Пинг: {P} · Запущен {Up()}");
+        => Set("Чилит в NetFix", $"Пинг: {P} · Запущен {Up()}");
 
     public void SetDiagnostics(int percent, int problems)
         => Set($"Сканирование: {percent}%",
                $"Найдено проблем: {problems} · {P}",
-               new Timestamps(DateTime.UtcNow),
-               priority: true);
+               new Timestamps(DateTime.UtcNow), priority: true);
 
     public void SetFixing()
         => Set("Чинит подключение...",
                $"Пинг: {P} · {Up()}",
-               new Timestamps(DateTime.UtcNow),
-               priority: true);
+               new Timestamps(DateTime.UtcNow), priority: true);
 
     public void SetAllGood(bool zapret, bool tgws)
-    {
-        Set($" {P}", "NetFix работает");
-    }
+        => Set($" {P}", "NetFix работает");
 
     public void SetProblems(string what)
         => Set(what, $"Запущена диагностика · {P}");
@@ -102,8 +106,7 @@ public class DiscordRpcService : IDisposable
     public void SetGamePlaying(string track, int combo, int accuracy, DateTime gameStart)
         => Set($"♪ {track}",
                $"Комбо: {combo}x · Точность: {accuracy}%",
-               new Timestamps(gameStart),
-               priority: true);
+               new Timestamps(gameStart), priority: true);
 
     public void SetGameResults(string track, string rank, int score, int accuracy, int maxCombo)
         => Set($"Ранг {rank} · {score:N0} очков",
@@ -113,8 +116,7 @@ public class DiscordRpcService : IDisposable
     public void SetLevelEditor(string track, int noteCount, DateTime start)
         => Set($"Создаёт уровень: {track}",
                $"Нот записано: {noteCount}",
-               new Timestamps(start),
-               priority: true);
+               new Timestamps(start), priority: true);
 
     public void Dispose()
     {
