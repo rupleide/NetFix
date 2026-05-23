@@ -1407,8 +1407,138 @@
                                         </Grid>
                                     </Border>
                                 </Border>
+
+                                <Border x:Name="GameSettingsMenuBtn" CornerRadius="12" Cursor="Hand"
+                                        Width="320" Height="68" Margin="0,12,0,0"
+                                        MouseLeftButtonUp="GameSettingsMenuBtn_Click"
+                                        MouseEnter="GameSettingsMenuBtn_MouseEnter"
+                                        MouseLeave="GameSettingsMenuBtn_MouseLeave"
+                                        Background="#1e1e1e">
+                                    <Border BorderBrush="#333333" BorderThickness="1" CornerRadius="12" IsHitTestVisible="False">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="68"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Width="34" Height="34" CornerRadius="17"
+                                                    Background="#272727"
+                                                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Path Data="M12,2 A10,10 0 1 1 11.999,2 Z M12,8 L12,12 M12,15 L12,16"
+                                                      Stroke="#a1a1aa" StrokeThickness="2"
+                                                      Width="16" Height="16" Stretch="Uniform"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="Настройки" FontFamily="Segoe UI" FontSize="15"
+                                                           FontWeight="SemiBold" Foreground="White"/>
+                                                <TextBlock Text="Управление и клавиши" FontFamily="Segoe UI"
+                                                           FontSize="11" Foreground="#888888"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </Border>
                             </StackPanel>
                         </Grid>
+
+            <Grid x:Name="GameSettingsView" Visibility="Collapsed" Focusable="True" KeyDown="GameSettingsView_KeyDown">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MinWidth="320">
+                    <TextBlock Text="Настройки управления" FontFamily="Segoe UI" FontSize="22"
+                               FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"
+                               Margin="0,0,0,8"/>
+                    <TextBlock Text="Нажми на клавишу и затем нажми новую кнопку" FontFamily="Segoe UI"
+                               FontSize="13" Foreground="#888888" HorizontalAlignment="Center"
+                               Margin="0,0,0,32"/>
+
+                    <!-- Лейн 0 — красный -->
+                    <Border CornerRadius="10" Background="#1e1e1e" BorderBrush="#333" BorderThickness="1"
+                            Padding="20,14" Margin="0,0,0,8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Дорожка 1 (красная)" FontFamily="Segoe UI" FontSize="13"
+                                       Foreground="#f43f5e" VerticalAlignment="Center"/>
+                            <Border Grid.Column="1" x:Name="KeyBtnLane0"
+                                    Background="#2a0a12" CornerRadius="6" Padding="16,6"
+                                    Cursor="Hand" MinWidth="48"
+                                    MouseLeftButtonUp="KeyBtn_Click" Tag="0">
+                                <TextBlock x:Name="KeyLabelLane0" Text="A" FontFamily="Segoe UI"
+                                           FontSize="14" FontWeight="SemiBold" Foreground="#f43f5e"
+                                           HorizontalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- Лейн 1 — жёлтый -->
+                    <Border CornerRadius="10" Background="#1e1e1e" BorderBrush="#333" BorderThickness="1"
+                            Padding="20,14" Margin="0,0,0,8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Дорожка 2 (жёлтая)" FontFamily="Segoe UI" FontSize="13"
+                                       Foreground="#f59e0b" VerticalAlignment="Center"/>
+                            <Border Grid.Column="1" x:Name="KeyBtnLane1"
+                                    Background="#2a1e00" CornerRadius="6" Padding="16,6"
+                                    Cursor="Hand" MinWidth="48"
+                                    MouseLeftButtonUp="KeyBtn_Click" Tag="1">
+                                <TextBlock x:Name="KeyLabelLane1" Text="S" FontFamily="Segoe UI"
+                                           FontSize="14" FontWeight="SemiBold" Foreground="#f59e0b"
+                                           HorizontalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- Лейн 2 — зелёный -->
+                    <Border CornerRadius="10" Background="#1e1e1e" BorderBrush="#333" BorderThickness="1"
+                            Padding="20,14" Margin="0,0,0,8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Дорожка 3 (зелёная)" FontFamily="Segoe UI" FontSize="13"
+                                       Foreground="#22c55e" VerticalAlignment="Center"/>
+                            <Border Grid.Column="1" x:Name="KeyBtnLane2"
+                                    Background="#002a0f" CornerRadius="6" Padding="16,6"
+                                    Cursor="Hand" MinWidth="48"
+                                    MouseLeftButtonUp="KeyBtn_Click" Tag="2">
+                                <TextBlock x:Name="KeyLabelLane2" Text="W" FontFamily="Segoe UI"
+                                           FontSize="14" FontWeight="SemiBold" Foreground="#22c55e"
+                                           HorizontalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- Лейн 3 — синий -->
+                    <Border CornerRadius="10" Background="#1e1e1e" BorderBrush="#333" BorderThickness="1"
+                            Padding="20,14" Margin="0,0,0,24">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Дорожка 4 (синяя)" FontFamily="Segoe UI" FontSize="13"
+                                       Foreground="#6366f1" VerticalAlignment="Center"/>
+                            <Border Grid.Column="1" x:Name="KeyBtnLane3"
+                                    Background="#0d0020" CornerRadius="6" Padding="16,6"
+                                    Cursor="Hand" MinWidth="48"
+                                    MouseLeftButtonUp="KeyBtn_Click" Tag="3">
+                                <TextBlock x:Name="KeyLabelLane3" Text="D" FontFamily="Segoe UI"
+                                           FontSize="14" FontWeight="SemiBold" Foreground="#6366f1"
+                                           HorizontalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <Button Style="{StaticResource OutlineBtn}" HorizontalAlignment="Stretch"
+                            Padding="12,10" Content="Сбросить по умолчанию"
+                            WindowChrome.IsHitTestVisibleInChrome="True"
+                            Click="ResetKeysBtn_Click"/>
+                </StackPanel>
+            </Grid>
 
                         <Grid x:Name="GameTrackSelectView" Visibility="Collapsed">
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -1597,16 +1727,16 @@
                                     BorderBrush="#1a1a2a" BorderThickness="0,1,0,0" Padding="0,10">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                     <Border Background="#1a0a10" CornerRadius="6" Padding="12,6" Margin="4,0">
-                                        <TextBlock Text="A / ←" FontFamily="Segoe UI" FontSize="12" Foreground="#f43f5e"/>
+                                        <TextBlock x:Name="KeyHint0" Text="A / ←" FontFamily="Segoe UI" FontSize="12" Foreground="#f43f5e"/>
                                     </Border>
                                     <Border Background="#1a1400" CornerRadius="6" Padding="12,6" Margin="4,0">
-                                        <TextBlock Text="S / ↓" FontFamily="Segoe UI" FontSize="12" Foreground="#f59e0b"/>
+                                        <TextBlock x:Name="KeyHint1" Text="S / ↓" FontFamily="Segoe UI" FontSize="12" Foreground="#f59e0b"/>
                                     </Border>
                                     <Border Background="#001a08" CornerRadius="6" Padding="12,6" Margin="4,0">
-                                        <TextBlock Text="W / ↑" FontFamily="Segoe UI" FontSize="12" Foreground="#22c55e"/>
+                                        <TextBlock x:Name="KeyHint2" Text="W / ↑" FontFamily="Segoe UI" FontSize="12" Foreground="#22c55e"/>
                                     </Border>
                                     <Border Background="#08001a" CornerRadius="6" Padding="12,6" Margin="4,0">
-                                        <TextBlock Text="D / →" FontFamily="Segoe UI" FontSize="12" Foreground="#6366f1"/>
+                                        <TextBlock x:Name="KeyHint3" Text="D / →" FontFamily="Segoe UI" FontSize="12" Foreground="#6366f1"/>
                                     </Border>
                                 </StackPanel>
                             </Border>
