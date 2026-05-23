@@ -211,6 +211,24 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+
+        // UI freeze detector
+        var lastTick = DateTime.UtcNow;
+        var freezeTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(50)
+        };
+        freezeTimer.Tick += (_, _) =>
+        {
+            var now = DateTime.UtcNow;
+            var delta = (now - lastTick).TotalMilliseconds;
+            if (delta > 16) // больше одного кадра при 60fps = уже заметно
+            Console.WriteLine($"[FREEZE] +{delta:0}ms @ {now:HH:mm:ss.fff} (норма 50ms, опоздал на {delta - 50:0}ms)");
+                Console.WriteLine($"[FREEZE] {delta:0}ms задержка в {now:HH:mm:ss.fff}");
+            lastTick = now;
+        };
+        freezeTimer.Start();
+
         Loaded += OnLoaded;
         SizeChanged += OnSizeChanged;
         InitTray();

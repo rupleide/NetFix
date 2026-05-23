@@ -1188,8 +1188,8 @@
 
                         <!-- Правая часть: громкость -->
                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
-                            <Path Data="M3,9 L3,15 L7,15 L13,20 L13,4 L7,9 Z M16,12 Q19,12 19,12 M16,7 Q22,7 22,12 Q22,17 16,17"
-                                  Stroke="#666666" StrokeThickness="1.5"
+                            <Path Data="M404,427 L370,400 C444,319 444,196 370,115 L403,88 C490,185 490,331 404,427 Z M319,156 L286,183 C326,225 326,291 286,333 L319,360 C372,302 372,214 319,156 Z M234,85 L123,172 L43,172 L43,343 L124,343 L234,428 Z M85,215 L138,215 L181,173 L181,342 L138,300 L85,300 Z"
+                                  Fill="#666666"
                                   Width="16" Height="16" Stretch="Uniform"
                                   VerticalAlignment="Center" Margin="0,0,8,0"/>
                             <Slider x:Name="VolumeSlider"
