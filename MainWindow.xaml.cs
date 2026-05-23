@@ -148,6 +148,8 @@ public partial class MainWindow : Window
     private static readonly string[] StarChars = { "★", "✦", "✧" };
 
     private System.Windows.Media.MediaPlayer _editorPlayer = new();
+    private System.Windows.Media.MediaPlayer _previewPlayer = new();
+    private bool _previewPlaying = false;
     private List<NoteEntry> _recordedNotes = new();
     private string? _editorMp3Path;
     private bool _editorRecording = false;
@@ -1926,6 +1928,9 @@ public partial class MainWindow : Window
 
     private void GameBackBtn_Click(object s, RoutedEventArgs e)
     {
+        _previewPlayer.Stop();
+        _previewPlaying = false;
+        
         if (_gameOverlayActive)
         {
             // Закрываем игровой оверлей, возвращаемся к главной
@@ -3850,6 +3855,12 @@ public partial class MainWindow : Window
         AutoAppCB.IsChecked     = _settings.AutostartApp;
         DiscordRpcCB.IsChecked  = _settings.DiscordRpcEnabled;
         AutoUpdatesCB.IsChecked = _settings.AutoUpdates;
+        VolumeSlider.Value = _settings.GameVolume;
+        // Применить логарифм сразу при загрузке
+        double linear = Math.Pow(_settings.GameVolume, 3);
+        _editorPlayer.Volume = linear;
+        _previewPlayer.Volume = linear;
+        UpdateVolumeSliderFill(_settings.GameVolume);
     }
 
     private void SaveSettings_Click(object s, RoutedEventArgs e)
@@ -3881,6 +3892,27 @@ public partial class MainWindow : Window
         _discord.Disable();
         SettingsService.Save(_settings);
     }
+
+    private void VolumeSlider_Changed(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        // Логарифмическая кривая: слух воспринимает громкость нелинейно
+        double linear = Math.Pow(e.NewValue, 3);
+        _editorPlayer.Volume = linear;
+        _previewPlayer.Volume = linear;
+        _settings.GameVolume = e.NewValue; // сохраняем позицию ползунка, не линейное значение
+        SettingsService.Save(_settings);
+
+        // Обновить заполненную часть слайдера
+        UpdateVolumeSliderFill(e.NewValue);
+    }
+
+    private void UpdateVolumeSliderFill(double value)
+    {
+        if (VolumeSlider?.Template?.FindName("TrackFill", VolumeSlider) is Border fill)
+            fill.Width = value * 90; // 90 = Width слайдера
+    }
+
+
 
     // ── Browse buttons ───────────────────────────────────────────────────────
     private string? BrowseExe(string title)
@@ -5054,6 +5086,7 @@ public partial class MainWindow : Window
         GameScore.Text = "0";
         GameCombo.Text = "0x";
         GameAccuracy.Text = "100%";
+        GameBpm.Text = $"{bpm:0}";
         GameHeaderTitle.Text = $"{title} · {bpm:0} BPM";
         GameHUDPanel.Visibility = Visibility.Visible;
         JudgeText.Opacity = 0;
@@ -5074,7 +5107,12 @@ public partial class MainWindow : Window
             _countdownTimer.Stop();
             CountdownOverlay.Visibility = Visibility.Collapsed;
 
-            if (mp3Path != null) { _editorPlayer.Open(new Uri(mp3Path)); _editorPlayer.Play(); }
+            if (mp3Path != null) 
+            { 
+                _editorPlayer.Volume = Math.Pow(_settings.GameVolume, 3);
+                _editorPlayer.Open(new Uri(mp3Path)); 
+                _editorPlayer.Play(); 
+            }
 
             _gameClock.Restart();
             CompositionTarget.Rendering -= GameTick;
@@ -6890,6 +6928,7 @@ public partial class MainWindow : Window
         // Первое обновление сразу
         _discord.SetLevelEditor(trackTitle, 0, editorStartTime);
         
+        _editorPlayer.Volume = Math.Pow(_settings.GameVolume, 3);
         _editorPlayer.Play();
         _editorPlayer.MediaEnded += EditorPlayer_Ended;
 

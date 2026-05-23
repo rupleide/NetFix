@@ -105,4 +105,5 @@ public class AppSettings
     public bool AutoUpdates { get; set; } = true;
     public bool ShowLongCheckDialog { get; set; } = true;
     public bool DiscordRpcEnabled { get; set; } = true;
+    public double GameVolume { get; set; } = 0.5;
 }
