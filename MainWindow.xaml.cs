@@ -1950,6 +1950,20 @@ public partial class MainWindow : Window
     {
         _previewPlayer.Stop();
         _previewPlaying = false;
+
+        if (GameStatsDetailView.Visibility == Visibility.Visible)
+        {
+            GameStatsDetailView.Visibility = Visibility.Collapsed;
+            GameStatsView.Visibility = Visibility.Visible;
+            GameStatsView.Focus();
+            return;
+        }
+        if (GameStatsView.Visibility == Visibility.Visible)
+        {
+            GameStatsView.Visibility = Visibility.Collapsed;
+            GameMenuView.Visibility = Visibility.Visible;
+            return;
+        }
         
         if (GameSettingsView.Visibility == Visibility.Visible)
         {
@@ -6133,6 +6147,37 @@ public partial class MainWindow : Window
         _discordGameTimer?.Stop();
         _discordGameTimer = null;
         _discord.SetGameResults(_currentTrackTitle, rank, _gameScore, acc, _maxCombo);
+
+        // Обновляем агрегированную статистику по треку
+        var existing = _settings.TrackHistory
+            .FirstOrDefault(x => x.TrackTitle == _currentTrackTitle);
+        if (existing is null)
+        {
+            existing = new GameTrackStats
+            {
+                TrackTitle = _currentTrackTitle ?? "Unknown",
+                FirstPlayed = DateTime.Now
+            };
+            _settings.TrackHistory.Add(existing);
+        }
+
+        existing.TimesPlayed++;
+        existing.LastPlayed = DateTime.Now;
+        existing.TotalHits += _hitNotes;
+        existing.TotalMisses += _missCount;
+        existing.TotalNotes += _totalNotes;
+        existing.TotalKeyPresses += _hitNotes + _missCount;
+        if (_gameScore > existing.BestScore) existing.BestScore = _gameScore;
+        if (_gameScore < existing.MinScore) existing.MinScore = _gameScore;
+        if (acc > existing.BestAccuracy) existing.BestAccuracy = Math.Round((double)acc, 1);
+        if (acc < existing.WorstAccuracy) existing.WorstAccuracy = Math.Round((double)acc, 1);
+        if (_maxCombo > existing.BestCombo) existing.BestCombo = _maxCombo;
+        string[] rankOrder = ["S", "A", "B", "C", "D", "F"];
+        if (Array.IndexOf(rankOrder, rank) < Array.IndexOf(rankOrder, existing.BestRank))
+            existing.BestRank = rank;
+
+        SettingsService.Save(_settings);
+
         // НЕ сбрасываем флаги здесь - пользователь все еще смотрит на результаты
         // _isInGame остается true, _discord.IsPriorityMode остается true
 
@@ -8517,6 +8562,235 @@ public partial class MainWindow : Window
         _settings.KeyLane3 = "D";
         SettingsService.Save(_settings);
         LoadKeyLabels();
+    }
+
+    private void GameStatsMenuBtn_Click(object sender, MouseButtonEventArgs e)
+    {
+        GameMenuView.Visibility = Visibility.Collapsed;
+        GameStatsView.Visibility = Visibility.Visible;
+        GameStatsView.Focus();
+        PopulateStatsList();
+    }
+
+    private void StatsBackToMenuBtn_Click(object sender, RoutedEventArgs e)
+    {
+        GameStatsView.Visibility = Visibility.Collapsed;
+        GameMenuView.Visibility = Visibility.Visible;
+    }
+
+    private void StatsDetailBackBtn_Click(object sender, RoutedEventArgs e)
+    {
+        GameStatsDetailView.Visibility = Visibility.Collapsed;
+        GameStatsView.Visibility = Visibility.Visible;
+        GameStatsView.Focus();
+    }
+
+    private void GameStatsView_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape) StatsBackToMenuBtn_Click(sender, e);
+    }
+
+    private void GameStatsDetailView_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape) StatsDetailBackBtn_Click(sender, e);
+    }
+
+    private void PopulateStatsList()
+    {
+        StatsListPanel.Children.Clear();
+        var history = _settings.TrackHistory;
+
+        if (history.Count == 0)
+        {
+            StatsEmptyText.Visibility = Visibility.Visible;
+            return;
+        }
+        StatsEmptyText.Visibility = Visibility.Collapsed;
+
+        foreach (var t in history.OrderByDescending(x => x.LastPlayed))
+        {
+            var row = new Border
+            {
+                CornerRadius = new CornerRadius(10),
+                Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
+                Margin = new Thickness(0, 0, 0, 8),
+                Cursor = Cursors.Hand
+            };
+            var inner = new Border
+            {
+                BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(10),
+                Padding = new Thickness(16, 12, 16, 12)
+            };
+
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var rankColor = t.BestRank switch
+            {
+                "S" => Color.FromRgb(0xFF, 0xD7, 0x00),
+                "A" => Color.FromRgb(0x7C, 0xFC, 0x00),
+                "B" => Color.FromRgb(0x00, 0xBF, 0xFF),
+                "C" => Color.FromRgb(0xFF, 0xFF, 0xFF),
+                "D" => Color.FromRgb(0xFF, 0xA5, 0x00),
+                _   => Color.FromRgb(0xFF, 0x44, 0x44)
+            };
+
+            var rankTb = new TextBlock
+            {
+                Text = t.BestRank, FontSize = 26, FontWeight = FontWeights.Bold,
+                FontFamily = new FontFamily("Segoe UI"),
+                Foreground = new SolidColorBrush(rankColor),
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 14, 0)
+            };
+            Grid.SetColumn(rankTb, 0);
+
+            var info = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+            info.Children.Add(new TextBlock
+            {
+                Text = t.TrackTitle, FontSize = 14, FontWeight = FontWeights.SemiBold,
+                FontFamily = new FontFamily("Segoe UI"), Foreground = Brushes.White,
+                TextTrimming = TextTrimming.CharacterEllipsis
+            });
+            info.Children.Add(new TextBlock
+            {
+                Text = $"{t.TimesPlayed} игр · {t.LastPlayed:dd.MM.yy}",
+                FontSize = 11, FontFamily = new FontFamily("Segoe UI"),
+                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88))
+            });
+            Grid.SetColumn(info, 1);
+
+            var right = new StackPanel
+            {
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Right
+            };
+            right.Children.Add(new TextBlock
+            {
+                Text = t.BestScore.ToString("N0"), FontSize = 15,
+                FontWeight = FontWeights.Bold, FontFamily = new FontFamily("Segoe UI"),
+                Foreground = Brushes.White, HorizontalAlignment = System.Windows.HorizontalAlignment.Right
+            });
+            right.Children.Add(new TextBlock
+            {
+                Text = $"×{t.BestCombo} · {t.BestAccuracy:F1}%",
+                FontSize = 11, FontFamily = new FontFamily("Segoe UI"),
+                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Right
+            });
+            Grid.SetColumn(right, 2);
+
+            grid.Children.Add(rankTb);
+            grid.Children.Add(info);
+            grid.Children.Add(right);
+            inner.Child = grid;
+            row.Child = inner;
+
+            var captured = t;
+            row.MouseLeftButtonUp += (_, _) => OpenStatsDetail(captured);
+            row.MouseEnter += (s, _) =>
+                ((Border)s).Background = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x2a));
+            row.MouseLeave += (s, _) =>
+                ((Border)s).Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e));
+
+            StatsListPanel.Children.Add(row);
+        }
+    }
+
+    private void OpenStatsDetail(GameTrackStats t)
+    {
+        GameStatsView.Visibility = Visibility.Collapsed;
+        GameStatsDetailView.Visibility = Visibility.Visible;
+        GameStatsDetailView.Focus();
+
+        StatsDetailTitle.Text = t.TrackTitle;
+        StatsDetailSub.Text = $"Первая игра {t.FirstPlayed:dd.MM.yyyy} · последняя {t.LastPlayed:dd.MM.yyyy}";
+
+        StatsDetailPanel.Children.Clear();
+
+        double lifeAcc = t.TotalNotes > 0 ? t.TotalHits * 100.0 / t.TotalNotes : 0;
+        double hitRate = (t.TotalHits + t.TotalMisses) > 0
+            ? t.TotalHits * 100.0 / (t.TotalHits + t.TotalMisses) : 0;
+
+        void AddStat(string label, string value, string? sub = null)
+        {
+            var row = new Border
+            {
+                CornerRadius = new CornerRadius(8),
+                Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
+                Margin = new Thickness(0, 0, 0, 6)
+            };
+            var innerB = new Border
+            {
+                BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+                BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(14, 10, 14, 10)
+            };
+            var g = new Grid();
+            g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var lPanel = new StackPanel();
+            lPanel.Children.Add(new TextBlock
+            {
+                Text = label, FontSize = 12, FontFamily = new FontFamily("Segoe UI"),
+                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88))
+            });
+            if (sub is not null)
+                lPanel.Children.Add(new TextBlock
+                {
+                    Text = sub, FontSize = 10, FontFamily = new FontFamily("Segoe UI"),
+                    Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x55))
+                });
+            Grid.SetColumn(lPanel, 0);
+
+            var valTb = new TextBlock
+            {
+                Text = value, FontSize = 15, FontWeight = FontWeights.SemiBold,
+                FontFamily = new FontFamily("Segoe UI"), Foreground = Brushes.White,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(valTb, 1);
+
+            g.Children.Add(lPanel);
+            g.Children.Add(valTb);
+            innerB.Child = g;
+            row.Child = innerB;
+            StatsDetailPanel.Children.Add(row);
+        }
+
+        void AddSection(string title)
+        {
+            StatsDetailPanel.Children.Add(new TextBlock
+            {
+                Text = title, FontSize = 11, FontFamily = new FontFamily("Segoe UI"),
+                Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x55)),
+                FontWeight = FontWeights.SemiBold,
+                Margin = new Thickness(2, 10, 0, 4)
+            });
+        }
+
+        AddSection("ОБЩЕЕ");
+        AddStat("Количество игр", t.TimesPlayed.ToString());
+        AddStat("Всего нажатий", t.TotalKeyPresses.ToString("N0"));
+
+        AddSection("РЕКОРДЫ");
+        AddStat("Лучший ранк", t.BestRank);
+        AddStat("Макс. очки", t.BestScore.ToString("N0"));
+        AddStat("Мин. очки", t.MinScore == int.MaxValue ? "—" : t.MinScore.ToString("N0"));
+        AddStat("Макс. точность", $"{t.BestAccuracy:F1}%");
+        AddStat("Мин. точность", $"{t.WorstAccuracy:F1}%");
+        AddStat("Макс. комбо", $"×{t.BestCombo}");
+
+        AddSection("ЗА ВСЕ ИГРЫ");
+        AddStat("Всего нот", t.TotalNotes.ToString("N0"));
+        AddStat("Попаданий", t.TotalHits.ToString("N0"), $"{hitRate:F1}% от нажатий");
+        AddStat("Промахов", t.TotalMisses.ToString("N0"));
+        AddStat("Lifetime accuracy", $"{lifeAcc:F1}%", "попадания / все ноты");
     }
 
     private void SpawnDoubleStrikeEffect(Color comboColor)

@@ -1379,8 +1379,38 @@
                                     </Border>
                                 </Border>
 
+                                <Border x:Name="GameStatsMenuBtn" CornerRadius="12" Cursor="Hand"
+                                        Width="320" Height="68" Margin="0,0,0,12"
+                                        MouseLeftButtonUp="GameStatsMenuBtn_Click"
+                                        MouseEnter="GameSettingsMenuBtn_MouseEnter"
+                                        MouseLeave="GameSettingsMenuBtn_MouseLeave"
+                                        Background="#1e1e1e">
+                                    <Border BorderBrush="#333333" BorderThickness="1" CornerRadius="12" IsHitTestVisible="False">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="68"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Width="34" Height="34" CornerRadius="17"
+                                                    Background="#272727"
+                                                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Path Data="M3,17 L7,11 L11,13 L15,6 L21,6 M18,3 L21,6 L18,9"
+                                                      Stroke="#a1a1aa" StrokeThickness="2"
+                                                      Width="16" Height="16" Stretch="Uniform"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="Статистика" FontFamily="Segoe UI" FontSize="15"
+                                                           FontWeight="SemiBold" Foreground="White"/>
+                                                <TextBlock Text="История и рекорды" FontFamily="Segoe UI"
+                                                           FontSize="11" Foreground="#888888"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </Border>
+
                                 <Border x:Name="EditorMenuBtn" CornerRadius="12" Cursor="Hand"
-                                        Width="320" Height="68"
+                                        Width="320" Height="68" Margin="0,0,0,12"
                                         MouseLeftButtonUp="EditorMenuBtn_Click"
                                         MouseEnter="EditorMenuBtn_MouseEnter"
                                         MouseLeave="EditorMenuBtn_MouseLeave"
@@ -1409,7 +1439,7 @@
                                 </Border>
 
                                 <Border x:Name="GameSettingsMenuBtn" CornerRadius="12" Cursor="Hand"
-                                        Width="320" Height="68" Margin="0,12,0,0"
+                                        Width="320" Height="68" Margin="0,0,0,12"
                                         MouseLeftButtonUp="GameSettingsMenuBtn_Click"
                                         MouseEnter="GameSettingsMenuBtn_MouseEnter"
                                         MouseLeave="GameSettingsMenuBtn_MouseLeave"
@@ -1439,6 +1469,57 @@
                                 </Border>
                             </StackPanel>
                         </Grid>
+
+            <!-- Список треков -->
+            <Grid x:Name="GameStatsView" Visibility="Collapsed" Focusable="True"
+                  KeyDown="GameStatsView_KeyDown">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" HorizontalAlignment="Center" MinWidth="320" Margin="0,24,0,16">
+                    <TextBlock Text="Статистика" FontFamily="Segoe UI" FontSize="22"
+                               FontWeight="SemiBold" Foreground="White"
+                               HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                    <TextBlock Text="Выбери трек для подробной статистики"
+                               FontFamily="Segoe UI" FontSize="13" Foreground="#888888"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel HorizontalAlignment="Center" MinWidth="320" Margin="0,0,0,24">
+                        <TextBlock x:Name="StatsEmptyText" Text="Пока нет сыгранных уровней"
+                                   FontFamily="Segoe UI" FontSize="13" Foreground="#555555"
+                                   HorizontalAlignment="Center" Margin="0,24,0,0"
+                                   Visibility="Collapsed"/>
+                        <StackPanel x:Name="StatsListPanel"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+
+            <!-- Детали одного трека -->
+            <Grid x:Name="GameStatsDetailView" Visibility="Collapsed" Focusable="True"
+                  KeyDown="GameStatsDetailView_KeyDown">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" HorizontalAlignment="Center" MinWidth="320" Margin="0,24,0,16">
+                    <TextBlock x:Name="StatsDetailTitle" FontFamily="Segoe UI" FontSize="20"
+                               FontWeight="SemiBold" Foreground="White"
+                               HorizontalAlignment="Center" Margin="0,0,0,4"
+                               TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="StatsDetailSub" FontFamily="Segoe UI" FontSize="12"
+                               Foreground="#888888" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel x:Name="StatsDetailPanel" HorizontalAlignment="Center"
+                                MinWidth="320" Margin="0,0,0,24"/>
+                </ScrollViewer>
+            </Grid>
 
             <Grid x:Name="GameSettingsView" Visibility="Collapsed" Focusable="True" KeyDown="GameSettingsView_KeyDown">
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MinWidth="320">
@@ -1786,10 +1867,17 @@
                                     <TextBox x:Name="EditorTrackTitle" Style="{StaticResource InputBox}"
                                              Height="32" Padding="8,0" Margin="0,0,0,16"/>
 
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                        <TextBlock Text="Введите BPM" FontFamily="Segoe UI" FontSize="12"
-                                                   Foreground="#888"/>
-                                        <TextBlock Text=" | Узнать BPM можно " FontFamily="Segoe UI" FontSize="12"
+                                    <TextBlock FontFamily="Segoe UI" FontSize="12" Foreground="#888888" Margin="0,0,0,6">
+                                        <Run Text="Скорость игры (BPM) — "/>
+                                        <Run Text="140 медленно, "/>
+                                        <Run Text="200 средне, "/>
+                                        <Run Text="240+ быстро"/>
+                                    </TextBlock>
+                                    <TextBox x:Name="EditorBpmBox" Style="{StaticResource InputBox}"
+                                             Height="32" Padding="8,0" Margin="0,0,0,6"
+                                             Text="140"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
+                                        <TextBlock Text="Узнать BPM можно " FontFamily="Segoe UI" FontSize="12"
                                                    Foreground="#666"/>
                                         <TextBlock FontFamily="Segoe UI" FontSize="12">
                                             <Hyperlink Click="BpmAnalyzerLink_Click" Foreground="#6366f1">
@@ -1797,9 +1885,6 @@
                                             </Hyperlink>
                                         </TextBlock>
                                     </StackPanel>
-                                    <TextBox x:Name="EditorBpmBox" Style="{StaticResource InputBox}"
-                                             Height="32" Padding="8,0" Margin="0,0,0,24"
-                                             Text="140"/>
 
                                     <Border x:Name="EditorStatusBox" Background="#1a1a1a" CornerRadius="8"
                                             Padding="16" Margin="0,0,0,20" Visibility="Collapsed">

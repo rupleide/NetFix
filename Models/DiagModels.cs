@@ -110,4 +110,27 @@ public class AppSettings
     public string KeyLane1 { get; set; } = "S";
     public string KeyLane2 { get; set; } = "W";
     public string KeyLane3 { get; set; } = "D";
+    public List<GameTrackStats> TrackHistory { get; set; } = [];
+}
+
+/// <summary>
+/// Агрегированная статистика по одному треку. Один объект = один трек, не одна игра.
+/// Так история не растёт бесконечно — максимум столько записей сколько уникальных треков.
+/// </summary>
+public record GameTrackStats
+{
+    public string TrackTitle { get; init; } = "";
+    public int TimesPlayed { get; set; }
+    public int BestScore { get; set; }
+    public int MinScore { get; set; } = int.MaxValue;
+    public double BestAccuracy { get; set; }
+    public double WorstAccuracy { get; set; } = 100;
+    public int BestCombo { get; set; }
+    public string BestRank { get; set; } = "F";
+    public int TotalKeyPresses { get; set; }
+    public int TotalHits { get; set; }
+    public int TotalMisses { get; set; }
+    public int TotalNotes { get; set; }
+    public DateTime LastPlayed { get; set; }
+    public DateTime FirstPlayed { get; set; } = DateTime.Now;
 }
