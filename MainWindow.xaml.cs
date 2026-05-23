@@ -114,11 +114,13 @@ public partial class MainWindow : Window
     private bool _gameOverTriggered = false;
     private DispatcherTimer? _auroraGameTimer;
     private int _lastComboAuraLevel = 0; // 0=нет, 1=x5, 2=x10, 3=x20+
+    private Color _currentComboColor = Color.FromRgb(0xff, 0xd7, 0x00);
 
     private bool _halfwayTriggered = false;
     private bool _dangerModeActive = false;
     private DispatcherTimer? _dangerPulseTimer;
     private int _perfectStreak = 0; // подряд PERFECT
+    private readonly HashSet<int> _activeLanes = [];
 
     // Перформанс: очередь эффектов вне GameTick
     private readonly System.Collections.Concurrent.ConcurrentQueue<Action> _effectQueue = new();
@@ -5135,6 +5137,7 @@ public partial class MainWindow : Window
             CompositionTarget.Rendering -= GameTick;
             CompositionTarget.Rendering += GameTick;
             PreviewKeyDown += Game_KeyDown;
+            PreviewKeyUp += Game_KeyUp;
         };
 
         // Запускаем диспетчер эффектов отдельно от GameTick
@@ -5381,6 +5384,8 @@ public partial class MainWindow : Window
         if (lane < 0) return;
         e.Handled = true;
 
+        _activeLanes.Add(lane);
+
         double now = _gameClock.Elapsed.TotalSeconds;
         
         // Берём первую нехитную ноту на дорожке по порядку времени
@@ -5410,6 +5415,14 @@ public partial class MainWindow : Window
         UpdateHUD();
     }
 
+    private void Game_KeyUp(object s, System.Windows.Input.KeyEventArgs e)
+    {
+        int lane = GetGameLane(e.Key);
+        if (lane < 0) return;
+        _activeLanes.Remove(lane);
+        e.Handled = true;
+    }
+
     private void HitNote(NoteEntry note, int lane, int baseScore, string judge, Color color)
     {
         note.Hit = true;
@@ -5418,6 +5431,12 @@ public partial class MainWindow : Window
         _hitNotes++;
         _consecutiveMisses = 0;
         _gameScore += baseScore * _gameCombo;
+
+        // Супер-эффект при одновременном нажатии крайних дорожек
+        if (_activeLanes.Contains(0) && _activeLanes.Contains(3))
+        {
+            _effectQueue.Enqueue(() => SpawnDoubleStrikeEffect(_currentComboColor));
+        }
 
         // Считаем серию PERFECT
         if (judge == "PERFECT")
@@ -5487,10 +5506,40 @@ public partial class MainWindow : Window
 
     private void UpdateComboAura()
     {
-        // Уровень каждые 7-8 комбо (округляем), максимум 15 уровней (до комбо ~112)
-        int newLevel = Math.Min(15, (_gameCombo + 3) / 7);
+        // Находим уровень по реальному значению комбо
+        int newLevel = 0;
+        int[] thresholds = [7, 15, 22, 30, 37, 45, 52, 60, 67, 75, 82, 90, 97, 105, 112, 120, 150, 200, 220, 250, 300];
+        for (int i = thresholds.Length - 1; i >= 0; i--)
+        {
+            if (_gameCombo >= thresholds[i]) { newLevel = i + 1; break; }
+        }
         if (newLevel == _lastComboAuraLevel) return;
         _lastComboAuraLevel = newLevel;
+
+        var levels = new (Color main, Color? accent, string announce, byte alpha)[]
+        {
+            (Color.FromRgb(0x38, 0xbf, 0xf8), null, "COMBO ×7!", 60),
+            (Color.FromRgb(0x63, 0x66, 0xf1), null, "COMBO ×15!", 70),
+            (Color.FromRgb(0x10, 0xb9, 0x81), null, "COMBO ×22!", 75),
+            (Color.FromRgb(0xf5, 0x9e, 0x0b), null, "COMBO ×30! ⚡", 80),
+            (Color.FromRgb(0xf9, 0x73, 0x16), null, "COMBO ×37! 🔥", 85),
+            (Color.FromRgb(0xf4, 0x3f, 0x5e), null, "COMBO ×45! 💥", 90),
+            (Color.FromRgb(0xef, 0x44, 0x44), null, "COMBO ×52!", 95),
+            (Color.FromRgb(0xa8, 0x55, 0xf7), null, "COMBO ×60!", 100),
+            (Color.FromRgb(0xec, 0x4e, 0xff), null, "COMBO ×67! 🌸", 105),
+            (Color.FromRgb(0xff, 0x6b, 0xb5), Color.FromRgb(0x38, 0xbf, 0xf8), "COMBO ×75! 🌈", 110),
+            (Color.FromRgb(0xff, 0xeb, 0x3b), Color.FromRgb(0xff, 0xa0, 0x00), "COMBO ×82! 👑", 115),
+            (Color.FromRgb(0x7c, 0x3a, 0xed), Color.FromRgb(0xec, 0x4e, 0xff), "COMBO ×90! ⚡💜", 120),
+            (Color.FromRgb(0xff, 0x45, 0x00), Color.FromRgb(0xff, 0xd7, 0x00), "COMBO ×97! 🔥👑", 125),
+            (Color.FromRgb(0x00, 0xff, 0xff), Color.FromRgb(0x00, 0x80, 0xff), "COMBO ×105! ❄️", 130),
+            (Color.FromRgb(0xff, 0xff, 0xff), Color.FromRgb(0xff, 0x6b, 0xb5), "COMBO ×112! 🌟", 135),
+            (Color.FromRgb(0xff, 0xd7, 0x00), Color.FromRgb(0xff, 0x45, 0x00), "COMBO ×120! 🔥🌟", 138),
+            (Color.FromRgb(0x00, 0xff, 0x88), Color.FromRgb(0x00, 0xcc, 0xff), "COMBO ×150! 💎", 140),
+            (Color.FromRgb(0xff, 0x00, 0xff), Color.FromRgb(0xff, 0xff, 0x00), "COMBO ×200! 👑⚡", 145),
+            (Color.FromRgb(0xff, 0x45, 0x00), Color.FromRgb(0x7c, 0x3a, 0xed), "COMBO ×220! 🔥💜", 148),
+            (Color.FromRgb(0x00, 0xff, 0xff), Color.FromRgb(0xff, 0x00, 0xff), "COMBO ×250! ❄️🌸", 150),
+            (Color.FromRgb(0xff, 0xff, 0xff), Color.FromRgb(0xff, 0xd7, 0x00), "MAX COMBO ×300!! 🌟✨🔥", 155),
+        };
 
         // Плавный fade-out старых
         var oldAuras = GamePlayView.Children
@@ -5505,45 +5554,11 @@ public partial class MainWindow : Window
             old.BeginAnimation(UIElement.OpacityProperty, fo);
         }
 
-        if (newLevel == 0) return;
-
-        // ── Таблица уровней ─────────────────────────────────────────────
-        var levels = new (Color main, Color? accent, string announce, byte alpha)[]
-        {
-            // 1  x7-8   — холодный синий
-            (Color.FromRgb(0x38, 0xbf, 0xf8), null, "COMBO ×7", 60),
-            // 2  x14-15 — индиго
-            (Color.FromRgb(0x63, 0x66, 0xf1), null, "COMBO ×15!", 70),
-            // 3  x21-22 — мятный
-            (Color.FromRgb(0x10, 0xb9, 0x81), null, "COMBO ×22!", 75),
-            // 4  x28-30 — золотой, первые звёздочки
-            (Color.FromRgb(0xf5, 0x9e, 0x0b), null, "COMBO ×30! ⚡", 80),
-            // 5  x35-37 — оранжевый
-            (Color.FromRgb(0xf9, 0x73, 0x16), null, "COMBO ×37! 🔥", 85),
-            // 6  x42-45 — красно-розовый
-            (Color.FromRgb(0xf4, 0x3f, 0x5e), null, "COMBO ×45! 💥", 90),
-            // 7  x49-52 — алый
-            (Color.FromRgb(0xef, 0x44, 0x44), null, "COMBO ×52!", 95),
-            // 8  x56-60 — пурпурный
-            (Color.FromRgb(0xa8, 0x55, 0xf7), null, "COMBO ×60!", 100),
-            // 9  x63-67 — неоново-розовый
-            (Color.FromRgb(0xec, 0x4e, 0xff), null, "COMBO ×67! 🌸", 105),
-            // 10 x70-75 — двухцветный: розовый + синий акцент
-            (Color.FromRgb(0xff, 0x6b, 0xb5), Color.FromRgb(0x38, 0xbf, 0xf8), "COMBO ×75! 🌈", 110),
-            // 11 x77-82 — белое золото
-            (Color.FromRgb(0xff, 0xeb, 0x3b), Color.FromRgb(0xff, 0xa0, 0x00), "COMBO ×82! 👑", 115),
-            // 12 x84-90 — ультрафиолет
-            (Color.FromRgb(0x7c, 0x3a, 0xed), Color.FromRgb(0xec, 0x4e, 0xff), "COMBO ×90! ⚡💜", 120),
-            // 13 x91-97 — огненный градиент
-            (Color.FromRgb(0xff, 0x45, 0x00), Color.FromRgb(0xff, 0xd7, 0x00), "COMBO ×97! 🔥👑", 125),
-            // 14 x98-105 — ледяной cyan
-            (Color.FromRgb(0x00, 0xff, 0xff), Color.FromRgb(0x00, 0x80, 0xff), "COMBO ×105! ❄️", 130),
-            // 15 x106-112+ — RAINBOW
-            (Color.FromRgb(0xff, 0xff, 0xff), Color.FromRgb(0xff, 0x6b, 0xb5), "MAX COMBO!! 🌟✨🔥", 140),
-        };
+        if (newLevel == 0) return; // ниже первого порога — ничего не делаем
 
         var (mainColor, accentColor, announceText, alpha) = levels[newLevel - 1];
         Color c = mainColor;
+        _currentComboColor = mainColor;
 
         // Создаём виньетку (как danger mode, но цветную)
         var vignette = new System.Windows.Shapes.Rectangle
@@ -5798,8 +5813,8 @@ public partial class MainWindow : Window
             new DoubleAnimation(0.7, 1.05, TimeSpan.FromMilliseconds(300))
             { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.3 } });
 
-        var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(400))
-            { BeginTime = TimeSpan.FromMilliseconds(1400) };
+        var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(600))
+            { BeginTime = TimeSpan.FromMilliseconds(2000) };
         fadeOut.Completed += (_, _) => GamePlayView.Children.Remove(tb);
         tb.BeginAnimation(UIElement.OpacityProperty, fadeOut);
     }
@@ -5934,7 +5949,7 @@ public partial class MainWindow : Window
             new DoubleAnimation(peakScale, 1.0, TimeSpan.FromMilliseconds(200))
             { BeginTime = TimeSpan.FromMilliseconds(300) });
 
-        int holdMs = 800 + Math.Min(level * 60, 600);
+        int holdMs = 1400 + Math.Min(level * 60, 600);
         var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(350))
             { BeginTime = TimeSpan.FromMilliseconds(holdMs) };
         fadeOut.Completed += (_, _) => GamePlayView.Children.Remove(announce);
@@ -6105,6 +6120,8 @@ public partial class MainWindow : Window
     {
         CompositionTarget.Rendering -= GameTick;
         PreviewKeyDown -= Game_KeyDown;
+        PreviewKeyUp -= Game_KeyUp;
+        _activeLanes.Clear();
         _editorPlayer.Stop();
         _gameClock.Stop();
         _auroraGameTimer?.Stop();
@@ -6382,6 +6399,8 @@ public partial class MainWindow : Window
         _gameTimer?.Stop();
         _gameTimer = null;
         PreviewKeyDown -= Game_KeyDown;
+        PreviewKeyUp -= Game_KeyUp;
+        _activeLanes.Clear();
         _editorPlayer.Stop();
         _editorPlayer.SpeedRatio = 1.0;
         _gameClock.Stop();
@@ -8498,6 +8517,135 @@ public partial class MainWindow : Window
         _settings.KeyLane3 = "D";
         SettingsService.Save(_settings);
         LoadKeyLabels();
+    }
+
+    private void SpawnDoubleStrikeEffect(Color comboColor)
+    {
+        double canvasW = GamePlayView.ActualWidth > 0 ? GamePlayView.ActualWidth : 800;
+        double canvasH = GamePlayView.ActualHeight > 0 ? GamePlayView.ActualHeight : 500;
+        double hitY = canvasH - 70;
+        var rng = new Random();
+
+        // Второй цвет — осветлённый вариант основного
+        Color brightColor = Color.FromRgb(
+            (byte)Math.Min(255, comboColor.R + 80),
+            (byte)Math.Min(255, comboColor.G + 80),
+            (byte)Math.Min(255, comboColor.B + 80));
+
+        Color[] palette = [comboColor, brightColor, Color.FromRgb(0xff, 0xff, 0xff)];
+
+        var overlay = new Canvas
+        {
+            Width = canvasW, Height = canvasH,
+            IsHitTestVisible = false
+        };
+        GamePlayView.Children.Add(overlay);
+
+        // 1. Вспышка цвета комбо
+        var flash = new System.Windows.Shapes.Rectangle
+        {
+            Width = canvasW, Height = canvasH,
+            IsHitTestVisible = false,
+            Fill = new LinearGradientBrush(
+                Color.FromArgb(90, comboColor.R, comboColor.G, comboColor.B),
+                Color.FromArgb(0, comboColor.R, comboColor.G, comboColor.B),
+                90)
+        };
+        overlay.Children.Add(flash);
+        // Появляется быстро, уходит медленно
+        var flashIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(120));
+        var flashOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(2000))
+            { BeginTime = TimeSpan.FromMilliseconds(120) };
+        flashOut.Completed += (_, _) => overlay.Children.Remove(flash);
+        flash.BeginAnimation(UIElement.OpacityProperty, flashIn);
+        flash.BeginAnimation(UIElement.OpacityProperty, flashOut);
+
+        // 2. Две волны от краёв
+        foreach (bool fromLeft in new[] { true, false })
+        {
+            var wave = new Ellipse
+            {
+                Width = 200, Height = 200,
+                Stroke = new SolidColorBrush(Color.FromArgb(200, comboColor.R, comboColor.G, comboColor.B)),
+                StrokeThickness = 3,
+                Fill = Brushes.Transparent,
+                IsHitTestVisible = false,
+                RenderTransformOrigin = new System.Windows.Point(0.5, 0.5),
+                RenderTransform = new ScaleTransform(0.3, 0.3)
+            };
+            double startX = fromLeft ? 0 : canvasW - 200;
+            Canvas.SetLeft(wave, startX);
+            Canvas.SetTop(wave, hitY - 100);
+            overlay.Children.Add(wave);
+
+            var sc = (ScaleTransform)wave.RenderTransform;
+            sc.BeginAnimation(ScaleTransform.ScaleXProperty,
+                new DoubleAnimation(0.3, 3.0, TimeSpan.FromMilliseconds(900))
+                { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
+            sc.BeginAnimation(ScaleTransform.ScaleYProperty,
+                new DoubleAnimation(0.3, 3.0, TimeSpan.FromMilliseconds(900))
+                { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
+            // Волна появляется — держится — плавно уходит
+            var waveAnim = new DoubleAnimationUsingKeyFrames();
+            waveAnim.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.Zero)));
+            waveAnim.KeyFrames.Add(new LinearDoubleKeyFrame(0.85, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(150))));
+            waveAnim.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(1000))));
+            waveAnim.Completed += (_, _) => overlay.Children.Remove(wave);
+            wave.BeginAnimation(UIElement.OpacityProperty, waveAnim);
+        }
+
+        // 3. Партиклы — первая волна
+        for (int p = 0; p < 10; p++)
+            SpawnDoubleStrikeParticle(overlay, canvasW, hitY, rng, palette);
+
+        // Вторая волна через 120мс
+        var t = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(120) };
+        t.Tick += (_, _) =>
+        {
+            t.Stop();
+            for (int p = 0; p < 10; p++)
+                SpawnDoubleStrikeParticle(overlay, canvasW, hitY, rng, palette);
+        };
+        t.Start();
+
+        // Cleanup — ждём пока все анимации завершатся
+        var cleanup = new DoubleAnimation(1, 1, TimeSpan.FromMilliseconds(2800));
+        cleanup.Completed += (_, _) => GamePlayView.Children.Remove(overlay);
+        overlay.BeginAnimation(UIElement.OpacityProperty, cleanup);
+    }
+
+    private void SpawnDoubleStrikeParticle(System.Windows.Controls.Canvas overlay, double canvasW, double hitY, Random rng, Color[] palette)
+    {
+        double angle = rng.NextDouble() * 360;
+        double rad = angle * Math.PI / 180.0;
+        double dist = 60 + rng.Next(30, 120);
+        double size = rng.Next(4, 11);
+        double startX = canvasW * 0.2 + rng.NextDouble() * canvasW * 0.6;
+
+        var particle = new System.Windows.Shapes.Ellipse
+        {
+            Width = size, Height = size,
+            Fill = new System.Windows.Media.SolidColorBrush(palette[rng.Next(palette.Length)]),
+            IsHitTestVisible = false,
+            RenderTransform = new TranslateTransform()
+        };
+        System.Windows.Controls.Canvas.SetLeft(particle, startX);
+        System.Windows.Controls.Canvas.SetTop(particle, hitY);
+        overlay.Children.Add(particle);
+
+        int dur = 900 + rng.Next(0, 400);
+        var tt = (TranslateTransform)particle.RenderTransform;
+        tt.BeginAnimation(TranslateTransform.XProperty,
+            new DoubleAnimation(0, Math.Cos(rad) * dist, TimeSpan.FromMilliseconds(dur))
+            { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
+        tt.BeginAnimation(TranslateTransform.YProperty,
+            new DoubleAnimation(0, Math.Sin(rad) * dist - 40, TimeSpan.FromMilliseconds(dur))
+            { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
+        var fadeAnim = new DoubleAnimationUsingKeyFrames();
+        fadeAnim.KeyFrames.Add(new LinearDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.Zero)));
+        fadeAnim.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(dur))));
+        fadeAnim.Completed += (_, _) => overlay.Children.Remove(particle);
+        particle.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
     }
 }
 
