@@ -1343,7 +1343,8 @@
                         <Grid x:Name="GameTrackSelectView" Visibility="Collapsed">
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
                                 <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center" Margin="40">
-                                    <!-- Заголовок по центру -->
+
+                                    <!-- Заголовок -->
                                     <TextBlock Text="Выбор трека" FontFamily="Segoe UI" FontSize="22"
                                                FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"
                                                Margin="0,0,0,6"/>
@@ -1351,192 +1352,160 @@
                                                FontSize="13" Foreground="#888888" TextAlignment="Center"
                                                TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,0,0,12"/>
 
-                                <!-- Предупреждение о здоровье -->
-                                <Border Background="#1a1a1a" CornerRadius="8" Padding="12,10" Margin="0,0,0,24" MaxWidth="600">
-                                    <Grid>
+                                    <!-- Предупреждение о здоровье -->
+                                    <Border Background="#1a1a1a" CornerRadius="8" Padding="12,10" Margin="0,0,0,24" MaxWidth="600">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Path Grid.Column="0" Data="M12,2 L22,20 L2,20 Z M12,9 L12,14 M12,16 L12,18"
+                                                  Stroke="#f59e0b" StrokeThickness="2" Width="20" Height="20"
+                                                  Stretch="Uniform" Margin="0,4,10,0" VerticalAlignment="Top"/>
+                                            <TextBlock Grid.Column="1" FontFamily="Segoe UI" FontSize="11" Foreground="#888" TextWrapping="Wrap">
+                                                <Run Text="ВНИМАНИЕ" Foreground="#f59e0b" FontWeight="Bold"/>
+                                                <LineBreak/>
+                                                <Run Text="Игра содержит мигающие эффекты и не рекомендуется лицам, подверженным эпилептическим припадкам."/>
+                                                <LineBreak/>
+                                                <Run Text="Продолжительное использование может привести к головокружению и возникновению зрительных иллюзий. Пожалуйста, соблюдайте режим отдыха и ограничьте время непрерывной игры."/>
+                                            </TextBlock>
+                                        </Grid>
+                                    </Border>
+
+                                    <Grid MaxWidth="800">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="20"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        
-                                        <Path Grid.Column="0" Data="M12,2 L22,20 L2,20 Z M12,9 L12,14 M12,16 L12,18" 
-                                              Stroke="#f59e0b" StrokeThickness="2" Width="20" Height="20" 
-                                              Stretch="Uniform" Margin="0,4,10,0" VerticalAlignment="Top"/>
-                                        
-                                        <TextBlock Grid.Column="1" FontFamily="Segoe UI" FontSize="11" Foreground="#888" TextWrapping="Wrap">
-                                            <Run Text="ВНИМАНИЕ" Foreground="#f59e0b" FontWeight="Bold"/>
-                                            <LineBreak/>
-                                            <Run Text="Игра содержит мигающие эффекты и не рекомендуется лицам, подверженным эпилептическим припадкам."/>
-                                            <LineBreak/>
-                                            <Run Text="Продолжительное использование может привести к головокружению и возникновению зрительных иллюзий. Пожалуйста, соблюдайте режим отдыха и ограничьте время непрерывной игры."/>
-                                        </TextBlock>
-                                    </Grid>
-                                </Border>
 
-                                <!-- Две колонки: Треки NetFix слева, Пользовательские справа -->
-                                <Grid MaxWidth="800">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="20"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
+                                        <!-- Левая колонка -->
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="ТРЕКИ NETFIX" FontFamily="Segoe UI" FontSize="11"
+                                                       Foreground="#666666" FontWeight="Bold" Margin="0,0,0,10"/>
+                                            <StackPanel x:Name="BuiltInTracksList"/>
+                                        </StackPanel>
 
-                                    <!-- Левая колонка: Треки NetFix -->
-                                    <Grid Grid.Column="0">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <TextBlock Grid.Row="0" Text="ТРЕКИ NETFIX" FontFamily="Segoe UI" FontSize="11"
-                                                   Foreground="#666666" FontWeight="Bold" Margin="0,0,0,10"/>
-                                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MaxHeight="400">
-                                            <StackPanel x:Name="BuiltInTracksList">
-                                                <!-- Встроенные треки загружаются динамически -->
-                                            </StackPanel>
-                                        </ScrollViewer>
-                                    </Grid>
+                                        <!-- Правая колонка -->
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="ПОЛЬЗОВАТЕЛЬСКИЕ ТРЕКИ" FontFamily="Segoe UI" FontSize="11"
+                                                       Foreground="#666666" FontWeight="Bold" Margin="0,0,0,10"/>
 
-                                    <!-- Правая колонка: Пользовательские треки -->
-                                    <Grid Grid.Column="2">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <TextBlock Grid.Row="0" Text="ПОЛЬЗОВАТЕЛЬСКИЕ ТРЕКИ" FontFamily="Segoe UI" FontSize="11"
-                                                   Foreground="#666666" FontWeight="Bold" Margin="0,0,0,10"/>
-                                        
-                                        <!-- Кнопка загрузки трека -->
-                                        <Button Grid.Row="1" x:Name="ImportLevelBtn" Style="{StaticResource OutlineBtn}"
-                                                Padding="14,12" Margin="0,0,0,10"
-                                                Click="ImportLevel_Click" Cursor="Hand">
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                                <Path Data="M12,2 L12,14 M7,9 L12,14 L17,9" 
-                                                      Stroke="#3b82f6" StrokeThickness="2"
-                                                      Width="16" Height="16" Stretch="Uniform"
-                                                      Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                                <TextBlock Text="Загрузить трек" FontFamily="Segoe UI"
-                                                           FontSize="13" Foreground="#3b82f6" FontWeight="SemiBold"
-                                                           VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                        </Button>
-
-                                        <!-- Инструкция по загрузке -->
-                                        <Border Grid.Row="2" Background="#1a1a1a" CornerRadius="8" Padding="14,12" Margin="0,0,0,12"
-                                                BorderBrush="#2a2a3a" BorderThickness="1">
-                                            <StackPanel>
-                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                                    <Path Data="{StaticResource ImportIcon}" 
-                                                          Fill="#3b82f6" Width="14" Height="14" 
-                                                          Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="ИНСТРУКЦИЯ ПО ЗАГРУЗКЕ ТРЕКОВ" FontFamily="Segoe UI" FontSize="11" 
-                                                               Foreground="#3b82f6" FontWeight="Bold" VerticalAlignment="Center"/>
+                                            <Button x:Name="ImportLevelBtn" Style="{StaticResource OutlineBtn}"
+                                                    Padding="14,12" Margin="0,0,0,10"
+                                                    Click="ImportLevel_Click" Cursor="Hand">
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Path Data="M12,2 L12,14 M7,9 L12,14 L17,9"
+                                                          Stroke="#3b82f6" StrokeThickness="2"
+                                                          Width="16" Height="16" Stretch="Uniform"
+                                                          Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="Загрузить трек" FontFamily="Segoe UI"
+                                                               FontSize="13" Foreground="#3b82f6" FontWeight="SemiBold"
+                                                               VerticalAlignment="Center"/>
                                                 </StackPanel>
-                                                
-                                                <TextBlock FontFamily="Segoe UI" FontSize="11" Foreground="#aaa" 
-                                                           TextWrapping="Wrap" LineHeight="16" Margin="0,0,0,10">
-                                                    <Run Text="Для загрузки собственного трека вам потребуется "/>
-                                                    <Run Text="ZIP или RAR архив" FontWeight="SemiBold" Foreground="#ddd"/><Run Text=". Такой архив создается автоматически при экспорте ваших кастомных уровней. Вы можете создавать уровни самостоятельно или использовать файлы, полученные от друзей."/>
-                                                </TextBlock>
-                                                
-                                                <Border Background="#0f1419" CornerRadius="6" Padding="10,8" 
-                                                        BorderBrush="#3b82f6" BorderThickness="1" Opacity="0.8">
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                            <ColumnDefinition Width="*"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        
-                                                        <Path Grid.Column="0" Data="{StaticResource TelegramIcon}" 
-                                                              Fill="#3b82f6" Width="14" Height="14" 
-                                                              Stretch="Uniform" Margin="0,2,8,0" VerticalAlignment="Top"/>
+                                            </Button>
 
-                                                            <TextBlock Grid.Column="1" FontFamily="Segoe UI" FontSize="11" Foreground="#aaa" 
+                                            <Border Background="#1a1a1a" CornerRadius="8" Padding="14,12" Margin="0,0,0,12"
+                                                    BorderBrush="#2a2a3a" BorderThickness="1">
+                                                <StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                                        <Path Data="{StaticResource ImportIcon}"
+                                                              Fill="#3b82f6" Width="14" Height="14"
+                                                              Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="ИНСТРУКЦИЯ ПО ЗАГРУЗКЕ ТРЕКОВ" FontFamily="Segoe UI" FontSize="11"
+                                                                   Foreground="#3b82f6" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                    <TextBlock FontFamily="Segoe UI" FontSize="11" Foreground="#aaa"
+                                                               TextWrapping="Wrap" LineHeight="16" Margin="0,0,0,10">
+                                                        <Run Text="Для загрузки собственного трека вам потребуется "/>
+                                                        <Run Text="ZIP или RAR архив" FontWeight="SemiBold" Foreground="#ddd"/>
+                                                        <Run Text=". Такой архив создается автоматически при экспорте ваших кастомных уровней. Вы можете создавать уровни самостоятельно или использовать файлы, полученные от друзей."/>
+                                                    </TextBlock>
+                                                    <Border Background="#0f1419" CornerRadius="6" Padding="10,8"
+                                                            BorderBrush="#3b82f6" BorderThickness="1" Opacity="0.8">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Path Grid.Column="0" Data="{StaticResource TelegramIcon}"
+                                                                  Fill="#3b82f6" Width="14" Height="14"
+                                                                  Stretch="Uniform" Margin="0,2,8,0" VerticalAlignment="Top"/>
+                                                            <TextBlock Grid.Column="1" FontFamily="Segoe UI" FontSize="11" Foreground="#aaa"
                                                                        TextWrapping="Wrap" LineHeight="16">
                                                                 <Run Text="Вы можете отправлять архивы со своими уровнями в комментарии под постами в нашем "/>
-                                                                <Hyperlink NavigateUri="https://t.me/NetFixRuBi" RequestNavigate="Hyperlink_RequestNavigate" 
+                                                                <Hyperlink NavigateUri="https://t.me/NetFixRuBi" RequestNavigate="Hyperlink_RequestNavigate"
                                                                            TextDecorations="None" Foreground="#3b82f6">
                                                                     <Run Text="Telegram-канале NetFix" FontWeight="SemiBold"/>
-                                                                </Hyperlink><Run Text=". Я обязательно посмотрю каждую работу!"/>
+                                                                </Hyperlink>
+                                                                <Run Text=". Я обязательно посмотрю каждую работу!"/>
                                                                 <LineBreak/>
                                                                 <Run Text="Лучшие кастомные уровни будут опубликованы в канале, а самые качественные из них я добавлю в список официальных треков "/>
-                                                                <Hyperlink NavigateUri="https://t.me/NetFixRuBi" RequestNavigate="Hyperlink_RequestNavigate" 
+                                                                <Hyperlink NavigateUri="https://t.me/NetFixRuBi" RequestNavigate="Hyperlink_RequestNavigate"
                                                                            TextDecorations="None" Foreground="#3b82f6">
                                                                     <Run Text="NetFix" FontWeight="SemiBold"/>
-                                                                </Hyperlink><Run Text=" с указанием вашего авторства."/>
+                                                                </Hyperlink>
+                                                                <Run Text=" с указанием вашего авторства."/>
                                                                 <LineBreak/>
                                                                 <Run Text="Подписывайтесь, чтобы играть в классные новинки и делиться своим творчеством!"/>
                                                             </TextBlock>
                                                         </Grid>
-                                                </Border>
-                                            </StackPanel>
-                                        </Border>
-                                        
-                                        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" MaxHeight="400">
-                                            <StackPanel>
-                                                <Border x:Name="UserLevelsEmpty" Background="#1a1a1a" CornerRadius="8"
-                                                        Padding="16" BorderBrush="#333333" BorderThickness="1">
-                                                    <TextBlock Text="Нет сохранённых уровней" FontFamily="Segoe UI"
-                                                               FontSize="12" Foreground="#555555" HorizontalAlignment="Center"/>
-                                                </Border>
-                                                <ItemsControl x:Name="UserLevelsList" Visibility="Collapsed">
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <Border Background="#1e1e1e" CornerRadius="8" Margin="0,0,0,6"
-                                                                    Padding="12,10" BorderBrush="#333333" BorderThickness="1"
-                                                                    Cursor="Hand"
-                                                                    Tag="{Binding}"
-                                                                    MouseLeftButtonUp="UserLevelCard_Click"
-                                                                    MouseEnter="UserLevelCard_MouseEnter"
-                                                                    MouseLeave="UserLevelCard_MouseLeave">
-                                                                <Grid>
-                                                                    <Grid.ColumnDefinitions>
-                                                                        <ColumnDefinition Width="*"/>
-                                                                        <ColumnDefinition Width="Auto"/>
-                                                                    </Grid.ColumnDefinitions>
-                                                                    <StackPanel VerticalAlignment="Center">
-                                                                        <TextBlock Text="{Binding Title}" FontFamily="Segoe UI"
-                                                                                   FontSize="13" Foreground="White" FontWeight="SemiBold"/>
-                                                                        <TextBlock Text="{Binding NoteCount, StringFormat='{}{0} нот'}"
-                                                                                   FontFamily="Segoe UI" FontSize="11" Foreground="#666666"/>
-                                                                    </StackPanel>
-                                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                                                        <Button Style="{StaticResource FlatBtn}"
-                                                                                Padding="10" Margin="0,0,4,0"
-                                                                                MinWidth="40" MinHeight="40"
-                                                                                Tag="{Binding}" Click="ExportUserLevel_Click"
-                                                                                Cursor="Hand">
-                                                                            <Border Background="Transparent" Width="20" Height="20">
-                                                                                <Path Data="{StaticResource ExportIcon}" 
-                                                                                      Stroke="#777777"
-                                                                                      StrokeThickness="2"
-                                                                                      Stretch="Uniform"/>
-                                                                            </Border>
-                                                                        </Button>
-                                                                        <Button Style="{StaticResource FlatBtn}"
-                                                                                Padding="10" Margin="0,0,0,0"
-                                                                                MinWidth="40" MinHeight="40"
-                                                                                Tag="{Binding}" Click="DeleteUserLevel_Click"
-                                                                                Cursor="Hand">
-                                                                            <Border Background="Transparent" Width="20" Height="20">
-                                                                                <Path Data="{StaticResource CloseIcon}" 
-                                                                                      Stroke="#ef4444"
-                                                                                      StrokeThickness="2"
-                                                                                      Stretch="Uniform"/>
-                                                                            </Border>
-                                                                        </Button>
-                                                                    </StackPanel>
-                                                                </Grid>
-                                                            </Border>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                            </StackPanel>
-                                        </ScrollViewer>
+                                                    </Border>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border x:Name="UserLevelsEmpty" Background="#1a1a1a" CornerRadius="8"
+                                                    Padding="16" BorderBrush="#333333" BorderThickness="1">
+                                                <TextBlock Text="Нет сохранённых уровней" FontFamily="Segoe UI"
+                                                           FontSize="12" Foreground="#555555" HorizontalAlignment="Center"/>
+                                            </Border>
+                                            <ItemsControl x:Name="UserLevelsList" Visibility="Collapsed">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Background="#1e1e1e" CornerRadius="8" Margin="0,0,0,6"
+                                                                Padding="12,10" BorderBrush="#333333" BorderThickness="1"
+                                                                Cursor="Hand" Tag="{Binding}"
+                                                                MouseLeftButtonUp="UserLevelCard_Click"
+                                                                MouseEnter="UserLevelCard_MouseEnter"
+                                                                MouseLeave="UserLevelCard_MouseLeave">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <StackPanel VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding Title}" FontFamily="Segoe UI"
+                                                                               FontSize="13" Foreground="White" FontWeight="SemiBold"/>
+                                                                    <TextBlock Text="{Binding NoteCount, StringFormat='{}{0} нот'}"
+                                                                               FontFamily="Segoe UI" FontSize="11" Foreground="#666666"/>
+                                                                </StackPanel>
+                                                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                                    <Button Style="{StaticResource FlatBtn}"
+                                                                            Padding="10" Margin="0,0,4,0"
+                                                                            MinWidth="40" MinHeight="40"
+                                                                            Tag="{Binding}" Click="ExportUserLevel_Click" Cursor="Hand">
+                                                                        <Border Background="Transparent" Width="20" Height="20">
+                                                                            <Path Data="{StaticResource ExportIcon}"
+                                                                                  Stroke="#777777" StrokeThickness="2" Stretch="Uniform"/>
+                                                                        </Border>
+                                                                    </Button>
+                                                                    <Button Style="{StaticResource FlatBtn}"
+                                                                            Padding="10" MinWidth="40" MinHeight="40"
+                                                                            Tag="{Binding}" Click="DeleteUserLevel_Click" Cursor="Hand">
+                                                                        <Border Background="Transparent" Width="20" Height="20">
+                                                                            <Path Data="{StaticResource CloseIcon}"
+                                                                                  Stroke="#ef4444" StrokeThickness="2" Stretch="Uniform"/>
+                                                                        </Border>
+                                                                    </Button>
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
                                     </Grid>
-                                </Grid>
-                            </StackPanel>
+
+                                </StackPanel>
                             </ScrollViewer>
                         </Grid>
 
