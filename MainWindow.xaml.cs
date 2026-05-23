@@ -3860,7 +3860,6 @@ public partial class MainWindow : Window
         double linear = Math.Pow(_settings.GameVolume, 3);
         _editorPlayer.Volume = linear;
         _previewPlayer.Volume = linear;
-        UpdateVolumeSliderFill(_settings.GameVolume);
     }
 
     private void SaveSettings_Click(object s, RoutedEventArgs e)
@@ -3901,15 +3900,6 @@ public partial class MainWindow : Window
         _previewPlayer.Volume = linear;
         _settings.GameVolume = e.NewValue; // сохраняем позицию ползунка, не линейное значение
         SettingsService.Save(_settings);
-
-        // Обновить заполненную часть слайдера
-        UpdateVolumeSliderFill(e.NewValue);
-    }
-
-    private void UpdateVolumeSliderFill(double value)
-    {
-        if (VolumeSlider?.Template?.FindName("TrackFill", VolumeSlider) is Border fill)
-            fill.Width = value * 90; // 90 = Width слайдера
     }
 
 

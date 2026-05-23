@@ -523,54 +523,48 @@
         </Style>
 
         <!-- ═══ VOLUME SLIDER ═══ -->
-        <ControlTemplate x:Key="SliderRepeatBtnTemplate" TargetType="RepeatButton">
-            <Border Background="Transparent"/>
+        <ControlTemplate x:Key="SliderDecreaseBtn" TargetType="RepeatButton">
+            <Border Height="3" CornerRadius="1.5,0,0,1.5" VerticalAlignment="Center">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="#6366f1" Offset="0"/>
+                        <GradientStop Color="#818cf8" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
         </ControlTemplate>
-
+        <ControlTemplate x:Key="SliderIncreaseBtn" TargetType="RepeatButton">
+            <Border Height="3" CornerRadius="0,1.5,1.5,0" Background="#2a2a2a" VerticalAlignment="Center"/>
+        </ControlTemplate>
         <Style x:Key="VolumeSliderStyle" TargetType="Slider">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Slider">
-                        <Grid Height="20" VerticalAlignment="Center">
-                            <Border Height="3" CornerRadius="1.5"
-                                    Background="#2a2a2a"
-                                    VerticalAlignment="Center"/>
+                        <Grid VerticalAlignment="Center">
                             <Track x:Name="PART_Track">
                                 <Track.DecreaseRepeatButton>
                                     <RepeatButton Command="Slider.DecreaseLarge"
-                                                  Background="Transparent" BorderThickness="0"
-                                                  Focusable="False" Height="20"
-                                                  Template="{StaticResource SliderRepeatBtnTemplate}"/>
+                                                  Focusable="False"
+                                                  Template="{StaticResource SliderDecreaseBtn}"/>
                                 </Track.DecreaseRepeatButton>
                                 <Track.Thumb>
-                                    <Thumb Width="14" Height="14">
+                                    <Thumb>
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
-                                                <Ellipse Fill="White" Width="14" Height="14"/>
+                                                <Grid Width="18" Height="18">
+                                                    <Ellipse Fill="#1a1a2e" Width="18" Height="18"/>
+                                                    <Ellipse Fill="White" Width="10" Height="10"/>
+                                                </Grid>
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>
                                 </Track.Thumb>
                                 <Track.IncreaseRepeatButton>
                                     <RepeatButton Command="Slider.IncreaseLarge"
-                                                  Background="Transparent" BorderThickness="0"
-                                                  Focusable="False" Height="20"
-                                                  Template="{StaticResource SliderRepeatBtnTemplate}"/>
+                                                  Focusable="False"
+                                                  Template="{StaticResource SliderIncreaseBtn}"/>
                                 </Track.IncreaseRepeatButton>
                             </Track>
-                            <!-- Заполненная часть поверх фона -->
-                            <Border x:Name="TrackFill"
-                                    Height="3" CornerRadius="1.5"
-                                    VerticalAlignment="Center"
-                                    HorizontalAlignment="Left"
-                                    IsHitTestVisible="False">
-                                <Border.Background>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#6366f1" Offset="0"/>
-                                        <GradientStop Color="#818cf8" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Border.Background>
-                            </Border>
                         </Grid>
                     </ControlTemplate>
                 </Setter.Value>
