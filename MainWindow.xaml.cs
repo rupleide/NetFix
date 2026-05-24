@@ -9498,104 +9498,146 @@ public partial class MainWindow : Window
 
         if (history.Count == 0)
         {
-            StatsEmptyText.Visibility = Visibility.Visible;
+            StatsEmptyState.Visibility = Visibility.Visible;
             return;
         }
-        StatsEmptyText.Visibility = Visibility.Collapsed;
+        StatsEmptyState.Visibility = Visibility.Collapsed;
 
         foreach (var t in history.OrderByDescending(x => x.LastPlayed))
         {
-            var row = new Border
+            var rankColor = GetRankColor(t.BestRank);
+
+            var card = new Border
             {
                 CornerRadius = new CornerRadius(10),
                 Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
-                Margin = new Thickness(0, 0, 0, 8),
-                Cursor = Cursors.Hand
-            };
-            var inner = new Border
-            {
                 BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
                 BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(10),
-                Padding = new Thickness(16, 12, 16, 12)
+                Margin = new Thickness(0, 0, 0, 8),
+                Cursor = Cursors.Hand,
+                Padding = new Thickness(16, 14, 16, 14)
             };
 
             var grid = new Grid();
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(44) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-            var rankColor = t.BestRank switch
-            {
-                "S" => Color.FromRgb(0xFF, 0xD7, 0x00),
-                "A" => Color.FromRgb(0x7C, 0xFC, 0x00),
-                "B" => Color.FromRgb(0x00, 0xBF, 0xFF),
-                "C" => Color.FromRgb(0xFF, 0xFF, 0xFF),
-                "D" => Color.FromRgb(0xFF, 0xA5, 0x00),
-                _   => Color.FromRgb(0xFF, 0x44, 0x44)
-            };
-
             var rankTb = new TextBlock
             {
-                Text = t.BestRank, FontSize = 26, FontWeight = FontWeights.Bold,
+                Text = t.BestRank,
+                FontSize = 28,
+                FontWeight = FontWeights.Bold,
                 FontFamily = new FontFamily("Segoe UI"),
                 Foreground = new SolidColorBrush(rankColor),
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 0, 14, 0)
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                LineHeight = 28
             };
             Grid.SetColumn(rankTb, 0);
 
-            var info = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-            info.Children.Add(new TextBlock
-            {
-                Text = t.TrackTitle, FontSize = 14, FontWeight = FontWeights.SemiBold,
-                FontFamily = new FontFamily("Segoe UI"), Foreground = Brushes.White,
-                TextTrimming = TextTrimming.CharacterEllipsis
-            });
-            info.Children.Add(new TextBlock
-            {
-                Text = $"{t.TimesPlayed} игр · {t.LastPlayed:dd.MM.yy}",
-                FontSize = 11, FontFamily = new FontFamily("Segoe UI"),
-                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88))
-            });
-            Grid.SetColumn(info, 1);
+            var infoStack = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 0, 0) };
 
-            var right = new StackPanel
+            var titleTb = new TextBlock
+            {
+                Text = t.TrackTitle,
+                FontSize = 14,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = Brushes.White,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                Margin = new Thickness(0, 0, 0, 4)
+            };
+
+            var subStack = new StackPanel { Orientation = Orientation.Horizontal };
+            subStack.Children.Add(CreateMiniStat($"{t.BestAccuracy:F1}%", "#a855f7"));
+            subStack.Children.Add(CreateSeparator());
+            subStack.Children.Add(CreateMiniStat($"×{t.BestCombo}", "#3b82f6"));
+            subStack.Children.Add(CreateSeparator());
+            subStack.Children.Add(CreateMiniStat($"{t.TimesPlayed} игр", "#666"));
+
+            infoStack.Children.Add(titleTb);
+            infoStack.Children.Add(subStack);
+            Grid.SetColumn(infoStack, 1);
+
+            var rightStack = new StackPanel
             {
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = System.Windows.HorizontalAlignment.Right
             };
-            right.Children.Add(new TextBlock
+
+            rightStack.Children.Add(new TextBlock
             {
-                Text = t.BestScore.ToString("N0"), FontSize = 15,
-                FontWeight = FontWeights.Bold, FontFamily = new FontFamily("Segoe UI"),
-                Foreground = Brushes.White, HorizontalAlignment = System.Windows.HorizontalAlignment.Right
-            });
-            right.Children.Add(new TextBlock
-            {
-                Text = $"×{t.BestCombo} · {t.BestAccuracy:F1}%",
-                FontSize = 11, FontFamily = new FontFamily("Segoe UI"),
-                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+                Text = t.BestScore.ToString("N0"),
+                FontSize = 16,
+                FontWeight = FontWeights.Bold,
+                Foreground = Brushes.White,
                 HorizontalAlignment = System.Windows.HorizontalAlignment.Right
             });
-            Grid.SetColumn(right, 2);
+
+            rightStack.Children.Add(new TextBlock
+            {
+                Text = t.LastPlayed.ToString("dd.MM.yy"),
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x66)),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
+                Margin = new Thickness(0, 2, 0, 0)
+            });
+            Grid.SetColumn(rightStack, 2);
 
             grid.Children.Add(rankTb);
-            grid.Children.Add(info);
-            grid.Children.Add(right);
-            inner.Child = grid;
-            row.Child = inner;
+            grid.Children.Add(infoStack);
+            grid.Children.Add(rightStack);
+            card.Child = grid;
+
+            card.MouseEnter += (s, _) =>
+            {
+                card.Background = new SolidColorBrush(Color.FromRgb(0x27, 0x27, 0x27));
+                card.BorderBrush = new SolidColorBrush(rankColor);
+            };
+            card.MouseLeave += (s, _) =>
+            {
+                card.Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e));
+                card.BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33));
+            };
 
             var captured = t;
-            row.MouseLeftButtonUp += (_, _) => OpenStatsDetail(captured);
-            row.MouseEnter += (s, _) =>
-                ((Border)s).Background = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x2a));
-            row.MouseLeave += (s, _) =>
-                ((Border)s).Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e));
+            card.MouseLeftButtonUp += (_, _) => OpenStatsDetail(captured);
 
-            StatsListPanel.Children.Add(row);
+            StatsListPanel.Children.Add(card);
         }
     }
+
+    private static TextBlock CreateMiniStat(string text, string colorHex)
+    {
+        return new TextBlock
+        {
+            Text = text,
+            FontSize = 11,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom(colorHex)
+        };
+    }
+
+    private static Border CreateSeparator()
+    {
+        return new Border
+        {
+            Width = 3, Height = 3, CornerRadius = new CornerRadius(2),
+            Background = new SolidColorBrush(Color.FromRgb(0x44, 0x44, 0x44)),
+            Margin = new Thickness(6, 0, 6, 0),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+    }
+
+    private static Color GetRankColor(string rank) => rank switch
+    {
+        "S" => Color.FromRgb(0xFF, 0xD7, 0x00),
+        "A" => Color.FromRgb(0x7C, 0xFC, 0x00),
+        "B" => Color.FromRgb(0x00, 0xBF, 0xFF),
+        "C" => Color.FromRgb(0xCC, 0xCC, 0xCC),
+        "D" => Color.FromRgb(0xFF, 0xA5, 0x00),
+        _   => Color.FromRgb(0xFF, 0x44, 0x44)
+    };
 
     private void OpenStatsDetail(GameTrackStats t)
     {
@@ -9604,7 +9646,8 @@ public partial class MainWindow : Window
         GameStatsDetailView.Focus();
 
         StatsDetailTitle.Text = t.TrackTitle;
-        StatsDetailSub.Text = $"Первая игра {t.FirstPlayed:dd.MM.yyyy} · последняя {t.LastPlayed:dd.MM.yyyy}";
+        StatsDetailPlays.Text = $"{t.TimesPlayed} ЗАПУСКОВ";
+        StatsDetailDates.Text = $"Первая: {t.FirstPlayed:dd.MM.yyyy} · Последняя: {t.LastPlayed:dd.MM.yyyy}";
 
         StatsDetailPanel.Children.Clear();
 
@@ -9612,81 +9655,128 @@ public partial class MainWindow : Window
         double hitRate = (t.TotalHits + t.TotalMisses) > 0
             ? t.TotalHits * 100.0 / (t.TotalHits + t.TotalMisses) : 0;
 
-        void AddStat(string label, string value, string? sub = null)
+        // БЛОК 1: ГЛАВНЫЕ РЕКОРДЫ (Сетка 2x2)
+        AddSectionHeader("ЛИЧНЫЕ РЕКОРДЫ");
+
+        var recordsGrid = new Grid { Margin = new Thickness(0, 0, 0, 16) };
+        recordsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        recordsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        recordsGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        recordsGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+        AddRecordCard(recordsGrid, 0, 0, "ЛУЧШИЙ РАНГ", t.BestRank, GetRankColor(t.BestRank));
+        AddRecordCard(recordsGrid, 0, 1, "МАКС. ТОЧНОСТЬ", $"{t.BestAccuracy:F2}%", Color.FromRgb(0xa8, 0x55, 0xf7));
+        AddRecordCard(recordsGrid, 1, 0, "ЛУЧШЕЕ КОМБО", $"×{t.BestCombo}", Color.FromRgb(0x3b, 0x82, 0xf6));
+        AddRecordCard(recordsGrid, 1, 1, "РЕКОРД ОЧКОВ", t.BestScore.ToString("N0"), Color.FromRgb(0xff, 0xff, 0xff));
+
+        StatsDetailPanel.Children.Add(recordsGrid);
+
+        // БЛОК 2: ОБЩАЯ СТАТИСТИКА (Список)
+        AddSectionHeader("ЗА ВСЕ ВРЕМЯ");
+
+        AddDetailRow("Всего нажатий", t.TotalKeyPresses.ToString("N0"));
+        AddDetailRow("Попаданий", $"{t.TotalHits:N0}", $"{hitRate:F1}% эффективность");
+        AddDetailRow("Промахов", $"{t.TotalMisses:N0}", t.TotalMisses > 0 ? "#ef4444" : "#666");
+        AddDetailRow("Lifetime Accuracy", $"{lifeAcc:F2}%", "отношение попаданий к нотам");
+
+        // БЛОК 3: ДОПОЛНИТЕЛЬНО
+        AddSectionHeader("ПРОЧЕЕ");
+        AddDetailRow("Худшая точность", $"{t.WorstAccuracy:F1}%", "#666");
+        AddDetailRow("Мин. очки", t.MinScore == int.MaxValue ? "—" : t.MinScore.ToString("N0"), "#666");
+    }
+
+    private void AddSectionHeader(string text)
+    {
+        StatsDetailPanel.Children.Add(new TextBlock
         {
-            var row = new Border
-            {
-                CornerRadius = new CornerRadius(8),
-                Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
-                Margin = new Thickness(0, 0, 0, 6)
-            };
-            var innerB = new Border
-            {
-                BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
-                BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8),
-                Padding = new Thickness(14, 10, 14, 10)
-            };
-            var g = new Grid();
-            g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            Text = text,
+            FontSize = 12,
+            FontWeight = FontWeights.Bold,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x66)),
+            Margin = new Thickness(2, 8, 0, 8)
+        });
+    }
 
-            var lPanel = new StackPanel();
-            lPanel.Children.Add(new TextBlock
+    private void AddRecordCard(Grid parent, int row, int col, string label, string value, Color accent)
+    {
+        var card = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(14, 12, 14, 12),
+            Margin = new Thickness(col == 0 ? 0 : 4, row == 0 ? 0 : 4, col == 1 ? 0 : 4, row == 1 ? 0 : 4)
+        };
+
+        var stack = new StackPanel();
+        stack.Children.Add(new TextBlock
+        {
+            Text = label,
+            FontSize = 10,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            Margin = new Thickness(0, 0, 0, 4)
+        });
+        stack.Children.Add(new TextBlock
+        {
+            Text = value,
+            FontSize = 18,
+            FontWeight = FontWeights.Bold,
+            Foreground = new SolidColorBrush(accent)
+        });
+
+        card.Child = stack;
+        Grid.SetRow(card, row);
+        Grid.SetColumn(card, col);
+        parent.Children.Add(card);
+    }
+
+    private void AddDetailRow(string label, string value, string? subOrColor = null)
+    {
+        bool isColor = subOrColor?.StartsWith("#") == true;
+
+        var row = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x1a, 0x1a, 0x1a)),
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(14, 10, 14, 10),
+            Margin = new Thickness(0, 0, 0, 4)
+        };
+
+        var grid = new Grid();
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var leftStack = new StackPanel();
+        leftStack.Children.Add(new TextBlock { Text = label, FontSize = 12, Foreground = new SolidColorBrush(Color.FromRgb(0xaa, 0xaa, 0xaa)) });
+
+        if (!isColor && subOrColor != null)
+        {
+            leftStack.Children.Add(new TextBlock
             {
-                Text = label, FontSize = 12, FontFamily = new FontFamily("Segoe UI"),
-                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88))
+                Text = subOrColor,
+                FontSize = 10,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x55))
             });
-            if (sub is not null)
-                lPanel.Children.Add(new TextBlock
-                {
-                    Text = sub, FontSize = 10, FontFamily = new FontFamily("Segoe UI"),
-                    Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x55))
-                });
-            Grid.SetColumn(lPanel, 0);
-
-            var valTb = new TextBlock
-            {
-                Text = value, FontSize = 15, FontWeight = FontWeights.SemiBold,
-                FontFamily = new FontFamily("Segoe UI"), Foreground = Brushes.White,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            Grid.SetColumn(valTb, 1);
-
-            g.Children.Add(lPanel);
-            g.Children.Add(valTb);
-            innerB.Child = g;
-            row.Child = innerB;
-            StatsDetailPanel.Children.Add(row);
         }
 
-        void AddSection(string title)
+        var valTb = new TextBlock
         {
-            StatsDetailPanel.Children.Add(new TextBlock
-            {
-                Text = title, FontSize = 11, FontFamily = new FontFamily("Segoe UI"),
-                Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x55)),
-                FontWeight = FontWeights.SemiBold,
-                Margin = new Thickness(2, 10, 0, 4)
-            });
-        }
+            Text = value,
+            FontSize = 14,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = isColor
+                ? (SolidColorBrush)new BrushConverter().ConvertFrom(subOrColor!)
+                : Brushes.White
+        };
 
-        AddSection("ОБЩЕЕ");
-        AddStat("Количество игр", t.TimesPlayed.ToString());
-        AddStat("Всего нажатий", t.TotalKeyPresses.ToString("N0"));
+        Grid.SetColumn(leftStack, 0);
+        Grid.SetColumn(valTb, 1);
+        grid.Children.Add(leftStack);
+        grid.Children.Add(valTb);
+        row.Child = grid;
 
-        AddSection("РЕКОРДЫ");
-        AddStat("Лучший ранк", t.BestRank);
-        AddStat("Макс. очки", t.BestScore.ToString("N0"));
-        AddStat("Мин. очки", t.MinScore == int.MaxValue ? "—" : t.MinScore.ToString("N0"));
-        AddStat("Макс. точность", $"{t.BestAccuracy:F1}%");
-        AddStat("Мин. точность", $"{t.WorstAccuracy:F1}%");
-        AddStat("Макс. комбо", $"×{t.BestCombo}");
-
-        AddSection("ЗА ВСЕ ИГРЫ");
-        AddStat("Всего нот", t.TotalNotes.ToString("N0"));
-        AddStat("Попаданий", t.TotalHits.ToString("N0"), $"{hitRate:F1}% от нажатий");
-        AddStat("Промахов", t.TotalMisses.ToString("N0"));
-        AddStat("Lifetime accuracy", $"{lifeAcc:F1}%", "попадания / все ноты");
+        StatsDetailPanel.Children.Add(row);
     }
 
     private void SpawnDoubleStrikeEffect(Color comboColor)
