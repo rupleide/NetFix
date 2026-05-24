@@ -1761,59 +1761,58 @@
                                                    </StackPanel>
                                                 </Button>
 
-                                            <!-- ═══ ПОИСК И СОРТИРОВКА ═══ -->
-                                            <Border Background="#1a1a1a" CornerRadius="8" Padding="10" Margin="0,0,0,12"
-                                                    BorderBrush="#2a2a2a" BorderThickness="1">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                    </Grid.ColumnDefinitions>
-
-                                                    <Grid Grid.Column="0" Margin="0,0,8,0">
-                                                        <Path Data="M11,19 A8,8 0 1 1 11,3 A8,8 0 1 1 11,19 Z M21,21 L16.65,16.65"
-                                                              Stroke="#555" StrokeThickness="2" Width="14" Height="14"
-                                                              Stretch="Uniform" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                                                        <TextBox x:Name="TrackSearchBox"
-                                                                 Background="Transparent" Foreground="#ddd" FontFamily="Segoe UI" FontSize="12"
-                                                                 BorderThickness="0" Padding="32,8,8,8" VerticalContentAlignment="Center"
-                                                                 TextChanged="TrackSearchBox_TextChanged"/>
-                                                        <TextBlock x:Name="SearchPlaceholder" Text="Поиск треков..." IsHitTestVisible="False"
-                                                                   Foreground="#555" FontSize="12" Margin="34,0,0,0" VerticalAlignment="Center"/>
-                                                    </Grid>
-
-                                                    <Button x:Name="SortMenuBtn" Grid.Column="1" Style="{StaticResource FlatBtn}"
-                                                            Padding="8" MinWidth="36" MinHeight="36" Click="SortMenuBtn_Click"
-                                                            Tag="{StaticResource SortContextMenu}" ToolTip="Сортировка">
-                                                        <Path Data="M3,6 L21,6 M3,12 L17,12 M3,18 L13,18"
-                                                              Stroke="#888" StrokeThickness="2" Width="16" Height="16" Stretch="Uniform"/>
-                                                    </Button>
-                                                </Grid>
-                                            </Border>
-
-                                             <Border Background="#1a1a1a" CornerRadius="8" Padding="14,12" Margin="0,0,0,12"
+                                             <Border Background="#1a1a1a" CornerRadius="8" Padding="14,10" Margin="0,0,0,12"
                                                      BorderBrush="#2a2a3a" BorderThickness="1">
                                                  <StackPanel>
-                                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                                         <Path Data="{StaticResource ImportIcon}"
-                                                               Fill="#3b82f6" Width="14" Height="14"
-                                                               Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                                         <TextBlock Text="ИНСТРУКЦИЯ ПО ЗАГРУЗКЕ ТРЕКОВ" FontFamily="Segoe UI" FontSize="11"
-                                                                    Foreground="#3b82f6" FontWeight="Bold" VerticalAlignment="Center"/>
-                                                    </StackPanel>
-                                                    <TextBlock FontFamily="Segoe UI" FontSize="11" Foreground="#aaa"
-                                                               TextWrapping="Wrap" LineHeight="16" Margin="0,0,0,10">
-                                                        <Run Text="Для загрузки собственного трека вам потребуется "/>
-                                                        <Run Text="ZIP или RAR архив" FontWeight="SemiBold" Foreground="#ddd"/>
-                                                        <Run Text=". Такой архив создается автоматически при экспорте ваших кастомных уровней. Вы можете создавать уровни самостоятельно или использовать файлы, полученные от друзей."/>
-                                                    </TextBlock>
-                                                    <Border Background="#0f1419" CornerRadius="6" Padding="10,8"
-                                                            BorderBrush="#3b82f6" BorderThickness="1" Opacity="0.8">
-                                                        <Grid>
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                                <ColumnDefinition Width="*"/>
-                                                            </Grid.ColumnDefinitions>
+                                                     <!-- Заголовок + сортировка -->
+                                                     <Grid Margin="0,0,0,6">
+                                                         <Grid.ColumnDefinitions>
+                                                             <ColumnDefinition Width="*"/>
+                                                             <ColumnDefinition Width="Auto"/>
+                                                         </Grid.ColumnDefinitions>
+                                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                             <Path Data="{StaticResource ImportIcon}"
+                                                                   Fill="#3b82f6" Width="14" Height="14"
+                                                                   Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                             <TextBlock Text="ИНСТРУКЦИЯ ПО ЗАГРУЗКЕ ТРЕКОВ" FontFamily="Segoe UI" FontSize="11"
+                                                                        Foreground="#3b82f6" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                         </StackPanel>
+                                                         <Button x:Name="SortMenuBtn" Grid.Column="1" Style="{StaticResource FlatBtn}"
+                                                                 Padding="6" MinWidth="40" MinHeight="40" Click="SortMenuBtn_Click"
+                                                                 Tag="{StaticResource SortContextMenu}" ToolTip="Сортировка">
+                                                             <Border Background="Transparent" Width="20" Height="20">
+                                                                 <Path Data="M3,6 L21,6 M3,12 L17,12 M3,18 L13,18"
+                                                                       Stroke="#888" StrokeThickness="2" Stretch="Uniform"/>
+                                                             </Border>
+                                                         </Button>
+                                                     </Grid>
+
+                                                     <!-- Поиск -->
+                                                     <Grid Margin="0,0,0,8">
+                                                         <Path Data="M11,19 A8,8 0 1 1 11,3 A8,8 0 1 1 11,19 Z M21,21 L16.65,16.65"
+                                                               Stroke="#555" StrokeThickness="2" Width="14" Height="14"
+                                                               Stretch="Uniform" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                                         <TextBox x:Name="TrackSearchBox"
+                                                                  Background="Transparent" Foreground="#ddd" FontFamily="Segoe UI" FontSize="12"
+                                                                  BorderThickness="0" Padding="32,6,8,6" VerticalContentAlignment="Center"
+                                                                  TextChanged="TrackSearchBox_TextChanged"/>
+                                                         <TextBlock x:Name="SearchPlaceholder" Text="Поиск треков..." IsHitTestVisible="False"
+                                                                    Foreground="#555" FontSize="12" Margin="34,0,0,0" VerticalAlignment="Center"/>
+                                                     </Grid>
+
+                                                     <TextBlock FontFamily="Segoe UI" FontSize="11" Foreground="#aaa"
+                                                                TextWrapping="Wrap" LineHeight="16" Margin="0,0,0,10">
+                                                         <Run Text="Для загрузки собственного трека вам потребуется "/>
+                                                         <Run Text="ZIP или RAR архив" FontWeight="SemiBold" Foreground="#ddd"/>
+                                                         <Run Text=". Такой архив создается автоматически при экспорте ваших кастомных уровней. Вы можете создавать уровни самостоятельно или использовать файлы, полученные от друзей."/>
+                                                     </TextBlock>
+                                                     <Border Background="#0f1419" CornerRadius="6" Padding="10,8"
+                                                             BorderBrush="#3b82f6" BorderThickness="1" Opacity="0.8">
+                                                         <Grid>
+                                                             <Grid.ColumnDefinitions>
+                                                                 <ColumnDefinition Width="Auto"/>
+                                                                 <ColumnDefinition Width="*"/>
+                                                             </Grid.ColumnDefinitions>
                                                             <Path Grid.Column="0" Data="{StaticResource TelegramIcon}"
                                                                   Fill="#3b82f6" Width="14" Height="14"
                                                                   Stretch="Uniform" Margin="0,2,8,0" VerticalAlignment="Top"/>
@@ -2092,7 +2091,7 @@
                                             </Button>
 
                                             <!-- ═══ ПОИСК И СОРТИРОВКА OSU ═══ -->
-                                            <Border Background="#1a1a1a" CornerRadius="8" Padding="10" Margin="0,0,0,12"
+                                            <Border Background="#1a1a1a" CornerRadius="8" Padding="8,4" Margin="0,0,0,12"
                                                     BorderBrush="#2a2a2a" BorderThickness="1">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
@@ -2106,17 +2105,19 @@
                                                               Stretch="Uniform" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0"/>
                                                         <TextBox x:Name="OsuTrackSearchBox"
                                                                  Background="Transparent" Foreground="#ddd" FontFamily="Segoe UI" FontSize="12"
-                                                                 BorderThickness="0" Padding="32,8,8,8" VerticalContentAlignment="Center"
+                                                                 BorderThickness="0" Padding="32,4,8,4" VerticalContentAlignment="Center"
                                                                  TextChanged="TrackSearchBox_TextChanged"/>
                                                         <TextBlock x:Name="OsuSearchPlaceholder" Text="Поиск osu! треков..." IsHitTestVisible="False"
                                                                    Foreground="#555" FontSize="12" Margin="34,0,0,0" VerticalAlignment="Center"/>
                                                     </Grid>
 
                                                     <Button x:Name="OsuSortMenuBtn" Grid.Column="1" Style="{StaticResource FlatBtn}"
-                                                            Padding="8" MinWidth="36" MinHeight="36" Click="SortMenuBtn_Click"
+                                                            Padding="6" MinWidth="40" MinHeight="40" Click="SortMenuBtn_Click"
                                                             Tag="{StaticResource SortContextMenu}" ToolTip="Сортировка">
-                                                        <Path Data="M3,6 L21,6 M3,12 L17,12 M3,18 L13,18"
-                                                              Stroke="#888" StrokeThickness="2" Width="16" Height="16" Stretch="Uniform"/>
+                                                        <Border Background="Transparent" Width="20" Height="20">
+                                                            <Path Data="M3,6 L21,6 M3,12 L17,12 M3,18 L13,18"
+                                                                  Stroke="#888" StrokeThickness="2" Stretch="Uniform"/>
+                                                        </Border>
                                                     </Button>
                                                 </Grid>
                                             </Border>
