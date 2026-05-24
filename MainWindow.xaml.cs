@@ -172,6 +172,9 @@ public partial class MainWindow : Window
     // Игровой оверлей поверх главного экрана
     private Border? _gameOverlayPanel = null;
     private bool _gameOverlayActive = false;
+
+    private readonly Dictionary<int, NoteEntry> _holdLanes = new();
+    private UIElement? _oszReturnView = null;
     
     // Таймер обратного отсчёта перед игрой
     private DispatcherTimer? _countdownTimer = null;
@@ -2024,6 +2027,13 @@ public partial class MainWindow : Window
         if (GameTrackSelectView.Visibility == Visibility.Visible)
         {
             ShowGameView(GameMenuView);
+            return;
+        }
+        
+        // Из Osu режима -> в меню игры
+        if (OsuModeView.Visibility == Visibility.Visible)
+        {
+            ShowGameView(GameTrackSelectView);
             return;
         }
         
@@ -5099,7 +5109,7 @@ public partial class MainWindow : Window
         StopGame();
 
         // Сохраняем параметры для перезапуска
-        _lastGameNotes = notes.Select(n => new NoteEntry { Time = n.Time, Lane = n.Lane }).ToList();
+        _lastGameNotes = notes.Select(n => new NoteEntry { Time = n.Time, Lane = n.Lane, IsHold = n.IsHold, HoldEnd = n.HoldEnd }).ToList();
         _lastGameMp3Path = mp3Path;
         _lastGameTitle = title;
         _lastGameBpm = bpm;
@@ -5115,7 +5125,7 @@ public partial class MainWindow : Window
 
         _currentFallSec = GetFallSecondsForBpm(bpm);
         _pendingNotes = notes
-            .Select(n => new NoteEntry { Time = n.Time, Lane = n.Lane })
+            .Select(n => new NoteEntry { Time = n.Time, Lane = n.Lane, IsHold = n.IsHold, HoldEnd = n.HoldEnd })
             .OrderBy(n => n.Time)
             .ToList();
         _activeNotes = new();
@@ -5310,6 +5320,32 @@ public partial class MainWindow : Window
             var note = _pendingNotes[0];
             _pendingNotes.RemoveAt(0);
 
+            // Сначала спавним тело hold (чтобы оно было под головой)
+            if (note.IsHold && note.HoldEnd > note.Time)
+            {
+                var holdBody = new Border
+                {
+                    Width = NOTE_SIZE - 8,
+                    Height = 1,
+                    Background = new SolidColorBrush(
+                        Color.FromArgb(150, LaneColors[note.Lane].R,
+                                       LaneColors[note.Lane].G,
+                                       LaneColors[note.Lane].B)),
+                    CornerRadius = new CornerRadius(4),
+                    IsHitTestVisible = false,
+                    Tag = note,
+                    BorderBrush = new SolidColorBrush(
+                        Color.FromArgb(200, LaneColors[note.Lane].R,
+                                       LaneColors[note.Lane].G,
+                                       LaneColors[note.Lane].B)),
+                    BorderThickness = new Thickness(1)
+                };
+                Canvas.SetLeft(holdBody, GetLaneLeft(note.Lane) + 4);
+                Canvas.SetTop(holdBody, -50);
+                GameCanvas.Children.Add(holdBody);
+                note.HoldBody = holdBody;
+            }
+
             var effect = new System.Windows.Media.Effects.DropShadowEffect
             {
                 Color = LaneColors[note.Lane],
@@ -5341,7 +5377,7 @@ public partial class MainWindow : Window
             GameCanvas.Children.Add(arrow);
             _activeNotes.Add(note);
             note.Visual = arrow;
-            note.Effect = effect; // сохраняем ссылку на эффект в NoteEntry
+            note.Effect = effect;
         }
 
         // Обновляем позиции — никаких new объектов
@@ -5353,6 +5389,30 @@ public partial class MainWindow : Window
             double top = -50 + progress * (hitY + 50);
             Canvas.SetTop(note.Visual, top);
 
+            // Hold body до нажатия: тянется от низа головы до линии хита
+            if (note.IsHold && note.HoldBody != null && !note.HoldActive)
+            {
+                double bodyTop = top + NOTE_SIZE;
+                double bodyBottom = hitY;
+                double bodyHeight = Math.Max(0, bodyBottom - bodyTop);
+
+                double holdDuration = note.HoldEnd - note.Time;
+                double maxHeight = holdDuration / _currentFallSec * (hitY + 50);
+                bodyHeight = Math.Min(bodyHeight, maxHeight);
+
+                note.HoldBody.Height = bodyHeight;
+                Canvas.SetTop(note.HoldBody, bodyTop);
+            }
+
+            // Hold body после нажатия: идёт от линии хита вниз и сжимается
+            if (note.IsHold && note.HoldBody != null && note.HoldActive)
+            {
+                double remaining = note.HoldEnd - now;
+                double remainHeight = Math.Max(0, remaining / _currentFallSec * (hitY + 50));
+                note.HoldBody.Height = Math.Min(remainHeight, hitY * 0.3);
+                Canvas.SetTop(note.HoldBody, hitY);
+            }
+
             // Свечение при приближении — обновляем существующий effect
             double distToHit = Math.Abs(top - hitY);
             if (distToHit < 90 && note.Effect != null)
@@ -5362,8 +5422,32 @@ public partial class MainWindow : Window
                 note.Effect.Opacity = 0.6 + proximity * 0.35;
             }
 
+            // Автозавершение hold-ноты по истечении времени
+            if (note.IsHold && note.HoldActive && now >= note.HoldEnd)
+            {
+                note.HoldActive = false;
+                note.HoldCompleted = true;
+                note.Hit = true;
+                if (note.HoldBody != null)
+                    GameCanvas.Children.Remove(note.HoldBody);
+                _holdLanes.Remove(note.Lane);
+                toRemove.Add(note);
+
+                _gameCombo++;
+                if (_gameCombo > _maxCombo) _maxCombo = _gameCombo;
+                _hitNotes++;
+                _consecutiveMisses = 0;
+                _gameScore += 300 * _gameCombo;
+                ShowJudge("PERFECT", LaneColors[note.Lane]);
+                _effectQueue.Enqueue(() => UpdateComboAura());
+                UpdateHUD();
+                continue;
+            }
+
             if (top > canvasH + 10)
             {
+                if (note.HoldBody != null)
+                    GameCanvas.Children.Remove(note.HoldBody);
                 GameCanvas.Children.Remove(note.Visual);
                 toRemove.Add(note);
                 _gameCombo = 0;
@@ -5431,11 +5515,41 @@ public partial class MainWindow : Window
 
         if (bestDist <= HIT_PERFECT)
         {
-            HitNote(best, lane, 300, "PERFECT", LaneColors[lane]);
+            if (best.IsHold)
+            {
+                best.HoldActive = true;
+                best.Hit = false;
+                _holdLanes[lane] = best;
+                _gameCombo++;
+                if (_gameCombo > _maxCombo) _maxCombo = _gameCombo;
+                _hitNotes++;
+                _consecutiveMisses = 0;
+                _effectQueue.Enqueue(() => UpdateComboAura());
+                ShowJudge("PERFECT", LaneColors[lane]);
+            }
+            else
+            {
+                HitNote(best, lane, 300, "PERFECT", LaneColors[lane]);
+            }
         }
         else if (bestDist <= HIT_GOOD)
         {
-            HitNote(best, lane, 100, "GOOD", Color.FromRgb(0xa1, 0xa1, 0xaa));
+            if (best.IsHold)
+            {
+                best.HoldActive = true;
+                best.Hit = false;
+                _holdLanes[lane] = best;
+                _gameCombo++;
+                if (_gameCombo > _maxCombo) _maxCombo = _gameCombo;
+                _hitNotes++;
+                _consecutiveMisses = 0;
+                _effectQueue.Enqueue(() => UpdateComboAura());
+                ShowJudge("GOOD", Color.FromRgb(0xa1, 0xa1, 0xaa));
+            }
+            else
+            {
+                HitNote(best, lane, 100, "GOOD", Color.FromRgb(0xa1, 0xa1, 0xaa));
+            }
         }
         else
         {
@@ -5452,6 +5566,36 @@ public partial class MainWindow : Window
         if (lane < 0) return;
         _activeLanes.Remove(lane);
         e.Handled = true;
+
+        if (_holdLanes.TryGetValue(lane, out var holdNote) && holdNote.HoldActive)
+        {
+            double now = _gameClock.Elapsed.TotalSeconds;
+            double remaining = holdNote.HoldEnd - now;
+
+            if (remaining > 0.15)
+            {
+                holdNote.HoldActive = false;
+                holdNote.Hit = true;
+                if (holdNote.HoldBody != null)
+                    GameCanvas.Children.Remove(holdNote.HoldBody);
+                _activeNotes.Remove(holdNote);
+                _gameCombo = 0;
+                ShowJudge("MISS", Colors.Gray);
+                _missCount++;
+                UpdateHUD();
+            }
+            else
+            {
+                holdNote.HoldActive = false;
+                holdNote.HoldCompleted = true;
+                holdNote.Hit = true;
+                if (holdNote.HoldBody != null)
+                    GameCanvas.Children.Remove(holdNote.HoldBody);
+                _activeNotes.Remove(holdNote);
+                HitNote(holdNote, lane, 300, "PERFECT", LaneColors[lane]);
+            }
+            _holdLanes.Remove(lane);
+        }
     }
 
     private void HitNote(NoteEntry note, int lane, int baseScore, string judge, Color color)
@@ -6153,6 +6297,7 @@ public partial class MainWindow : Window
         PreviewKeyDown -= Game_KeyDown;
         PreviewKeyUp -= Game_KeyUp;
         _activeLanes.Clear();
+        _holdLanes.Clear();
         _editorPlayer.Stop();
         _gameClock.Stop();
         _auroraGameTimer?.Stop();
@@ -6584,7 +6729,7 @@ public partial class MainWindow : Window
         var ext = Path.GetExtension(dlg.FileName).ToLowerInvariant();
         if (ext == ".osz")
         {
-            StartOszImport(dlg.FileName);
+            ShowNotification("Osu! файлы", "Для импорта .osz файлов используй раздел «Osu! режим»", isError: false, isWarning: true);
             return;
         }
 
@@ -6667,6 +6812,10 @@ public partial class MainWindow : Window
             }
 
             _pendingOszPath = oszPath;
+            _oszReturnView = OsuModeView.Visibility == Visibility.Visible
+                ? OsuModeView
+                : (UIElement)GameTrackSelectView;
+            ShowGameView(OszDifficultyView);
             ShowOszDifficultyPicker(difficulties, isOsuMode);
         }
         catch (Exception ex)
@@ -6734,7 +6883,7 @@ public partial class MainWindow : Window
             btn.MouseLeftButtonUp += (_, _) =>
             {
                 OszDifficultyView.Visibility = Visibility.Collapsed;
-                GameMenuView.Visibility = Visibility.Visible;
+                (_oszReturnView ?? GameTrackSelectView).Visibility = Visibility.Visible;
                 if (_pendingOszPath is not null)
                     ExecuteOszImport(_pendingOszPath, captured.FileName, captured.KeyCount, isOsuMode);
             };
@@ -6785,9 +6934,10 @@ public partial class MainWindow : Window
                                  line.Length > 0 && !line.StartsWith("//"))
                         {
                             var parts = line.Split(',');
-                            if (parts.Length < 3) continue;
+                            if (parts.Length < 4) continue;
                             if (!int.TryParse(parts[0], out int x)) continue;
                             if (!int.TryParse(parts[2], out int timeMs)) continue;
+                            if (!int.TryParse(parts[3], out int noteType)) continue;
 
                             int sourceLane = (int)Math.Floor((double)x * keyCount / 512.0);
                             sourceLane = Math.Clamp(sourceLane, 0, keyCount - 1);
@@ -6797,7 +6947,23 @@ public partial class MainWindow : Window
                                 : 0;
                             targetLane = Math.Clamp(targetLane, 0, 3);
 
-                            notes.Add(new NoteEntry { Time = timeMs / 1000.0, Lane = targetLane });
+                            bool isHold = (noteType & 128) != 0;
+                            double holdEnd = 0;
+
+                            if (isHold && parts.Length >= 6)
+                            {
+                                var extras = parts[5].Split(':');
+                                if (int.TryParse(extras[0], out int endTimeMs))
+                                    holdEnd = endTimeMs / 1000.0;
+                            }
+
+                            notes.Add(new NoteEntry
+                            {
+                                Time = timeMs / 1000.0,
+                                Lane = targetLane,
+                                IsHold = isHold,
+                                HoldEnd = holdEnd
+                            });
                         }
                     }
                 }
@@ -6923,7 +7089,9 @@ public partial class MainWindow : Window
                     Directory.Move(tempDir, targetDir);
                     if (isOsuMode) LoadOsuLevelsList(); else LoadUserLevels();
                     ShowNotification("Успешно", $"Трек «{map.Title}» импортирован", isError: false);
-                });
+                },
+                confirmText: "Заменить",
+                confirmIsDestructive: false);
         }
         else
         {
@@ -6938,6 +7106,7 @@ public partial class MainWindow : Window
     private void OsuModeBtn_Click(object s, RoutedEventArgs e)
     {
         ShowGameView(OsuModeView);
+        CheckFfmpegStatus();
         LoadOsuLevelsList();
     }
 
@@ -7063,77 +7232,64 @@ public partial class MainWindow : Window
         ShowNotification("Экспорт", $"Трек «{map.Title}» экспортирован как ZIP", isError: false);
     }
 
-    private void DownloadFfmpegBtn_Click(object sender, RoutedEventArgs e)
+    private async void DownloadFfmpegBtn_Click(object sender, RoutedEventArgs e)
     {
         DownloadFfmpegBtn.IsEnabled = false;
         FfmpegBtnText.Text = "Скачиваем...";
 
-        _ = Task.Run(async () =>
+        try
         {
-            try
+            var ffmpegDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "NetFix", "ffmpeg");
+            Directory.CreateDirectory(ffmpegDir);
+
+            var zipPath = Path.Combine(ffmpegDir, "ffmpeg.zip");
+            var ffmpegExe = Path.Combine(ffmpegDir, "ffmpeg.exe");
+
+            const string url = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip";
+
+            using var http = new System.Net.Http.HttpClient();
+            http.Timeout = TimeSpan.FromMinutes(5);
+            FfmpegBtnText.Text = "Скачиваем... (это может занять минуту)";
+
+            var bytes = await http.GetByteArrayAsync(url);
+            await File.WriteAllBytesAsync(zipPath, bytes);
+
+            FfmpegBtnText.Text = "Распаковываем...";
+            await Task.Run(() =>
             {
-                var ffmpegDir = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "NetFix", "ffmpeg");
-                Directory.CreateDirectory(ffmpegDir);
+                var extractDir = Path.Combine(ffmpegDir, "extracted");
+                if (Directory.Exists(extractDir)) Directory.Delete(extractDir, true);
+                ZipFile.ExtractToDirectory(zipPath, extractDir);
 
-                var zipPath = Path.Combine(ffmpegDir, "ffmpeg.zip");
-                var ffmpegExe = Path.Combine(ffmpegDir, "ffmpeg.exe");
+                var found = Directory.GetFiles(extractDir, "ffmpeg.exe", SearchOption.AllDirectories)
+                    .FirstOrDefault();
+                if (found != null)
+                    File.Copy(found, ffmpegExe, overwrite: true);
 
-                const string url = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip";
+                Directory.Delete(extractDir, true);
+                File.Delete(zipPath);
+            });
 
-                using var http = new System.Net.Http.HttpClient();
-                http.Timeout = TimeSpan.FromMinutes(5);
-
-                await Dispatcher.InvokeAsync(() => FfmpegBtnText.Text = "Скачиваем... (1-2 минуты)");
-                var bytes = await http.GetByteArrayAsync(url);
-                await File.WriteAllBytesAsync(zipPath, bytes);
-
-                await Dispatcher.InvokeAsync(() => FfmpegBtnText.Text = "Распаковываем...");
-                await Task.Run(() =>
-                {
-                    var extractDir = Path.Combine(ffmpegDir, "extracted");
-                    if (Directory.Exists(extractDir)) Directory.Delete(extractDir, true);
-                    ZipFile.ExtractToDirectory(zipPath, extractDir);
-
-                    var found = Directory.GetFiles(extractDir, "ffmpeg.exe", SearchOption.AllDirectories)
-                        .FirstOrDefault();
-                    if (found != null)
-                        File.Copy(found, ffmpegExe, overwrite: true);
-
-                    try { Directory.Delete(extractDir, true); } catch { }
-                    try { File.Delete(zipPath); } catch { }
-                });
-
-                if (File.Exists(ffmpegExe))
-                {
-                    _settings.FfmpegPath = ffmpegExe;
-                    SettingsService.Save(_settings);
-                    await Dispatcher.InvokeAsync(() =>
-                    {
-                        CheckFfmpegStatus();
-                        ShowNotification("FFmpeg", "FFmpeg успешно установлен!", isError: false);
-                    });
-                }
-                else
-                {
-                    await Dispatcher.InvokeAsync(() =>
-                        ShowNotification("Ошибка", "Не удалось найти ffmpeg.exe в архиве", isError: true));
-                }
-            }
-            catch (Exception ex)
+            if (File.Exists(ffmpegExe))
             {
-                await Dispatcher.InvokeAsync(() =>
-                    ShowNotification("Ошибка", $"Не удалось скачать FFmpeg: {ex.Message}", isError: true));
+                _settings.FfmpegPath = ffmpegExe;
+                SettingsService.Save(_settings);
+                CheckFfmpegStatus();
+                ShowNotification("ffmpeg", "ffmpeg успешно установлен!", isError: false);
             }
-            finally
+            else
             {
-                await Dispatcher.InvokeAsync(() => {
-                    DownloadFfmpegBtn.IsEnabled = true;
-                    FfmpegBtnText.Text = "Скачать FFmpeg";
-                });
+                throw new Exception("ffmpeg.exe не найден в архиве");
             }
-        });
+        }
+        catch (Exception ex)
+        {
+            FfmpegBtnText.Text = "Скачать ffmpeg";
+            DownloadFfmpegBtn.IsEnabled = true;
+            ShowNotification("Ошибка", $"Не удалось скачать ffmpeg: {ex.Message}", isError: true);
+        }
     }
 
     private void CheckFfmpegStatus()
@@ -7141,14 +7297,22 @@ public partial class MainWindow : Window
         bool ok = !string.IsNullOrEmpty(_settings.FfmpegPath) && File.Exists(_settings.FfmpegPath);
         FfmpegOkBadge.Visibility = ok ? Visibility.Visible : Visibility.Collapsed;
         DownloadFfmpegBtn.Visibility = ok ? Visibility.Collapsed : Visibility.Visible;
-        FfmpegStatusText.Text = ok ? "Установлен" : "Не найден";
-        FfmpegStatusText.Foreground = ok
-            ? new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e))
-            : new SolidColorBrush(Color.FromRgb(0xf5, 0x9e, 0x0b));
     }
 
-    private void ShowNotification(string title, string message, bool isError)
+    private void ShowNotification(string title, string message, bool isError, bool isWarning = false)
     {
+        Color accentColor = isError
+            ? Color.FromRgb(0xef, 0x44, 0x44)
+            : isWarning
+                ? Color.FromRgb(0xf5, 0x9e, 0x0b)
+                : Color.FromRgb(0x22, 0xc5, 0x5e);
+
+        string iconPath = isError
+            ? "M6,6 L18,18 M18,6 L6,18"
+            : isWarning
+                ? "M12,2 L22,20 L2,20 Z M12,9 L12,14 M12,16 L12,18"
+                : "M4,12 L9,17 L20,6";
+
         // Создаём оверлей для затемнения фона
         var overlay = new Border
         {
@@ -7163,9 +7327,7 @@ public partial class MainWindow : Window
         var notificationCard = new Border
         {
             Background = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x18)),
-            BorderBrush = new SolidColorBrush(isError 
-                ? Color.FromRgb(0xef, 0x44, 0x44) 
-                : Color.FromRgb(0x22, 0xc5, 0x5e)),
+            BorderBrush = new SolidColorBrush(accentColor),
             BorderThickness = new Thickness(0, 3, 0, 0),
             CornerRadius = new CornerRadius(14),
             MaxWidth = 480,
@@ -7193,21 +7355,15 @@ public partial class MainWindow : Window
             Width = 56,
             Height = 56,
             CornerRadius = new CornerRadius(28),
-            Background = new SolidColorBrush(isError 
-                ? Color.FromRgb(0xef, 0x44, 0x44) 
-                : Color.FromRgb(0x22, 0xc5, 0x5e)) { Opacity = 0.15 },
+            Background = new SolidColorBrush(accentColor) { Opacity = 0.15 },
             HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
             Margin = new Thickness(0, 0, 0, 20)
         };
 
         var icon = new System.Windows.Shapes.Path
         {
-            Data = Geometry.Parse(isError 
-                ? "M6,6 L18,18 M18,6 L6,18" // Крестик для ошибки
-                : "M4,12 L9,17 L20,6"), // Галочка для успеха
-            Stroke = new SolidColorBrush(isError 
-                ? Color.FromRgb(0xef, 0x44, 0x44) 
-                : Color.FromRgb(0x22, 0xc5, 0x5e)),
+            Data = Geometry.Parse(iconPath),
+            Stroke = new SolidColorBrush(accentColor),
             StrokeThickness = 2.5,
             Width = 28,
             Height = 28,
@@ -7250,9 +7406,7 @@ public partial class MainWindow : Window
             Width = 140,
             Height = 40,
             Foreground = Brushes.White,
-            Background = new SolidColorBrush(isError 
-                ? Color.FromRgb(0xef, 0x44, 0x44) 
-                : Color.FromRgb(0x22, 0xc5, 0x5e)),
+            Background = new SolidColorBrush(accentColor),
             BorderThickness = new Thickness(0),
             FontFamily = new FontFamily("Segoe UI"),
             FontSize = 14,
@@ -7309,8 +7463,16 @@ public partial class MainWindow : Window
             });
     }
     
-    private void ShowConfirmDialog(string title, string message, Action<bool> callback)
+    private void ShowConfirmDialog(string title, string message, Action<bool> callback,
+        string confirmText = "Удалить", bool confirmIsDestructive = true)
     {
+        var confirmColor = confirmIsDestructive
+            ? Color.FromRgb(0xef, 0x44, 0x44)
+            : Color.FromRgb(0x22, 0xc5, 0x5e);
+        var confirmHoverColor = confirmIsDestructive
+            ? Color.FromRgb(0xdc, 0x26, 0x26)
+            : Color.FromRgb(0x16, 0xa3, 0x4a);
+
         // Создаём оверлей
         var overlay = new Border
         {
@@ -7380,9 +7542,9 @@ public partial class MainWindow : Window
         
         var confirmBtn = new Button
         {
-            Content = "Удалить",
+            Content = confirmText,
             Padding = new Thickness(16, 8, 16, 8),
-            Background = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44)),
+            Background = new SolidColorBrush(confirmColor),
             Foreground = Brushes.White,
             BorderThickness = new Thickness(0),
             FontFamily = new FontFamily("Segoe UI"),
@@ -7405,7 +7567,7 @@ public partial class MainWindow : Window
         
         var hoverTrigger = new Trigger { Property = Button.IsMouseOverProperty, Value = true };
         hoverTrigger.Setters.Add(new Setter(Button.BackgroundProperty, 
-            new SolidColorBrush(Color.FromRgb(0xdc, 0x26, 0x26))));
+            new SolidColorBrush(confirmHoverColor)));
         btnTemplate.Triggers.Add(hoverTrigger);
         
         confirmBtn.Template = btnTemplate;
