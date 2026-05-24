@@ -5500,7 +5500,6 @@ public partial class MainWindow : Window
 
     private void GameTick(object? s, EventArgs e)
     {
-        _hitLanesThisFrame.Clear();
         double now = _gameClock.Elapsed.TotalSeconds;
         double canvasH = GameCanvas.ActualHeight > 0 ? GameCanvas.ActualHeight : 500;
         double hitY = canvasH - 70;
@@ -5666,11 +5665,12 @@ public partial class MainWindow : Window
         _hitLanesThisFrame.Add(lane);
 
         // Супер-эффект: крайние дорожки (← →) или любые три одновременно
-        if (!_settings.DisableComboEffect &&
-            (_hitLanesThisFrame.Contains(0) && _hitLanesThisFrame.Contains(3) ||
-             _hitLanesThisFrame.Count >= 3))
+        if (_hitLanesThisFrame.Count >= 3 ||
+            _hitLanesThisFrame.Contains(0) && _hitLanesThisFrame.Contains(3))
         {
-            _effectQueue.Enqueue(() => SpawnDoubleStrikeEffect(_currentComboColor));
+            if (!_settings.DisableComboEffect)
+                _effectQueue.Enqueue(() => SpawnDoubleStrikeEffect(_currentComboColor));
+            _hitLanesThisFrame.Clear();
         }
 
         // Считаем серию PERFECT
