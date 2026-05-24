@@ -334,6 +334,12 @@ public partial class MainWindow : Window
         UpdateMainGridClip();
         LoadSettingsToPanel();
 
+        // Приветственный диалог о комбо-эффекте, если он включён
+        if (!_settings.DisableComboEffect && SettingsService.IsOnboarded)
+        {
+            Dispatcher.BeginInvoke(() => ShowComboEffectInfo());
+        }
+
         if (!SettingsService.IsOnboarded)
             ShowOnboarding();
         else
@@ -7680,6 +7686,76 @@ public partial class MainWindow : Window
         dialog.Child = stack;
         overlay.Child = dialog;
         
+        ContentGrid.Children.Add(overlay);
+        Grid.SetRowSpan(overlay, 10);
+    }
+
+    private void ShowComboEffectInfo()
+    {
+        var overlay = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = System.Windows.VerticalAlignment.Stretch
+        };
+
+        var dialog = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(12),
+            Padding = new Thickness(24),
+            MaxWidth = 420,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = System.Windows.VerticalAlignment.Center
+        };
+
+        var stack = new StackPanel();
+
+        var title = new TextBlock
+        {
+            Text = "Комбо-эффект активен!",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 16,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = Brushes.White,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 12)
+        };
+        stack.Children.Add(title);
+
+        var msg = new TextBlock
+        {
+            Text = "При одновременном нажатии крайних дорожек (← →) " +
+                   "срабатывает яркая визуальная вспышка — комбо-эффект.\n\n" +
+                   "Он добавляет игре зрелищности и эмоций, но на сложных " +
+                   "уровнях с высокой плотностью нот может отвлекать.\n\n" +
+                   "При желании его можно отключить в настройках управления.",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 13,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xaa, 0xaa, 0xaa)),
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 20),
+            LineHeight = 20
+        };
+        stack.Children.Add(msg);
+
+        var okBtn = new Button
+        {
+            Content = "Понятно",
+            Style = (Style)FindResource("OutlineBtn"),
+            Padding = new Thickness(20, 8, 20, 8),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Right
+        };
+        okBtn.Click += (_, _) =>
+        {
+            ContentGrid.Children.Remove(overlay);
+        };
+        stack.Children.Add(okBtn);
+
+        dialog.Child = stack;
+        overlay.Child = dialog;
         ContentGrid.Children.Add(overlay);
         Grid.SetRowSpan(overlay, 10);
     }
