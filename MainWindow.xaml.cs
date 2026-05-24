@@ -3945,7 +3945,6 @@ public partial class MainWindow : Window
         _settings.AutostartTgWsProxy = AutoTgWsCB.IsChecked == true;
         _settings.AutostartApp     = AutoAppCB.IsChecked == true;
         _settings.AutoUpdates      = AutoUpdatesCB.IsChecked == true;
-        _settings.DisableComboEffect = ComboEffectCB.IsChecked == true;
         SettingsService.Save(_settings);
         
         // Автозапуск через Task Scheduler
@@ -3965,6 +3964,18 @@ public partial class MainWindow : Window
     {
         _settings.DiscordRpcEnabled = false;
         _discord.Disable();
+        SettingsService.Save(_settings);
+    }
+
+    private void ComboEffectCB_Checked(object sender, RoutedEventArgs e)
+    {
+        _settings.DisableComboEffect = true;
+        SettingsService.Save(_settings);
+    }
+
+    private void ComboEffectCB_Unchecked(object sender, RoutedEventArgs e)
+    {
+        _settings.DisableComboEffect = false;
         SettingsService.Save(_settings);
     }
 

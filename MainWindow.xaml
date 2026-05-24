@@ -1694,7 +1694,7 @@
 
                     <!-- Лейн 3 — синий -->
                     <Border CornerRadius="10" Background="#1e1e1e" BorderBrush="#333" BorderThickness="1"
-                            Padding="20,14" Margin="0,0,0,24">
+                            Padding="20,14" Margin="0,0,0,8">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -1711,6 +1711,15 @@
                                            HorizontalAlignment="Center"/>
                             </Border>
                         </Grid>
+                    </Border>
+
+                    <!-- Комбо-эффект -->
+                    <Border CornerRadius="10" Background="#1e1e1e" BorderBrush="#333" BorderThickness="1"
+                            Padding="20,14" Margin="0,0,0,24">
+                        <CheckBox x:Name="ComboEffectCB" Style="{StaticResource Toggle}"
+                                  Content="Отключить комбо-эффект при ← →"
+                                  Checked="ComboEffectCB_Checked"
+                                  Unchecked="ComboEffectCB_Unchecked"/>
                     </Border>
 
                     <Button Style="{StaticResource OutlineBtn}" HorizontalAlignment="Stretch"
@@ -2796,9 +2805,7 @@
                                           Checked="DiscordRpcCB_Checked"
                                           Unchecked="DiscordRpcCB_Unchecked"/>
                                 <CheckBox x:Name="AutoUpdatesCB" Style="{StaticResource Toggle}"
-                                          Content="Автоматические обновления" Margin="0,0,0,6"/>
-                                <CheckBox x:Name="ComboEffectCB" Style="{StaticResource Toggle}"
-                                          Content="Отключить комбо-эффект при ← →" Margin="0,0,0,20"/>
+                                          Content="Автоматические обновления" Margin="0,0,0,20"/>
 
                                 <Button Content="Проверить обновления" Style="{StaticResource OutlineBtn}"
                                         HorizontalAlignment="Stretch" Padding="12,8" Margin="0,0,0,20"
