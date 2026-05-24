@@ -5651,6 +5651,8 @@ public partial class MainWindow : Window
         int lane = GetGameLane(e.Key);
         if (lane < 0) return;
         _activeLanes.Remove(lane);
+        if (_activeLanes.Count == 0)
+            _hitLanesThisFrame.Clear();
         e.Handled = true;
     }
 
@@ -5664,13 +5666,17 @@ public partial class MainWindow : Window
         _gameScore += baseScore * _gameCombo;
         _hitLanesThisFrame.Add(lane);
 
-        // Супер-эффект: крайние дорожки (← →) или любые три одновременно
-        if (_hitLanesThisFrame.Count >= 3 ||
-            _hitLanesThisFrame.Contains(0) && _hitLanesThisFrame.Contains(3))
+        // Супер-эффект: одновременно нажаты ← → с попаданием или 3+ любых с попаданием
+        if (!_settings.DisableComboEffect)
         {
-            if (!_settings.DisableComboEffect)
+            bool extremeHit = _activeLanes.Contains(0) && _activeLanes.Contains(3) &&
+                              _hitLanesThisFrame.Contains(0) && _hitLanesThisFrame.Contains(3);
+            bool tripleHit = _activeLanes.Count >= 3 && _hitLanesThisFrame.Count >= 3;
+            if (extremeHit || tripleHit)
+            {
                 _effectQueue.Enqueue(() => SpawnDoubleStrikeEffect(_currentComboColor));
-            _hitLanesThisFrame.Clear();
+                _hitLanesThisFrame.Clear();
+            }
         }
 
         // Считаем серию PERFECT
@@ -6357,6 +6363,7 @@ public partial class MainWindow : Window
         PreviewKeyDown -= Game_KeyDown;
         PreviewKeyUp -= Game_KeyUp;
         _activeLanes.Clear();
+        _hitLanesThisFrame.Clear();
         _editorPlayer.Stop();
         _gameClock.Stop();
         _auroraGameTimer?.Stop();
@@ -6667,6 +6674,7 @@ public partial class MainWindow : Window
         PreviewKeyDown -= Game_KeyDown;
         PreviewKeyUp -= Game_KeyUp;
         _activeLanes.Clear();
+        _hitLanesThisFrame.Clear();
         _editorPlayer.Stop();
         _editorPlayer.SpeedRatio = 1.0;
         _gameClock.Stop();
