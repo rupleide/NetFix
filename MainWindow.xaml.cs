@@ -3969,8 +3969,26 @@ public partial class MainWindow : Window
 
     private void ComboEffectCB_Checked(object sender, RoutedEventArgs e)
     {
-        _settings.DisableComboEffect = true;
-        SettingsService.Save(_settings);
+        ShowConfirmDialog(
+            "Отключить комбо-эффект?",
+            "Этот эффект создаёт яркую вспышку при одновременном нажатии крайних дорожек — " +
+            "он усиливает эмоциональную отдачу от прохождения и делает игру более зрелищной.\n\n" +
+            "Однако на очень сложных уровнях с высокой плотностью нот визуальный шум может " +
+            "сбивать концентрацию. В таком случае отключение оправдано.",
+            ok =>
+            {
+                if (ok)
+                {
+                    _settings.DisableComboEffect = true;
+                    SettingsService.Save(_settings);
+                }
+                else
+                {
+                    ComboEffectCB.IsChecked = false;
+                }
+            },
+            confirmText: "Отключить",
+            confirmIsDestructive: false);
     }
 
     private void ComboEffectCB_Unchecked(object sender, RoutedEventArgs e)
