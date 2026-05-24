@@ -160,7 +160,12 @@ public partial class MainWindow : Window
         System.IO.Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "NetFix", "levels");
-    
+
+    private static readonly string OsuLevelsDir =
+        System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "NetFix", "osu_levels");
+
     private static readonly string BuiltInTracksDir =
         System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Tracks");
     
@@ -4359,6 +4364,7 @@ public partial class MainWindow : Window
         GameEditorView.Visibility = Visibility.Collapsed;
         GameStatsView.Visibility = Visibility.Collapsed;
         GameStatsDetailView.Visibility = Visibility.Collapsed;
+        OsuModeView.Visibility = Visibility.Collapsed;
         OszDifficultyView.Visibility = Visibility.Collapsed;
         view.Visibility = Visibility.Visible;
     }
@@ -6611,9 +6617,9 @@ public partial class MainWindow : Window
         }
     }
 
-    private void StartOszImport(string oszPath)
+    private void StartOszImport(string oszPath, bool isOsuMode = false)
     {
-        System.Diagnostics.Debug.WriteLine($"[OSZ] StartOszImport path='{oszPath}'");
+        System.Diagnostics.Debug.WriteLine($"[OSZ] StartOszImport path='{oszPath}' isOsuMode={isOsuMode}");
 
         try
         {
@@ -6656,12 +6662,12 @@ public partial class MainWindow : Window
 
             if (difficulties.Count == 1)
             {
-                ExecuteOszImport(oszPath, difficulties[0].FileName, difficulties[0].KeyCount);
+                ExecuteOszImport(oszPath, difficulties[0].FileName, difficulties[0].KeyCount, isOsuMode);
                 return;
             }
 
             _pendingOszPath = oszPath;
-            ShowOszDifficultyPicker(difficulties);
+            ShowOszDifficultyPicker(difficulties, isOsuMode);
         }
         catch (Exception ex)
         {
@@ -6669,7 +6675,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ShowOszDifficultyPicker(List<(string Name, string FileName, int KeyCount)> difficulties)
+    private void ShowOszDifficultyPicker(List<(string Name, string FileName, int KeyCount)> difficulties, bool isOsuMode = false)
     {
         OszDifficultyPanel.Children.Clear();
         OszDifficultySubtext.Text = $"{difficulties.Count} сложностей — выбери одну для импорта";
@@ -6730,17 +6736,14 @@ public partial class MainWindow : Window
                 OszDifficultyView.Visibility = Visibility.Collapsed;
                 GameMenuView.Visibility = Visibility.Visible;
                 if (_pendingOszPath is not null)
-                    ExecuteOszImport(_pendingOszPath, captured.FileName, captured.KeyCount);
-                _pendingOszPath = null;
+                    ExecuteOszImport(_pendingOszPath, captured.FileName, captured.KeyCount, isOsuMode);
             };
 
             OszDifficultyPanel.Children.Add(btn);
         }
-
-        ShowGameView(OszDifficultyView);
     }
 
-    private void ExecuteOszImport(string oszPath, string osuFileName, int keyCount)
+    private void ExecuteOszImport(string oszPath, string osuFileName, int keyCount, bool isOsuMode = false)
     {
         var tempDir = Path.Combine(Path.GetTempPath(), "NetFix_osu_" + Guid.NewGuid());
         Directory.CreateDirectory(tempDir);
@@ -6789,7 +6792,6 @@ public partial class MainWindow : Window
                             int sourceLane = (int)Math.Floor((double)x * keyCount / 512.0);
                             sourceLane = Math.Clamp(sourceLane, 0, keyCount - 1);
 
-                            // равномерный маппинг sourceLane → 0..3: round, не floor
                             int targetLane = keyCount > 1
                                 ? (int)Math.Round((double)sourceLane * 3.0 / (keyCount - 1))
                                 : 0;
@@ -6869,10 +6871,13 @@ public partial class MainWindow : Window
                 File.WriteAllText(Path.Combine(tempDir, "notes.json"),
                     JsonSerializer.Serialize(map, new JsonSerializerOptions { WriteIndented = true }));
 
+                if (isOsuMode)
+                    File.WriteAllText(Path.Combine(tempDir, "source.osz.path"), oszPath);
+
             } // using archive закрыт — файл разлочен
 
             // Архив закрыт, можно безопасно вызывать FinishLevelImport
-            FinishLevelImport(map, tempDir);
+            FinishLevelImport(map, tempDir, isOsuMode);
         }
         catch (Exception ex)
         {
@@ -6899,13 +6904,14 @@ public partial class MainWindow : Window
         return result;
     }
 
-    private void FinishLevelImport(NoteMap map, string tempDir)
+    private void FinishLevelImport(NoteMap map, string tempDir, bool isOsuMode = false)
     {
-        System.Diagnostics.Debug.WriteLine($"[OSZ] FinishLevelImport called title='{map.Title}' tempDir='{tempDir}' tempDirExists={Directory.Exists(tempDir)}");
+        System.Diagnostics.Debug.WriteLine($"[OSZ] FinishLevelImport called title='{map.Title}' tempDir='{tempDir}' isOsuMode={isOsuMode}");
+        System.Diagnostics.Debug.WriteLine($"[OSZ] tempDirExists={Directory.Exists(tempDir)}");
         System.Diagnostics.Debug.WriteLine($"[OSZ] notes.json in tempDir exists={File.Exists(Path.Combine(tempDir, "notes.json"))}");
-        System.Diagnostics.Debug.WriteLine($"[OSZ] audio in tempDir: {string.Join(", ", Directory.GetFiles(tempDir))}");
 
-        var targetDir = Path.Combine(LevelsDir, map.Title!);
+        var baseDir = isOsuMode ? OsuLevelsDir : LevelsDir;
+        var targetDir = Path.Combine(baseDir, map.Title!);
         if (Directory.Exists(targetDir))
         {
             ShowConfirmDialog("Уровень уже существует",
@@ -6915,20 +6921,232 @@ public partial class MainWindow : Window
                     if (!confirmed) { Directory.Delete(tempDir, true); return; }
                     Directory.Delete(targetDir, true);
                     Directory.Move(tempDir, targetDir);
-                    LoadUserLevels();
+                    if (isOsuMode) LoadOsuLevelsList(); else LoadUserLevels();
                     ShowNotification("Успешно", $"Трек «{map.Title}» импортирован", isError: false);
                 });
         }
         else
         {
-            if (!Directory.Exists(LevelsDir))
-                Directory.CreateDirectory(LevelsDir);
+            if (!Directory.Exists(baseDir))
+                Directory.CreateDirectory(baseDir);
             Directory.Move(tempDir, targetDir);
-            LoadUserLevels();
+            if (isOsuMode) LoadOsuLevelsList(); else LoadUserLevels();
             ShowNotification("Успешно", $"Трек «{map.Title}» импортирован", isError: false);
         }
     }
     
+    private void OsuModeBtn_Click(object s, RoutedEventArgs e)
+    {
+        ShowGameView(OsuModeView);
+        LoadOsuLevelsList();
+    }
+
+    private void OsuModeBackBtn_Click(object s, RoutedEventArgs e)
+    {
+        ShowGameView(GameTrackSelectView);
+    }
+
+    private void ImportOszBtn_Click(object s, RoutedEventArgs e)
+    {
+        var dlg = new OpenFileDialog
+        {
+            Title = "Выбрать osu!mania карту",
+            Filter = "osu! архив|*.osz",
+            DefaultExt = ".osz"
+        };
+        if (dlg.ShowDialog() != true) return;
+        StartOszImport(dlg.FileName, isOsuMode: true);
+    }
+
+    private void LoadOsuLevelsList()
+    {
+        if (!Directory.Exists(OsuLevelsDir))
+        {
+            OsuLevelsEmpty.Visibility = Visibility.Visible;
+            OsuLevelsList.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        var maps = new List<NoteMap>();
+        foreach (var dir in Directory.GetDirectories(OsuLevelsDir))
+        {
+            var json = Path.Combine(dir, "notes.json");
+            if (!File.Exists(json)) continue;
+            try
+            {
+                var map = JsonSerializer.Deserialize<NoteMap>(File.ReadAllText(json));
+                if (map != null)
+                {
+                    map.LevelDir = dir;
+                    var sourcePath = Path.Combine(dir, "source.osz.path");
+                    if (File.Exists(sourcePath))
+                        map.SourceOszPath = File.ReadAllText(sourcePath).Trim();
+                    maps.Add(map);
+                }
+            }
+            catch { }
+        }
+
+        if (maps.Count == 0)
+        {
+            OsuLevelsEmpty.Visibility = Visibility.Visible;
+            OsuLevelsList.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            OsuLevelsEmpty.Visibility = Visibility.Collapsed;
+            OsuLevelsList.Visibility = Visibility.Visible;
+            OsuLevelsList.ItemsSource = maps;
+        }
+    }
+
+    private void OsuLevelCard_Click(object s, MouseButtonEventArgs e)
+    {
+        if ((s as FrameworkElement)?.Tag is not NoteMap map) return;
+        var mp3 = map.LevelDir != null
+            ? Directory.GetFiles(map.LevelDir, "*.mp3").FirstOrDefault()
+            : null;
+        if (mp3 == null)
+        {
+            ShowNotification("Ошибка", "Аудио файл не найден", isError: true);
+            return;
+        }
+        ShowGameView(GamePlayView);
+        StartGame(map.Notes, mp3, map.Title ?? "Osu! трек", map.Bpm);
+    }
+
+    private void DeleteOsuLevel_Click(object s, RoutedEventArgs e)
+    {
+        e.Handled = true;
+        if ((s as Button)?.Tag is not NoteMap map) return;
+
+        ShowConfirmDialog(
+            "Удалить osu! уровень?",
+            $"Уровень «{map.Title}» будет удалён безвозвратно.",
+            confirmed =>
+            {
+                if (!confirmed) return;
+                if (map.LevelDir != null && Directory.Exists(map.LevelDir))
+                    Directory.Delete(map.LevelDir, recursive: true);
+                LoadOsuLevelsList();
+            });
+    }
+
+    private void ExportOsuLevel_Click(object s, RoutedEventArgs e)
+    {
+        e.Handled = true;
+        if ((s as Button)?.Tag is not NoteMap map) return;
+
+        if (!string.IsNullOrEmpty(map.SourceOszPath) && File.Exists(map.SourceOszPath))
+        {
+            var dlg = new Microsoft.Win32.SaveFileDialog
+            {
+                FileName = map.Title,
+                DefaultExt = ".osz",
+                Filter = "osu! архив|*.osz"
+            };
+            if (dlg.ShowDialog() != true) return;
+            File.Copy(map.SourceOszPath, dlg.FileName!, overwrite: true);
+            ShowNotification("Экспорт", $"Трек «{map.Title}» экспортирован", isError: false);
+            return;
+        }
+
+        var dir = Path.Combine(OsuLevelsDir, map.Title ?? "level");
+        var dlg2 = new Microsoft.Win32.SaveFileDialog
+        {
+            FileName = map.Title + "_export",
+            DefaultExt = ".zip",
+            Filter = "ZIP Archive|*.zip"
+        };
+        if (dlg2.ShowDialog() != true) return;
+        ZipFile.CreateFromDirectory(dir, dlg2.FileName);
+        ShowNotification("Экспорт", $"Трек «{map.Title}» экспортирован как ZIP", isError: false);
+    }
+
+    private void DownloadFfmpegBtn_Click(object sender, RoutedEventArgs e)
+    {
+        DownloadFfmpegBtn.IsEnabled = false;
+        FfmpegBtnText.Text = "Скачиваем...";
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var ffmpegDir = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "NetFix", "ffmpeg");
+                Directory.CreateDirectory(ffmpegDir);
+
+                var zipPath = Path.Combine(ffmpegDir, "ffmpeg.zip");
+                var ffmpegExe = Path.Combine(ffmpegDir, "ffmpeg.exe");
+
+                const string url = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip";
+
+                using var http = new System.Net.Http.HttpClient();
+                http.Timeout = TimeSpan.FromMinutes(5);
+
+                await Dispatcher.InvokeAsync(() => FfmpegBtnText.Text = "Скачиваем... (1-2 минуты)");
+                var bytes = await http.GetByteArrayAsync(url);
+                await File.WriteAllBytesAsync(zipPath, bytes);
+
+                await Dispatcher.InvokeAsync(() => FfmpegBtnText.Text = "Распаковываем...");
+                await Task.Run(() =>
+                {
+                    var extractDir = Path.Combine(ffmpegDir, "extracted");
+                    if (Directory.Exists(extractDir)) Directory.Delete(extractDir, true);
+                    ZipFile.ExtractToDirectory(zipPath, extractDir);
+
+                    var found = Directory.GetFiles(extractDir, "ffmpeg.exe", SearchOption.AllDirectories)
+                        .FirstOrDefault();
+                    if (found != null)
+                        File.Copy(found, ffmpegExe, overwrite: true);
+
+                    try { Directory.Delete(extractDir, true); } catch { }
+                    try { File.Delete(zipPath); } catch { }
+                });
+
+                if (File.Exists(ffmpegExe))
+                {
+                    _settings.FfmpegPath = ffmpegExe;
+                    SettingsService.Save(_settings);
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        CheckFfmpegStatus();
+                        ShowNotification("FFmpeg", "FFmpeg успешно установлен!", isError: false);
+                    });
+                }
+                else
+                {
+                    await Dispatcher.InvokeAsync(() =>
+                        ShowNotification("Ошибка", "Не удалось найти ffmpeg.exe в архиве", isError: true));
+                }
+            }
+            catch (Exception ex)
+            {
+                await Dispatcher.InvokeAsync(() =>
+                    ShowNotification("Ошибка", $"Не удалось скачать FFmpeg: {ex.Message}", isError: true));
+            }
+            finally
+            {
+                await Dispatcher.InvokeAsync(() => {
+                    DownloadFfmpegBtn.IsEnabled = true;
+                    FfmpegBtnText.Text = "Скачать FFmpeg";
+                });
+            }
+        });
+    }
+
+    private void CheckFfmpegStatus()
+    {
+        bool ok = !string.IsNullOrEmpty(_settings.FfmpegPath) && File.Exists(_settings.FfmpegPath);
+        FfmpegOkBadge.Visibility = ok ? Visibility.Visible : Visibility.Collapsed;
+        DownloadFfmpegBtn.Visibility = ok ? Visibility.Collapsed : Visibility.Visible;
+        FfmpegStatusText.Text = ok ? "Установлен" : "Не найден";
+        FfmpegStatusText.Foreground = ok
+            ? new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e))
+            : new SolidColorBrush(Color.FromRgb(0xf5, 0x9e, 0x0b));
+    }
+
     private void ShowNotification(string title, string message, bool isError)
     {
         // Создаём оверлей для затемнения фона

@@ -1695,18 +1695,31 @@
                                                        Foreground="#666666" FontWeight="Bold" Margin="0,0,0,10"/>
 
                                             <Button x:Name="ImportLevelBtn" Style="{StaticResource OutlineBtn}"
-                                                    Padding="14,12" Margin="0,0,0,10"
-                                                    Click="ImportLevel_Click" Cursor="Hand">
-                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                    <Path Data="M12,2 L12,14 M7,9 L12,14 L17,9"
-                                                          Stroke="#3b82f6" StrokeThickness="2"
-                                                          Width="16" Height="16" Stretch="Uniform"
-                                                          Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="Загрузить трек" FontFamily="Segoe UI"
-                                                               FontSize="13" Foreground="#3b82f6" FontWeight="SemiBold"
-                                                               VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                            </Button>
+                                                     Padding="14,12" Margin="0,0,0,6"
+                                                     Click="ImportLevel_Click" Cursor="Hand">
+                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                     <Path Data="M12,2 L12,14 M7,9 L12,14 L17,9"
+                                                           Stroke="#3b82f6" StrokeThickness="2"
+                                                           Width="16" Height="16" Stretch="Uniform"
+                                                           Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                     <TextBlock Text="Загрузить трек" FontFamily="Segoe UI"
+                                                                FontSize="13" Foreground="#3b82f6" FontWeight="SemiBold"
+                                                                VerticalAlignment="Center"/>
+                                                 </StackPanel>
+                                             </Button>
+
+                                             <Button x:Name="OsuModeBtn" Style="{StaticResource OutlineBtn}"
+                                                     Padding="14,12" Margin="0,0,0,10"
+                                                     Click="OsuModeBtn_Click" Cursor="Hand">
+                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                     <Path Data="M4,4 L12,4 L12,8 L16,8 L16,16 L4,16 Z M6,6 L6,10 L10,10 L10,6 Z M14,14 L14,12 L12,12 L12,14 Z M14,10 L14,8 L12,8 L12,10 Z"
+                                                           Fill="#3b82f6" Width="16" Height="16" Stretch="Uniform"
+                                                           Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                     <TextBlock Text="Osu! режим" FontFamily="Segoe UI"
+                                                                FontSize="13" Foreground="#3b82f6" FontWeight="SemiBold"
+                                                                VerticalAlignment="Center"/>
+                                                 </StackPanel>
+                                             </Button>
 
                                             <Border Background="#1a1a1a" CornerRadius="8" Padding="14,12" Margin="0,0,0,12"
                                                     BorderBrush="#2a2a3a" BorderThickness="1">
@@ -1808,6 +1821,130 @@
                                         </StackPanel>
                                     </Grid>
 
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Grid>
+
+                        <!-- Osu! режим -->
+                        <Grid x:Name="OsuModeView" Visibility="Collapsed">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center" Margin="40" MaxWidth="600">
+                                    <Button Style="{StaticResource FlatBtn}" Content="← Назад" FontSize="13"
+                                            Foreground="#888888" HorizontalAlignment="Left" Padding="8,4"
+                                            Click="OsuModeBackBtn_Click" Cursor="Hand"/>
+
+                                    <TextBlock Text="Osu! режим" FontFamily="Segoe UI" FontSize="22"
+                                               FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"
+                                               Margin="0,0,0,4"/>
+                                    <TextBlock Text="Импорт карт из osu!mania 4K" FontFamily="Segoe UI"
+                                               FontSize="13" Foreground="#888888" TextAlignment="Center"
+                                               Margin="0,0,0,16"/>
+
+                                    <!-- Предупреждение -->
+                                    <Border Background="#1a1a1a" CornerRadius="8" Padding="12,10" Margin="0,0,0,16">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Path Grid.Column="0" Data="M12,2 L22,20 L2,20 Z M12,9 L12,14 M12,16 L12,18"
+                                                  Stroke="#f59e0b" StrokeThickness="2" Width="20" Height="20"
+                                                  Stretch="Uniform" Margin="0,4,10,0" VerticalAlignment="Top"/>
+                                            <TextBlock Grid.Column="1" FontFamily="Segoe UI" FontSize="11" Foreground="#888" TextWrapping="Wrap">
+                                                <Run Text="ВНИМАНИЕ" Foreground="#f59e0b" FontWeight="Bold"/>
+                                                <LineBreak/>
+                                                <Run Text="Osu! режим поддерживает только osu!mania 4K карты."/>
+                                                <LineBreak/>
+                                                <Run Text="Другие режимы (Standard, Taiko, CTB, 7K+ mania) не поддерживаются."/>
+                                            </TextBlock>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- FFmpeg статус -->
+                                    <Border Background="#1a1a1a" CornerRadius="8" Padding="14,12" Margin="0,0,0,12">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Path Grid.Column="0" Data="M12,2 L22,20 L2,20 Z" Stroke="#f59e0b" StrokeThickness="2"
+                                                  Width="16" Height="16" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="FFmpeg" FontFamily="Segoe UI" FontSize="12" Foreground="White" FontWeight="SemiBold"/>
+                                                <TextBlock x:Name="FfmpegStatusText" Text="Не найден" FontFamily="Segoe UI" FontSize="11" Foreground="#f59e0b"/>
+                                            </StackPanel>
+                                            <Button x:Name="DownloadFfmpegBtn" Grid.Column="2" Style="{StaticResource AccentBtn}"
+                                                    Padding="10,6" Click="DownloadFfmpegBtn_Click" Cursor="Hand"
+                                                    Visibility="Collapsed">
+                                                <TextBlock x:Name="FfmpegBtnText" Text="Скачать FFmpeg" FontSize="11"/>
+                                            </Button>
+                                            <Path x:Name="FfmpegOkBadge" Grid.Column="2" Data="M4,12 L9,17 L20,6"
+                                                  Stroke="#22c55e" StrokeThickness="2.5" Width="20" Height="20"
+                                                  Stretch="Uniform" Visibility="Collapsed"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Кнопка импорта .osz -->
+                                    <Button x:Name="ImportOszBtn" Style="{StaticResource AccentBtn}"
+                                            Padding="14,12" Margin="0,0,0,12"
+                                            Click="ImportOszBtn_Click" Cursor="Hand" HorizontalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <Path Data="M12,2 L12,14 M7,9 L12,14 L17,9"
+                                                  Stroke="White" StrokeThickness="2" Width="16" Height="16"
+                                                  Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Импорт .osz карты" FontFamily="Segoe UI" FontSize="13"
+                                                       Foreground="White" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- Пусто -->
+                                    <TextBlock x:Name="OsuLevelsEmpty" Text="Нет импортированных osu! треков"
+                                               FontFamily="Segoe UI" FontSize="12" Foreground="#555555"
+                                               HorizontalAlignment="Center" Margin="0,20,0,0"/>
+
+                                    <!-- Список -->
+                                    <ItemsControl x:Name="OsuLevelsList" Visibility="Collapsed">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="#1e1e1e" CornerRadius="8" Margin="0,0,0,6"
+                                                        Padding="12,10" BorderBrush="#333333" BorderThickness="1"
+                                                        Cursor="Hand" Tag="{Binding}"
+                                                        MouseLeftButtonUp="OsuLevelCard_Click">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Title}" FontFamily="Segoe UI"
+                                                                       FontSize="13" Foreground="White" FontWeight="SemiBold"/>
+                                                            <TextBlock Text="{Binding NoteCount, StringFormat='{}{0} нот'}"
+                                                                       FontFamily="Segoe UI" FontSize="11" Foreground="#666666"/>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <Button Style="{StaticResource FlatBtn}" Padding="10" Margin="0,0,4,0"
+                                                                    MinWidth="40" MinHeight="40"
+                                                                    Tag="{Binding}" Click="ExportOsuLevel_Click" Cursor="Hand">
+                                                                <Border Background="Transparent" Width="20" Height="20">
+                                                                    <Path Data="{StaticResource ExportIcon}"
+                                                                          Stroke="#777777" StrokeThickness="2" Stretch="Uniform"/>
+                                                                </Border>
+                                                            </Button>
+                                                            <Button Style="{StaticResource FlatBtn}" Padding="10"
+                                                                    MinWidth="40" MinHeight="40"
+                                                                    Tag="{Binding}" Click="DeleteOsuLevel_Click" Cursor="Hand">
+                                                                <Border Background="Transparent" Width="20" Height="20">
+                                                                    <Path Data="{StaticResource CloseIcon}"
+                                                                          Stroke="#ef4444" StrokeThickness="2" Stretch="Uniform"/>
+                                                                </Border>
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                 </StackPanel>
                             </ScrollViewer>
                         </Grid>
