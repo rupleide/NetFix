@@ -173,7 +173,6 @@ public partial class MainWindow : Window
     private Border? _gameOverlayPanel = null;
     private bool _gameOverlayActive = false;
 
-    private readonly Dictionary<int, NoteEntry> _holdLanes = new();
     private UIElement? _oszReturnView = null;
     
     // Таймер обратного отсчёта перед игрой
@@ -5109,7 +5108,7 @@ public partial class MainWindow : Window
         StopGame();
 
         // Сохраняем параметры для перезапуска
-        _lastGameNotes = notes.Select(n => new NoteEntry { Time = n.Time, Lane = n.Lane, IsHold = n.IsHold, HoldEnd = n.HoldEnd }).ToList();
+        _lastGameNotes = notes.Select(n => new NoteEntry { Time = n.Time, Lane = n.Lane }).ToList();
         _lastGameMp3Path = mp3Path;
         _lastGameTitle = title;
         _lastGameBpm = bpm;
@@ -5125,7 +5124,7 @@ public partial class MainWindow : Window
 
         _currentFallSec = GetFallSecondsForBpm(bpm);
         _pendingNotes = notes
-            .Select(n => new NoteEntry { Time = n.Time, Lane = n.Lane, IsHold = n.IsHold, HoldEnd = n.HoldEnd })
+            .Select(n => new NoteEntry { Time = n.Time, Lane = n.Lane })
             .OrderBy(n => n.Time)
             .ToList();
         _activeNotes = new();
@@ -5320,32 +5319,6 @@ public partial class MainWindow : Window
             var note = _pendingNotes[0];
             _pendingNotes.RemoveAt(0);
 
-            // Сначала спавним тело hold (чтобы оно было под головой)
-            if (note.IsHold && note.HoldEnd > note.Time)
-            {
-                var holdBody = new Border
-                {
-                    Width = NOTE_SIZE - 8,
-                    Height = 1,
-                    Background = new SolidColorBrush(
-                        Color.FromArgb(150, LaneColors[note.Lane].R,
-                                       LaneColors[note.Lane].G,
-                                       LaneColors[note.Lane].B)),
-                    CornerRadius = new CornerRadius(4),
-                    IsHitTestVisible = false,
-                    Tag = note,
-                    BorderBrush = new SolidColorBrush(
-                        Color.FromArgb(200, LaneColors[note.Lane].R,
-                                       LaneColors[note.Lane].G,
-                                       LaneColors[note.Lane].B)),
-                    BorderThickness = new Thickness(1)
-                };
-                Canvas.SetLeft(holdBody, GetLaneLeft(note.Lane) + 4);
-                Canvas.SetTop(holdBody, -50);
-                GameCanvas.Children.Add(holdBody);
-                note.HoldBody = holdBody;
-            }
-
             var effect = new System.Windows.Media.Effects.DropShadowEffect
             {
                 Color = LaneColors[note.Lane],
@@ -5389,30 +5362,6 @@ public partial class MainWindow : Window
             double top = -50 + progress * (hitY + 50);
             Canvas.SetTop(note.Visual, top);
 
-            // Hold body до нажатия: тянется от низа головы до линии хита
-            if (note.IsHold && note.HoldBody != null && !note.HoldActive)
-            {
-                double bodyTop = top + NOTE_SIZE;
-                double bodyBottom = hitY;
-                double bodyHeight = Math.Max(0, bodyBottom - bodyTop);
-
-                double holdDuration = note.HoldEnd - note.Time;
-                double maxHeight = holdDuration / _currentFallSec * (hitY + 50);
-                bodyHeight = Math.Min(bodyHeight, maxHeight);
-
-                note.HoldBody.Height = bodyHeight;
-                Canvas.SetTop(note.HoldBody, bodyTop);
-            }
-
-            // Hold body после нажатия: идёт от линии хита вниз и сжимается
-            if (note.IsHold && note.HoldBody != null && note.HoldActive)
-            {
-                double remaining = note.HoldEnd - now;
-                double remainHeight = Math.Max(0, remaining / _currentFallSec * (hitY + 50));
-                note.HoldBody.Height = Math.Min(remainHeight, hitY * 0.3);
-                Canvas.SetTop(note.HoldBody, hitY);
-            }
-
             // Свечение при приближении — обновляем существующий effect
             double distToHit = Math.Abs(top - hitY);
             if (distToHit < 90 && note.Effect != null)
@@ -5422,32 +5371,8 @@ public partial class MainWindow : Window
                 note.Effect.Opacity = 0.6 + proximity * 0.35;
             }
 
-            // Автозавершение hold-ноты по истечении времени
-            if (note.IsHold && note.HoldActive && now >= note.HoldEnd)
-            {
-                note.HoldActive = false;
-                note.HoldCompleted = true;
-                note.Hit = true;
-                if (note.HoldBody != null)
-                    GameCanvas.Children.Remove(note.HoldBody);
-                _holdLanes.Remove(note.Lane);
-                toRemove.Add(note);
-
-                _gameCombo++;
-                if (_gameCombo > _maxCombo) _maxCombo = _gameCombo;
-                _hitNotes++;
-                _consecutiveMisses = 0;
-                _gameScore += 300 * _gameCombo;
-                ShowJudge("PERFECT", LaneColors[note.Lane]);
-                _effectQueue.Enqueue(() => UpdateComboAura());
-                UpdateHUD();
-                continue;
-            }
-
             if (top > canvasH + 10)
             {
-                if (note.HoldBody != null)
-                    GameCanvas.Children.Remove(note.HoldBody);
                 GameCanvas.Children.Remove(note.Visual);
                 toRemove.Add(note);
                 _gameCombo = 0;
@@ -5515,41 +5440,11 @@ public partial class MainWindow : Window
 
         if (bestDist <= HIT_PERFECT)
         {
-            if (best.IsHold)
-            {
-                best.HoldActive = true;
-                best.Hit = false;
-                _holdLanes[lane] = best;
-                _gameCombo++;
-                if (_gameCombo > _maxCombo) _maxCombo = _gameCombo;
-                _hitNotes++;
-                _consecutiveMisses = 0;
-                _effectQueue.Enqueue(() => UpdateComboAura());
-                ShowJudge("PERFECT", LaneColors[lane]);
-            }
-            else
-            {
-                HitNote(best, lane, 300, "PERFECT", LaneColors[lane]);
-            }
+            HitNote(best, lane, 300, "PERFECT", LaneColors[lane]);
         }
         else if (bestDist <= HIT_GOOD)
         {
-            if (best.IsHold)
-            {
-                best.HoldActive = true;
-                best.Hit = false;
-                _holdLanes[lane] = best;
-                _gameCombo++;
-                if (_gameCombo > _maxCombo) _maxCombo = _gameCombo;
-                _hitNotes++;
-                _consecutiveMisses = 0;
-                _effectQueue.Enqueue(() => UpdateComboAura());
-                ShowJudge("GOOD", Color.FromRgb(0xa1, 0xa1, 0xaa));
-            }
-            else
-            {
-                HitNote(best, lane, 100, "GOOD", Color.FromRgb(0xa1, 0xa1, 0xaa));
-            }
+            HitNote(best, lane, 100, "GOOD", Color.FromRgb(0xa1, 0xa1, 0xaa));
         }
         else
         {
@@ -5566,36 +5461,6 @@ public partial class MainWindow : Window
         if (lane < 0) return;
         _activeLanes.Remove(lane);
         e.Handled = true;
-
-        if (_holdLanes.TryGetValue(lane, out var holdNote) && holdNote.HoldActive)
-        {
-            double now = _gameClock.Elapsed.TotalSeconds;
-            double remaining = holdNote.HoldEnd - now;
-
-            if (remaining > 0.15)
-            {
-                holdNote.HoldActive = false;
-                holdNote.Hit = true;
-                if (holdNote.HoldBody != null)
-                    GameCanvas.Children.Remove(holdNote.HoldBody);
-                _activeNotes.Remove(holdNote);
-                _gameCombo = 0;
-                ShowJudge("MISS", Colors.Gray);
-                _missCount++;
-                UpdateHUD();
-            }
-            else
-            {
-                holdNote.HoldActive = false;
-                holdNote.HoldCompleted = true;
-                holdNote.Hit = true;
-                if (holdNote.HoldBody != null)
-                    GameCanvas.Children.Remove(holdNote.HoldBody);
-                _activeNotes.Remove(holdNote);
-                HitNote(holdNote, lane, 300, "PERFECT", LaneColors[lane]);
-            }
-            _holdLanes.Remove(lane);
-        }
     }
 
     private void HitNote(NoteEntry note, int lane, int baseScore, string judge, Color color)
@@ -6297,7 +6162,6 @@ public partial class MainWindow : Window
         PreviewKeyDown -= Game_KeyDown;
         PreviewKeyUp -= Game_KeyUp;
         _activeLanes.Clear();
-        _holdLanes.Clear();
         _editorPlayer.Stop();
         _gameClock.Stop();
         _auroraGameTimer?.Stop();
@@ -6934,10 +6798,9 @@ public partial class MainWindow : Window
                                  line.Length > 0 && !line.StartsWith("//"))
                         {
                             var parts = line.Split(',');
-                            if (parts.Length < 4) continue;
+                            if (parts.Length < 3) continue;
                             if (!int.TryParse(parts[0], out int x)) continue;
                             if (!int.TryParse(parts[2], out int timeMs)) continue;
-                            if (!int.TryParse(parts[3], out int noteType)) continue;
 
                             int sourceLane = (int)Math.Floor((double)x * keyCount / 512.0);
                             sourceLane = Math.Clamp(sourceLane, 0, keyCount - 1);
@@ -6947,23 +6810,7 @@ public partial class MainWindow : Window
                                 : 0;
                             targetLane = Math.Clamp(targetLane, 0, 3);
 
-                            bool isHold = (noteType & 128) != 0;
-                            double holdEnd = 0;
-
-                            if (isHold && parts.Length >= 6)
-                            {
-                                var extras = parts[5].Split(':');
-                                if (int.TryParse(extras[0], out int endTimeMs))
-                                    holdEnd = endTimeMs / 1000.0;
-                            }
-
-                            notes.Add(new NoteEntry
-                            {
-                                Time = timeMs / 1000.0,
-                                Lane = targetLane,
-                                IsHold = isHold,
-                                HoldEnd = holdEnd
-                            });
+                            notes.Add(new NoteEntry { Time = timeMs / 1000.0, Lane = targetLane });
                         }
                     }
                 }

@@ -24,23 +24,12 @@ public class NoteEntry
 {
     public double Time { get; set; }
     public int Lane { get; set; }
-    public bool IsHold { get; set; } = false;
-    public double HoldEnd { get; set; } = 0;
 
     [JsonIgnore]
     public bool Hit { get; set; }
 
     [JsonIgnore]
-    public bool HoldActive { get; set; }
-
-    [JsonIgnore]
-    public bool HoldCompleted { get; set; }
-
-    [JsonIgnore]
     public Border? Visual { get; set; }
-
-    [JsonIgnore]
-    public Border? HoldBody { get; set; }
 
     [JsonIgnore]
     public DropShadowEffect? Effect { get; set; }
