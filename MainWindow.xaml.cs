@@ -6889,6 +6889,21 @@ public partial class MainWindow : Window
 
             } // using archive закрыт — файл разлочен
 
+            // Проверка на слишком большое количество нот для osu! режима
+            if (isOsuMode && map is not null && map.NoteCount > 1100)
+            {
+                var m = map;
+                var tmp = tempDir;
+                ShowHighNoteCountDialog(ok =>
+                {
+                    if (ok)
+                        FinishLevelImport(m, tmp, isOsuMode);
+                    else
+                        try { Directory.Delete(tmp, true); } catch { }
+                });
+                return;
+            }
+
             // Архив закрыт, можно безопасно вызывать FinishLevelImport
             FinishLevelImport(map, tempDir, isOsuMode);
         }
@@ -7456,6 +7471,112 @@ public partial class MainWindow : Window
         dialog.Child = stack;
         overlay.Child = dialog;
         
+        ContentGrid.Children.Add(overlay);
+        Grid.SetRowSpan(overlay, 10);
+    }
+
+    private void ShowHighNoteCountDialog(Action<bool> callback)
+    {
+        var overlay = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = System.Windows.VerticalAlignment.Stretch
+        };
+
+        var dialog = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(12),
+            Padding = new Thickness(24),
+            MaxWidth = 420,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = System.Windows.VerticalAlignment.Center
+        };
+
+        var stack = new StackPanel();
+
+        stack.Children.Add(new TextBlock
+        {
+            Text = "Слишком много нот!",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 16,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = Brushes.White,
+            Margin = new Thickness(0, 0, 0, 12)
+        });
+
+        stack.Children.Add(new TextBlock
+        {
+            Text = "В этом уровне 1100+ нот. Скорее всего, он не подходит для игры в NetFix из-за жёсткого спама кнопками. Всё равно добавить?",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 13,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 20)
+        });
+
+        var buttonPanel = new StackPanel
+        {
+            Orientation = System.Windows.Controls.Orientation.Horizontal,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Right
+        };
+
+        var yesBtn = new Button
+        {
+            Content = "Да",
+            Style = (Style)FindResource("OutlineBtn"),
+            Padding = new Thickness(16, 8, 16, 8),
+            Margin = new Thickness(0, 0, 8, 0)
+        };
+        yesBtn.Click += (_, _) =>
+        {
+            ContentGrid.Children.Remove(overlay);
+            callback(true);
+        };
+
+        var noBtn = new Button
+        {
+            Content = "Нет",
+            Padding = new Thickness(16, 8, 16, 8),
+            Background = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
+            Foreground = Brushes.White,
+            BorderThickness = new Thickness(0),
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 13,
+            Cursor = Cursors.Hand
+        };
+
+        var nt = new ControlTemplate(typeof(Button));
+        var nb = new FrameworkElementFactory(typeof(Border));
+        nb.SetValue(Border.BackgroundProperty, new TemplateBindingExtension(Button.BackgroundProperty));
+        nb.SetValue(Border.CornerRadiusProperty, new CornerRadius(8));
+        nb.SetValue(Border.PaddingProperty, new TemplateBindingExtension(Button.PaddingProperty));
+        var np = new FrameworkElementFactory(typeof(ContentPresenter));
+        np.SetValue(ContentPresenter.HorizontalAlignmentProperty, System.Windows.HorizontalAlignment.Center);
+        np.SetValue(ContentPresenter.VerticalAlignmentProperty, System.Windows.VerticalAlignment.Center);
+        nb.AppendChild(np);
+        nt.VisualTree = nb;
+        var ht = new Trigger { Property = Button.IsMouseOverProperty, Value = true };
+        ht.Setters.Add(new Setter(Button.BackgroundProperty, new SolidColorBrush(Color.FromRgb(0x16, 0xa3, 0x4a))));
+        nt.Triggers.Add(ht);
+        noBtn.Template = nt;
+
+        noBtn.Click += (_, _) =>
+        {
+            ContentGrid.Children.Remove(overlay);
+            callback(false);
+        };
+
+        buttonPanel.Children.Add(yesBtn);
+        buttonPanel.Children.Add(noBtn);
+        stack.Children.Add(buttonPanel);
+
+        dialog.Child = stack;
+        overlay.Child = dialog;
+
         ContentGrid.Children.Add(overlay);
         Grid.SetRowSpan(overlay, 10);
     }

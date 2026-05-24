@@ -1988,12 +1988,12 @@
                                                     Padding="14,12" Margin="0,0,0,12"
                                                     Click="ImportOszBtn_Click" Cursor="Hand">
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                    <Border Width="16" Height="16" CornerRadius="8"
-                                                            Background="#e84d8a" Margin="0,0,8,0" VerticalAlignment="Center">
-                                                        <TextBlock Text="+" FontFamily="Segoe UI" FontSize="13" FontWeight="Bold"
-                                                                   Foreground="White" HorizontalAlignment="Center"
-                                                                   VerticalAlignment="Center" Margin="0,-2,0,0"/>
-                                                    </Border>
+                                                     <Border Width="16" Height="16" CornerRadius="8"
+                                                             Background="#e84d8a" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                         <Path Data="M8,3 L8,13 M3,8 L13,8"
+                                                               Stroke="White" StrokeThickness="2" Stretch="Uniform"
+                                                               Width="8" Height="8"/>
+                                                     </Border>
                                                     <TextBlock Text="Импорт .osz файла" FontFamily="Segoe UI"
                                                                FontSize="13" Foreground="#e84d8a" FontWeight="SemiBold"
                                                                VerticalAlignment="Center"/>
