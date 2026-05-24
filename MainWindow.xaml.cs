@@ -3974,7 +3974,7 @@ public partial class MainWindow : Window
         if (!_settingsLoaded) return; // не показывать диалог при загрузке настроек
         ShowConfirmDialog(
             "Отключить комбо-эффект?",
-            "Этот эффект создаёт яркую вспышку при одновременном нажатии крайних дорожек — " +
+            "Этот эффект создаёт яркую вспышку при одновременном нажатии трёх любых дорожек — " +
             "он усиливает эмоциональную отдачу от прохождения и делает игру более зрелищной.\n\n" +
             "Однако на очень сложных уровнях с высокой плотностью нот визуальный шум может " +
             "сбивать концентрацию. В таком случае отключение оправдано.",
@@ -5660,8 +5660,9 @@ public partial class MainWindow : Window
         _consecutiveMisses = 0;
         _gameScore += baseScore * _gameCombo;
 
-        // Супер-эффект при одновременном нажатии крайних дорожек
-        if (!_settings.DisableComboEffect && _activeLanes.Contains(0) && _activeLanes.Contains(3))
+        // Супер-эффект: крайние дорожки (← →) или любые три одновременно
+        if (!_settings.DisableComboEffect &&
+            (_activeLanes.Contains(0) && _activeLanes.Contains(3) || _activeLanes.Count >= 3))
         {
             _effectQueue.Enqueue(() => SpawnDoubleStrikeEffect(_currentComboColor));
         }
