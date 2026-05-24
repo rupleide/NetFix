@@ -7186,6 +7186,24 @@ public partial class MainWindow : Window
         DownloadFfmpegBtn.Visibility = ok ? Visibility.Collapsed : Visibility.Visible;
     }
 
+    private void ManualFfmpegLink_Click(object sender, RoutedEventArgs e)
+    {
+        ManualInstallPanel.Visibility = ManualInstallPanel.Visibility == Visibility.Collapsed
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
+
+    private void CheckFfmpegStatus_Click(object sender, RoutedEventArgs e)
+    {
+        CheckFfmpegStatus();
+        var btn = (Button)sender;
+        var original = btn.Content.ToString();
+        bool ok = !string.IsNullOrEmpty(_settings.FfmpegPath) && File.Exists(_settings.FfmpegPath);
+        btn.Content = ok ? "✓ Файл найден!" : "✗ Файл не найден";
+        Task.Delay(2000).ContinueWith(_ =>
+            Dispatcher.Invoke(() => btn.Content = original));
+    }
+
     private void ShowNotification(string title, string message, bool isError, bool isWarning = false)
     {
         Color accentColor = isError
