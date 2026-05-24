@@ -3928,6 +3928,7 @@ public partial class MainWindow : Window
         AutoAppCB.IsChecked     = _settings.AutostartApp;
         DiscordRpcCB.IsChecked  = _settings.DiscordRpcEnabled;
         AutoUpdatesCB.IsChecked = _settings.AutoUpdates;
+        ComboEffectCB.IsChecked = _settings.DisableComboEffect;
         VolumeSlider.Value = _settings.GameVolume;
         // Применить логарифм сразу при загрузке
         double linear = Math.Pow(_settings.GameVolume, 3);
@@ -3944,6 +3945,7 @@ public partial class MainWindow : Window
         _settings.AutostartTgWsProxy = AutoTgWsCB.IsChecked == true;
         _settings.AutostartApp     = AutoAppCB.IsChecked == true;
         _settings.AutoUpdates      = AutoUpdatesCB.IsChecked == true;
+        _settings.DisableComboEffect = ComboEffectCB.IsChecked == true;
         SettingsService.Save(_settings);
         
         // Автозапуск через Task Scheduler
@@ -5626,7 +5628,7 @@ public partial class MainWindow : Window
         _gameScore += baseScore * _gameCombo;
 
         // Супер-эффект при одновременном нажатии крайних дорожек
-        if (_activeLanes.Contains(0) && _activeLanes.Contains(3))
+        if (!_settings.DisableComboEffect && _activeLanes.Contains(0) && _activeLanes.Contains(3))
         {
             _effectQueue.Enqueue(() => SpawnDoubleStrikeEffect(_currentComboColor));
         }
