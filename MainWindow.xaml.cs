@@ -6957,6 +6957,31 @@ public partial class MainWindow : Window
         LoadOsuLevelsList();
     }
 
+    private void OsuModeBtn_Loaded(object s, RoutedEventArgs e)
+    {
+        if (s is not Button btn) return;
+        if (btn.Template.FindName("GlowBorder", btn) is not Border border) return;
+
+        var brush = new LinearGradientBrush
+        {
+            StartPoint = new System.Windows.Point(0, 0.5),
+            EndPoint = new System.Windows.Point(1, 0.5)
+        };
+        brush.GradientStops.Add(new GradientStop(Color.FromRgb(0xe8, 0x4d, 0x8a), 0.0));
+        brush.GradientStops.Add(new GradientStop(Color.FromRgb(0xff, 0x9a, 0x5c), 0.5));
+        brush.GradientStops.Add(new GradientStop(Color.FromRgb(0xe8, 0x4d, 0x8a), 1.0));
+
+        var transform = new RotateTransform(0);
+        brush.RelativeTransform = transform;
+        border.Background = brush;
+
+        var anim = new DoubleAnimation(0, 360, new Duration(TimeSpan.FromSeconds(4)))
+        {
+            RepeatBehavior = RepeatBehavior.Forever
+        };
+        transform.BeginAnimation(RotateTransform.AngleProperty, anim);
+    }
+
     private void OsuModeBackBtn_Click(object s, RoutedEventArgs e)
     {
         ShowGameView(GameTrackSelectView);
