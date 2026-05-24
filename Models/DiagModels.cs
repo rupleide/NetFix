@@ -107,6 +107,7 @@ public class AppSettings
     public bool DiscordRpcEnabled { get; set; } = true;
     public double GameVolume { get; set; } = 0.5;
     public string FfmpegPath { get; set; } = "";
+    public bool DisableComboEffect { get; set; } = false;
     public string KeyLane0 { get; set; } = "A";
     public string KeyLane1 { get; set; } = "S";
     public string KeyLane2 { get; set; } = "W";

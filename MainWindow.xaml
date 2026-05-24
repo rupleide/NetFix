@@ -2796,7 +2796,9 @@
                                           Checked="DiscordRpcCB_Checked"
                                           Unchecked="DiscordRpcCB_Unchecked"/>
                                 <CheckBox x:Name="AutoUpdatesCB" Style="{StaticResource Toggle}"
-                                          Content="Автоматические обновления" Margin="0,0,0,20"/>
+                                          Content="Автоматические обновления" Margin="0,0,0,6"/>
+                                <CheckBox x:Name="ComboEffectCB" Style="{StaticResource Toggle}"
+                                          Content="Отключить комбо-эффект при ← →" Margin="0,0,0,20"/>
 
                                 <Button Content="Проверить обновления" Style="{StaticResource OutlineBtn}"
                                         HorizontalAlignment="Stretch" Padding="12,8" Margin="0,0,0,20"
