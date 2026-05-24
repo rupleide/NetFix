@@ -4008,6 +4008,7 @@ public partial class MainWindow : Window
         _editorPlayer.Volume = linear;
         _previewPlayer.Volume = linear;
         _settings.GameVolume = e.NewValue; // сохраняем позицию ползунка, не линейное значение
+        VolumePercent.Text = $"{(int)(e.NewValue * 100)}%";
         SettingsService.Save(_settings);
     }
 
