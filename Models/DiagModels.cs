@@ -113,6 +113,9 @@ public class AppSettings
     public string KeyLane2 { get; set; } = "W";
     public string KeyLane3 { get; set; } = "D";
     public List<GameTrackStats> TrackHistory { get; set; } = [];
+    public string StatsSortMode { get; set; } = "LastPlayedDesc";
+    public string UserSortMode { get; set; } = "DateAddedDesc";
+    public string OsuSortMode { get; set; } = "DateAddedDesc";
 }
 
 /// <summary>

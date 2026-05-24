@@ -193,7 +193,8 @@ public partial class MainWindow : Window
     private ICollectionView? _osuTracksView;
     private string _userSearchText = string.Empty;
     private string _osuSearchText = string.Empty;
-    private string _currentSortMode = "DateAddedDesc";
+    private string _statsSearchText = string.Empty;
+
     private bool _settingsLoaded; // защита от срабатывания событий при загрузке
 
     // ── Network Monitor ──────────────────────────────────────────────────────
@@ -4693,6 +4694,15 @@ public partial class MainWindow : Window
         }
     }
 
+    private void StatsSearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        var tb = (TextBox)sender;
+        _statsSearchText = tb.Text;
+        if (FindName("StatsSearchPlaceholder") is TextBlock ph)
+            ph.Visibility = string.IsNullOrEmpty(_statsSearchText) ? Visibility.Visible : Visibility.Collapsed;
+        PopulateStatsList();
+    }
+
     private void TrackSearchBox_GotFocus(object sender, RoutedEventArgs e)
     {
         if (sender is not TextBox tb) return;
@@ -4735,18 +4745,27 @@ public partial class MainWindow : Window
     {
         if (sender is not MenuItem item) return;
         var tag = item.Tag?.ToString() ?? "DateAddedDesc";
-        _currentSortMode = tag;
 
         // Определяем какой вью и кнопка — по родительской цепочке ContextMenu
         var ctx = item.Parent as ContextMenu;
         var target = ctx?.PlacementTarget;
         if (target is Button btn && btn.Name == "OsuSortMenuBtn")
         {
+            _settings.OsuSortMode = tag;
+            SettingsService.Save(_settings);
             ApplyOsuSorting();
             _osuTracksView?.Refresh();
         }
+        else if (target is Button btn2 && btn2.Name == "StatsSortMenuBtn")
+        {
+            _settings.StatsSortMode = tag;
+            SettingsService.Save(_settings);
+            PopulateStatsList();
+        }
         else
         {
+            _settings.UserSortMode = tag;
+            SettingsService.Save(_settings);
             ApplyUserSorting();
             _userTracksView?.Refresh();
         }
@@ -4755,19 +4774,19 @@ public partial class MainWindow : Window
     private void ApplyUserSorting()
     {
         if (_userTracksView == null) return;
-        ApplySortingToView(_userTracksView);
+        ApplySortingToView(_userTracksView, _settings.UserSortMode);
     }
 
     private void ApplyOsuSorting()
     {
         if (_osuTracksView == null) return;
-        ApplySortingToView(_osuTracksView);
+        ApplySortingToView(_osuTracksView, _settings.OsuSortMode);
     }
 
-    private void ApplySortingToView(ICollectionView view)
+    private void ApplySortingToView(ICollectionView view, string sortMode)
     {
         view.SortDescriptions.Clear();
-        switch (_currentSortMode)
+        switch (sortMode)
         {
             case "TitleAsc":
                 view.SortDescriptions.Add(new SortDescription("Title", ListSortDirection.Ascending));
@@ -9496,14 +9515,35 @@ public partial class MainWindow : Window
         StatsListPanel.Children.Clear();
         var history = _settings.TrackHistory;
 
-        if (history.Count == 0)
+        // Фильтрация
+        var query = history.AsEnumerable();
+        if (!string.IsNullOrWhiteSpace(_statsSearchText))
+            query = query.Where(t =>
+                t.TrackTitle.Contains(_statsSearchText, StringComparison.OrdinalIgnoreCase));
+
+        // Сортировка
+        query = _settings.StatsSortMode switch
+        {
+            "TitleAsc"        => query.OrderBy(t => t.TrackTitle),
+            "LastPlayedDesc"  => query.OrderByDescending(t => t.LastPlayed),
+            "LastPlayedAsc"   => query.OrderBy(t => t.LastPlayed),
+            "TimesPlayedDesc" => query.OrderByDescending(t => t.TimesPlayed),
+            "TimesPlayedAsc"  => query.OrderBy(t => t.TimesPlayed),
+            "BestScoreDesc"   => query.OrderByDescending(t => t.BestScore),
+            "BestAccuracyDesc"=> query.OrderByDescending(t => t.BestAccuracy),
+            _                 => query.OrderByDescending(t => t.LastPlayed)
+        };
+
+        var filtered = query.ToList();
+
+        if (filtered.Count == 0)
         {
             StatsEmptyState.Visibility = Visibility.Visible;
             return;
         }
         StatsEmptyState.Visibility = Visibility.Collapsed;
 
-        foreach (var t in history.OrderByDescending(x => x.LastPlayed))
+        foreach (var t in filtered)
         {
             var rankColor = GetRankColor(t.BestRank);
 
