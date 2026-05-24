@@ -572,6 +572,50 @@
         </Style>
 
         <!-- ═══ КОНТЕКСТНОЕ МЕНЮ СОРТИРОВКИ ═══ -->
+        <ContextMenu x:Key="StatsSortContextMenu" HasDropShadow="False" UseLayoutRounding="True">
+            <ContextMenu.Resources>
+                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Foreground" Value="#aaa"/>
+                    <Setter Property="FontFamily" Value="Segoe UI"/>
+                    <Setter Property="FontSize" Value="11.5"/>
+                    <Setter Property="Padding" Value="8,5,14,5"/>
+                    <Setter Property="Cursor" Value="Hand"/>
+                </Style>
+                <Style TargetType="Separator" BasedOn="{StaticResource {x:Type Separator}}">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate>
+                                <Border Height="1" Background="#2a2a2a" Margin="6,2,6,2"/>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ContextMenu.Resources>
+            <ContextMenu.Template>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border Background="#1a1a1a" CornerRadius="8"
+                            BorderBrush="#2a2a2a" BorderThickness="1"
+                            Padding="3" SnapsToDevicePixels="True">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="12" ShadowDepth="3" Color="#000" Opacity="0.5"/>
+                            </Border.Effect>
+                        <ScrollViewer>
+                            <StackPanel IsItemsHost="True"/>
+                        </ScrollViewer>
+                    </Border>
+                </ControlTemplate>
+            </ContextMenu.Template>
+            <MenuItem Header="По названию (А-Я)" Tag="TitleAsc" Click="SortMenuItem_Click"/>
+            <MenuItem Header="По дате игры (Новые)" Tag="LastPlayedDesc" Click="SortMenuItem_Click"/>
+            <MenuItem Header="По дате игры (Старые)" Tag="LastPlayedAsc" Click="SortMenuItem_Click"/>
+            <Separator/>
+            <MenuItem Header="По кол-ву игр (Больше → Меньше)" Tag="TimesPlayedDesc" Click="SortMenuItem_Click"/>
+            <MenuItem Header="По кол-ву игр (Меньше → Больше)" Tag="TimesPlayedAsc" Click="SortMenuItem_Click"/>
+            <Separator/>
+            <MenuItem Header="По очкам (Больше → Меньше)" Tag="BestScoreDesc" Click="SortMenuItem_Click"/>
+            <MenuItem Header="По точности (Больше → Меньше)" Tag="BestAccuracyDesc" Click="SortMenuItem_Click"/>
+        </ContextMenu>
         <ContextMenu x:Key="SortContextMenu" HasDropShadow="False" UseLayoutRounding="True">
             <ContextMenu.Resources>
                 <Style TargetType="MenuItem">
@@ -1461,41 +1505,31 @@
                                 </Border>
 
                                 <Border x:Name="GameStatsMenuBtn" CornerRadius="12" Cursor="Hand"
-                                        Width="320" Height="72" Margin="0,0,0,12"
+                                        Width="320" Height="68" Margin="0,0,0,12"
                                         MouseLeftButtonUp="GameStatsMenuBtn_Click"
                                         MouseEnter="GameSettingsMenuBtn_MouseEnter"
-                                        MouseLeave="GameSettingsMenuBtn_MouseLeave">
-                                    <Border.Background>
-                                        <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
-                                            <GradientStop Color="#1e1e1e" Offset="0"/>
-                                            <GradientStop Color="#252525" Offset="1"/>
-                                        </LinearGradientBrush>
-                                    </Border.Background>
+                                        MouseLeave="GameSettingsMenuBtn_MouseLeave"
+                                        Background="#1e1e1e">
                                     <Border BorderBrush="#333333" BorderThickness="1" CornerRadius="12" IsHitTestVisible="False">
-                                        <Grid Margin="16,0">
+                                        <Grid>
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="68"/>
                                                 <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-
-                                            <Border Width="40" Height="40" CornerRadius="12" Background="#2a2a2a">
+                                            <Border Width="34" Height="34" CornerRadius="17"
+                                                    Background="#272727"
+                                                    HorizontalAlignment="Center" VerticalAlignment="Center">
                                                 <Path Data="M3,17 L7,11 L11,13 L15,6 L21,6 M18,3 L21,6 L18,9"
-                                                      Stroke="#a855f7" StrokeThickness="2.5"
-                                                      Width="20" Height="20" Stretch="Uniform"
+                                                      Stroke="#a1a1aa" StrokeThickness="2"
+                                                      Width="16" Height="16" Stretch="Uniform"
                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
-
-                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="14,0,0,0">
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                 <TextBlock Text="Статистика" FontFamily="Segoe UI" FontSize="15"
-                                                           FontWeight="Bold" Foreground="White"/>
-                                                <TextBlock Text="Личные рекорды и прогресс" FontFamily="Segoe UI"
+                                                           FontWeight="SemiBold" Foreground="White"/>
+                                                <TextBlock Text="История и рекорды" FontFamily="Segoe UI"
                                                            FontSize="11" Foreground="#888888"/>
                                             </StackPanel>
-
-                                            <Path Grid.Column="2" Data="M9,6 L15,12 L9,18" Stroke="#555"
-                                                  StrokeThickness="2" Width="12" Height="12" Stretch="Uniform"
-                                                  VerticalAlignment="Center"/>
                                         </Grid>
                                     </Border>
                                 </Border>
@@ -1562,64 +1596,89 @@
                         </Grid>
 
             <!-- ═══ СПИСОК ТРЕКОВ (GameStatsView) ═══ -->
-            <Grid x:Name="GameStatsView" Visibility="Collapsed" Focusable="True"
-                  KeyDown="GameStatsView_KeyDown">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
+            <ScrollViewer x:Name="GameStatsView" Visibility="Collapsed" Focusable="True"
+                          KeyDown="GameStatsView_KeyDown"
+                          VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                          Margin="32,0,32,0">
+                <StackPanel HorizontalAlignment="Center" Width="498.68">
+                    <StackPanel HorizontalAlignment="Center" Margin="0,24,0,20">
+                        <TextBlock Text="ИСТОРИЯ ИГР" FontFamily="Segoe UI" FontSize="24"
+                                   FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"
+                                   Margin="0,0,0,6"/>
+                        <TextBlock Text="Выбери трек для детального анализа" FontFamily="Segoe UI"
+                                   FontSize="13" Foreground="#666666" HorizontalAlignment="Center"/>
+                    </StackPanel>
 
-                <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,24,0,20">
-                    <TextBlock Text="ИСТОРИЯ ИГР" FontFamily="Segoe UI" FontSize="24"
-                               FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"
-                               Margin="0,0,0,6"/>
-                    <TextBlock Text="Выбери трек для детального анализа" FontFamily="Segoe UI"
-                               FontSize="13" Foreground="#666666" HorizontalAlignment="Center"/>
+                    <!-- ═══ ПОИСК И СОРТИРОВКА ═══ -->
+                    <Border Background="#1a1a1a" CornerRadius="6" Padding="6,2"
+                            Margin="0,0,0,8" BorderBrush="#2a2a2a" BorderThickness="1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0">
+                                <Path Data="M11,19 A8,8 0 1 1 11,3 A8,8 0 1 1 11,19 Z M21,21 L16.65,16.65"
+                                      Stroke="#555" StrokeThickness="2" Width="12" Height="12"
+                                      Stretch="Uniform" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                <TextBox x:Name="StatsSearchBox"
+                                         Background="Transparent" Foreground="#ddd" FontFamily="Segoe UI" FontSize="11.5"
+                                         BorderThickness="0" Padding="26,3,8,3" VerticalContentAlignment="Center"
+                                         TextChanged="StatsSearchBox_TextChanged"
+                                         GotFocus="TrackSearchBox_GotFocus" LostFocus="TrackSearchBox_LostFocus"
+                                         CaretBrush="#3b82f6"/>
+                                <TextBlock x:Name="StatsSearchPlaceholder" Text="Поиск треков..." IsHitTestVisible="False"
+                                           Foreground="#555" FontSize="11.5" Margin="28,0,0,0" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Button x:Name="StatsSortMenuBtn" Grid.Column="1" Style="{StaticResource FlatBtn}"
+                                    Padding="4" MinWidth="38" MinHeight="38" Click="SortMenuBtn_Click"
+                                    Tag="{StaticResource StatsSortContextMenu}" ToolTip="Сортировка">
+                                <Border Background="Transparent" Width="18" Height="18">
+                                    <Path Data="M3,6 L21,6 M3,12 L17,12 M3,18 L13,18"
+                                          Stroke="#888" StrokeThickness="2" Stretch="Uniform"/>
+                                </Border>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <StackPanel x:Name="StatsListPanel" Margin="0,0,0,24"/>
+
+                    <StackPanel x:Name="StatsEmptyState" VerticalAlignment="Center"
+                                HorizontalAlignment="Center" Visibility="Collapsed">
+                        <Path Data="M12,2 A10,10 0 1 1 11.999,2 Z M12,8 L12,12 M12,15 L12,16"
+                              Stroke="#333" StrokeThickness="2" Width="48" Height="48"
+                              Stretch="Uniform" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                        <TextBlock Text="Пока нет сыгранных уровней" FontSize="14"
+                                   Foreground="#555" HorizontalAlignment="Center"/>
+                    </StackPanel>
                 </StackPanel>
-
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,12,0">
-                    <StackPanel x:Name="StatsListPanel" HorizontalAlignment="Center"
-                                MinWidth="360" MaxWidth="500" Margin="0,0,0,24"/>
-                </ScrollViewer>
-
-                <StackPanel x:Name="StatsEmptyState" Grid.Row="1" VerticalAlignment="Center"
-                            HorizontalAlignment="Center" Visibility="Collapsed">
-                    <Path Data="M12,2 A10,10 0 1 1 11.999,2 Z M12,8 L12,12 M12,15 L12,16"
-                          Stroke="#333" StrokeThickness="2" Width="48" Height="48"
-                          Stretch="Uniform" HorizontalAlignment="Center" Margin="0,0,0,16"/>
-                    <TextBlock Text="Пока нет сыгранных уровней" FontSize="14"
-                               Foreground="#555" HorizontalAlignment="Center"/>
-                </StackPanel>
-            </Grid>
+            </ScrollViewer>
 
             <!-- ═══ ДЕТАЛЬНАЯ СТАТИСТИКА (GameStatsDetailView) ═══ -->
-            <Grid x:Name="GameStatsDetailView" Visibility="Collapsed" Focusable="True"
-                  KeyDown="GameStatsDetailView_KeyDown">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
+            <ScrollViewer x:Name="GameStatsDetailView" Visibility="Collapsed" Focusable="True"
+                          KeyDown="GameStatsDetailView_KeyDown"
+                          VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                          Margin="32,0,32,0">
+                <StackPanel HorizontalAlignment="Center" Width="498.68">
+                    <Border Background="#1a1a1a" Padding="20,24" BorderBrush="#2a2a2a" BorderThickness="0,0,0,1"
+                            Margin="0,0,0,16">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock x:Name="StatsDetailTitle" FontFamily="Segoe UI" FontSize="22"
+                                       FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis" Margin="0,0,0,6"/>
 
-                <Border Grid.Row="0" Background="#1a1a1a" Padding="20,24" BorderBrush="#2a2a2a" BorderThickness="0,0,0,1">
-                    <StackPanel HorizontalAlignment="Center" MaxWidth="500">
-                        <TextBlock x:Name="StatsDetailTitle" FontFamily="Segoe UI" FontSize="22"
-                                   FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"
-                                   TextTrimming="CharacterEllipsis" Margin="0,0,0,6"/>
-
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Border Background="#2a2a2a" CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
-                                <TextBlock x:Name="StatsDetailPlays" FontSize="11" Foreground="#aaa"/>
-                            </Border>
-                            <TextBlock x:Name="StatsDetailDates" FontSize="11" Foreground="#666" VerticalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border Background="#2a2a2a" CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
+                                    <TextBlock x:Name="StatsDetailPlays" FontSize="11" Foreground="#aaa"/>
+                                </Border>
+                                <TextBlock x:Name="StatsDetailDates" FontSize="11" Foreground="#666" VerticalAlignment="Center"/>
+                            </StackPanel>
                         </StackPanel>
-                    </StackPanel>
-                </Border>
+                    </Border>
 
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                    <StackPanel x:Name="StatsDetailPanel" HorizontalAlignment="Center"
-                                MinWidth="360" MaxWidth="500" Margin="0,16,0,24"/>
-                </ScrollViewer>
-            </Grid>
+                    <StackPanel x:Name="StatsDetailPanel" Margin="0,0,0,24"/>
+                </StackPanel>
+            </ScrollViewer>
 
             <!-- Выбор сложности .osz -->
             <Grid x:Name="OszDifficultyView" Visibility="Collapsed">
