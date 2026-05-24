@@ -123,6 +123,7 @@ public partial class MainWindow : Window
     private DispatcherTimer? _dangerPulseTimer;
     private int _perfectStreak = 0; // подряд PERFECT
     private readonly HashSet<int> _activeLanes = [];
+    private readonly HashSet<int> _hitLanesThisFrame = [];
 
     // Перформанс: очередь эффектов вне GameTick
     private readonly System.Collections.Concurrent.ConcurrentQueue<Action> _effectQueue = new();
@@ -4008,7 +4009,8 @@ public partial class MainWindow : Window
         _editorPlayer.Volume = linear;
         _previewPlayer.Volume = linear;
         _settings.GameVolume = e.NewValue; // сохраняем позицию ползунка, не линейное значение
-        VolumePercent.Text = $"{(int)(e.NewValue * 100)}%";
+        if (VolumePercent != null)
+            VolumePercent.Text = $"{(int)(e.NewValue * 100)}%";
         SettingsService.Save(_settings);
     }
 
@@ -5498,6 +5500,7 @@ public partial class MainWindow : Window
 
     private void GameTick(object? s, EventArgs e)
     {
+        _hitLanesThisFrame.Clear();
         double now = _gameClock.Elapsed.TotalSeconds;
         double canvasH = GameCanvas.ActualHeight > 0 ? GameCanvas.ActualHeight : 500;
         double hitY = canvasH - 70;
@@ -5660,10 +5663,12 @@ public partial class MainWindow : Window
         _hitNotes++;
         _consecutiveMisses = 0;
         _gameScore += baseScore * _gameCombo;
+        _hitLanesThisFrame.Add(lane);
 
         // Супер-эффект: крайние дорожки (← →) или любые три одновременно
         if (!_settings.DisableComboEffect &&
-            (_activeLanes.Contains(0) && _activeLanes.Contains(3) || _activeLanes.Count >= 3))
+            (_hitLanesThisFrame.Contains(0) && _hitLanesThisFrame.Contains(3) ||
+             _hitLanesThisFrame.Count >= 3))
         {
             _effectQueue.Enqueue(() => SpawnDoubleStrikeEffect(_currentComboColor));
         }
