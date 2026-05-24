@@ -1875,106 +1875,157 @@
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
 
-                                        <!-- Левая колонка -->
+                                        <!-- Левая колонка: Osu! Mode Info -->
                                         <StackPanel Grid.Column="0">
-                                            <Border Background="#1a1a1a" CornerRadius="8" Padding="12,10" Margin="0,0,0,12"
-                                                    BorderBrush="#2a2a2a" BorderThickness="1">
+
+                                            <!-- 1. Предупреждение об эпилепсии -->
+                                            <Border Background="Transparent" CornerRadius="8" Padding="12" Margin="0,0,0,10"
+                                                    BorderBrush="#f59e0b" BorderThickness="1" Opacity="0.9">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <Path Grid.Column="0" Data="M12,2 L22,20 L2,20 Z M12,9 L12,14 M12,16 L12,18"
-                                                          Stroke="#f59e0b" StrokeThickness="2" Width="18" Height="18"
+                                                          Stroke="#f59e0b" StrokeThickness="2" Width="16" Height="16"
                                                           Stretch="Uniform" Margin="0,2,10,0" VerticalAlignment="Top"/>
-                                                    <TextBlock Grid.Column="1" FontFamily="Segoe UI" FontSize="11"
-                                                               Foreground="#888" TextWrapping="Wrap">
+                                                    <TextBlock Grid.Column="1" FontFamily="Segoe UI" FontSize="11" LineHeight="16">
                                                         <Run Text="ВНИМАНИЕ" Foreground="#f59e0b" FontWeight="Bold"/>
                                                         <LineBreak/>
-                                                        <Run Text="Игра содержит мигающие эффекты и не рекомендуется лицам, подверженным эпилептическим припадкам."/>
+                                                        <Run Text="Игра содержит мигающие эффекты. Не рекомендуется лицам, подверженным фоточувствительной эпилепсии." Foreground="#a8a29e"/>
                                                     </TextBlock>
                                                 </Grid>
                                             </Border>
 
-                                            <Border Background="#1a1a1a" CornerRadius="8" Padding="12,10" Margin="0,0,0,12"
+                                            <!-- 2. Совместимость -->
+                                            <Border Background="Transparent" CornerRadius="8" Padding="14" Margin="0,0,0,10"
                                                     BorderBrush="#2a2a2a" BorderThickness="1">
                                                 <StackPanel>
-                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                                                         <Path Data="M12,2 A10,10 0 1 1 11.999,2 Z M12,8 L12,12 M12,15 L12,16"
-                                                              Stroke="#3b82f6" StrokeThickness="2"
-                                                              Width="14" Height="14" Stretch="Uniform"
-                                                              Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="СОВМЕСТИМОСТЬ" FontFamily="Segoe UI" FontSize="11"
+                                                              Stroke="#3b82f6" StrokeThickness="2" Width="14" Height="14"
+                                                              Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="СОВМЕСТИМОСТЬ КАРТ" FontFamily="Segoe UI" FontSize="11"
                                                                    Foreground="#3b82f6" FontWeight="Bold" VerticalAlignment="Center"/>
                                                     </StackPanel>
-                                                    <TextBlock FontFamily="Segoe UI" FontSize="11" Foreground="#888"
-                                                               TextWrapping="Wrap" LineHeight="18">
-                                                        <Run Text="NetFix поддерживает только режим " Foreground="#aaa"/>
-                                                        <Run Text="osu!mania" Foreground="#e84d8a" FontWeight="SemiBold"/>
-                                                        <Run Text=" — карты с 4 дорожками (4K)." Foreground="#aaa"/>
-                                                        <LineBreak/>
-                                                        <Run Text="Найти карты: " Foreground="#aaa"/>
+
+                                                    <TextBlock FontFamily="Segoe UI" FontSize="11.5" Foreground="#ccc" TextWrapping="Wrap" LineHeight="18">
+                                                        <Run Text="NetFix работает только с режимом "/>
+                                                        <Run Text="osu!mania (4K)" Foreground="#e84d8a" FontWeight="SemiBold"/>
+                                                        <Run Text=". Другие режимы не поддерживаются."/>
+                                                    </TextBlock>
+
+                                                    <Border Background="#222" CornerRadius="6" Padding="10,8" Margin="0,10,0,0">
+                                                        <StackPanel>
+                                                            <TextBlock FontSize="11" LineHeight="18" TextWrapping="Wrap">
+                                                                <Run Text="✓ " Foreground="#22c55e" FontWeight="Bold"/>
+                                                                <Run Text="Easy / Normal (4 кнопки)" Foreground="#ddd"/>
+                                                            </TextBlock>
+                                                            <TextBlock FontSize="11" LineHeight="18" TextWrapping="Wrap" Margin="0,2,0,0">
+                                                                <Run Text="✗ " Foreground="#ef4444" FontWeight="Bold"/>
+                                                                <Run Text="5K, 6K, 7K+ и стандартные карты" Foreground="#777"/>
+                                                            </TextBlock>
+                                                        </StackPanel>
+                                                    </Border>
+
+                                                    <TextBlock Margin="0,10,0,0" FontSize="11">
+                                                        <Run Text="Найти карты: " Foreground="#888"/>
                                                         <Hyperlink NavigateUri="https://osu.ppy.sh/beatmapsets?m=3&amp;s=any"
                                                                    RequestNavigate="Hyperlink_RequestNavigate"
-                                                                   TextDecorations="None" Foreground="#e84d8a">
-                                                            <Run Text="osu.ppy.sh/beatmapsets" FontWeight="SemiBold"/>
+                                                                   TextDecorations="None" Foreground="#e84d8a" FontWeight="SemiBold">
+                                                            osu.ppy.sh/beatmapsets
                                                         </Hyperlink>
-                                                        <LineBreak/>
-                                                        <LineBreak/>
-                                                        <Run Text="✓  Рекомендуется: " Foreground="#22c55e" FontWeight="SemiBold"/>
-                                                        <Run Text="Easy / Normal, " Foreground="#aaa"/>
-                                                        <Run Text="4K (4 кнопки)" Foreground="#22c55e" FontWeight="SemiBold"/>
-                                                        <LineBreak/>
-                                                        <Run Text="✗  Избегай: " Foreground="#ef4444" FontWeight="SemiBold"/>
-                                                        <Run Text="5K, 6K, 7K+ — NetFix поддерживает только 4 дорожки" Foreground="#aaa"/>
                                                     </TextBlock>
                                                 </StackPanel>
                                             </Border>
 
-                                            <Border x:Name="FfmpegBlock" Background="#1a1a1a" CornerRadius="8" Padding="14,12"
+                                            <!-- 3. FFmpeg Конвертация -->
+                                            <Border x:Name="FfmpegBlock" Background="Transparent" CornerRadius="8" Padding="14"
                                                     BorderBrush="#2a2a3a" BorderThickness="1">
                                                 <StackPanel>
                                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                                         <Path Data="M9,3 L9,21 M15,3 L15,21 M3,9 L21,9 M3,15 L21,15"
-                                                              Stroke="#a855f7" StrokeThickness="2"
-                                                              Width="14" Height="14" Stretch="Uniform"
-                                                              Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="FFMPEG — КОНВЕРТАЦИЯ АУДИО" FontFamily="Segoe UI" FontSize="11"
+                                                              Stroke="#a855f7" StrokeThickness="2" Width="14" Height="14"
+                                                              Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="АУДИО-КОНВЕРТАЦИЯ" FontFamily="Segoe UI" FontSize="11"
                                                                    Foreground="#a855f7" FontWeight="Bold" VerticalAlignment="Center"/>
                                                     </StackPanel>
-                                                    <TextBlock FontFamily="Segoe UI" FontSize="11" Foreground="#888"
-                                                               TextWrapping="Wrap" Margin="0,0,0,10" LineHeight="18">
-                                                        <Run Text="Для воспроизведения треков из osu! требуется "/>
-                                                        <Run Text="ffmpeg" FontWeight="SemiBold" Foreground="#ddd"/>
-                                                        <Run Text=". NetFix скачает и настроит его автоматически."/>
+
+                                                    <TextBlock FontFamily="Segoe UI" FontSize="11.5" Foreground="#aaa"
+                                                               TextWrapping="Wrap" Margin="0,0,0,12" LineHeight="18">
+                                                        <Run Text="Для воспроизведения треков требуется "/>
+                                                        <Run Text="ffmpeg" FontWeight="SemiBold" Foreground="#eee"/>
+                                                        <Run Text=". Обычно он скачивается автоматически."/>
                                                     </TextBlock>
 
-                                                    <Border x:Name="FfmpegOkBadge" Background="#0a1a0a" CornerRadius="6"
-                                                            Padding="10,6" BorderBrush="#1a3a1a" BorderThickness="1"
+                                                    <!-- Статус: Установлен -->
+                                                    <Border x:Name="FfmpegOkBadge" Background="#052e16" CornerRadius="6"
+                                                            Padding="10,8" BorderBrush="#14532d" BorderThickness="1"
                                                             Visibility="Collapsed">
                                                         <StackPanel Orientation="Horizontal">
-                                                            <Path Data="M20,6 L9,17 L4,12" Stroke="#22c55e" StrokeThickness="2"
+                                                            <Path Data="M20,6 L9,17 L4,12" Stroke="#22c55e" StrokeThickness="2.5"
                                                                   Width="12" Height="12" Stretch="Uniform" Margin="0,0,8,0"/>
                                                             <TextBlock Text="ffmpeg установлен и готов к работе"
-                                                                       FontFamily="Segoe UI" FontSize="11" Foreground="#22c55e"/>
+                                                                       FontFamily="Segoe UI" FontSize="11.5" Foreground="#4ade80" FontWeight="SemiBold"/>
                                                         </StackPanel>
                                                     </Border>
 
+                                                    <!-- Кнопка автозагрузки -->
                                                     <Button x:Name="DownloadFfmpegBtn" Style="{StaticResource OutlineBtn}"
-                                                            HorizontalAlignment="Stretch" Padding="12,8"
+                                                            HorizontalAlignment="Stretch" Padding="12,10"
                                                             WindowChrome.IsHitTestVisibleInChrome="True"
                                                             Click="DownloadFfmpegBtn_Click">
-                                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                                             <Path Data="M12,2 L12,14 M7,9 L12,14 L17,9 M3,17 L3,20 L21,20 L21,17"
-                                                                  Stroke="#a855f7" StrokeThickness="2"
-                                                                  Width="14" Height="14" Stretch="Uniform"
-                                                                  Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                                            <TextBlock x:Name="FfmpegBtnText" Text="Скачать ffmpeg"
-                                                                       FontFamily="Segoe UI" FontSize="13"
-                                                                       Foreground="#a855f7" FontWeight="SemiBold"
-                                                                       VerticalAlignment="Center"/>
+                                                                  Stroke="#a855f7" StrokeThickness="2" Width="14" Height="14"
+                                                                  Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                            <TextBlock x:Name="FfmpegBtnText" Text="Скачать ffmpeg автоматически"
+                                                                       FontFamily="Segoe UI" FontSize="12.5"
+                                                                       Foreground="#a855f7" FontWeight="SemiBold"/>
                                                         </StackPanel>
                                                     </Button>
+
+                                                    <!-- Ручная установка (Fallback) -->
+                                                    <StackPanel Margin="0,8,0,0">
+                                                        <TextBlock HorizontalAlignment="Center">
+                                                            <Hyperlink x:Name="ManualFfmpegLink"
+                                                                       Click="ManualFfmpegLink_Click"
+                                                                       TextDecorations="None" Foreground="#666" FontSize="11">
+                                                                Не скачивается? Установить вручную
+                                                            </Hyperlink>
+                                                        </TextBlock>
+
+                                                        <!-- Раскрывающаяся инструкция (по умолчанию скрыта) -->
+<Border x:Name="ManualInstallPanel" Background="Transparent" CornerRadius="6"
+                                                                        Padding="12" Margin="0,8,0,0" BorderBrush="#333" BorderThickness="1"
+                                                                        Visibility="Collapsed">
+                                                            <StackPanel>
+                                                                <TextBlock Text="Ручная установка:" Foreground="#ddd" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                                                <TextBlock FontSize="11" Foreground="#999" TextWrapping="Wrap" LineHeight="18">
+                                                                    <Run Text="1. Скачайте архив с "/>
+                                                                    <Hyperlink NavigateUri="https://github.com/BtbN/FFmpeg-Builds/releases"
+                                                                               RequestNavigate="Hyperlink_RequestNavigate"
+                                                                               TextDecorations="None" Foreground="#a855f7">
+                                                                        GitHub BtbN
+                                                                    </Hyperlink>
+                                                                    <LineBreak/>
+                                                                    <Run Text="2. Распакуйте "/>
+                                                                    <Run Text="ffmpeg.exe" Foreground="#eee" FontWeight="SemiBold"/>
+                                                                    <Run Text=" в папку:"/>
+                                                                    <LineBreak/>
+                                                                    <Run Text="%APPDATA%\NetFix\ffmpeg\" Foreground="#22c55e" FontWeight="SemiBold" FontFamily="Consolas" FontSize="10.5"/>
+                                                                    <LineBreak/>
+                                                                    <Run Text="3. Перезапустите приложение или нажмите проверку ниже."/>
+                                                                </TextBlock>
+
+                                                                <Button Content="Проверить наличие файла"
+                                                                        Style="{StaticResource OutlineBtn}"
+                                                                        Padding="8,6" Margin="0,10,0,0"
+                                                                        HorizontalAlignment="Left" FontSize="11"
+                                                                        Click="CheckFfmpegStatus_Click"/>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </StackPanel>
                                                 </StackPanel>
                                             </Border>
                                         </StackPanel>
