@@ -190,7 +190,8 @@ public partial class MainWindow : Window
     // ── Поиск и сортировка треков ────────────────────────────────────────────
     private ICollectionView? _userTracksView;
     private ICollectionView? _osuTracksView;
-    private string _currentSearchText = string.Empty;
+    private string _userSearchText = string.Empty;
+    private string _osuSearchText = string.Empty;
     private string _currentSortMode = "DateAddedDesc";
 
     // ── Network Monitor ──────────────────────────────────────────────────────
@@ -4621,34 +4622,64 @@ public partial class MainWindow : Window
     // ── Поиск и сортировка треков ────────────────────────────────────────────
     private bool UserTrackFilterPredicate(object item)
     {
-        if (string.IsNullOrWhiteSpace(_currentSearchText)) return true;
+        if (string.IsNullOrWhiteSpace(_userSearchText)) return true;
         if (item is not NoteMap track) return false;
-        return track.Title?.Contains(_currentSearchText, StringComparison.OrdinalIgnoreCase) == true;
+        return track.Title?.Contains(_userSearchText, StringComparison.OrdinalIgnoreCase) == true;
     }
 
     private bool OsuTrackFilterPredicate(object item)
     {
-        if (string.IsNullOrWhiteSpace(_currentSearchText)) return true;
+        if (string.IsNullOrWhiteSpace(_osuSearchText)) return true;
         if (item is not NoteMap track) return false;
-        return track.Title?.Contains(_currentSearchText, StringComparison.OrdinalIgnoreCase) == true;
+        return track.Title?.Contains(_osuSearchText, StringComparison.OrdinalIgnoreCase) == true;
     }
 
     private void TrackSearchBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         var tb = (TextBox)sender;
-        _currentSearchText = tb.Text;
-
-        // Placeholder — ищем по имени в окне (оба в одном namescope)
-        var placeholderName = tb.Name == "OsuTrackSearchBox"
-            ? "OsuSearchPlaceholder" : "SearchPlaceholder";
-        if (FindName(placeholderName) is TextBlock ph)
-            ph.Visibility = string.IsNullOrEmpty(_currentSearchText)
-                ? Visibility.Visible : Visibility.Collapsed;
+        var text = tb.Text;
 
         if (tb.Name == "OsuTrackSearchBox")
+        {
+            _osuSearchText = text;
+            if (FindName("OsuSearchPlaceholder") is TextBlock ph)
+                ph.Visibility = string.IsNullOrEmpty(text) ? Visibility.Visible : Visibility.Collapsed;
             _osuTracksView?.Refresh();
+        }
         else
+        {
+            _userSearchText = text;
+            if (FindName("SearchPlaceholder") is TextBlock ph)
+                ph.Visibility = string.IsNullOrEmpty(text) ? Visibility.Visible : Visibility.Collapsed;
             _userTracksView?.Refresh();
+        }
+    }
+
+    private void TrackSearchBox_GotFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is not TextBox tb) return;
+        // TextBox → inner Grid → outer Grid → Border
+        var border = (tb.Parent as FrameworkElement)?.Parent switch
+        {
+            Grid g => g.Parent as Border,
+            Border b => b,
+            _ => null
+        };
+        if (border != null)
+            border.BorderBrush = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6));
+    }
+
+    private void TrackSearchBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is not TextBox tb) return;
+        var border = (tb.Parent as FrameworkElement)?.Parent switch
+        {
+            Grid g => g.Parent as Border,
+            Border b => b,
+            _ => null
+        };
+        if (border != null)
+            border.BorderBrush = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x2a));
     }
 
     private void SortMenuBtn_Click(object sender, RoutedEventArgs e)

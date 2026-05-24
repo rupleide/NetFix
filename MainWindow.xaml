@@ -572,7 +572,77 @@
         </Style>
 
         <!-- ═══ КОНТЕКСТНОЕ МЕНЮ СОРТИРОВКИ ═══ -->
-        <ContextMenu x:Key="SortContextMenu" Background="#1e1e1e" Foreground="#ddd" BorderBrush="#333" FontFamily="Segoe UI" FontSize="12">
+        <ContextMenu x:Key="SortContextMenu" HasDropShadow="False"
+                     TextOptions.TextRenderingMode="Aliased" UseLayoutRounding="True">
+            <ContextMenu.Resources>
+                <Style TargetType="MenuItem">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Foreground" Value="#ccc"/>
+                    <Setter Property="FontFamily" Value="Segoe UI"/>
+                    <Setter Property="FontSize" Value="12.5"/>
+                    <Setter Property="Padding" Value="28,7,14,7"/>
+                    <Setter Property="Margin" Value="2,0"/>
+                    <Setter Property="Cursor" Value="Hand"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="MenuItem">
+                                <Border x:Name="Bg" Background="{TemplateBinding Background}"
+                                        CornerRadius="5" Padding="{TemplateBinding Padding}"
+                                        BorderThickness="0" SnapsToDevicePixels="True">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <!-- Акцентный индикатор слева -->
+                                        <Border Grid.Column="0" x:Name="AccentBar"
+                                                Width="3" Height="14" CornerRadius="2"
+                                                Background="Transparent"
+                                                VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <TextBlock Grid.Column="1" x:Name="Tb"
+                                                   Text="{TemplateBinding Header}"
+                                                   Foreground="{TemplateBinding Foreground}"
+                                                   VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bg" Property="Background" Value="#252525"/>
+                                        <Setter TargetName="AccentBar" Property="Background" Value="#3b82f6"/>
+                                        <Setter TargetName="Tb" Property="Foreground" Value="White"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.4"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+                <Style TargetType="Separator">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate>
+                                <Border Height="1" Background="#2a2a2a" Margin="10,3,10,3"/>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ContextMenu.Resources>
+            <ContextMenu.Template>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border Background="#1a1a1a" CornerRadius="10"
+                            BorderBrush="#333" BorderThickness="1"
+                            Padding="4" SnapsToDevicePixels="True">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="16" ShadowDepth="4" Color="#000" Opacity="0.5"/>
+                            </Border.Effect>
+                        <ScrollViewer>
+                            <StackPanel IsItemsHost="True"/>
+                        </ScrollViewer>
+                    </Border>
+                </ControlTemplate>
+            </ContextMenu.Template>
             <MenuItem Header="По названию (А-Я)" Tag="TitleAsc" Click="SortMenuItem_Click"/>
             <MenuItem Header="По дате добавления (Новые)" Tag="DateAddedDesc" Click="SortMenuItem_Click"/>
             <MenuItem Header="По дате добавления (Старые)" Tag="DateAddedAsc" Click="SortMenuItem_Click"/>
@@ -1825,7 +1895,9 @@
                                                         <TextBox x:Name="TrackSearchBox"
                                                                  Background="Transparent" Foreground="#ddd" FontFamily="Segoe UI" FontSize="11.5"
                                                                  BorderThickness="0" Padding="26,3,8,3" VerticalContentAlignment="Center"
-                                                                 TextChanged="TrackSearchBox_TextChanged"/>
+                                                                 TextChanged="TrackSearchBox_TextChanged"
+                                                                 GotFocus="TrackSearchBox_GotFocus" LostFocus="TrackSearchBox_LostFocus"
+                                                                 CaretBrush="#3b82f6"/>
                                                         <TextBlock x:Name="SearchPlaceholder" Text="Поиск треков..." IsHitTestVisible="False"
                                                                    Foreground="#555" FontSize="11.5" Margin="28,0,0,0" VerticalAlignment="Center"/>
                                                     </Grid>
@@ -2108,7 +2180,9 @@
                                                         <TextBox x:Name="OsuTrackSearchBox"
                                                                  Background="Transparent" Foreground="#ddd" FontFamily="Segoe UI" FontSize="11.5"
                                                                  BorderThickness="0" Padding="26,3,8,3" VerticalContentAlignment="Center"
-                                                                 TextChanged="TrackSearchBox_TextChanged"/>
+                                                                 TextChanged="TrackSearchBox_TextChanged"
+                                                                 GotFocus="TrackSearchBox_GotFocus" LostFocus="TrackSearchBox_LostFocus"
+                                                                 CaretBrush="#3b82f6"/>
                                                         <TextBlock x:Name="OsuSearchPlaceholder" Text="Поиск osu! треков..." IsHitTestVisible="False"
                                                                    Foreground="#555" FontSize="11.5" Margin="28,0,0,0" VerticalAlignment="Center"/>
                                                     </Grid>
