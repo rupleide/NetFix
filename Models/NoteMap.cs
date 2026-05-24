@@ -18,6 +18,10 @@ public class NoteMap
 
     [JsonIgnore]
     public string? SourceOszPath { get; set; }
+
+    public DateTime DateAdded { get; set; } = DateTime.Now;
+
+    public DateTime? LastPlayed { get; set; }
 }
 
 public class NoteEntry

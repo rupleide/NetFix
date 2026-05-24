@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -36,6 +37,7 @@ using Cursors      = System.Windows.Input.Cursors;
 using Orientation  = System.Windows.Controls.Orientation;
 using RadioButton  = System.Windows.Controls.RadioButton;
 using Button       = System.Windows.Controls.Button;
+using TextBox      = System.Windows.Controls.TextBox;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using Brush        = System.Windows.Media.Brush;
 using Panel        = System.Windows.Controls.Panel;
@@ -184,7 +186,13 @@ public partial class MainWindow : Window
     private string? _lastGameTitle = null;
     private double _lastGameBpm = 0;
     private string? _pendingOszPath;
-    
+
+    // ── Поиск и сортировка треков ────────────────────────────────────────────
+    private ICollectionView? _userTracksView;
+    private ICollectionView? _osuTracksView;
+    private string _currentSearchText = string.Empty;
+    private string _currentSortMode = "DateAddedDesc";
+
     // ── Network Monitor ──────────────────────────────────────────────────────
     private DispatcherTimer _netTimer = null!;
     private DispatcherTimer _pingTimer = null!;
@@ -4394,7 +4402,14 @@ public partial class MainWindow : Window
                 if (!File.Exists(notesFile)) return null;
                 try
                 {
-                    return JsonSerializer.Deserialize<NoteMap>(File.ReadAllText(notesFile));
+                    var map = JsonSerializer.Deserialize<NoteMap>(File.ReadAllText(notesFile));
+                    if (map != null)
+                    {
+                        map.LevelDir = d;
+                        if (map.DateAdded == default)
+                            map.DateAdded = Directory.GetCreationTime(d);
+                    }
+                    return map;
                 }
                 catch
                 {
@@ -4409,12 +4424,16 @@ public partial class MainWindow : Window
             UserLevelsEmpty.Visibility = Visibility.Visible;
             UserLevelsList.Visibility = Visibility.Collapsed;
             UserLevelsList.ItemsSource = null;
+            _userTracksView = null;
         }
         else
         {
             UserLevelsEmpty.Visibility = Visibility.Collapsed;
             UserLevelsList.Visibility = Visibility.Visible;
             UserLevelsList.ItemsSource = levels;
+            _userTracksView = CollectionViewSource.GetDefaultView(UserLevelsList.ItemsSource);
+            _userTracksView.Filter = UserTrackFilterPredicate;
+            ApplyUserSorting();
         }
         
         // Загружаем встроенные треки NetFix
@@ -4597,6 +4616,109 @@ public partial class MainWindow : Window
         }
         
         return result;
+    }
+
+    // ── Поиск и сортировка треков ────────────────────────────────────────────
+    private bool UserTrackFilterPredicate(object item)
+    {
+        if (string.IsNullOrWhiteSpace(_currentSearchText)) return true;
+        if (item is not NoteMap track) return false;
+        return track.Title?.Contains(_currentSearchText, StringComparison.OrdinalIgnoreCase) == true;
+    }
+
+    private bool OsuTrackFilterPredicate(object item)
+    {
+        if (string.IsNullOrWhiteSpace(_currentSearchText)) return true;
+        if (item is not NoteMap track) return false;
+        return track.Title?.Contains(_currentSearchText, StringComparison.OrdinalIgnoreCase) == true;
+    }
+
+    private void TrackSearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        var tb = (TextBox)sender;
+        _currentSearchText = tb.Text;
+
+        // Placeholder — ищем по имени в окне (оба в одном namescope)
+        var placeholderName = tb.Name == "OsuTrackSearchBox"
+            ? "OsuSearchPlaceholder" : "SearchPlaceholder";
+        if (FindName(placeholderName) is TextBlock ph)
+            ph.Visibility = string.IsNullOrEmpty(_currentSearchText)
+                ? Visibility.Visible : Visibility.Collapsed;
+
+        if (tb.Name == "OsuTrackSearchBox")
+            _osuTracksView?.Refresh();
+        else
+            _userTracksView?.Refresh();
+    }
+
+    private void SortMenuBtn_Click(object sender, RoutedEventArgs e)
+    {
+        var btn = (Button)sender;
+        var menu = btn.Tag as ContextMenu;
+        if (menu != null)
+        {
+            menu.PlacementTarget = btn;
+            menu.IsOpen = true;
+        }
+    }
+
+    private void SortMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuItem item) return;
+        var tag = item.Tag?.ToString() ?? "DateAddedDesc";
+        _currentSortMode = tag;
+
+        // Определяем какой вью и кнопка — по родительской цепочке ContextMenu
+        var ctx = item.Parent as ContextMenu;
+        var target = ctx?.PlacementTarget;
+        if (target is Button btn && btn.Name == "OsuSortMenuBtn")
+        {
+            ApplyOsuSorting();
+            _osuTracksView?.Refresh();
+        }
+        else
+        {
+            ApplyUserSorting();
+            _userTracksView?.Refresh();
+        }
+    }
+
+    private void ApplyUserSorting()
+    {
+        if (_userTracksView == null) return;
+        ApplySortingToView(_userTracksView);
+    }
+
+    private void ApplyOsuSorting()
+    {
+        if (_osuTracksView == null) return;
+        ApplySortingToView(_osuTracksView);
+    }
+
+    private void ApplySortingToView(ICollectionView view)
+    {
+        view.SortDescriptions.Clear();
+        switch (_currentSortMode)
+        {
+            case "TitleAsc":
+                view.SortDescriptions.Add(new SortDescription("Title", ListSortDirection.Ascending));
+                break;
+            case "DateAddedDesc":
+                view.SortDescriptions.Add(new SortDescription("DateAdded", ListSortDirection.Descending));
+                break;
+            case "DateAddedAsc":
+                view.SortDescriptions.Add(new SortDescription("DateAdded", ListSortDirection.Ascending));
+                break;
+            case "LastPlayedDesc":
+                view.SortDescriptions.Add(new SortDescription("LastPlayed", ListSortDirection.Descending));
+                break;
+            case "NotesAsc":
+                view.SortDescriptions.Add(new SortDescription("NoteCount", ListSortDirection.Ascending));
+                break;
+            case "NotesDesc":
+                view.SortDescriptions.Add(new SortDescription("NoteCount", ListSortDirection.Descending));
+                break;
+        }
     }
 
     // ── Игра: движок ─────────────────────────────────────────────────────────
@@ -7034,6 +7156,8 @@ public partial class MainWindow : Window
                 if (map != null)
                 {
                     map.LevelDir = dir;
+                    if (map.DateAdded == default)
+                        map.DateAdded = Directory.GetCreationTime(dir);
                     var sourcePath = Path.Combine(dir, "source.osz.path");
                     if (File.Exists(sourcePath))
                         map.SourceOszPath = File.ReadAllText(sourcePath).Trim();
@@ -7047,12 +7171,17 @@ public partial class MainWindow : Window
         {
             OsuLevelsEmpty.Visibility = Visibility.Visible;
             OsuLevelsList.Visibility = Visibility.Collapsed;
+            OsuLevelsList.ItemsSource = null;
+            _osuTracksView = null;
         }
         else
         {
             OsuLevelsEmpty.Visibility = Visibility.Collapsed;
             OsuLevelsList.Visibility = Visibility.Visible;
             OsuLevelsList.ItemsSource = maps;
+            _osuTracksView = CollectionViewSource.GetDefaultView(OsuLevelsList.ItemsSource);
+            _osuTracksView.Filter = OsuTrackFilterPredicate;
+            ApplyOsuSorting();
         }
     }
 
