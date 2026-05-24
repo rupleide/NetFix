@@ -572,33 +572,30 @@
         </Style>
 
         <!-- ═══ КОНТЕКСТНОЕ МЕНЮ СОРТИРОВКИ ═══ -->
-        <ContextMenu x:Key="SortContextMenu" HasDropShadow="False"
-                     TextOptions.TextRenderingMode="Aliased" UseLayoutRounding="True">
+        <ContextMenu x:Key="SortContextMenu" HasDropShadow="False" UseLayoutRounding="True">
             <ContextMenu.Resources>
                 <Style TargetType="MenuItem">
                     <Setter Property="Background" Value="Transparent"/>
-                    <Setter Property="Foreground" Value="#ccc"/>
+                    <Setter Property="Foreground" Value="#aaa"/>
                     <Setter Property="FontFamily" Value="Segoe UI"/>
-                    <Setter Property="FontSize" Value="12.5"/>
-                    <Setter Property="Padding" Value="28,7,14,7"/>
-                    <Setter Property="Margin" Value="2,0"/>
+                    <Setter Property="FontSize" Value="11.5"/>
+                    <Setter Property="Padding" Value="8,5,14,5"/>
                     <Setter Property="Cursor" Value="Hand"/>
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="MenuItem">
                                 <Border x:Name="Bg" Background="{TemplateBinding Background}"
-                                        CornerRadius="5" Padding="{TemplateBinding Padding}"
+                                        CornerRadius="4" Padding="{TemplateBinding Padding}"
                                         BorderThickness="0" SnapsToDevicePixels="True">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <!-- Акцентный индикатор слева -->
                                         <Border Grid.Column="0" x:Name="AccentBar"
-                                                Width="3" Height="14" CornerRadius="2"
+                                                Width="3" Height="12" CornerRadius="1.5"
                                                 Background="Transparent"
-                                                VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                VerticalAlignment="Center" Margin="0,0,8,0"/>
                                         <TextBlock Grid.Column="1" x:Name="Tb"
                                                    Text="{TemplateBinding Header}"
                                                    Foreground="{TemplateBinding Foreground}"
@@ -607,7 +604,7 @@
                                 </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Bg" Property="Background" Value="#252525"/>
+                                        <Setter TargetName="Bg" Property="Background" Value="#222"/>
                                         <Setter TargetName="AccentBar" Property="Background" Value="#3b82f6"/>
                                         <Setter TargetName="Tb" Property="Foreground" Value="White"/>
                                     </Trigger>
@@ -623,7 +620,7 @@
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate>
-                                <Border Height="1" Background="#2a2a2a" Margin="10,3,10,3"/>
+                                <Border Height="1" Background="#2a2a2a" Margin="6,2,6,2"/>
                             </ControlTemplate>
                         </Setter.Value>
                     </Setter>
@@ -631,11 +628,11 @@
             </ContextMenu.Resources>
             <ContextMenu.Template>
                 <ControlTemplate TargetType="ContextMenu">
-                    <Border Background="#1a1a1a" CornerRadius="10"
-                            BorderBrush="#333" BorderThickness="1"
-                            Padding="4" SnapsToDevicePixels="True">
+                    <Border Background="#1a1a1a" CornerRadius="8"
+                            BorderBrush="#2a2a2a" BorderThickness="1"
+                            Padding="3" SnapsToDevicePixels="True">
                             <Border.Effect>
-                                <DropShadowEffect BlurRadius="16" ShadowDepth="4" Color="#000" Opacity="0.5"/>
+                                <DropShadowEffect BlurRadius="12" ShadowDepth="3" Color="#000" Opacity="0.5"/>
                             </Border.Effect>
                         <ScrollViewer>
                             <StackPanel IsItemsHost="True"/>
