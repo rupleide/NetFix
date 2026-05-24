@@ -15,6 +15,9 @@ public class NoteMap
 
     [JsonIgnore]
     public string? LevelDir { get; set; }
+
+    [JsonIgnore]
+    public string? SourceOszPath { get; set; }
 }
 
 public class NoteEntry
