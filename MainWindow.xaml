@@ -1274,6 +1274,10 @@
                                     Width="90" VerticalAlignment="Center"
                                     ValueChanged="VolumeSlider_Changed"
                                     Style="{StaticResource VolumeSliderStyle}"/>
+                            <TextBlock x:Name="VolumePercent" Text="50%"
+                                       FontFamily="Segoe UI" FontSize="11"
+                                       Foreground="#888" VerticalAlignment="Center"
+                                       Width="32" TextAlignment="Right"/>
                         </StackPanel>
 
                         <!-- Центр: Счёт/Комбо/Точность (видны только во время игры) -->
