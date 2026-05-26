@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -334,6 +334,7 @@ public partial class MainWindow : Window
     {
         if (_settings.DiscordRpcEnabled)
             _discord.Initialize();
+        _discord.UseCleanText = _settings.CleanDiscordStatus;
         UpdateMainGridClip();
         LoadSettingsToPanel();
         _settingsLoaded = true; // после этого можно обрабатывать события чекбоксов
@@ -3931,6 +3932,7 @@ public partial class MainWindow : Window
         AutoTgWsCB.IsChecked    = _settings.AutostartTgWsProxy;
         AutoAppCB.IsChecked     = _settings.AutostartApp;
         DiscordRpcCB.IsChecked  = _settings.DiscordRpcEnabled;
+        CleanDiscordStatusCB.IsChecked = _settings.CleanDiscordStatus;
         AutoUpdatesCB.IsChecked = _settings.AutoUpdates;
         ComboEffectCB.IsChecked = _settings.DisableComboEffect;
         VolumeSlider.Value = _settings.GameVolume;
@@ -3938,6 +3940,8 @@ public partial class MainWindow : Window
         double linear = Math.Pow(_settings.GameVolume, 3);
         _editorPlayer.Volume = linear;
         _previewPlayer.Volume = linear;
+        if (VolumePercent != null)
+            VolumePercent.Text = $"{(int)(_settings.GameVolume * 100)}%";
         LoadKeyLabels();
     }
 
@@ -3955,6 +3959,20 @@ public partial class MainWindow : Window
         SetAutostart(_settings.AutostartApp);
         
         CloseSettings();
+    }
+
+    private void CleanDiscordStatusCB_Checked(object sender, RoutedEventArgs e)
+    {
+        _settings.CleanDiscordStatus = true;
+        _discord.UseCleanText = true;
+        SettingsService.Save(_settings);
+    }
+
+    private void CleanDiscordStatusCB_Unchecked(object sender, RoutedEventArgs e)
+    {
+        _settings.CleanDiscordStatus = false;
+        _discord.UseCleanText = false;
+        SettingsService.Save(_settings);
     }
 
     private void DiscordRpcCB_Checked(object sender, RoutedEventArgs e)
@@ -3993,7 +4011,7 @@ public partial class MainWindow : Window
                 }
             },
             confirmText: "Отключить",
-            confirmIsDestructive: false);
+            confirmIsDestructive: true);
     }
 
     private void ComboEffectCB_Unchecked(object sender, RoutedEventArgs e)
@@ -4005,11 +4023,13 @@ public partial class MainWindow : Window
 
     private void VolumeSlider_Changed(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
+        if (!_settingsLoaded) return;
+
         // Логарифмическая кривая: слух воспринимает громкость нелинейно
         double linear = Math.Pow(e.NewValue, 3);
         _editorPlayer.Volume = linear;
         _previewPlayer.Volume = linear;
-        _settings.GameVolume = e.NewValue; // сохраняем позицию ползунка, не линейное значение
+        _settings.GameVolume = e.NewValue;
         if (VolumePercent != null)
             VolumePercent.Text = $"{(int)(e.NewValue * 100)}%";
         SettingsService.Save(_settings);
@@ -7175,7 +7195,7 @@ public partial class MainWindow : Window
                     ShowNotification("Успешно", $"Трек «{map.Title}» импортирован", isError: false);
                 },
                 confirmText: "Заменить",
-                confirmIsDestructive: false);
+            confirmIsDestructive: true);
         }
         else
         {
