@@ -255,7 +255,7 @@ public partial class MainWindow : Window
         SizeChanged += OnSizeChanged;
         InitTray();
         
-        // Aurora animation — 30fps, синхронизировано с рендером
+        // Aurora animation, 30fps, синхронизировано с рендером
         _auroraTimer = new DispatcherTimer(DispatcherPriority.Render);
         _auroraTimer.Interval = TimeSpan.FromMilliseconds(33); // 30fps
         _auroraTimer.Tick += (s, e) =>
@@ -302,7 +302,7 @@ public partial class MainWindow : Window
         // Радиус остаётся постоянным (без пульсации и изменения размера)
         double baseRadius = index == 0 ? 0.32 : 0.22; // Базовые размеры из XAML
         
-        // Цвет — меняем ВСЕ GradientStop'ы плавно от базового к результату
+        // Цвет, меняем ВСЕ GradientStop'ы плавно от базового к результату
         Color targetColor = _finalSuccess ? _successColor : _errorColor;
         Color currentColor = LerpColor(_baseColors[index], targetColor, colorEase);
         
@@ -4010,7 +4010,7 @@ public partial class MainWindow : Window
 
         var titleBlock = new TextBlock
         {
-            Text = "Вы точно хотите отключить интеграцию с Discord?",
+            Text = "Ты точно хочешь отключить интеграцию с Discord?",
             FontFamily = new FontFamily("Segoe UI"),
             FontSize = 16,
             FontWeight = FontWeights.SemiBold,
@@ -4022,10 +4022,11 @@ public partial class MainWindow : Window
 
         var messageBlock = new TextBlock
         {
-            Text = "Статус NetFix в вашем профиле помогает приложению развиваться — " +
-                   "о нём узнают больше людей! Это не тратит вашу память и не замедляет " +
-                   "систему. А мне, как разработчику, будет очень приятно, что приложение " +
-                   "скачивают чаще — это мотивирует на новые обновления 🙂",
+            Text = "Статус NetFix в твоем профиле помогает проекту развиваться, ведь " +
+                   "благодаря ему о приложении узнает больше людей. Это не расходует " +
+                   "оперативную память и никак не замедляет систему. А мне, как разработчику, " +
+                   "очень приятно видеть, что приложением пользуются, это мотивирует чаще " +
+                   "выпускать обновления 🙂",
             FontFamily = new FontFamily("Segoe UI"),
             FontSize = 13,
             Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
@@ -4040,7 +4041,7 @@ public partial class MainWindow : Window
             HorizontalAlignment = System.Windows.HorizontalAlignment.Right
         };
 
-        // Кнопка "Отключить" (красная, деструктивная — чуть меньше)
+        // Кнопка "Отключить" (красная, деструктивная, чуть меньше)
         var disableBtn = new Button
         {
             Content = "Отключить",
@@ -4224,7 +4225,7 @@ public partial class MainWindow : Window
 
         var titleBlock = new TextBlock
         {
-            Text = "Ну раз ты так, то я вот так:",
+            Text = "Ну раз так, тогда небольшая проверка:",
             FontFamily = new FontFamily("Segoe UI"),
             FontSize = 16,
             FontWeight = FontWeights.SemiBold,
@@ -4273,7 +4274,7 @@ public partial class MainWindow : Window
         };
         stack.Children.Add(problemBlock);
 
-        // Кнопки ответов — сетка 2×2
+        // Кнопки ответов, сетка 2×2
         var grid = new Grid { Margin = new Thickness(0, 0, 0, 8) };
         grid.ColumnDefinitions.Add(new ColumnDefinition());
         grid.ColumnDefinitions.Add(new ColumnDefinition());
@@ -4330,7 +4331,7 @@ public partial class MainWindow : Window
 
                 if (val == correctAnswer)
                 {
-                    // Правильно — отключаем
+                    // Правильно, отключаем
                     _settings.DiscordRpcEnabled = false;
                     _discord.Disable();
                     SettingsService.Save(_settings);
@@ -4338,7 +4339,7 @@ public partial class MainWindow : Window
                 }
                 else
                 {
-                    // Неправильно — оставляем
+                    // Неправильно, оставляем
                     DiscordRpcCB.IsChecked = true;
                     ShowMathResultDialog(false);
                 }
@@ -4384,8 +4385,8 @@ public partial class MainWindow : Window
         var titleBlock = new TextBlock
         {
             Text = correct
-                ? "ну ладно"
-                : "НЕПРАВИЛЬНО! ну оставим стутус получается)",
+                ? "Ну ладно, твоя взяла."
+                : "Неправильно!",
             FontFamily = new FontFamily("Segoe UI"),
             FontSize = 16,
             FontWeight = FontWeights.SemiBold,
@@ -4395,19 +4396,18 @@ public partial class MainWindow : Window
         };
         stack.Children.Add(titleBlock);
 
-        if (correct)
+        var msgBlock = new TextBlock
         {
-            var msgBlock = new TextBlock
-            {
-                Text = "но всё таки если есть возможность включи пожалуйста.",
-                FontFamily = new FontFamily("Segoe UI"),
-                FontSize = 13,
-                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 0, 0, 20)
-            };
-            stack.Children.Add(msgBlock);
-        }
+            Text = correct
+                ? "Но если будет возможность, включи его обратно, пожалуйста."
+                : "Похоже, статус пока придется оставить :)",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 13,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 20)
+        };
+        stack.Children.Add(msgBlock);
 
         var okBtn = new Button
         {
@@ -4439,7 +4439,7 @@ public partial class MainWindow : Window
         if (!_settingsLoaded) return; // не показывать диалог при загрузке настроек
         ShowConfirmDialog(
             "Отключить комбо-эффект?",
-            "Этот эффект создаёт яркую вспышку при одновременном нажатии трёх любых дорожек — " +
+            "Этот эффект создаёт яркую вспышку при одновременном нажатии трёх любых дорожек, " +
             "он усиливает эмоциональную отдачу от прохождения и делает игру более зрелищной.\n\n" +
             "Однако на очень сложных уровнях с высокой плотностью нот визуальный шум может " +
             "сбивать концентрацию. В таком случае отключение оправдано.",
@@ -5211,7 +5211,7 @@ public partial class MainWindow : Window
         if (sender is not MenuItem item) return;
         var tag = item.Tag?.ToString() ?? "DateAddedDesc";
 
-        // Определяем какой вью и кнопка — по родительской цепочке ContextMenu
+        // Определяем какой вью и кнопка, по родительской цепочке ContextMenu
         var ctx = item.Parent as ContextMenu;
         var target = ctx?.PlacementTarget;
         if (target is Button btn && btn.Name == "OsuSortMenuBtn")
@@ -5310,7 +5310,7 @@ public partial class MainWindow : Window
         for (int i = 0; i < 48; i++)
             notes.Add(new NoteEntry { Time = beatSec * (i + 2), Lane = pattern[i % pattern.Length] });
 
-        StartGame(notes, null, "NetFix — Default Beat", REFERENCE_BPM);
+        StartGame(notes, null, "NetFix, Default Beat", REFERENCE_BPM);
     }
 
     private void ShowGameOverlay()
@@ -5988,7 +5988,7 @@ public partial class MainWindow : Window
         double canvasH = GameCanvas.ActualHeight > 0 ? GameCanvas.ActualHeight : 500;
         double hitY = canvasH - 70;
 
-        // Спавн новых нот — используем кэшированные кисти
+        // Спавн новых нот, используем кэшированные кисти
         while (_pendingNotes.Count > 0 && _pendingNotes[0].Time - now <= _currentFallSec)
         {
             var note = _pendingNotes[0];
@@ -6007,7 +6007,7 @@ public partial class MainWindow : Window
                 Width = NOTE_SIZE, Height = NOTE_SIZE,
                 CornerRadius = new CornerRadius(8),
                 BorderThickness = new Thickness(1.5),
-                // Используем кэшированные кисти — не создаём новые каждый раз
+                // Используем кэшированные кисти, не создаём новые каждый раз
                 BorderBrush = _laneBrushes[note.Lane],
                 Background = _noteGradients[note.Lane],
                 Tag = note,
@@ -6028,7 +6028,7 @@ public partial class MainWindow : Window
             note.Effect = effect;
         }
 
-        // Обновляем позиции — никаких new объектов
+        // Обновляем позиции, никаких new объектов
         var toRemove = new List<NoteEntry>();
         foreach (var note in _activeNotes)
         {
@@ -6037,7 +6037,7 @@ public partial class MainWindow : Window
             double top = -50 + progress * (hitY + 50);
             Canvas.SetTop(note.Visual, top);
 
-            // Свечение при приближении — обновляем существующий effect
+            // Свечение при приближении, обновляем существующий effect
             double distToHit = Math.Abs(top - hitY);
             if (distToHit < 90 && note.Effect != null)
             {
@@ -6054,7 +6054,7 @@ public partial class MainWindow : Window
                 _missCount++;
                 _consecutiveMisses++;
                 ShowJudge("MISS", Colors.Gray);
-                // Эффекты в очередь — не в game loop
+                // Эффекты в очередь, не в game loop
                 _effectQueue.Enqueue(() => UpdateComboAura());
                 UpdateHUD();
 
@@ -6068,7 +6068,7 @@ public partial class MainWindow : Window
         }
         foreach (var n in toRemove) _activeNotes.Remove(n);
 
-        // Judge fade — просто Opacity, без аллокаций
+        // Judge fade, просто Opacity, без аллокаций
         if (_judgeVisibleUntil > 0 && now >= _judgeVisibleUntil)
         {
             JudgeText.Opacity = 0;
@@ -6167,7 +6167,7 @@ public partial class MainWindow : Window
         if (judge == "PERFECT")
         {
             _perfectStreak++;
-            // Каждые 10 PERFECT подряд — спецэффект
+            // Каждые 10 PERFECT подряд, спецэффект
             if (_perfectStreak > 0 && _perfectStreak % 10 == 0)
             {
                 _effectQueue.Enqueue(() =>
@@ -6183,7 +6183,7 @@ public partial class MainWindow : Window
         ShowJudge(judge, color);
         FlashHitZone(lane);
 
-        // Тяжёлые эффекты — в очередь, не блокируем GameTick
+        // Тяжёлые эффекты, в очередь, не блокируем GameTick
         int capturedLane = lane;
         string capturedJudge = judge;
         _effectQueue.Enqueue(() =>
@@ -6279,7 +6279,7 @@ public partial class MainWindow : Window
             old.BeginAnimation(UIElement.OpacityProperty, fo);
         }
 
-        if (newLevel == 0) return; // ниже первого порога — ничего не делаем
+        if (newLevel == 0) return; // ниже первого порога, ничего не делаем
 
         var (mainColor, accentColor, announceText, alpha) = levels[newLevel - 1];
         Color c = mainColor;
@@ -6295,7 +6295,7 @@ public partial class MainWindow : Window
             Opacity = 0
         };
 
-        // Виньетка — цветная по краям, прозрачная в центре
+        // Виньетка, цветная по краям, прозрачная в центре
         // Для высоких уровней (10+) добавляем акцентный цвет в центре
         var stops = new GradientStopCollection();
         
@@ -6336,7 +6336,7 @@ public partial class MainWindow : Window
             new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(600))
             { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
 
-        // Пульсация — скорость и амплитуда растут с уровнем
+        // Пульсация, скорость и амплитуда растут с уровнем
         double pulse = 0;
         double speed = 0.025 + newLevel * 0.010;
         double ampli = 0.15 + newLevel * 0.010; // max ~0.30
@@ -6362,7 +6362,7 @@ public partial class MainWindow : Window
     {
         _starTimer?.Stop();
         
-        // На максимальном уровне (15) — НАМНОГО больше звёзд
+        // На максимальном уровне (15), НАМНОГО больше звёзд
         _starBurst = level >= 12 ? 20 : (level >= 3 ? 12 : 8);
 
         var rng = new Random();
@@ -6379,7 +6379,7 @@ public partial class MainWindow : Window
             _starBurst--;
 
             int count = level >= 12 ? 10 : (level >= 3 ? 6 : 3);
-            double viewWidth  = GameCanvas.ActualWidth;   // 240px — только игровое поле
+            double viewWidth  = GameCanvas.ActualWidth;   // 240px, только игровое поле
             double viewHeight = GameCanvas.ActualHeight;  // без нижней панели
 
             for (int i = 0; i < count; i++)
@@ -6391,7 +6391,7 @@ public partial class MainWindow : Window
                 double size   = rng.Next(6, level >= 3 ? 18 : 14);
                 double dur    = 1200 + rng.Next(0, 600);
 
-                // Для белого цвета (максимальное комбо) — используем радужные цвета
+                // Для белого цвета (максимальное комбо), используем радужные цвета
                 Color starColor;
                 if (color.R >= 250 && color.G >= 250 && color.B >= 250)
                 {
@@ -6409,7 +6409,7 @@ public partial class MainWindow : Window
                 }
                 else
                 {
-                    // Обычные звёзды — светлее основного цвета
+                    // Обычные звёзды, светлее основного цвета
                     starColor = Color.FromArgb(
                         (byte)rng.Next(200, 255),
                         (byte)Math.Min(255, color.R + 40),
@@ -6578,7 +6578,7 @@ public partial class MainWindow : Window
             Opacity = 0
         };
 
-        // Виньетка — красная по краям, прозрачная в центре
+        // Виньетка, красная по краям, прозрачная в центре
         danger.Fill = new RadialGradientBrush(new GradientStopCollection
         {
             new GradientStop(Color.FromArgb(0,   0xef, 0x44, 0x44), 0.00),
@@ -6683,7 +6683,7 @@ public partial class MainWindow : Window
 
     private void ShowJudge(string text, Color color)
     {
-        // MISS показываем статично, PERFECT/GOOD — через SpawnHitEffect
+        // MISS показываем статично, PERFECT/GOOD, через SpawnHitEffect
         if (text == "MISS")
         {
             JudgeText.Text = "MISS";
@@ -6758,7 +6758,7 @@ public partial class MainWindow : Window
             { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
         ring.BeginAnimation(UIElement.OpacityProperty, fadeRing);
 
-        // 3. Частицы — разлетаются во все стороны
+        // 3. Частицы, разлетаются во все стороны
         var rng = new Random();
         int particleCount = judge == "PERFECT" ? 8 : 5;
         for (int p = 0; p < particleCount; p++)
@@ -7378,7 +7378,7 @@ public partial class MainWindow : Window
     private void ShowOszDifficultyPicker(List<(string Name, string FileName, int KeyCount)> difficulties, bool isOsuMode = false)
     {
         OszDifficultyPanel.Children.Clear();
-        OszDifficultySubtext.Text = $"{difficulties.Count} сложностей — выбери одну для импорта";
+        OszDifficultySubtext.Text = $"{difficulties.Count} сложностей, выбери одну для импорта";
 
         foreach (var diff in difficulties)
         {
@@ -7574,7 +7574,7 @@ public partial class MainWindow : Window
                 if (isOsuMode)
                     File.WriteAllText(Path.Combine(tempDir, "source.osz.path"), oszPath);
 
-            } // using archive закрыт — файл разлочен
+            } // using archive закрыт, файл разлочен
 
             // Проверка на слишком большое количество нот для osu! режима
             if (isOsuMode && map is not null && map.NoteCount > 1100)
@@ -8791,7 +8791,7 @@ public partial class MainWindow : Window
                    "Для поиска оптимальных настроек рекомендую пройти полное тестирование. " +
                    "Это займёт около 10 минут, но зато в следующий раз, когда что-то сломается, " +
                    "ты сможешь быстро переключиться на другой конфиг и всё заработает!\n\n" +
-                   "Тебе ничего не нужно делать — приложение само всё протестирует. " +
+                   "Тебе ничего не нужно делать, приложение само всё протестирует. " +
                    "Просто подожди 10 минут!");
 
         AddWizBtn("Пройти тестирование", "#22c55e", () =>
@@ -9700,7 +9700,7 @@ public partial class MainWindow : Window
         _lastBytesReceived = rx;
         _lastBytesSent = tx;
  
-        // Пока тест не закончен — показываем анимацию, после — результат теста
+        // Пока тест не закончен, показываем анимацию, после, результат теста
         if (_speedTestDone)
         {
             DownloadLbl.Text = $"{_finalDownloadMbps:0.0}";
@@ -9713,7 +9713,7 @@ public partial class MainWindow : Window
         long rx = 0, tx = 0;
         foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
         {
-            // Только физические интерфейсы — без loopback и виртуальных
+            // Только физические интерфейсы, без loopback и виртуальных
             if (ni.OperationalStatus != OperationalStatus.Up) continue;
             if (ni.NetworkInterfaceType == NetworkInterfaceType.Loopback) continue;
             if (ni.NetworkInterfaceType == NetworkInterfaceType.Tunnel) continue;
@@ -9775,8 +9775,8 @@ public partial class MainWindow : Window
                 
                 // Цвет цифры
                 PingLbl.Foreground = new SolidColorBrush(good
-                    ? Color.FromRgb(0xf0, 0xf0, 0xf0)   // белый — хороший
-                    : Color.FromRgb(0xf5, 0x9e, 0x0b)); // жёлтый — высокий
+                    ? Color.FromRgb(0xf0, 0xf0, 0xf0)   // белый, хороший
+                    : Color.FromRgb(0xf5, 0x9e, 0x0b)); // жёлтый, высокий
             });
         }
         catch (Exception ex) { Console.WriteLine($"[Ping] FATAL: {ex.Message}"); }
@@ -9787,7 +9787,7 @@ public partial class MainWindow : Window
     {
         if (samples.Count == 0) return 0;
         
-        // Отбрасываем первые 2 сэмпла — TCP ещё разгоняется
+        // Отбрасываем первые 2 сэмпла, TCP ещё разгоняется
         var stable = samples.Count > 2 ? samples.Skip(2).ToList() : samples;
         if (stable.Count == 0) return 0;
         
@@ -9909,7 +9909,7 @@ public partial class MainWindow : Window
         if (_listeningLane < 0) return;
 
         string keyStr = e.Key.ToString();
-        // Фильтр — только одиночные буквы/цифры
+        // Фильтр, только одиночные буквы/цифры
         if (keyStr.Length > 1 && !keyStr.StartsWith("D") && keyStr != "Space") return;
         if (keyStr.StartsWith("D") && keyStr.Length == 2) keyStr = keyStr[1..]; // D1→1
 
@@ -10291,7 +10291,7 @@ public partial class MainWindow : Window
         double hitY = canvasH - 70;
         var rng = new Random();
 
-        // Второй цвет — осветлённый вариант основного
+        // Второй цвет, осветлённый вариант основного
         Color brightColor = Color.FromRgb(
             (byte)Math.Min(255, comboColor.R + 80),
             (byte)Math.Min(255, comboColor.G + 80),
@@ -10350,7 +10350,7 @@ public partial class MainWindow : Window
             sc.BeginAnimation(ScaleTransform.ScaleYProperty,
                 new DoubleAnimation(0.3, 3.0, TimeSpan.FromMilliseconds(900))
                 { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
-            // Волна появляется — держится — плавно уходит
+            // Волна появляется, держится, плавно уходит
             var waveAnim = new DoubleAnimationUsingKeyFrames();
             waveAnim.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.Zero)));
             waveAnim.KeyFrames.Add(new LinearDoubleKeyFrame(0.85, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(150))));
@@ -10359,7 +10359,7 @@ public partial class MainWindow : Window
             wave.BeginAnimation(UIElement.OpacityProperty, waveAnim);
         }
 
-        // 3. Партиклы — первая волна
+        // 3. Партиклы, первая волна
         for (int p = 0; p < 10; p++)
             SpawnDoubleStrikeParticle(overlay, canvasW, hitY, rng, palette);
 
@@ -10373,7 +10373,7 @@ public partial class MainWindow : Window
         };
         t.Start();
 
-        // Cleanup — ждём пока все анимации завершатся
+        // Cleanup, ждём пока все анимации завершатся
         var cleanup = new DoubleAnimation(1, 1, TimeSpan.FromMilliseconds(2800));
         cleanup.Completed += (_, _) => GamePlayView.Children.Remove(overlay);
         overlay.BeginAnimation(UIElement.OpacityProperty, cleanup);
