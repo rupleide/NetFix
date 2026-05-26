@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
@@ -33,7 +33,7 @@ public partial class TrayPopup : Window
         // Привязываем версию из AssemblyInfo
         VersionLabel.Text = AppVersion.Display;
 
-        // Закрытие при потере фокуса — самый надёжный способ
+        // Закрытие при потере фокуса, самый надёжный способ
         Deactivated += (_, _) => SafeClose();
 
         Loaded += OnLoaded;

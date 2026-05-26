@@ -1,4 +1,4 @@
-namespace NetFix.Models;
+﻿namespace NetFix.Models;
 
 public enum BlockType { None, Throttling, IpBlock, SniBlock, DnsSpoof, MediaThrottle }
 
@@ -121,7 +121,7 @@ public class AppSettings
 
 /// <summary>
 /// Агрегированная статистика по одному треку. Один объект = один трек, не одна игра.
-/// Так история не растёт бесконечно — максимум столько записей сколько уникальных треков.
+/// Так история не растёт бесконечно, максимум столько записей сколько уникальных треков.
 /// </summary>
 public record GameTrackStats
 {
