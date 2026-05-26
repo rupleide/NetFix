@@ -12,6 +12,7 @@ public class DiscordRpcService : IDisposable
 
     public bool IsPriorityMode { get; set; } = false;
     public bool IsScanning { get; set; } = false;
+    public bool UseCleanText { get; set; } = false;
 
     private const string APP_ID = "1503332623546716240";
 
@@ -98,7 +99,7 @@ public class DiscordRpcService : IDisposable
                new Timestamps(DateTime.UtcNow), priority: true);
 
     public void SetAllGood(bool zapret, bool tgws)
-        => Set($"Ёбет в жопу РКН с пингом {P}", "NetFix работает");
+        => Set(UseCleanText ? $"Чилит в NetFix с пингом {P}" : $"Ёбет в жопу РКН с пингом {P}", "NetFix работает");
 
     public void SetProblems(string what)
         => Set(what, $"Запущена диагностика · {P}");
