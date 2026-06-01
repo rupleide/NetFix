@@ -4752,7 +4752,7 @@ public partial class MainWindow : Window
     private void SupportBtn_Click(object s, RoutedEventArgs e) =>
         OpenUrl("https://t.me/sofirka_hanabi");
     private void DonateBtn_Click(object s, RoutedEventArgs e) =>
-        OpenUrl("https://www.tinkoff.ru/rm/kononenko.nikolay30/XeyPE87770");
+        OpenUrl("https://www.tinkoff.ru/rm/r_eELpDmupvc.SCiWRkVJON/bgKkD30493");
     private void LinkZapret_Click(object s, RoutedEventArgs e) =>
         OpenUrl("https://github.com/Flowseal/zapret-discord-youtube");
     private void LinkTgWs_Click(object s, RoutedEventArgs e) =>
