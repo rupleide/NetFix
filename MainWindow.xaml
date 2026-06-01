@@ -2882,10 +2882,6 @@
                                 <TextBlock Text="ПРОЧЕЕ" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
 
-                                <CheckBox x:Name="CleanDiscordStatusCB" Style="{StaticResource Toggle}"
-                                          Content="Статус без мата в Discord" Margin="0,0,0,10"
-                                          Checked="CleanDiscordStatusCB_Checked"
-                                          Unchecked="CleanDiscordStatusCB_Unchecked"/>
                                 <CheckBox x:Name="DiscordRpcCB" Style="{StaticResource Toggle}"
                                           Content="Интеграция с Discord" Margin="0,0,0,10"
                                           Checked="DiscordRpcCB_Checked"

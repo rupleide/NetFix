@@ -334,7 +334,6 @@ public partial class MainWindow : Window
     {
         if (_settings.DiscordRpcEnabled)
             _discord.Initialize();
-        _discord.UseCleanText = _settings.CleanDiscordStatus;
         UpdateMainGridClip();
         LoadSettingsToPanel();
         _settingsLoaded = true; // после этого можно обрабатывать события чекбоксов
@@ -3932,7 +3931,6 @@ public partial class MainWindow : Window
         AutoTgWsCB.IsChecked    = _settings.AutostartTgWsProxy;
         AutoAppCB.IsChecked     = _settings.AutostartApp;
         DiscordRpcCB.IsChecked  = _settings.DiscordRpcEnabled;
-        CleanDiscordStatusCB.IsChecked = _settings.CleanDiscordStatus;
         AutoUpdatesCB.IsChecked = _settings.AutoUpdates;
         ComboEffectCB.IsChecked = _settings.DisableComboEffect;
         VolumeSlider.Value = _settings.GameVolume;
@@ -3959,20 +3957,6 @@ public partial class MainWindow : Window
         SetAutostart(_settings.AutostartApp);
         
         CloseSettings();
-    }
-
-    private void CleanDiscordStatusCB_Checked(object sender, RoutedEventArgs e)
-    {
-        _settings.CleanDiscordStatus = true;
-        _discord.UseCleanText = true;
-        SettingsService.Save(_settings);
-    }
-
-    private void CleanDiscordStatusCB_Unchecked(object sender, RoutedEventArgs e)
-    {
-        _settings.CleanDiscordStatus = false;
-        _discord.UseCleanText = false;
-        SettingsService.Save(_settings);
     }
 
     private void DiscordRpcCB_Checked(object sender, RoutedEventArgs e)

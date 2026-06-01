@@ -105,7 +105,6 @@ public class AppSettings
     public bool AutoUpdates { get; set; } = true;
     public bool ShowLongCheckDialog { get; set; } = true;
     public bool DiscordRpcEnabled { get; set; } = true;
-    public bool CleanDiscordStatus { get; set; } = false;
     public double GameVolume { get; set; } = 0.5;
     public string FfmpegPath { get; set; } = "";
     public bool DisableComboEffect { get; set; } = false;
