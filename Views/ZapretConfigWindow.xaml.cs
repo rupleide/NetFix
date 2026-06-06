@@ -206,23 +206,6 @@ public partial class ZapretConfigWindow : Window
             }
         }
 
-        // ═══ DEBUG: кнопка для теста отчёта ═══
-        var debugBtn = new System.Windows.Controls.Button
-        {
-            Content = "test report",
-            Width = 70, Height = 20,
-            FontSize = 10,
-            Background = Brushes.Transparent,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x44, 0x44, 0x44)),
-            BorderThickness = new Thickness(0),
-            Cursor = System.Windows.Input.Cursors.Hand,
-            HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
-            VerticalAlignment = VerticalAlignment.Top
-        };
-        debugBtn.Click += (_, _) => ShowMockReport();
-        Grid.SetRow(debugBtn, 0);
-        Grid.SetColumn(debugBtn, 0);
-        RootGrid.Children.Add(debugBtn);
     }
 
     private void ShowWarningNoCache()
@@ -975,48 +958,4 @@ public partial class ZapretConfigWindow : Window
         Close();
     }
 
-    // ═══ DEBUG ═══
-    private void ShowMockReport()
-    {
-        var mockConfigs = new List<ZapretConfig>
-        {
-            new() { Name = "general (ALT).bat", AveragePing = 45, SuccessCount = 12, IsValid = true },
-            new() { Name = "general (ALT2).bat", AveragePing = 52, SuccessCount = 12, IsValid = true },
-            new() { Name = "general (ALT10).bat", AveragePing = 68, SuccessCount = 12, IsValid = true },
-            new() { Name = "general (ALT3).bat", AveragePing = 78, SuccessCount = 11, IsValid = false },
-            new() { Name = "general.bat", AveragePing = 95, SuccessCount = 10, IsValid = false },
-        };
-
-        _cache = new ZapretConfigCache
-        {
-            LastTested = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-            CurrentConfig = mockConfigs[0].Name,
-            ValidConfigs = mockConfigs.Where(c => c.IsValid).ToList(),
-            PartialConfigs = mockConfigs.Where(c => c.IsPartiallyUsable).ToList()
-        };
-        ZapretConfigService.SaveCache(_cache);
-
-        ProgressBarContainer.Visibility = Visibility.Collapsed;
-        ProgressText.Visibility = Visibility.Collapsed;
-        TimeRemainingText.Visibility = Visibility.Collapsed;
-        LogContainer.Visibility = Visibility.Collapsed;
-        StopIndeterminateAnimation();
-        StatusPanel.Visibility = Visibility.Visible;
-        StatusIcon.Visibility = Visibility.Visible;
-        StatusIcon.Data = (Geometry)FindResource("CheckmarkIcon");
-        StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
-
-        var topConfigs = string.Join("\n", mockConfigs.Where(c => c.IsValid)
-            .Select((c, i) => $"{i + 1}. {c.Name} (пинг: {c.AveragePing} мс, тестов: {c.SuccessCount}/12)"));
-
-        StatusText.Text = $"🎉 Поздравляю с полным тестированием!\n\n" +
-                         $"Найдено {mockConfigs.Count(c => c.IsValid)} идеальных конфигов.\n" +
-                         $"Все они прошли 12/12 тестов без ошибок!\n\n" +
-                         $"Ваш топ конфигов на следующие разы:\n\n{topConfigs}";
-
-        SecondaryBtn.Content = "Выбрать конфиг";
-        SecondaryBtn.Style = (Style)FindResource("AccentBtn");
-        PrimaryBtn.Visibility = Visibility.Visible;
-        PrimaryBtn.Content = "Отмена";
-    }
 }
