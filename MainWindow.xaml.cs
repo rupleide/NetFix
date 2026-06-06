@@ -101,6 +101,7 @@ public partial class MainWindow : Window
     private DispatcherTimer? _longCheckTimer = null;
     private bool _checkInProgress = false;
     private bool _autoFixRunning = false;
+    private Views.ZapretConfigWindow? _configWindow = null;
 
     // ── Игра: состояние ──────────────────────────────────────────────────────
     private DispatcherTimer? _gameTimer;
@@ -724,16 +725,36 @@ public partial class MainWindow : Window
     }
 
     // ── Zapret Config Testing ──────────────────────────────────────────────────
-    private void TestConfigsBtn_Click(object s, RoutedEventArgs e)
+    private void ShowConfigWindow(bool testMode, Action<Views.ZapretConfigWindow>? onClosed = null)
     {
-        if (string.IsNullOrEmpty(_settings.ZapretPath) || !File.Exists(_settings.ZapretPath))
+        if (_configWindow is not null && _configWindow.IsVisible)
         {
+            _configWindow.Activate();
             return;
         }
+        if (_configWindow is not null)
+        {
+            _configWindow.Close();
+            _configWindow = null;
+        }
 
-        var configWindow = new Views.ZapretConfigWindow(_settings.ZapretPath, testMode: true);
-        configWindow.Owner = this;
-        configWindow.ShowDialog();
+        if (string.IsNullOrEmpty(_settings.ZapretPath) || !File.Exists(_settings.ZapretPath))
+            return;
+
+        var w = new Views.ZapretConfigWindow(_settings.ZapretPath, testMode);
+        _configWindow = w;
+        w.Owner = this;
+        w.Closed += (_, _) =>
+        {
+            _configWindow = null;
+            onClosed?.Invoke(w);
+        };
+        w.Show();
+    }
+
+    private void TestConfigsBtn_Click(object s, RoutedEventArgs e)
+    {
+        ShowConfigWindow(testMode: true);
     }
 
     private async void SelectConfigBtn_Click(object s, RoutedEventArgs e)
@@ -741,39 +762,37 @@ public partial class MainWindow : Window
         Console.WriteLine("[MainWindow] SelectConfigBtn_Click started");
         
         if (string.IsNullOrEmpty(_settings.ZapretPath) || !File.Exists(_settings.ZapretPath))
-        {
             return;
+
+        if (_configWindow is not null && _configWindow.IsVisible)
+        {
+            _configWindow.Activate();
+            return;
+        }
+        if (_configWindow is not null)
+        {
+            _configWindow.Close();
+            _configWindow = null;
         }
 
         // Проверить есть ли кэш с тестами
         var cache = ZapretConfigService.LoadCache();
         if (cache == null || !cache.HasAnyConfigs)
         {
-            // Показать стильное уведомление о необходимости полного сканирования
             ShowFullScanRequiredNotification();
+            return;
         }
-        else
+
+        Console.WriteLine("[MainWindow] Opening config window");
+        ShowConfigWindow(testMode: false, onClosed: async (w) =>
         {
-            Console.WriteLine("[MainWindow] Opening config window");
-            // Показать окно выбора конфига
-            var configWindow = new Views.ZapretConfigWindow(_settings.ZapretPath, testMode: false);
-            configWindow.Owner = this;
-            configWindow.ShowDialog();
-            
             Console.WriteLine("[MainWindow] Config window closed");
-            
-            // Обновить отображение выбранного конфига после закрытия окна
             UpdateSelectedConfigDisplay();
-            
-            // Запустить сервис только если конфиг был ПРИМЕНЕН через кнопку "Применить"
-            if (configWindow.ConfigWasApplied)
+
+            if (w.ConfigWasApplied)
             {
                 Console.WriteLine("[MainWindow] Config was applied, checking if service needs to be started");
-                
-                // Проверить текущее состояние Zapret
                 var status = DiagnosticsEngine.CheckAppStatus();
-                
-                // Запустить только если Zapret НЕ запущен
                 if (!status.ZapretRunning)
                 {
                     Console.WriteLine("[MainWindow] Zapret not running, starting service");
@@ -784,9 +803,9 @@ public partial class MainWindow : Window
                     Console.WriteLine("[MainWindow] Zapret already running, skipping start");
                 }
             }
-            
+
             Console.WriteLine("[MainWindow] SelectConfigBtn_Click finished");
-        }
+        });
     }
 
     private void UpdateComponentsBtn_Click(object s, RoutedEventArgs e)
@@ -1744,11 +1763,7 @@ public partial class MainWindow : Window
         {
             MainGrid.Children.Remove(overlay);
             MainGrid.Children.Remove(notificationCard);
-            
-            // Открыть окно тестирования
-            var configWindow = new Views.ZapretConfigWindow(_settings.ZapretPath, testMode: true);
-            configWindow.Owner = this;
-            configWindow.ShowDialog();
+            ShowConfigWindow(testMode: true);
         };
 
         var cancelBtn = new Button
@@ -1799,6 +1814,137 @@ public partial class MainWindow : Window
         {
             MainGrid.Children.Remove(overlay);
             MainGrid.Children.Remove(notificationCard);
+        };
+    }
+
+    private void ShowScanRequiredForFastMode()
+    {
+        var overlay = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(180, 0, 0, 0)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+        Grid.SetRowSpan(overlay, 3);
+        MainGrid.Children.Add(overlay);
+
+        var card = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x18)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08)),
+            BorderThickness = new Thickness(0, 3, 0, 0),
+            CornerRadius = new CornerRadius(14),
+            MaxWidth = 460,
+            Margin = new Thickness(40),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = Colors.Black, BlurRadius = 30, ShadowDepth = 0, Opacity = 0.5
+            }
+        };
+        Grid.SetRowSpan(card, 3);
+
+        var content = new StackPanel { Margin = new Thickness(32, 28, 32, 28) };
+
+        var icon = new Border
+        {
+            Width = 56, Height = 56, CornerRadius = new CornerRadius(28),
+            Background = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08)) { Opacity = 0.15 },
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 20),
+            Child = new System.Windows.Shapes.Path
+            {
+                Data = Geometry.Parse("M12,2 L22,20 L2,20 Z M12,9 L12,13 M12,15 L12,17"),
+                Stroke = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08)),
+                StrokeThickness = 2.5, Width = 28, Height = 28, Stretch = Stretch.Uniform,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            }
+        };
+        content.Children.Add(icon);
+
+        content.Children.Add(new TextBlock
+        {
+            Text = "Нет просканированных конфигов",
+            FontSize = 20, FontWeight = FontWeights.Bold,
+            Foreground = Brushes.White, TextAlignment = TextAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 16)
+        });
+
+        content.Children.Add(new TextBlock
+        {
+            Text = "Приложение не обнаружило рабочие конфиги!\n\n" +
+                   "Для работы приложения необходимо просканировать конфиги. " +
+                   "Выделите примерно 10 минут, во время проверки вы можете поиграть " +
+                   "в мини-игру или заняться своими делами.\n\n" +
+                   "После сканирования у вас будет полный функционал приложения!",
+            FontSize = 14,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc)),
+            TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap,
+            LineHeight = 22, Margin = new Thickness(0, 0, 0, 24)
+        });
+
+        var btns = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+        };
+
+        var scanBtn = new Button
+        {
+            Content = "Пройти тестирование", Width = 180, Height = 40,
+            Margin = new Thickness(0, 0, 10, 0), Foreground = Brushes.White,
+            FontSize = 13, FontWeight = FontWeights.SemiBold, Cursor = System.Windows.Input.Cursors.Hand
+        };
+        scanBtn.Style = (Style)FindResource("AccentBtn");
+        scanBtn.Click += (_, _) =>
+        {
+            MainGrid.Children.Remove(overlay);
+            MainGrid.Children.Remove(card);
+            ShowConfigWindow(testMode: true);
+        };
+
+        var cancelBtn = new Button
+        {
+            Content = "Отмена", Width = 100, Height = 40,
+            Background = Brushes.Transparent, Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+            BorderThickness = new Thickness(1), FontSize = 13, Cursor = System.Windows.Input.Cursors.Hand
+        };
+        cancelBtn.Style = (Style)FindResource("OutlineBtn");
+        cancelBtn.Click += (_, _) =>
+        {
+            MainGrid.Children.Remove(overlay);
+            MainGrid.Children.Remove(card);
+        };
+
+        btns.Children.Add(scanBtn);
+        btns.Children.Add(cancelBtn);
+        content.Children.Add(btns);
+        card.Child = content;
+        MainGrid.Children.Add(card);
+
+        overlay.Opacity = 0;
+        card.Opacity = 0;
+        card.RenderTransform = new ScaleTransform(0.9, 0.9);
+        card.RenderTransformOrigin = new System.Windows.Point(0.5, 0.5);
+
+        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+        var scaleIn = new DoubleAnimation(0.9, 1, TimeSpan.FromMilliseconds(300))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+
+        overlay.BeginAnimation(OpacityProperty, fadeIn);
+        card.BeginAnimation(OpacityProperty, fadeIn);
+        ((ScaleTransform)card.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleIn);
+        ((ScaleTransform)card.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty, scaleIn);
+
+        overlay.MouseLeftButtonDown += (_, _) =>
+        {
+            MainGrid.Children.Remove(overlay);
+            MainGrid.Children.Remove(card);
         };
     }
 
@@ -3226,9 +3372,15 @@ public partial class MainWindow : Window
         }
         
         Console.WriteLine("[FixBtn] Компоненты актуальны, запускаем стандартную логику");
-        
+
+        if (_settings.Mode == FixMode.Fast)
+        {
+            RunFastFix();
+            return;
+        }
+
         var st = DiagnosticsEngine.CheckAppStatus();
-        
+
         // 1. Проверяем Zapret
         if (!st.ZapretRunning && !string.IsNullOrWhiteSpace(_settings.ZapretPath) && File.Exists(_settings.ZapretPath))
         {
@@ -3242,7 +3394,6 @@ public partial class MainWindow : Window
         if (!st.TgWsProxyRunning && !string.IsNullOrWhiteSpace(_settings.TgWsProxyPath) && File.Exists(_settings.TgWsProxyPath))
         {
             StartTgWsProxyWithActivation();
-            // Не возвращаемся, продолжаем RunAutoFix
         }
 
         // Таймер остановится в doneCb внутри RunAutoFix
@@ -3364,6 +3515,189 @@ public partial class MainWindow : Window
                 }
             }),
             settings: _settings);
+    }
+
+    private async void RunFastFix()
+    {
+        if (_autoFixRunning) return;
+        _autoFixRunning = true;
+
+        FixBtn.IsEnabled = false;
+        SetupProg.Value = 0;
+        SetupProg.Foreground = new SolidColorBrush(Color.FromRgb(59, 130, 246));
+        SetupProgLbl.Text = "Быстрый запуск...";
+        LogBox.Document.Blocks.Clear();
+
+        string timeStr = DateTime.Now.ToString("HH:mm:ss");
+        AppendLog($"БЫСТРЫЙ ЗАПУСК [ {timeStr} ]", "system");
+        AppendLog("spacer");
+
+        StartGlow();
+        _discord.IsScanning = true;
+        _discord.SetFixing();
+
+        var st = DiagnosticsEngine.CheckAppStatus();
+        bool zapretNeeded = !st.ZapretRunning
+            && !string.IsNullOrWhiteSpace(_settings.ZapretPath)
+            && File.Exists(_settings.ZapretPath);
+        bool tgwsNeeded = !st.TgWsProxyRunning
+            && !string.IsNullOrWhiteSpace(_settings.TgWsProxyPath)
+            && File.Exists(_settings.TgWsProxyPath);
+
+        // ═══ ДИАГНОСТИКА — всегда ═══
+        AppendLog("СОСТОЯНИЕ СЕРВИСОВ", "system");
+        bool tgRunning = Process.GetProcessesByName("Telegram").Length > 0;
+        AppendLog($"Telegram Desktop: [ {(tgRunning ? "ЗАПУЩЕН" : "НЕ ЗАПУЩЕН")} ]", "net");
+        bool dcRunning = Process.GetProcessesByName("Discord").Length > 0;
+        AppendLog($"Discord App:      [ {(dcRunning ? "ЗАПУЩЕН" : "НЕ ЗАПУЩЕН")} ]", "net");
+
+        AppendLog("spacer");
+        AppendLog("СЕТЕВАЯ СРЕДА", "system");
+        bool netOk = await DiagnosticsEngine.CheckInternetAsync();
+        AppendLog($"Интернет-соединение: [ {(netOk ? "ПОДКЛЮЧЕНО" : "НЕТ ПОДКЛЮЧЕНИЯ")} ]", "ok");
+
+        AppendLog("spacer");
+        AppendLog("ЗАПУСК ИСПРАВЛЕНИЙ", "system");
+        AppendLog("Проверяю подключение к интернету…", "info");
+        if (netOk)
+            AppendLog("Интернет есть", "ok");
+        else
+            AppendLog("Нет подключения к интернету", "error");
+        AppendLog("Проверяю последние версии инструментов…", "info");
+        if (!string.IsNullOrWhiteSpace(_settings.ZapretPath) && File.Exists(_settings.ZapretPath))
+            AppendLog($"Zapret найден: {_settings.ZapretPath}", "ok");
+        else
+            AppendLog("Zapret не найден", "warn");
+        if (!string.IsNullOrWhiteSpace(_settings.TgWsProxyPath) && File.Exists(_settings.TgWsProxyPath))
+            AppendLog($"tg-ws-proxy найден: {_settings.TgWsProxyPath}", "ok");
+        else
+            AppendLog("tg-ws-proxy не найден", "warn");
+
+        // Всё уже запущено
+        if (!zapretNeeded && !tgwsNeeded)
+        {
+            AppendLog("Zapret уже запущен", "ok");
+            AppendLog("tg-ws-proxy уже запущен", "ok");
+
+            AppendLog("spacer");
+            AppendLog("Всё запущено и всё работает НОРМАЛЬНО!", "final");
+            AppendLog("Zapret включен. Discord и YouTube должны работать нормально.", "ok");
+            AppendLog("Прокси настроен. Telegram должен работать стабильно.", "ok");
+            AppendLog("Если что-то всё еще не грузит, перейдите во вкладку «Частые вопросы».", "info");
+
+            StopGlow(true);
+            _discord.IsScanning = false;
+            _discord.SetAllGood(true, true);
+            SetupProg.Value = 100;
+            SetupProg.Foreground = new SolidColorBrush(Color.FromRgb(34, 197, 94));
+            SetupProgLbl.Text = "Всё уже работает";
+            PlaySuccessRing();
+            StopLongCheckTimer();
+            _checkInProgress = false;
+            _autoFixRunning = false;
+            FixBtn.IsEnabled = true;
+            return;
+        }
+
+        // ═══ ЗАПУСК НЕДОСТАЮЩИХ ═══
+        bool zapretOk = !zapretNeeded;
+        bool tgwsOk = !tgwsNeeded;
+
+        // Zapret
+        if (zapretNeeded)
+        {
+            AppendLog("Zapret не запущен — запускаю...", "info");
+            var isServiceBat = Path.GetFileName(_settings.ZapretPath)
+                .Equals("service.bat", StringComparison.OrdinalIgnoreCase);
+
+            if (isServiceBat)
+            {
+                var cache = ZapretConfigService.LoadCache();
+                bool success = await ZapretConfigService.ApplyConfigAsync(
+                    _settings.ZapretPath, cache?.CurrentConfig ?? "");
+                zapretOk = success;
+            }
+            else
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo(_settings.ZapretPath) { UseShellExecute = true });
+                    zapretOk = true;
+                }
+                catch (Exception ex) { AppendLog($"Ошибка: {ex.Message}", "error"); }
+            }
+
+            if (zapretOk) AppendLog("✓ Zapret запущен", "ok");
+            else AppendLog("✗ Не удалось запустить Zapret", "error");
+        }
+        else
+        {
+            AppendLog("Zapret уже работает", "ok");
+        }
+
+        SetupProg.Value = 50;
+        SetupProgLbl.Text = "TgWsProxy...";
+        await Task.Delay(300);
+
+        // TgWsProxy
+        if (tgwsNeeded)
+        {
+            AppendLog("TgWsProxy не запущен — запускаю...", "info");
+            if (!string.IsNullOrWhiteSpace(_settings.TgWsProxyPath) && File.Exists(_settings.TgWsProxyPath))
+            {
+                try
+                {
+                    var psi = new ProcessStartInfo(_settings.TgWsProxyPath)
+                    {
+                        UseShellExecute = true,
+                        WindowStyle = ProcessWindowStyle.Hidden,
+                    };
+                    Process.Start(psi);
+                    tgwsOk = true;
+                    AppendLog("✓ TgWsProxy запущен", "ok");
+                }
+                catch (Exception ex) { AppendLog($"Ошибка: {ex.Message}", "error"); }
+            }
+            else
+            {
+                AppendLog("Путь к TgWsProxy не указан или файл не найден", "warn");
+            }
+        }
+        else
+        {
+            AppendLog("TgWsProxy уже работает", "ok");
+        }
+
+        await Task.Delay(300);
+        SetupProg.Value = 100;
+        SetupProgLbl.Text = "Готово";
+
+        StopGlow(zapretOk || tgwsOk);
+        _discord.IsScanning = false;
+
+        if (zapretOk && tgwsOk)
+        {
+            SetupProg.Foreground = new SolidColorBrush(Color.FromRgb(34, 197, 94));
+            _discord.SetAllGood(true, true);
+            AppendLog("spacer");
+            AppendLog("Всё запущено и всё работает НОРМАЛЬНО!", "final");
+            AppendLog("Zapret включен. Discord и YouTube должны работать нормально.", "ok");
+            AppendLog("Прокси настроен. Telegram должен работать стабильно.", "ok");
+            AppendLog("Если что-то всё еще не грузит, перейдите во вкладку «Частые вопросы».", "info");
+            PlaySuccessRing();
+        }
+        else
+        {
+            _discord.SetProblems("Ошибка запуска");
+            SetupProg.Foreground = new SolidColorBrush(Color.FromRgb(239, 68, 68));
+            AppendLog("Не удалось запустить некоторые сервисы. Проверьте пути в настройках.", "error");
+            PlayErrorRing();
+        }
+
+        StopLongCheckTimer();
+        _checkInProgress = false;
+        _autoFixRunning = false;
+        FixBtn.IsEnabled = true;
     }
 
     /// <summary>
@@ -3899,6 +4233,7 @@ public partial class MainWindow : Window
         AutoUpdatesCB.IsChecked     = _settings.AutoUpdates;
         ShowGameOfferCB.IsChecked   = _settings.ShowGameOfferDialog;
         ShowServiceReminderCB.IsChecked = _settings.ShowLongCheckDialog;
+        UpdateFixModeVisual(_settings.Mode);
         ComboEffectCB.IsChecked = _settings.DisableComboEffect;
         VolumeSlider.Value = _settings.GameVolume;
         // Применить логарифм сразу при загрузке
@@ -3921,6 +4256,49 @@ public partial class MainWindow : Window
         _settings.ShowLongCheckDialog  = ShowServiceReminderCB.IsChecked == true;
         SettingsService.Save(_settings);
         SetAutostart(_settings.AutostartApp);
+    }
+
+    private void UpdateFixModeVisual(FixMode mode)
+    {
+        var fullBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33));
+        var fastBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33));
+        var fullBg = new SolidColorBrush(Color.FromRgb(0x1a, 0x1a, 0x1a));
+        var fastBg = new SolidColorBrush(Color.FromRgb(0x1a, 0x1a, 0x1a));
+
+        if (mode == FixMode.Full)
+        {
+            fullBrush = new SolidColorBrush(Color.FromRgb(0x63, 0x66, 0xf1));
+            fullBg = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x2e));
+        }
+        else
+        {
+            fastBrush = new SolidColorBrush(Color.FromRgb(0x34, 0xc7, 0x59));
+            fastBg = new SolidColorBrush(Color.FromRgb(0x1a, 0x2e, 0x1a));
+        }
+
+        FixModeFullCard.BorderBrush = fullBrush;
+        FixModeFullCard.Background = fullBg;
+        FixModeFastCard.BorderBrush = fastBrush;
+        FixModeFastCard.Background = fastBg;
+    }
+
+    private void SelectFixMode(FixMode mode)
+    {
+        _settings.Mode = mode;
+        SettingsService.Save(_settings);
+        UpdateFixModeVisual(mode);
+    }
+
+    private void FixModeFullCard_Click(object s, MouseButtonEventArgs e) { SelectFixMode(FixMode.Full); }
+    private void FixModeFastCard_Click(object s, MouseButtonEventArgs e)
+    {
+        var cache = ZapretConfigService.LoadCache();
+        if (cache is null || !cache.HasAnyConfigs)
+        {
+            ShowScanRequiredForFastMode();
+            return;
+        }
+        SelectFixMode(FixMode.Fast);
     }
 
     private void SettingCB_Checked(object sender, RoutedEventArgs e) { if (_settingsLoaded) AutoSaveSettings(); }
@@ -8311,22 +8689,83 @@ public partial class MainWindow : Window
         if (title != null) title.Text = "Мастер настройки Zapret";
 
         AddWizText("Приложение не обнаружило рабочие конфиги!\n\n" +
-                   "Для поиска оптимальных настроек рекомендую пройти полное тестирование. " +
-                   "Это займёт около 10 минут, но зато в следующий раз, когда что-то сломается, " +
-                   "ты сможешь быстро переключиться на другой конфиг и всё заработает!\n\n" +
-                   "Тебе ничего не нужно делать, приложение само всё протестирует. " +
-                   "Просто подожди 10 минут!");
+                   "Для работы приложения необходимо просканировать конфиги. " +
+                   "Выделите примерно 10 минут, во время проверки вы можете поиграть " +
+                   "в мини-игру или заняться своими делами.\n\n" +
+                   "После сканирования у вас будет полный функционал приложения!");
 
         AddWizBtn("Пройти тестирование", "#22c55e", () =>
         {
             CloseWizard();
-            // Открываем окно тестирования конфигов
-            var configWindow = new ZapretConfigWindow(_settings.ZapretPath, true);
-            configWindow.Owner = this;
-            configWindow.ShowDialog();
+            ShowConfigWindow(testMode: true);
         });
 
         AddWizBtn("Отмена", "#ef4444", CloseWizard);
+
+        // Разделитель
+        WizardContent.Children.Add(new Border
+        {
+            Height = 1, Background = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+            Margin = new Thickness(0, 0, 0, 10)
+        });
+
+        AddWizOutlineBtn("Импортировать конфиги", () =>
+        {
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "Импортировать конфиги Zapret",
+                Filter = "JSON файл (*.json)|*.json"
+            };
+
+            if (dlg.ShowDialog() == true)
+            {
+                try
+                {
+                    var json = File.ReadAllText(dlg.FileName);
+                    var importedCache = System.Text.Json.JsonSerializer.Deserialize<ZapretConfigCache>(json);
+
+                    if (importedCache == null || !importedCache.HasAnyConfigs)
+                    {
+                        ShowNotification("❌ Ошибка импорта",
+                            "Файл не содержит валидных результатов тестирования",
+                            "#ef4444");
+                        return;
+                    }
+
+                    var cacheFile = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                        "NetFix", "zapret_configs.json");
+                    var cacheDir = Path.GetDirectoryName(cacheFile);
+                    if (!string.IsNullOrEmpty(cacheDir) && !Directory.Exists(cacheDir))
+                        Directory.CreateDirectory(cacheDir);
+
+                    if (File.Exists(cacheFile))
+                    {
+                        var backupFile = cacheFile + $".backup_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
+                        File.Copy(cacheFile, backupFile, true);
+                    }
+
+                    File.Copy(dlg.FileName, cacheFile, true);
+                    ZapretConfigService.LoadCache(); // refresh
+                    CloseWizard();
+                    ShowNotification("✅ Конфиги импортированы",
+                        $"Загружено {importedCache.ValidConfigs.Count} идеальных и " +
+                        $"{importedCache.PartialConfigs.Count} частичных конфигов.\n" +
+                        $"Теперь выберите конфиг на вкладке «Серверы».",
+                        "#22c55e");
+                }
+                catch (Exception ex)
+                {
+                    ShowNotification("❌ Ошибка импорта",
+                        $"Не удалось загрузить файл:\n{ex.Message}",
+                        "#ef4444");
+                }
+            }
+        });
+
+        AddWizNote("Это кнопка для тех, у кого остался экспортированный файл конфигов Zapret, " +
+                   "сделанный в этом приложении. Если вы запускаете приложение в первый раз, " +
+                   "то нажимайте на кнопку «Пройти тестирование».");
     }
 
     private void RenderWizardStep(int step)
@@ -8467,16 +8906,46 @@ public partial class MainWindow : Window
         });
     }
 
+    private void AddWizNote(string txt)
+    {
+        WizardContent.Children.Add(new TextBlock {
+            Text = txt, FontFamily = new FontFamily("Segoe UI"), FontSize = 11,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 20)
+        });
+    }
+
     private void AddWizBtn(string txt, string hex, Action act, string fgHex = "#ffffff")
     {
+        var bgBrush = (SolidColorBrush)new BrushConverter().ConvertFrom(hex)!;
+        var c = bgBrush.Color;
+        var hoverBrush = new SolidColorBrush(Color.FromRgb(
+            (byte)(c.R > 30 ? c.R - 30 : 0),
+            (byte)(c.G > 30 ? c.G - 30 : 0),
+            (byte)(c.B > 30 ? c.B - 30 : 0)));
+
         var btn = new Button {
             Content = txt,
-            Background = (SolidColorBrush)new BrushConverter().ConvertFrom(hex)!,
+            Background = bgBrush,
             Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom(fgHex)!,
             FontFamily = new FontFamily("Segoe UI"), FontSize = 14, Height = 40,
             Cursor = Cursors.Hand, BorderThickness = new Thickness(0),
             Margin = new Thickness(0, 0, 0, 10),
-            Template = CreateSimpleBtnTemplate(hex)
+            Template = CreateSimpleBtnTemplate()
+        };
+        btn.MouseEnter += (_, _) => btn.Background = hoverBrush;
+        btn.MouseLeave += (_, _) => btn.Background = bgBrush;
+        btn.Click += (_, _) => act();
+        WizardContent.Children.Add(btn);
+    }
+
+    private void AddWizOutlineBtn(string txt, Action act)
+    {
+        var btn = new Button {
+            Content = txt,
+            FontFamily = new FontFamily("Segoe UI"), FontSize = 14, Height = 40,
+            Cursor = Cursors.Hand, Margin = new Thickness(0, 0, 0, 10),
+            Style = (Style)FindResource("OutlineBtn")
         };
         btn.Click += (_, _) => act();
         WizardContent.Children.Add(btn);
@@ -8901,10 +9370,17 @@ public partial class MainWindow : Window
     private void AddOnboardBtn(StackPanel p, string text, string bgHex, Action action,
         string foreground = "#ffffff")
     {
+        var bgBrush = (SolidColorBrush)new BrushConverter().ConvertFrom(bgHex)!;
+        var c = bgBrush.Color;
+        var hoverBrush = new SolidColorBrush(Color.FromRgb(
+            (byte)(c.R > 30 ? c.R - 30 : 0),
+            (byte)(c.G > 30 ? c.G - 30 : 0),
+            (byte)(c.B > 30 ? c.B - 30 : 0)));
+
         var btn = new Button
         {
             Content             = text,
-            Background          = (SolidColorBrush)new BrushConverter().ConvertFrom(bgHex)!,
+            Background          = bgBrush,
             Foreground          = (SolidColorBrush)new BrushConverter().ConvertFrom(foreground)!,
             FontFamily          = new FontFamily("Segoe UI"),
             FontSize            = 14,
@@ -8915,18 +9391,20 @@ public partial class MainWindow : Window
             Margin              = new Thickness(0, 0, 0, 10),
         };
 
-        // Simple style inline
-        btn.Template = CreateSimpleBtnTemplate(bgHex);
+        btn.Template = CreateSimpleBtnTemplate();
+        btn.MouseEnter += (_, _) => btn.Background = hoverBrush;
+        btn.MouseLeave += (_, _) => btn.Background = bgBrush;
         btn.Click += (_, _) => action();
         p.Children.Add(btn);
     }
 
-    private static ControlTemplate CreateSimpleBtnTemplate(string bgHex)
+    private static ControlTemplate CreateSimpleBtnTemplate()
     {
         var tmpl = new ControlTemplate(typeof(Button));
         var bd = new FrameworkElementFactory(typeof(Border));
-        bd.SetValue(Border.BackgroundProperty,
-            (SolidColorBrush)new BrushConverter().ConvertFrom(bgHex)!);
+        bd.SetValue(Border.BackgroundProperty, new TemplateBindingExtension(Button.BackgroundProperty));
+        bd.SetValue(Border.BorderBrushProperty, new TemplateBindingExtension(Button.BorderBrushProperty));
+        bd.SetValue(Border.BorderThicknessProperty, new TemplateBindingExtension(Button.BorderThicknessProperty));
         bd.SetValue(Border.CornerRadiusProperty, new CornerRadius(8));
         var cp = new FrameworkElementFactory(typeof(ContentPresenter));
         cp.SetValue(ContentPresenter.HorizontalAlignmentProperty, System.Windows.HorizontalAlignment.Center);
