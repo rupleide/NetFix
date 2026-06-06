@@ -1559,75 +1559,17 @@ public partial class MainWindow : Window
         cardContent.Children.Add(descText);
 
         // Чекбокс "Показывать это окно в будущем"
-        var checkboxPanel = new StackPanel
+        var showAgainCb = new System.Windows.Controls.CheckBox
         {
-            Orientation = Orientation.Horizontal,
-            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
-            Margin = new Thickness(0, 0, 0, 20),
-            Cursor = System.Windows.Input.Cursors.Hand
-        };
-
-        // Создаем кастомный чекбокс
-        var checkboxBorder = new Border
-        {
-            Width = 20,
-            Height = 20,
-            CornerRadius = new CornerRadius(4),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
-            BorderThickness = new Thickness(2),
-            Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
-            Margin = new Thickness(0, 0, 10, 0),
-            VerticalAlignment = VerticalAlignment.Center
-        };
-
-        // Иконка галочки внутри чекбокса
-        var checkIcon = new System.Windows.Shapes.Path
-        {
-            Data = Geometry.Parse("M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"),
-            Fill = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
-            Width = 14,
-            Height = 14,
-            Stretch = Stretch.Uniform,
-            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-            Visibility = Visibility.Visible // По умолчанию включен
-        };
-        checkboxBorder.Child = checkIcon;
-
-        var checkboxLabel = new TextBlock
-        {
-            Text = "Показывать это окно в будущем",
+            Content = "Больше не показывать",
+            Style = (Style)FindResource("Toggle"),
             Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc)),
             FontSize = 13,
-            VerticalAlignment = VerticalAlignment.Center
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 20),
+            IsChecked = !_settings.ShowLongCheckDialog
         };
-
-        // Состояние чекбокса
-        bool isChecked = true;
-
-        // Обработчик клика на весь panel
-        checkboxPanel.MouseLeftButtonDown += (s, e) =>
-        {
-            isChecked = !isChecked;
-            checkIcon.Visibility = isChecked ? Visibility.Visible : Visibility.Collapsed;
-            checkboxBorder.Background = isChecked 
-                ? new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e))
-                : new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x18));
-        };
-
-        // Hover эффект
-        checkboxPanel.MouseEnter += (s, e) =>
-        {
-            checkboxBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0x5b, 0xa2, 0xf6));
-        };
-        checkboxPanel.MouseLeave += (s, e) =>
-        {
-            checkboxBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6));
-        };
-
-        checkboxPanel.Children.Add(checkboxBorder);
-        checkboxPanel.Children.Add(checkboxLabel);
-        cardContent.Children.Add(checkboxPanel);
+        cardContent.Children.Add(showAgainCb);
 
         // Кнопка "Понятно"
         var okBtn = new Button
@@ -1644,11 +1586,9 @@ public partial class MainWindow : Window
         okBtn.Style = (Style)FindResource("AccentBtn");
         okBtn.Click += (s, e) =>
         {
-            // Сохраняем настройку
-            _settings.ShowLongCheckDialog = isChecked;
+            _settings.ShowLongCheckDialog = showAgainCb.IsChecked != true;
             SettingsService.Save(_settings);
-            
-            // Закрываем диалог
+            ShowServiceReminderCB.IsChecked = _settings.ShowLongCheckDialog;
             MainGrid.Children.Remove(overlay);
             MainGrid.Children.Remove(dialogCard);
         };
@@ -1677,10 +1617,9 @@ public partial class MainWindow : Window
         // Закрытие по клику на overlay
         overlay.MouseLeftButtonDown += (s, e) =>
         {
-            // Сохраняем настройку
-            _settings.ShowLongCheckDialog = isChecked;
+            _settings.ShowLongCheckDialog = showAgainCb.IsChecked != true;
             SettingsService.Save(_settings);
-            
+            ShowServiceReminderCB.IsChecked = _settings.ShowLongCheckDialog;
             MainGrid.Children.Remove(overlay);
             MainGrid.Children.Remove(dialogCard);
         };
@@ -3043,6 +2982,8 @@ public partial class MainWindow : Window
 
     private void ShowPlayWhileScanDialog()
     {
+        if (!_settings.ShowGameOfferDialog) return;
+
         // Создаем overlay
         var overlay = new Border
         {
@@ -3158,6 +3099,18 @@ public partial class MainWindow : Window
             Margin = new Thickness(0, 0, 0, 22)
         });
 
+        var dontShowAgain = new System.Windows.Controls.CheckBox
+        {
+            Content = "Больше не показывать",
+            Style = (Style)FindResource("Toggle"),
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            FontSize = 13,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 14),
+            IsChecked = !_settings.ShowGameOfferDialog
+        };
+        content.Children.Add(dontShowAgain);
+
         var btnPanel = new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -3178,6 +3131,12 @@ public partial class MainWindow : Window
         yesBtn.Content = "Поиграть!";
         yesBtn.Click += (_, _) =>
         {
+            if (dontShowAgain.IsChecked == true)
+            {
+                _settings.ShowGameOfferDialog = false;
+                SettingsService.Save(_settings);
+            }
+            ShowGameOfferCB.IsChecked = _settings.ShowGameOfferDialog;
             MainGrid.Children.Remove(overlay);
             MainGrid.Children.Remove(dialogCard);
             ShowGameOverlay();
@@ -3194,6 +3153,12 @@ public partial class MainWindow : Window
         noBtn.Content = "Нет";
         noBtn.Click += (_, _) =>
         {
+            if (dontShowAgain.IsChecked == true)
+            {
+                _settings.ShowGameOfferDialog = false;
+                SettingsService.Save(_settings);
+            }
+            ShowGameOfferCB.IsChecked = _settings.ShowGameOfferDialog;
             MainGrid.Children.Remove(overlay);
             MainGrid.Children.Remove(dialogCard);
         };
@@ -3930,8 +3895,10 @@ public partial class MainWindow : Window
         // AutoZapretCB убран - Zapret больше не в автозапуске
         AutoTgWsCB.IsChecked    = _settings.AutostartTgWsProxy;
         AutoAppCB.IsChecked     = _settings.AutostartApp;
-        DiscordRpcCB.IsChecked  = _settings.DiscordRpcEnabled;
-        AutoUpdatesCB.IsChecked = _settings.AutoUpdates;
+        DiscordRpcCB.IsChecked      = _settings.DiscordRpcEnabled;
+        AutoUpdatesCB.IsChecked     = _settings.AutoUpdates;
+        ShowGameOfferCB.IsChecked   = _settings.ShowGameOfferDialog;
+        ShowServiceReminderCB.IsChecked = _settings.ShowLongCheckDialog;
         ComboEffectCB.IsChecked = _settings.DisableComboEffect;
         VolumeSlider.Value = _settings.GameVolume;
         // Применить логарифм сразу при загрузке
@@ -3943,20 +3910,34 @@ public partial class MainWindow : Window
         LoadKeyLabels();
     }
 
-    private void SaveSettings_Click(object s, RoutedEventArgs e)
+    private void AutoSaveSettings()
     {
         _settings.ZapretPath       = ZapretBox.Text.Trim();
         _settings.TgWsProxyPath    = TgWsBox.Text.Trim();
-        _settings.AutostartZapret  = false; // Zapret убран из автозапуска
         _settings.AutostartTgWsProxy = AutoTgWsCB.IsChecked == true;
         _settings.AutostartApp     = AutoAppCB.IsChecked == true;
         _settings.AutoUpdates      = AutoUpdatesCB.IsChecked == true;
+        _settings.ShowGameOfferDialog  = ShowGameOfferCB.IsChecked == true;
+        _settings.ShowLongCheckDialog  = ShowServiceReminderCB.IsChecked == true;
         SettingsService.Save(_settings);
-        
-        // Автозапуск через Task Scheduler
         SetAutostart(_settings.AutostartApp);
-        
-        CloseSettings();
+    }
+
+    private void SettingCB_Checked(object sender, RoutedEventArgs e) { if (_settingsLoaded) AutoSaveSettings(); }
+    private void SettingCB_Unchecked(object sender, RoutedEventArgs e) { if (_settingsLoaded) AutoSaveSettings(); }
+
+    private void ZapretBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        if (!_settingsLoaded) return;
+        _settings.ZapretPath = ZapretBox.Text.Trim();
+        SettingsService.Save(_settings);
+    }
+
+    private void TgWsBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        if (!_settingsLoaded) return;
+        _settings.TgWsProxyPath = TgWsBox.Text.Trim();
+        SettingsService.Save(_settings);
     }
 
     private void DiscordRpcCB_Checked(object sender, RoutedEventArgs e)
