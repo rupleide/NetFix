@@ -344,6 +344,7 @@ public partial class MainWindow : Window
         else
         {
             FadeIn();
+            _ = WriteStartupLogAsync();
             CheckInternetOnStart();
             StartActiveAppsMonitor();
             
@@ -360,6 +361,10 @@ public partial class MainWindow : Window
         
         // Инициализируем монитор сети
         InitNetworkMonitor();
+        
+        // Обработчик кликов по ссылкам в логе
+        LogBox.PreviewMouseLeftButtonDown += LogBox_PreviewMouseLeftButtonDown;
+        LogBox.PreviewMouseMove += LogBox_PreviewMouseMove;
     }
 
     private void OnSizeChanged(object sender, SizeChangedEventArgs e)
@@ -414,13 +419,28 @@ public partial class MainWindow : Window
         double popupW = popup.ActualWidth;
         double popupH = popup.ActualHeight;
 
-        // Позиция: правый край у курсора, снизу над панелью задач
-        double left = pos.X - popupW;
-        double top  = screen.WorkingArea.Bottom - popupH;
+        // DPI-коэффициент: физические пиксели → WPF device-independent пиксели
+        var dpi = VisualTreeHelper.GetDpi(this);
+        double sx = dpi.DpiScaleX;
+        double sy = dpi.DpiScaleY;
 
-        if (left < screen.WorkingArea.Left) left = screen.WorkingArea.Left + 4;
-        if (left + popupW > screen.WorkingArea.Right) left = screen.WorkingArea.Right - popupW - 4;
-        if (top < screen.WorkingArea.Top) top = screen.WorkingArea.Top + 4;
+        double cursorX = pos.X / sx;
+        double cursorY = pos.Y / sy;
+
+        double workLeft   = screen.WorkingArea.Left   / sx;
+        double workRight  = screen.WorkingArea.Right  / sx;
+        double workTop    = screen.WorkingArea.Top    / sy;
+        double workBottom = screen.WorkingArea.Bottom / sy;
+
+        // Позиция: верхним правым углом у курсора
+        double left = cursorX - popupW;
+        double top  = cursorY - popupH;
+
+        // Не даём вылезти за края экрана
+        if (left < workLeft) left = workLeft + 4;
+        if (left + popupW > workRight) left = workRight - popupW - 4;
+        if (top < workTop) top = workTop + 4;
+        if (top + popupH > workBottom) top = workBottom - popupH;
 
         popup.Left = left;
         popup.Top  = top;
@@ -1577,6 +1597,19 @@ public partial class MainWindow : Window
         };
         cardContent.Children.Add(descText);
 
+        // Текст про режимы кнопки
+        var modeText = new TextBlock
+        {
+            Text = "А также в настройках вы можете выбрать режим работы кнопки. Если поставить «Быстрый», всё запускается буквально за 3 секунды и ждать больше не нужно.",
+            FontSize = 14,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc)),
+            TextAlignment = TextAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+            LineHeight = 22,
+            Margin = new Thickness(0, 0, 0, 24)
+        };
+        cardContent.Children.Add(modeText);
+
         // Чекбокс "Показывать это окно в будущем"
         var showAgainCb = new System.Windows.Controls.CheckBox
         {
@@ -2226,7 +2259,7 @@ public partial class MainWindow : Window
         });
         
         helpStack.Children.Add(new TextBlock { 
-            Text = "Обращение ко мне: Если ничего не помогло, вы можете описать свою проблему в разделе Issues на моём GitHub-репозитории. Я постараюсь ответить по мере возможности.", 
+            Text = "Обращение ко мне: Если ничего не помогло, вы можете описать свою проблему в разделе Issues на моём GitHub-репозитории или написать мне напрямую в Telegram @sofirka_hanabi - я постараюсь помочь всем по мере возможности!", 
             FontSize = 13, 
             Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
             TextWrapping = TextWrapping.Wrap,
@@ -2928,6 +2961,11 @@ public partial class MainWindow : Window
         CheckInternetOnStart();
     }
 
+    private void ForceOpenNet_Click(object s, RoutedEventArgs e)
+    {
+        NoInternetPage.Visibility = Visibility.Collapsed;
+    }
+
     // ── Active apps monitor ──────────────────────────────────────────────────
     private void StartActiveAppsMonitor()
     {
@@ -3038,6 +3076,121 @@ public partial class MainWindow : Window
     }
 
     // ── Log ──────────────────────────────────────────────────────────────────
+    private async Task WriteStartupLogAsync()
+    {
+        const int d = 60; // задержка между строками (мс)
+        var hour = DateTime.Now.Hour;
+        string greeting = hour >= 5 && hour < 12 ? "Доброе утро" :
+                          hour >= 12 && hour < 18 ? "Добрый день" :
+                          "Добрый вечер";
+
+        await Task.Delay(d);
+        AppendLog($"{greeting}! Добро пожаловать в NetFix 🚀", "final");
+        await Task.Delay(d);
+        AppendLog("Инициализация компонентов системы...", "info");
+        await Task.Delay(d);
+        AppendLink("Мой Telegram-канал: ", "t.me/NetFixRuBi", " - информация об обновлениях, новые способы обходов и гайды. Максимально полезная информация, советую подписаться", "https://t.me/NetFixRuBi");
+        await Task.Delay(d);
+        AppendLog("spacer");
+
+        var status = DiagnosticsEngine.CheckAppStatus();
+        bool admin;
+        try
+        {
+            using var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
+            var principal = new System.Security.Principal.WindowsPrincipal(identity);
+            admin = principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+        }
+        catch { admin = false; }
+
+        await Task.Delay(d);
+        AppendLog("СТАТУС СЕРВИСОВ И ПРИЛОЖЕНИЙ", "system");
+        await Task.Delay(d);
+        AppendLog($"Обход блокировок (Zapret):    [ {(status.ZapretRunning ? "ЗАПУЩЕН" : "ВЫКЛЮЧЕН")} ]", status.ZapretRunning ? "ok" : "warn");
+        await Task.Delay(d);
+        AppendLog($"Прокси для Telegram:          [ {(status.TgWsProxyRunning ? "ЗАПУЩЕН" : "ВЫКЛЮЧЕН")} ]", status.TgWsProxyRunning ? "ok" : "warn");
+        await Task.Delay(d);
+        AppendLog($"Права администратора (UAC):   [ {(admin ? "ПОДТВЕРЖДЕНЫ" : "НЕ ПОЛУЧЕНЫ")} ]", admin ? "ok" : "warn");
+        await Task.Delay(d);
+        AppendLog("spacer");
+
+        if (status.ZapretRunning && status.TgWsProxyRunning && admin)
+        {
+            await Task.Delay(d);
+            AppendLog("Всё запущено и всё работает НОРМАЛЬНО!", "final");
+            await Task.Delay(d);
+            AppendLog("Zapret включен. Discord и YouTube должны работать нормально.", "ok");
+            await Task.Delay(d);
+            AppendLog("Прокси настроен. Telegram должен работать стабильно.", "ok");
+        }
+        else
+        {
+            await Task.Delay(d);
+            AppendLog("Если что-то всё еще не грузит, перейдите во вкладку «Частые вопросы».", "info");
+        }
+        await Task.Delay(d);
+        AppendLog("spacer");
+    }
+
+    private void AppendLink(string prefix, string linkText, string suffix, string url)
+    {
+        string ts = DateTime.Now.ToString("HH:mm:ss");
+        Dispatcher.Invoke(() =>
+        {
+            var para = new System.Windows.Documents.Paragraph { Margin = new Thickness(0, 1, 0, 1) };
+            para.Inlines.Add(new System.Windows.Documents.Run($"[{ts}] [INFO] ")
+            {
+                Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x55)),
+                FontSize = 10,
+                FontFamily = new FontFamily("Consolas")
+            });
+            para.Inlines.Add(new System.Windows.Documents.Run(prefix)
+            {
+                Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc)),
+                FontSize = 12,
+                FontFamily = new FontFamily("Segoe UI")
+            });
+            // только ссылка подчёркнута
+            var linkRun = new System.Windows.Documents.Run(linkText)
+            {
+                Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+                FontSize = 12,
+                FontFamily = new FontFamily("Segoe UI"),
+                TextDecorations = TextDecorations.Underline,
+                Tag = url
+            };
+            para.Inlines.Add(linkRun);
+            para.Inlines.Add(new System.Windows.Documents.Run(suffix)
+            {
+                Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc)),
+                FontSize = 12,
+                FontFamily = new FontFamily("Segoe UI")
+            });
+            LogBox.Document.Blocks.Add(para);
+            LogBox.ScrollToEnd();
+        });
+    }
+
+    private void LogBox_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        var pos = e.GetPosition(LogBox);
+        var pointer = LogBox.GetPositionFromPoint(pos, true);
+        if (pointer?.Parent is System.Windows.Documents.Run run && run.Tag is string url && !string.IsNullOrEmpty(url))
+        {
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            e.Handled = true;
+        }
+    }
+
+    private void LogBox_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        var pos = e.GetPosition(LogBox);
+        var pointer = LogBox.GetPositionFromPoint(pos, true);
+        LogBox.Cursor = pointer?.Parent is System.Windows.Documents.Run run && run.Tag is string url && !string.IsNullOrEmpty(url)
+            ? System.Windows.Input.Cursors.Hand
+            : System.Windows.Input.Cursors.Arrow;
+    }
+
     private void AppendLog(string msg, string kind = "info")
     {
         if (msg == "spacer") {
@@ -3086,6 +3239,9 @@ public partial class MainWindow : Window
                     fontSize = 15;
                     isBold = true;
                     prefix = "🚀 ";
+                    break;
+                case "info":
+                    prefix = "[INFO] ";
                     break;
                 default:
                     prefix = "🔹 ";
@@ -9021,7 +9177,7 @@ public partial class MainWindow : Window
 
     private void BuildOnboard2(StackPanel p)
     {
-        AddOnboardSub(p, "Приложение НЕ СОБИРАЕТ ВАШИ ДАННЫЕ.\nКак разработчик пишу: ОНИ МНЕ НАХУЙ НЕ НУЖНЫ!\nЕсли вы беспокоитесь за свою безопасность, то нахуя вы скачали это с GitHub?\nВ любом случае, исходный код доступен на GitHub.");
+        AddOnboardSub(p, "Приложение НЕ СОБИРАЕТ ВАШИ ДАННЫЕ.\n\nКак разработчик заявляю: они мне абсолютно не нужны. Если вы всё же беспокоитесь о конфиденциальности и безопасности, напоминаю, что исходный код проекта полностью открыт и доступен на GitHub - вы всегда можете проверить его лично.");
         AddOnboardBtn(p, "Далее", "#3b82f6", () => ShowOnboardScreen(3));
     }
 
@@ -9372,10 +9528,11 @@ public partial class MainWindow : Window
     {
         var bgBrush = (SolidColorBrush)new BrushConverter().ConvertFrom(bgHex)!;
         var c = bgBrush.Color;
+        // Пропорциональное затемнение: умножаем на 0.75, но не ниже тёмных цветов
         var hoverBrush = new SolidColorBrush(Color.FromRgb(
-            (byte)(c.R > 30 ? c.R - 30 : 0),
-            (byte)(c.G > 30 ? c.G - 30 : 0),
-            (byte)(c.B > 30 ? c.B - 30 : 0)));
+            (byte)(c.R * 0.75),
+            (byte)(c.G * 0.75),
+            (byte)(c.B * 0.75)));
 
         var btn = new Button
         {
