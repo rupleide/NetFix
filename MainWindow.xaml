@@ -2844,7 +2844,8 @@
                                     <TextBox x:Name="ZapretBox" Style="{StaticResource InputBox}" Height="32"
          HorizontalScrollBarVisibility="Hidden"
          TextAlignment="Left"
-         Padding="8,0,8,0"/>
+         Padding="8,0,8,0"
+         TextChanged="ZapretBox_TextChanged"/>
                                     <Button Grid.Column="1" Content="…" Style="{StaticResource OutlineBtn}"
                                             Height="32" Padding="0" Margin="4,0,0,0" FontSize="14"
                                             WindowChrome.IsHitTestVisibleInChrome="True"
@@ -2862,7 +2863,8 @@
                                     <TextBox x:Name="TgWsBox" Style="{StaticResource InputBox}" Height="32"
          HorizontalScrollBarVisibility="Hidden"
          TextAlignment="Left"
-         Padding="8,0,8,0"/>
+         Padding="8,0,8,0"
+         TextChanged="TgWsBox_TextChanged"/>
                                     <Button Grid.Column="1" Content="…" Style="{StaticResource OutlineBtn}"
                                             Height="32" Padding="0" Margin="4,0,0,0" FontSize="14"
                                             WindowChrome.IsHitTestVisibleInChrome="True"
@@ -2874,9 +2876,11 @@
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
 
                                 <CheckBox x:Name="AutoTgWsCB" Style="{StaticResource Toggle}"
-                                          Content="tg-ws-proxy в автозапуск Windows" Margin="0,0,0,10"/>
+                                          Content="tg-ws-proxy в автозапуск Windows" Margin="0,0,0,10"
+                                          Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
                                 <CheckBox x:Name="AutoAppCB" Style="{StaticResource Toggle}"
-                                          Content="NetFix в автозапуск Windows" Margin="0,0,0,20"/>
+                                          Content="NetFix в автозапуск Windows" Margin="0,0,0,20"
+                                          Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
 
                                 <Border Height="1" Background="#333333" Margin="0,0,0,16"/>
                                 <TextBlock Text="ПРОЧЕЕ" FontFamily="Segoe UI" FontSize="11"
@@ -2887,18 +2891,21 @@
                                           Checked="DiscordRpcCB_Checked"
                                           Unchecked="DiscordRpcCB_Unchecked"/>
                                 <CheckBox x:Name="AutoUpdatesCB" Style="{StaticResource Toggle}"
-                                          Content="Автоматические обновления" Margin="0,0,0,20"/>
+                                          Content="Автоматические обновления" Margin="0,0,0,10"
+                                          Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
+                                <CheckBox x:Name="ShowGameOfferCB" Style="{StaticResource Toggle}"
+                                          Content="Предлагать поиграть при проверке" Margin="0,0,0,10"
+                                          Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
+                                <CheckBox x:Name="ShowServiceReminderCB" Style="{StaticResource Toggle}"
+                                          Content="Напоминать про сервисы при проверке" Margin="0,0,0,20"
+                                          Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
 
                                 <Button Content="Проверить обновления" Style="{StaticResource OutlineBtn}"
                                         HorizontalAlignment="Stretch" Padding="12,8" Margin="0,0,0,20"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
                                         Click="CheckUpdateBtn_Click"/>
 
-                                <Button Content="Сохранить" Style="{StaticResource AccentBtn}"
-                                        WindowChrome.IsHitTestVisibleInChrome="True"
-                                        Click="SaveSettings_Click"/>
-
-                                <Border Height="1" Background="#333333" Margin="0,20"/>
+                                <Border Height="1" Background="#333333" Margin="0,4,0,16"/>
                                 <TextBlock Text="TELEGRAM-КАНАЛ ПРОЕКТА" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,10"/>
                                 
