@@ -2883,6 +2883,58 @@
                                           Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
 
                                 <Border Height="1" Background="#333333" Margin="0,0,0,16"/>
+                                <TextBlock Text="РЕЖИМ КНОПКИ «ПОЧИНИТЬ ИНТЕРНЕТ»" FontFamily="Segoe UI" FontSize="11"
+                                           Foreground="#888888" FontWeight="Bold" Margin="0,0,0,10"/>
+
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,20">
+                                    <Border x:Name="FixModeFastCard" Width="155" Height="90"
+                                            CornerRadius="10" Background="#1a1a1a"
+                                            BorderBrush="#333333" BorderThickness="1.5"
+                                            Margin="0,0,8,0" Cursor="Hand"
+                                            MouseLeftButtonDown="FixModeFastCard_Click"
+                                            SnapsToDevicePixels="True"
+                                            TextOptions.TextRenderingMode="ClearType"
+                                            TextOptions.TextFormattingMode="Ideal">
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Path Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                                                  Fill="#22c55e" Width="20" Height="20" Stretch="Uniform"
+                                                  HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                                            <TextBlock Text="Быстрая" FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="#f0f0f0" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Только запуск" FontSize="9.5"
+                                                       Foreground="#888888" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                                            <TextBlock Text="Zapret и TgWsProxy" FontSize="9.5"
+                                                       Foreground="#888888" HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border x:Name="FixModeFullCard" Width="155" Height="90"
+                                            CornerRadius="10" Background="#1a1a1a"
+                                            BorderBrush="#333333" BorderThickness="1.5"
+                                            Cursor="Hand" MouseLeftButtonDown="FixModeFullCard_Click"
+                                            SnapsToDevicePixels="True"
+                                            TextOptions.TextRenderingMode="ClearType"
+                                            TextOptions.TextFormattingMode="Ideal">
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Path Data="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"
+                                                  Fill="#6366f1" Width="20" Height="20" Stretch="Uniform"
+                                                  HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                                            <TextBlock Text="Полная" FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="#f0f0f0" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="С проверкой DPI, DNS," FontSize="9.5"
+                                                       Foreground="#888888" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                                            <TextBlock Text="TCP и запуском сервисов" FontSize="9.5"
+                                                       Foreground="#888888" HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+
+                                <TextBlock Text="Если вы пользуетесь приложением чтобы быстро запускать Zapret и TgWsProxy, а не сканировать сеть каждый раз - ставьте Быстрый режим."
+                                           FontSize="10.5" Foreground="#f0f0f0" TextWrapping="Wrap"
+                                           Margin="0,0,0,10" HorizontalAlignment="Center"
+                                           TextAlignment="Center" MaxWidth="420"/>
+
+                                <Border Height="1" Background="#333333" Margin="0,0,0,16"/>
                                 <TextBlock Text="ПРОЧЕЕ" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
 

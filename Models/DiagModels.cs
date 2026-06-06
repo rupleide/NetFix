@@ -95,6 +95,8 @@ public class DiagReport
     public List<DiscordPingResult> DiscordPing { get; set; } = new();
 }
 
+public enum FixMode { Full, Fast }
+
 public class AppSettings
 {
     public string ZapretPath { get; set; } = "";
@@ -109,6 +111,7 @@ public class AppSettings
     public double GameVolume { get; set; } = 0.5;
     public string FfmpegPath { get; set; } = "";
     public bool DisableComboEffect { get; set; } = false;
+    public FixMode Mode { get; set; } = FixMode.Full;
     public string KeyLane0 { get; set; } = "A";
     public string KeyLane1 { get; set; } = "S";
     public string KeyLane2 { get; set; } = "W";
