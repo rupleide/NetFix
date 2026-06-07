@@ -233,7 +233,12 @@ git clone https://github.com/rupleide/NetFix.git
 1. Открыть `NetFix.sln`
 2. Нажать **Сборка → Собрать решение**
 
-Всё. Никаких дополнительных шагов, все сторонние зависимости (WinDivert, Zapret, TgWsProxy и прочие бинарники) уже включены в репозиторий.
+**Всё. Никаких дополнительных шагов.**
+
+> [!NOTE]
+> Сторонние компоненты (Zapret, TgWsProxy) в репозитории отсутствуют - это намеренно. Пользователь устанавливает их сам через встроенную автоматическую или ручную установку, которая скачивает их напрямую с официальных репозиториев авторa:
+> - [Flowseal/zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube)
+> - [Flowseal/tg-ws-proxy](https://github.com/Flowseal/tg-ws-proxy)
 
 ---
 
