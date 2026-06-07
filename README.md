@@ -11,6 +11,7 @@
 [![Downloads](https://img.shields.io/github/downloads/rupleide/NetFix/total?style=flat-square&color=22c55e&label=скачиваний)](https://github.com/rupleide/NetFix/releases)
 [![VirusTotal](https://img.shields.io/badge/VirusTotal-0%2F72-brightgreen?style=flat-square&logo=virustotal)](https://www.virustotal.com/gui/file/8a5eb3a2ecf231285d2b577daf82750995c83524b17aac022d4395215fe6b983)
 [![Telegram](https://img.shields.io/badge/Telegram-канал-26A5E4?style=flat-square&logo=telegram)](https://t.me/NetFixRuBi)
+[![TON Donate](https://img.shields.io/badge/Донат-TON-0088CC?style=flat-square&logo=ton&logoColor=white)](https://app.tonkeeper.com/transfer/UQCx8X4z86Jej2hc8l_IVni8e0Q8uDHhC8_PJ2zymxngVc2Q)
 [![License](https://img.shields.io/badge/лицензия-GPL_3.0-blue?style=flat-square)](LICENSE)
 
 </div>
