@@ -11,7 +11,7 @@
 [![Downloads](https://img.shields.io/github/downloads/rupleide/NetFix/total?style=flat-square&color=22c55e&label=скачиваний)](https://github.com/rupleide/NetFix/releases)
 [![VirusTotal](https://img.shields.io/badge/VirusTotal-0%2F72-brightgreen?style=flat-square&logo=virustotal)](https://www.virustotal.com/gui/file/8a5eb3a2ecf231285d2b577daf82750995c83524b17aac022d4395215fe6b983)
 [![Telegram](https://img.shields.io/badge/Telegram-канал-26A5E4?style=flat-square&logo=telegram)](https://t.me/NetFixRuBi)
-[![License](https://img.shields.io/badge/лицензия-MIT-blue?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/badge/лицензия-GPL_3.0-blue?style=flat-square)](LICENSE)
 
 </div>
 
@@ -216,7 +216,7 @@
 
 ## 📜 Лицензия
 
-Данное ПО распространяется под лицензией **MIT**.
+Данное ПО распространяется под лицензией **GPL-3.0**.
 
 - **GUI и код автоматизации (NetFix):** © 2024–2026 [rupleide](https://github.com/rupleide). Свободно для изменения и распространения при сохранении авторства.
 - **Сторонние компоненты (Zapret, TgWsProxy):** Все права принадлежат их автору - **[Flowseal](https://github.com/Flowseal)**. Именно его сборки являются сердцем этого приложения. Я не являюсь автором инструментов `Zapret` и `TgWsProxy`.

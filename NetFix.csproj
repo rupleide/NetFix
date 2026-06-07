@@ -18,6 +18,7 @@
     <Copyright>© 2024-2026 rupleide</Copyright>
     <Product>NetFix</Product>
     <Description>NetFix - GUI приложение для обхода блокировок Telegram и Discord</Description>
+    <License>GPL-3.0-only</License>
   </PropertyGroup>
 
   <PropertyGroup>
