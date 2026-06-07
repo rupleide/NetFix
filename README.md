@@ -207,8 +207,68 @@
       <i>Все типичные проблемы и их решения - чтобы не пришлось никого просить о помощи.</i>
     </td>
   </tr>
-
 </table>
+</div>
+
+---
+
+## 🛠 Для разработчиков
+
+Если хотите разобраться в коде или внести свой вклад - добро пожаловать.
+
+Просто клонируйте репозиторий. Все файлы, которые компилируются в `.exe`, уже находятся в репозитории, за исключением встроенных треков ритм-игры.
+
+```bash
+git clone https://github.com/rupleide/NetFix.git
+```
+
+> [!IMPORTANT]
+> **Пожалуйста, не создавайте отдельные форки NetFix как самостоятельные проекты.**
+> Если есть идея или улучшение, предложите их через Pull Request или напишите мне лично. Я читаю каждое обращение, и если изменение стоящее - обязательно добавлю. Так проект останется единым, а ваш вклад увидят все пользователи.
+
+<div align="center">
+<br/>
+
+[![Pull Request](https://img.shields.io/badge/Предложить%20изменение-238636?style=for-the-badge&logo=github&logoColor=white)](https://github.com/rupleide/NetFix/pulls)
+&nbsp;
+[![Telegram](https://img.shields.io/badge/Написать%20автору-26A5E4?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/rupleide)
+
+</div>
+
+---
+
+<div align="center">
+
+## 💎 Поддержать проект
+
+*Если NetFix помог вам - вы можете поддержать разработку донатом*
+
+<br/>
+
+<table border="0" cellpadding="24" width="700">
+  <tr>
+    <td align="center" valign="middle" width="350">
+      <h3>💎 Toncoin (TON)</h3>
+      <code>UQCx8X4z86Jej2hc8l_IVni8e0Q8uDHhC8_PJ2zymxngVc2Q</code>
+      <br/><br/>
+      <a href="https://app.tonkeeper.com/transfer/UQCx8X4z86Jej2hc8l_IVni8e0Q8uDHhC8_PJ2zymxngVc2Q">
+        <img src="https://img.shields.io/badge/Открыть%20в%20Tonkeeper-0088CC?style=for-the-badge&logo=ton&logoColor=white" alt="Tonkeeper"/>
+      </a>
+    </td>
+    <td align="center" valign="middle" width="350">
+      <h3>⚡ Перевод по СБП</h3>
+      <i>Работает с любого банка России</i>
+      <br/><br/>
+      <a href="https://www.tbank.ru/rm/r_eELpDmupvc.SCiWRkVJON/bgKkD30493/">
+        <img src="https://img.shields.io/badge/Перевести%20донат-FFDD2D?style=for-the-badge&logoColor=000000" alt="СБП"/>
+      </a>
+    </td>
+  </tr>
+</table>
+
+<br/>
+
+ ❤️ Каждый донат мотивирует продолжать развитие проекта. Спасибо!
 
 </div>
 
