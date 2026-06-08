@@ -180,7 +180,7 @@ public partial class TrayPopup : Window
                 if (cache?.CurrentConfig is { Length: > 0 })
                     await ZapretConfigService.ApplyConfigAsync(settings.ZapretPath, cache.CurrentConfig);
                 else
-                    Process.Start(new ProcessStartInfo(settings.ZapretPath) { UseShellExecute = true });
+                    Process.Start(new ProcessStartInfo("cmd.exe", $"/c \"{settings.ZapretPath}\"") { UseShellExecute = false, CreateNoWindow = true });
             }
             await Task.Delay(1000);
         }

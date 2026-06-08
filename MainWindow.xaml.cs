@@ -845,6 +845,14 @@ public partial class MainWindow : Window
         });
     }
 
+    private void ModsBtn_Click(object s, RoutedEventArgs e)
+    {
+        var modsWindow = new Views.ModsWindow(_settings);
+        modsWindow.Owner = this;
+        modsWindow.ShowDialog();
+        _settings = SettingsService.Load();
+    }
+
     private void UpdateComponentsBtn_Click(object s, RoutedEventArgs e)
     {
         // Показываем диалоговое окно подтверждения

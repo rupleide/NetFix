@@ -59,6 +59,9 @@
         <!-- Export Icon (arrow from box pointing out) -->
         <PathGeometry x:Key="ExportIcon">M17,3 L21,3 L21,7 M11,13 L21,3 M19,13.89 L19,20 Q19,21 18,21 L4,21 Q3,21 3,20 L3,6 Q3,5 4,5 L10.11,5</PathGeometry>
         
+        <!-- Star Icon (mods) -->
+        <PathGeometry x:Key="StarIcon">M16,2.7 L20,13 L30,13 L21.8,19.1 L24.7,29 L16,23.3 L7.3,29 L10.2,19.1 L2,13 L12,13 Z M14,16 L14,18 M18,16 L18,18</PathGeometry>
+        
         <!-- Import Icon (arrow into box) -->
         <PathGeometry x:Key="ImportIcon">M13,9 L13,13 L9,13 M3,3 L13,13 M13.89,5 L20,5 Q21,5 21,6 L21,20 Q21,21 20,21 L6,21 Q5,21 5,20 L5,13.89</PathGeometry>
         
@@ -3426,6 +3429,32 @@
                                                  BorderThickness="0"/>
                                 </StackPanel>
                             </Border>
+
+                            <!-- Модификации -->
+                            <TextBlock Text="Модификации" 
+                                       FontFamily="Segoe UI" FontSize="12"
+                                       FontWeight="SemiBold" Foreground="#888888" 
+                                       Margin="0,0,0,8"/>
+                            <Button x:Name="ModsBtn"
+                                    Style="{StaticResource OutlineBtn}"
+                                    Padding="14,10"
+                                    Margin="0,0,0,0"
+                                    HorizontalContentAlignment="Left"
+                                    WindowChrome.IsHitTestVisibleInChrome="True"
+                                    Click="ModsBtn_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource StarIcon}" 
+                                          Stroke="#888888"
+                                          StrokeThickness="1.5"
+                                          Width="16" Height="16"
+                                          Stretch="Uniform"
+                                          Margin="0,0,10,0"
+                                          VerticalAlignment="Center"/>
+                                    <TextBlock Text="Модификации" 
+                                               FontFamily="Segoe UI" FontSize="13"
+                                               Foreground="#888888" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
 
                             <!-- Zapret Config Buttons -->
                             <TextBlock Text="Настройка Zapret" 
