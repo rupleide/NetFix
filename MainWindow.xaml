@@ -27,6 +27,16 @@
         <SolidColorBrush x:Key="GreenBrush"   Color="#22c55e"/>
         <SolidColorBrush x:Key="YellowBrush"  Color="#eab308"/>
         <SolidColorBrush x:Key="RedBrush"     Color="#ef4444"/>
+        <SolidColorBrush x:Key="SuccessBrush" Color="#22c55e"/>
+        <SolidColorBrush x:Key="ErrorBrush" Color="#ef4444"/>
+        <SolidColorBrush x:Key="WarningBrush" Color="#eab308"/>
+        <SolidColorBrush x:Key="InfoBrush" Color="#3b82f6"/>
+        <SolidColorBrush x:Key="MutedTextBrush" Color="#888888"/>
+        <SolidColorBrush x:Key="DimTextBrush" Color="#555558"/>
+        <SolidColorBrush x:Key="CardBgBrush" Color="#161618"/>
+        <SolidColorBrush x:Key="CardBorderBrush" Color="#2a2a2d"/>
+        <SolidColorBrush x:Key="CardHoverBgBrush" Color="#1c1c20"/>
+        <SolidColorBrush x:Key="CardHoverBorderBrush" Color="#3a3a3d"/>
 
         <!-- ═══ VECTOR ICONS ═══ -->
         <!-- Power Icon (векторная, совместима с Windows 10) -->
@@ -2903,13 +2913,9 @@
                         </Style>
 
                         <DataTemplate x:Key="ModCardTpl">
-                            <Border x:Name="card"
-                                    MinHeight="56" Margin="2,1"
-                                    CornerRadius="8"
-                                    Background="#161618"
-                                    BorderBrush="#2a2a2d"
-                                    BorderThickness="1"
-                                    Cursor="Hand">
+                            <Border x:Name="card" MinHeight="56" Margin="2,1" CornerRadius="8"
+                                    Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" 
+                                    BorderThickness="1" Cursor="Hand">
                                 <Grid Margin="10,8,8,8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
@@ -2917,39 +2923,33 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <Border Grid.Column="0" Width="3" CornerRadius="2"
-                                            Background="#3b82f6" Margin="0,2,8,2"/>
+                                            Background="{StaticResource AccentBrush}" Margin="0,2,8,2"/>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Name}"
-                                                   FontFamily="Segoe UI" FontSize="12"
-                                                   FontWeight="SemiBold" Foreground="#f0f0f0"
+                                        <TextBlock Text="{Binding Name}" FontFamily="Segoe UI" FontSize="12"
+                                                   FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"
                                                    TextTrimming="CharacterEllipsis"/>
                                         <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
                                             <Border CornerRadius="4" Background="#1e1e22" Padding="5,1" Margin="0,0,5,0">
-                                                <TextBlock Text="{Binding Author}"
-                                                           FontFamily="Segoe UI" FontSize="10"
+                                                <TextBlock Text="{Binding Author}" FontFamily="Segoe UI" FontSize="10"
                                                            Foreground="#5a9fd4"/>
                                             </Border>
                                             <Border CornerRadius="4" Background="#1a1a1e" Padding="5,1">
-                                                <TextBlock Text="{Binding Version}"
-                                                           FontFamily="Segoe UI" FontSize="10"
-                                                           Foreground="#555558"/>
+                                                <TextBlock Text="{Binding Version}" FontFamily="Segoe UI" FontSize="10"
+                                                           Foreground="{StaticResource DimTextBrush}"/>
                                             </Border>
                                         </StackPanel>
                                     </StackPanel>
-                                    <Button Grid.Column="2" Style="{StaticResource FlatBtn}"
-                                            Width="24" Height="24" Padding="0"
-                                            Opacity="0" x:Name="exportBtn"
-                                            Tag="{Binding}" Click="ExportSingleMod_Click">
-                                        <Path Data="{StaticResource ExportIcon}"
-                                              Stroke="#555558" StrokeThickness="1.5"
+                                    <Button Grid.Column="2" Style="{StaticResource FlatBtn}" Width="24" Height="24" Padding="0"
+                                            Opacity="0" x:Name="exportBtn" Tag="{Binding}" Click="ExportSingleMod_Click">
+                                        <Path Data="{StaticResource ExportIcon}" Stroke="{StaticResource DimTextBrush}" StrokeThickness="1.5"
                                               Width="11" Height="11" Stretch="Uniform"/>
                                     </Button>
                                 </Grid>
                             </Border>
                             <DataTemplate.Triggers>
                                 <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
-                                    <Setter TargetName="card" Property="Background" Value="#1c1c20"/>
-                                    <Setter TargetName="card" Property="BorderBrush" Value="#3a3a3d"/>
+                                    <Setter TargetName="card" Property="Background" Value="{StaticResource CardHoverBgBrush}"/>
+                                    <Setter TargetName="card" Property="BorderBrush" Value="{StaticResource CardHoverBorderBrush}"/>
                                     <Setter TargetName="exportBtn" Property="Opacity" Value="1"/>
                                 </DataTrigger>
                             </DataTemplate.Triggers>
@@ -3674,10 +3674,10 @@
                             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
                                 <RadioButton x:Name="ModsEditorTabLists" Content="Листы"
                                              Style="{StaticResource TabRadio}" GroupName="ModsEditorTabs"
-                                             IsChecked="True" Checked="ModsEditorTab_Checked"/>
+                                             IsChecked="True" Checked="ModsEditorTabLists_Checked"/>
                                 <RadioButton x:Name="ModsEditorTabBat" Content=".bat файлы"
                                              Style="{StaticResource TabRadio}" GroupName="ModsEditorTabs"
-                                             Margin="4,0,0,0" Checked="ModsEditorTab_Checked"/>
+                                             Margin="4,0,0,0" Checked="ModsEditorTabLists_Checked"/>
                             </StackPanel>
 
                             <!-- Two-column editor -->
