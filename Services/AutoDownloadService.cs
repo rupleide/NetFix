@@ -14,6 +14,13 @@ public static class AutoDownloadService
     private const string TgWsProxyRepo = "Flowseal/tg-ws-proxy";
     private static readonly string InstallDir = @"C:\Zapret";
 
+    private static readonly string[] ProtectedListFiles =
+    [
+        "ipset-exclude-user.txt",
+        "list-exclude-user.txt",
+        "list-general-user.txt"
+    ];
+
     public static async Task<bool> AutoInstallAllAsync(
         Action<string> onLog,
         Action<double> onProgress,
@@ -165,35 +172,80 @@ public static class AutoDownloadService
                 onProgress(0.50);
 
                 // Копируем содержимое из TEMP в C:\Zapret с заменой
-                // Если нужно сохранить lists — делаем резервную копию
-                string? listsBackupDir = null;
+                // Сохраняем пользовательские файлы если нужно
+                var preservedFiles = new List<(string Source, string Backup)>();
                 if (preserveLists)
                 {
                     string listsDir = Path.Combine(mainInstallDir, "lists");
                     if (Directory.Exists(listsDir))
                     {
-                        listsBackupDir = Path.Combine(Path.GetTempPath(),
-                            $"NetFix_Lists_Backup_{Guid.NewGuid()}");
-                        onLog("📋 Сохраняю папку lists...");
-                        CopyDirectory(listsDir, listsBackupDir);
-                        onLog("✅ Папка lists сохранена");
+                        onLog("📋 Сохраняю пользовательские файлы lists...");
+                        foreach (var fileName in ProtectedListFiles)
+                        {
+                            var src = Path.Combine(listsDir, fileName);
+                            if (File.Exists(src))
+                            {
+                                var backup = Path.Combine(Path.GetTempPath(), $"NetFix_Preserve_{Guid.NewGuid()}_{fileName}");
+                                File.Copy(src, backup, true);
+                                preservedFiles.Add((src, backup));
+                                onLog($"  → {fileName} сохранён");
+                            }
+                        }
+                        if (preservedFiles.Count > 0)
+                            onLog($"✅ Сохранено {preservedFiles.Count} файлов");
+                        else
+                            onLog("⚠️ Ни один из защищаемых файлов не найден");
                     }
                 }
 
                 onLog("Копирую файлы в C:\\Zapret (с заменой существующих)...");
                 MoveDirectoryContents(tempInstallDir, mainInstallDir);
 
-                // Восстанавливаем lists если делали резервную копию
-                if (preserveLists && listsBackupDir is not null
-                    && Directory.Exists(listsBackupDir))
+                // Восстанавливаем сохранённые файлы
+                if (preservedFiles.Count > 0)
                 {
-                    string listsTarget = Path.Combine(mainInstallDir, "lists");
-                    onLog("📋 Восстанавливаю папку lists...");
-                    if (Directory.Exists(listsTarget))
-                        Directory.Delete(listsTarget, true);
-                    CopyDirectory(listsBackupDir, listsTarget);
-                    Directory.Delete(listsBackupDir, true);
-                    onLog("✅ Папка lists восстановлена");
+                    onLog("📋 Восстанавливаю пользовательские файлы...");
+                    foreach (var (source, backup) in preservedFiles)
+                    {
+                        try
+                        {
+                            var dir = Path.GetDirectoryName(source);
+                            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                            File.Copy(backup, source, true);
+                            File.Delete(backup);
+                            onLog($"  → {Path.GetFileName(source)} восстановлен");
+                        }
+                        catch (Exception ex)
+                        {
+                            onLog($"  ⚠️ {Path.GetFileName(source)}: {ex.Message}");
+                        }
+                    }
+                    onLog("✅ Пользовательские файлы восстановлены");
+                }
+
+                // Если галочка снята — удаляем user-файлы, чтобы применились дефолтные
+                if (!preserveLists)
+                {
+                    string listsDir = Path.Combine(mainInstallDir, "lists");
+                    if (Directory.Exists(listsDir))
+                    {
+                        foreach (var fileName in ProtectedListFiles)
+                        {
+                            var filePath = Path.Combine(listsDir, fileName);
+                            try
+                            {
+                                if (File.Exists(filePath))
+                                {
+                                    File.Delete(filePath);
+                                    onLog($"  → {fileName} удалён (будут использованы стандартные)");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                onLog($"  ⚠️ {fileName}: {ex.Message}");
+                            }
+                        }
+                    }
                 }
 
                 // Проверяем успешность установки

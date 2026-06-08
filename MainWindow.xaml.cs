@@ -212,6 +212,7 @@ public partial class MainWindow : Window
     private bool _modsLoaded;
     private ModEntry? _dragMod;
     private bool _dragFromActive;
+    private DragAdorner? _currentDragAdorner;
 
     // ── Network Monitor ──────────────────────────────────────────────────────
     private DispatcherTimer _netTimer = null!;
@@ -1042,6 +1043,33 @@ public partial class MainWindow : Window
             {
                 _dragMod = mod;
                 _dragFromActive = listBox == ActiveList;
+
+                var layer = AdornerLayer.GetAdornerLayer(listBox);
+                if (layer is not null)
+                {
+                    var ghost = new Border
+                    {
+                        Width = 160, Height = 50,
+                        Background = new SolidColorBrush(Color.FromArgb(200, 30, 30, 35)),
+                        BorderBrush = new SolidColorBrush(Color.FromArgb(180, 168, 85, 247)),
+                        BorderThickness = new Thickness(1),
+                        CornerRadius = new CornerRadius(8),
+                        Child = new TextBlock
+                        {
+                            Text = mod.Name,
+                            Foreground = Brushes.White,
+                            FontSize = 13,
+                            VerticalAlignment = System.Windows.VerticalAlignment.Center,
+                            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                        }
+                    };
+                    ghost.Measure(new Size(160, 50));
+                    ghost.Arrange(new Rect(0, 0, 160, 50));
+                    _currentDragAdorner = new DragAdorner(listBox, ghost);
+                    layer.Add(_currentDragAdorner);
+                    _currentDragAdorner.UpdatePosition(e.GetPosition(listBox).X + 15, e.GetPosition(listBox).Y + 15);
+                }
+
                 DragDrop.DoDragDrop(listBox, _dragMod, DragDropEffects.Move);
             }
         }
@@ -1059,6 +1087,7 @@ public partial class MainWindow : Window
         if (_dragFromActive)
             ToggleModActive(_dragMod, false);
         _dragMod = null;
+        RemoveDragAdorner();
     }
 
     private void ActiveList_Drop(object sender, DragEventArgs e)
@@ -1067,6 +1096,15 @@ public partial class MainWindow : Window
         if (!_dragFromActive)
             ToggleModActive(_dragMod, true);
         _dragMod = null;
+        RemoveDragAdorner();
+    }
+
+    private void RemoveDragAdorner()
+    {
+        if (_currentDragAdorner is null) return;
+        var layer = AdornerLayer.GetAdornerLayer(_currentDragAdorner.AdornedElement);
+        layer?.Remove(_currentDragAdorner);
+        _currentDragAdorner = null;
     }
 
     private static ListBoxItem? FindListBoxItem(DependencyObject? element)
@@ -1177,13 +1215,11 @@ public partial class MainWindow : Window
         }
     }
 
-    private void MyModDetails_Click(object sender, RoutedEventArgs e)
+    private void MyModCard_Click(object sender, MouseButtonEventArgs e)
     {
-        if (sender is not Button btn || btn.Tag is not ModEntry mod) return;
-
-        // TODO: Open sub-screen with mod details
-        // Pass mod.Name, mod.Author, mod.Version, mod.Description, mod.FolderPath
-        // Show diff, change history, metadata editing button
+        if (sender is not Border border || border.DataContext is not ModEntry mod) return;
+        ShowModsSubScreen(ModsEditorScreen, "Редактор");
+        LoadEditorFileLists(mod.FolderPath);
     }
 
     private async void EditorAddFile_Click(object sender, RoutedEventArgs e)
@@ -1314,14 +1350,14 @@ public partial class MainWindow : Window
         _editorSaveBtn = FindName("ModsEditorSaveBtn") as Button;
     }
 
-    private void LoadEditorFileLists()
+    private void LoadEditorFileLists(string? folderPath = null)
     {
         EnsureEditorControls();
         if (_editorFileList is null) { ModsStatusText.Text = "❌ Ошибка инициализации редактора"; return; }
 
         _editorFileList.Items.Clear();
         var isListsTab = _editorTabLists?.IsChecked == true;
-        var dir = isListsTab ? @"C:\Zapret" : System.IO.Path.Combine(AppContext.BaseDirectory, "Mods", "strategies");
+        var dir = folderPath ?? (isListsTab ? @"C:\Zapret" : System.IO.Path.Combine(AppContext.BaseDirectory, "Mods", "strategies"));
         var ext = isListsTab ? "*.txt" : "*.bat";
 
         if (!Directory.Exists(dir))
@@ -1432,6 +1468,33 @@ public partial class MainWindow : Window
             {
                 _dragMod = mod;
                 _dragFromActive = listBox == ListsActiveList;
+
+                var layer = AdornerLayer.GetAdornerLayer(listBox);
+                if (layer is not null)
+                {
+                    var ghost = new Border
+                    {
+                        Width = 160, Height = 50,
+                        Background = new SolidColorBrush(Color.FromArgb(200, 30, 30, 35)),
+                        BorderBrush = new SolidColorBrush(Color.FromArgb(180, 168, 85, 247)),
+                        BorderThickness = new Thickness(1),
+                        CornerRadius = new CornerRadius(8),
+                        Child = new TextBlock
+                        {
+                            Text = mod.Name,
+                            Foreground = Brushes.White,
+                            FontSize = 13,
+                            VerticalAlignment = System.Windows.VerticalAlignment.Center,
+                            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                        }
+                    };
+                    ghost.Measure(new Size(160, 50));
+                    ghost.Arrange(new Rect(0, 0, 160, 50));
+                    _currentDragAdorner = new DragAdorner(listBox, ghost);
+                    layer.Add(_currentDragAdorner);
+                    _currentDragAdorner.UpdatePosition(e.GetPosition(listBox).X + 15, e.GetPosition(listBox).Y + 15);
+                }
+
                 DragDrop.DoDragDrop(listBox, _dragMod, DragDropEffects.Move);
             }
         }
@@ -1443,6 +1506,7 @@ public partial class MainWindow : Window
         if (_dragFromActive)
             ListsToggleModActive(_dragMod, false);
         _dragMod = null;
+        RemoveDragAdorner();
     }
 
     private void ListsActiveList_Drop(object sender, DragEventArgs e)
@@ -1451,6 +1515,7 @@ public partial class MainWindow : Window
         if (!_dragFromActive)
             ListsToggleModActive(_dragMod, true);
         _dragMod = null;
+        RemoveDragAdorner();
     }
 
     private void RefreshListsInfo()
@@ -1679,11 +1744,11 @@ public partial class MainWindow : Window
             Child = CreateWarningGrid()
         });
 
-        // Чекбокс сохранения lists
+        // Чекбокс сохранения пользовательских файлов lists
         var preserveListsCB = new System.Windows.Controls.CheckBox
         {
-            Content = "Не обновлять папку lists (сохранить мои настройки блокировок)",
-            IsChecked = true,
+            Content = "Не обновлять файлы: ipset-exclude-user.txt и другие -user файлы",
+            IsChecked = false,
             Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc)),
             FontSize = 12,
             Margin = new Thickness(0, 0, 0, 20),
@@ -11424,6 +11489,44 @@ public partial class MainWindow : Window
         fadeAnim.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(dur))));
         fadeAnim.Completed += (_, _) => overlay.Children.Remove(particle);
         particle.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
+    }
+
+    // ── Drag Adorner for visual feedback ──────────────────────────────────────
+    private class DragAdorner : Adorner
+    {
+        private readonly UIElement _child;
+        private double _leftOffset;
+        private double _topOffset;
+
+        public DragAdorner(UIElement adornedElement, UIElement child)
+            : base(adornedElement)
+        {
+            _child = child;
+            AddVisualChild(child);
+            IsHitTestVisible = false;
+        }
+
+        protected override int VisualChildrenCount => 1;
+        protected override Visual GetVisualChild(int index) => _child;
+
+        protected override Size MeasureOverride(Size constraint)
+        {
+            _child.Measure(constraint);
+            return _child.DesiredSize;
+        }
+
+        protected override Size ArrangeOverride(Size finalSize)
+        {
+            _child.Arrange(new Rect(_leftOffset, _topOffset, finalSize.Width, finalSize.Height));
+            return finalSize;
+        }
+
+        public void UpdatePosition(double left, double top)
+        {
+            _leftOffset = left;
+            _topOffset = top;
+            InvalidateArrange();
+        }
     }
 }
 

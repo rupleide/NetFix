@@ -330,13 +330,13 @@
             <Setter Property="Foreground"   Value="#f0f0f0"/>
             <Setter Property="FontFamily"   Value="Segoe UI"/>
             <Setter Property="FontSize"     Value="13"/>
-            <Setter Property="Cursor"       Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="CheckBox">
                         <StackPanel Orientation="Horizontal">
                             <Border x:Name="track" Width="40" Height="22" CornerRadius="11"
-                                    Background="#333333" VerticalAlignment="Center" Margin="0,0,10,0">
+                                    Background="#333333" VerticalAlignment="Center" Margin="0,0,10,0"
+                                    Cursor="Hand">
                                 <Ellipse x:Name="thumb" Width="16" Height="16" Fill="White"
                                          HorizontalAlignment="Left" VerticalAlignment="Center" Margin="3,0,0,0">
                                     <Ellipse.RenderTransform>
@@ -344,7 +344,7 @@
                                     </Ellipse.RenderTransform>
                                 </Ellipse>
                             </Border>
-                            <ContentPresenter VerticalAlignment="Center"/>
+                            <ContentPresenter VerticalAlignment="Center" IsHitTestVisible="False"/>
                         </StackPanel>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
@@ -2952,9 +2952,10 @@
                     </DataTemplate>
 
                     <DataTemplate x:Key="MyModCardTpl">
-                        <Border Width="160" Height="160" CornerRadius="14"
+                        <Border x:Name="card" Width="160" Height="160" CornerRadius="14"
                                 Background="#1a1a1e" BorderBrush="#2a2a2e" BorderThickness="1"
-                                Margin="0,0,14,14" Padding="16,14">
+                                Margin="0,0,14,14" Padding="16,14"
+                                Cursor="Hand" MouseLeftButtonUp="MyModCard_Click">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -2976,30 +2977,12 @@
                                         <TextBlock Text="{Binding Version}" FontSize="10" Foreground="#555558"/>
                                     </Border>
                                 </StackPanel>
-                                <!-- Overlay button on hover -->
-                                <Border x:Name="detailsOverlay" Grid.RowSpan="3"
-                                        Background="#80000000" CornerRadius="14"
-                                        Opacity="0" IsHitTestVisible="False">
-                                    <Button x:Name="detailsBtn" Style="{StaticResource OutlineBtn}"
-                                            Tag="{Binding}" Click="MyModDetails_Click"
-                                            VerticalAlignment="Center" HorizontalAlignment="Center"
-                                            Foreground="White" BorderBrush="#a855f7"
-                                            IsHitTestVisible="False">
-                                        <StackPanel Orientation="Horizontal">
-                                            <Path Data="M9,5 L9,19 L21,12 Z" Stroke="White" StrokeThickness="1.5"
-                                                  Width="10" Height="10" Stretch="Uniform"
-                                                  Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Подробнее" VerticalAlignment="Center" FontSize="12"/>
-                                        </StackPanel>
-                                    </Button>
-                                </Border>
                             </Grid>
                         </Border>
                         <DataTemplate.Triggers>
                             <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ItemsControl}}" Value="True">
-                                <Setter TargetName="detailsOverlay" Property="Opacity" Value="1"/>
-                                <Setter TargetName="detailsOverlay" Property="IsHitTestVisible" Value="True"/>
-                                <Setter TargetName="detailsBtn" Property="IsHitTestVisible" Value="True"/>
+                                <Setter TargetName="card" Property="Background" Value="#222228"/>
+                                <Setter TargetName="card" Property="BorderBrush" Value="#a855f7"/>
                             </DataTrigger>
                         </DataTemplate.Triggers>
                     </DataTemplate>
@@ -3133,29 +3116,29 @@
                </Grid.RowDefinitions>
 
                <!-- Page title + back -->
-               <Grid Grid.Row="0" Margin="32,24,32,0">
-                   <StackPanel Orientation="Horizontal">
-                       <Button Style="{StaticResource BackBtn}"
-                               WindowChrome.IsHitTestVisibleInChrome="True"
-                               Click="ModsBackBtn_Click">
-                           <StackPanel Orientation="Horizontal">
-                               <Path Data="{StaticResource ArrowLeftIcon}" 
-                                     Stroke="#888888"
-                                     StrokeThickness="2"
-                                     Width="14" Height="14"
-                                     Stretch="Uniform"
-                                     Margin="0,0,8,0"
-                                     VerticalAlignment="Center"/>
-                               <TextBlock Text="Назад" VerticalAlignment="Center" Foreground="#cccccc"/>
-                           </StackPanel>
-                       </Button>
-                       <TextBlock x:Name="ModsHeaderTitle" Text="Модификации" FontFamily="Segoe UI" FontSize="20"
-                                  FontWeight="Bold" Foreground="White"
-                                  VerticalAlignment="Center" Margin="20,0,0,0"/>
-                   </StackPanel>
-               </Grid>
+                <Grid Grid.Row="0" Margin="32,20,32,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Style="{StaticResource BackBtn}"
+                                WindowChrome.IsHitTestVisibleInChrome="True"
+                                Click="ModsBackBtn_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource ArrowLeftIcon}" 
+                                      Stroke="#888888"
+                                      StrokeThickness="2"
+                                      Width="14" Height="14"
+                                      Stretch="Uniform"
+                                      Margin="0,0,6,0"
+                                      VerticalAlignment="Center"/>
+                                <TextBlock Text="Назад" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <TextBlock x:Name="ModsHeaderTitle" Text="Модификации" FontFamily="Segoe UI" FontSize="18"
+                                   FontWeight="Bold" Foreground="White"
+                                   VerticalAlignment="Center" Margin="16,0,0,0"/>
+                    </StackPanel>
+                </Grid>
 
-               <Border Grid.Row="1" Height="1" Background="#2a2a2e" Margin="32,16,32,0"/>
+               <Border Grid.Row="1" Height="1" Background="#333333" Margin="32,14,32,0"/>
 
                <!-- ═══ CONTENT AREA (Row 2) — 5 sub-screens ═══ -->
                <Grid Grid.Row="2" x:Name="ModsContentArea" Margin="32,20,32,20">
@@ -3447,7 +3430,7 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Orientation="Horizontal">
                                     <Button x:Name="CreateModBtn" Style="{StaticResource OutlineBtn}"
-                                            Margin="0,0,10,0" Click="CreateModBtn_Click" Foreground="#aaaaaa">
+                                            Height="36" Margin="0,0,10,0" Click="CreateModBtn_Click" Foreground="#aaaaaa">
                                         <StackPanel Orientation="Horizontal">
                                             <Path Data="{StaticResource PlusIcon}" Stroke="#aaaaaa"
                                                   StrokeThickness="1.8" Width="12" Height="12" Stretch="Uniform"
@@ -3456,7 +3439,7 @@
                                         </StackPanel>
                                     </Button>
                                     <Button x:Name="ModsImportBtn" Style="{StaticResource OutlineBtn}"
-                                            Margin="0,0,10,0" Click="ModsImportBtn_Click" Foreground="#aaaaaa">
+                                            Height="36" Margin="0,0,10,0" Click="ModsImportBtn_Click" Foreground="#aaaaaa">
                                         <StackPanel Orientation="Horizontal">
                                             <Path Data="{StaticResource ImportIcon}" Stroke="#aaaaaa"
                                                   StrokeThickness="1.8" Width="12" Height="12" Stretch="Uniform"
@@ -3465,7 +3448,7 @@
                                         </StackPanel>
                                     </Button>
                                     <Button x:Name="DeleteModBtn" Style="{StaticResource DeleteOutlineBtn}"
-                                            IsEnabled="False" Click="DeleteBtn_Click"
+                                            Height="36" IsEnabled="False" Click="DeleteBtn_Click"
                                             Foreground="#ff6b6b" BorderBrush="#6a3030">
                                         <StackPanel Orientation="Horizontal">
                                             <Path Data="{StaticResource TrashIcon}" Stroke="#ff6b6b"
@@ -3480,7 +3463,7 @@
                                            VerticalAlignment="Center" HorizontalAlignment="Center"
                                            TextTrimming="CharacterEllipsis"/>
                                 <Button Grid.Column="2" x:Name="ModsApplyBtn" Style="{StaticResource AccentBtn}"
-                                        Width="140" Height="38" Click="ModsApplyBtn_Click">
+                                        Width="Auto" MinWidth="130" Height="36" Click="ModsApplyBtn_Click">
                                     <StackPanel Orientation="Horizontal">
                                         <Path Data="{StaticResource CheckmarkIcon}" Stroke="White"
                                               StrokeThickness="2.2" Width="14" Height="14" Stretch="Uniform"
@@ -3604,48 +3587,48 @@
                                    <ColumnDefinition Width="Auto"/>
                                </Grid.ColumnDefinitions>
                                <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                   <Button x:Name="ListsCreateBtn" Style="{StaticResource OutlineBtn}"
-                                           Margin="0,0,10,0" Click="ListsCreateBtn_Click" Foreground="#aaaaaa">
-                                       <StackPanel Orientation="Horizontal">
-                                           <Path Data="{StaticResource PlusIcon}" Stroke="#aaaaaa"
-                                                 StrokeThickness="1.8" Width="12" Height="12" Stretch="Uniform"
-                                                 Margin="0,0,7,0" VerticalAlignment="Center"/>
-                                           <TextBlock Text="Создать" VerticalAlignment="Center"/>
-                                       </StackPanel>
-                                   </Button>
-                                   <Button x:Name="ListsImportBtn" Style="{StaticResource OutlineBtn}"
-                                           Margin="0,0,10,0" Click="ListsImportBtn_Click" Foreground="#aaaaaa">
-                                       <StackPanel Orientation="Horizontal">
-                                           <Path Data="{StaticResource ImportIcon}" Stroke="#aaaaaa"
-                                                 StrokeThickness="1.8" Width="12" Height="12" Stretch="Uniform"
-                                                 Margin="0,0,7,0" VerticalAlignment="Center"/>
-                                           <TextBlock Text="Импорт" VerticalAlignment="Center"/>
-                                       </StackPanel>
-                                   </Button>
-                                   <Button x:Name="ListsDeleteBtn" Style="{StaticResource DeleteOutlineBtn}"
-                                           IsEnabled="False" Click="ListsDeleteBtn_Click"
-                                           Foreground="#ff6b6b" BorderBrush="#6a3030">
-                                       <StackPanel Orientation="Horizontal">
-                                           <Path Data="{StaticResource TrashIcon}" Stroke="#ff6b6b"
-                                                 StrokeThickness="1.5" Width="12" Height="12" Stretch="Uniform"
-                                                 Margin="0,0,7,0" VerticalAlignment="Center"/>
-                                           <TextBlock Text="Удалить" VerticalAlignment="Center"/>
-                                       </StackPanel>
-                                   </Button>
-                               </StackPanel>
-                               <TextBlock Grid.Column="1" x:Name="ListsStatusText" Text=""
-                                          FontFamily="Segoe UI" FontSize="12" Foreground="#888888"
-                                          VerticalAlignment="Center" HorizontalAlignment="Center"
-                                          TextTrimming="CharacterEllipsis"/>
-                               <Button Grid.Column="2" x:Name="ListsApplyBtn" Style="{StaticResource AccentBtn}"
-                                       Width="140" Height="38" Click="ListsApplyBtn_Click">
-                                   <StackPanel Orientation="Horizontal">
-                                       <Path Data="{StaticResource CheckmarkIcon}" Stroke="White"
-                                             StrokeThickness="2.2" Width="14" Height="14" Stretch="Uniform"
-                                             Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                       <TextBlock Text="Применить" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                                   </StackPanel>
-                               </Button>
+                                    <Button x:Name="ListsCreateBtn" Style="{StaticResource OutlineBtn}"
+                                            Height="36" Margin="0,0,10,0" Click="ListsCreateBtn_Click" Foreground="#aaaaaa">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource PlusIcon}" Stroke="#aaaaaa"
+                                                  StrokeThickness="1.8" Width="12" Height="12" Stretch="Uniform"
+                                                  Margin="0,0,7,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Создать" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button x:Name="ListsImportBtn" Style="{StaticResource OutlineBtn}"
+                                            Height="36" Margin="0,0,10,0" Click="ListsImportBtn_Click" Foreground="#aaaaaa">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource ImportIcon}" Stroke="#aaaaaa"
+                                                  StrokeThickness="1.8" Width="12" Height="12" Stretch="Uniform"
+                                                  Margin="0,0,7,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Импорт" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button x:Name="ListsDeleteBtn" Style="{StaticResource DeleteOutlineBtn}"
+                                            Height="36" IsEnabled="False" Click="ListsDeleteBtn_Click"
+                                            Foreground="#ff6b6b" BorderBrush="#6a3030">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource TrashIcon}" Stroke="#ff6b6b"
+                                                  StrokeThickness="1.5" Width="12" Height="12" Stretch="Uniform"
+                                                  Margin="0,0,7,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Удалить" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                                <TextBlock Grid.Column="1" x:Name="ListsStatusText" Text=""
+                                           FontFamily="Segoe UI" FontSize="12" Foreground="#888888"
+                                           VerticalAlignment="Center" HorizontalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis"/>
+                                <Button Grid.Column="2" x:Name="ListsApplyBtn" Style="{StaticResource AccentBtn}"
+                                        Width="Auto" MinWidth="130" Height="36" Click="ListsApplyBtn_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource CheckmarkIcon}" Stroke="White"
+                                              StrokeThickness="2.2" Width="14" Height="14" Stretch="Uniform"
+                                              Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Применить" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                </Button>
                            </Grid>
                        </Border>
                    </Grid>
@@ -4445,32 +4428,6 @@
                                                  BorderThickness="0"/>
                                 </StackPanel>
                             </Border>
-
-                            <!-- Модификации -->
-                            <TextBlock Text="Модификации" 
-                                       FontFamily="Segoe UI" FontSize="12"
-                                       FontWeight="SemiBold" Foreground="#888888" 
-                                       Margin="0,0,0,8"/>
-                            <Button x:Name="ModsBtn"
-                                    Style="{StaticResource OutlineBtn}"
-                                    Padding="14,10"
-                                    Margin="0,0,0,0"
-                                    HorizontalContentAlignment="Left"
-                                    WindowChrome.IsHitTestVisibleInChrome="True"
-                                    Click="ModsBtn_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource StarIcon}" 
-                                          Stroke="#888888"
-                                          StrokeThickness="1.5"
-                                          Width="16" Height="16"
-                                          Stretch="Uniform"
-                                          Margin="0,0,10,0"
-                                          VerticalAlignment="Center"/>
-                                    <TextBlock Text="Модификации" 
-                                               FontFamily="Segoe UI" FontSize="13"
-                                               Foreground="#888888" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
 
                             <!-- Zapret Config Buttons -->
                             <TextBlock Text="Настройка Zapret" 
