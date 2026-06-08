@@ -81,7 +81,7 @@
         <PathGeometry x:Key="CheckmarkIcon">M4.63 15.638a1.028 1.028 0 0 1-.79-.37L.36 11.09a1.03 1.03 0 1 1 1.58-1.316l2.535 3.043L9.958 3.32a1.029 1.029 0 0 1 1.783 1.03L5.52 15.122a1.03 1.03 0 0 1-.803.511.89.89 0 0 1-.088.004z</PathGeometry>
         
         <!-- Plug Icon -->
-        <PathGeometry x:Key="PlugIcon">M6 0a.5.5 0 0 1 .5.5V3h3V.5a.5.5 0 0 1 1 0V3h1a.5.5 0 0 1 .5.5v3A3.5 3.5 0 0 1 8.5 10c-.002.434-.01.845-.04 1.22-.041.514-.126 1.003-.317 1.424a2.083 2.083 0 0 1-.97 1.028C6.725 13.9 6.169 14 5.5 14c-.998 0-1.61.33-1.974.718A1.922 1.922 0 0 0 3 16H2c0-.616.232-1.367.797-1.968C3.374 13.42 4.261 13 5.5 13c.581 0 .962-.088 1.218-.219.241-.123.4-.3.514-.55.121-.266.193-.621.23-1.09.027-.34.035-.718.037-1.141A3.5 3.5 0 0 1 4 6.5v-3a.5.5 0 0 1 .5-.5h1V.5A.5.5 0 0 1 6 0zM5 4v2.5A2.5 2.5 0 0 0 7.5 9h1A2.5 2.5 0 0 0 11 6.5V4H5z</PathGeometry>
+
         
         <!-- External Link Icon -->
         <PathGeometry x:Key="ExternalLinkIcon">M392.857,292.354h-18.274c-2.669,0-4.859,0.855-6.563,2.573c-1.718,1.708-2.573,3.897-2.573,6.563v91.361 c0,12.563-4.47,23.315-13.415,32.262c-8.945,8.945-19.701,13.414-32.264,13.414H82.224c-12.562,0-23.317-4.469-32.264-13.414 c-8.945-8.946-13.417-19.698-13.417-32.262V155.31c0-12.562,4.471-23.313,13.417-32.259c8.947-8.947,19.702-13.418,32.264-13.418 h200.994c2.669,0,4.859-0.859,6.57-2.57c1.711-1.713,2.566-3.9,2.566-6.567V82.221c0-2.662-0.855-4.853-2.566-6.563 c-1.711-1.713-3.901-2.568-6.57-2.568H82.224c-22.648,0-42.016,8.042-58.102,24.125C8.042,113.297,0,132.665,0,155.313v237.542 c0,22.647,8.042,42.018,24.123,58.095c16.086,16.084,35.454,24.13,58.102,24.13h237.543c22.647,0,42.017-8.046,58.101-24.13 c16.085-16.077,24.127-35.447,24.127-58.095v-91.358c0-2.669-0.856-4.859-2.574-6.57 C397.709,293.209,395.519,292.354,392.857,292.354z M506.199,41.971c-3.617-3.617-7.905-5.424-12.85-5.424H347.171c-4.948,0-9.233,1.807-12.847,5.424 c-3.617,3.615-5.428,7.898-5.428,12.847s1.811,9.233,5.428,12.85l50.247,50.248L198.424,304.067 c-1.906,1.903-2.856,4.093-2.856,6.563c0,2.479,0.953,4.668,2.856,6.571l32.548,32.544c1.903,1.903,4.093,2.852,6.567,2.852 s4.665-0.948,6.567-2.852l186.148-186.148l50.251,50.248c3.614,3.617,7.898,5.426,12.847,5.426s9.233-1.809,12.851-5.426 c3.617-3.616,5.424-7.898,5.424-12.847V54.818C511.626,49.866,509.813,45.586,506.199,41.971z</PathGeometry>
@@ -2783,32 +2783,7 @@
                     </ScrollViewer>
                 </Grid>
 
-                <!-- ── NO INTERNET OVERLAY ── -->
-                <Border x:Name="NoInternetPage" Visibility="Collapsed" Background="#161616" Panel.ZIndex="5">
-                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                            <Path Data="{StaticResource PlugIcon}" 
-                                  Fill="White"
-                                  Width="52" Height="52"
-                                  Stretch="Uniform"
-                                  HorizontalAlignment="Center"
-                                  Margin="0,0,0,10"/>
-                            <TextBlock Text="Нет подключения к интернету"
-                                       FontFamily="Segoe UI" FontSize="20" FontWeight="Bold"
-                                       Foreground="White" HorizontalAlignment="Center" Margin="0,10,0,0"/>
-                            <TextBlock Text="Подключитесь к сети и нажмите «Проверить снова»."
-                                       FontFamily="Segoe UI" FontSize="13" Foreground="#888888"
-                                       HorizontalAlignment="Center" Margin="0,6,0,0"/>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,24,0,0">
-                                <Button Content="Проверить снова" Style="{StaticResource AccentBtn}"
-                                        WindowChrome.IsHitTestVisibleInChrome="True"
-                                        Click="RetryNet_Click"/>
-                                <Button Content="Всё равно открыть" Style="{StaticResource OutlineBtn}"
-                                        Foreground="#cccccc" Margin="12,0,0,0"
-                                        WindowChrome.IsHitTestVisibleInChrome="True"
-                                        Click="ForceOpenNet_Click"/>
-                            </StackPanel>
-                        </StackPanel>
-                </Border>
+
             </Grid>
 
             <!-- ══════════════════ FOOTER ══════════════════ -->
@@ -2932,7 +2907,7 @@
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
 
                                 <CheckBox x:Name="TgWsCheckUpdatesCB" Style="{StaticResource Toggle}"
-                                          Content="Проверять обновления TgWsProxy" Margin="0,0,0,20"
+                                          Content="Уведомление об уведомлениях TgWsProxy" Margin="0,0,0,20"
                                           Checked="TgWsSetting_Checked" Unchecked="TgWsSetting_Unchecked"/>
 
                                 <Border Height="1" Background="#333333" Margin="0,0,0,16"/>

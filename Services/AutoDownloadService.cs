@@ -17,7 +17,8 @@ public static class AutoDownloadService
     public static async Task<bool> AutoInstallAllAsync(
         Action<string> onLog,
         Action<double> onProgress,
-        Action<string> onError)
+        Action<string> onError,
+        bool preserveLists = false)
     {
         try
         {
@@ -164,8 +165,36 @@ public static class AutoDownloadService
                 onProgress(0.50);
 
                 // Копируем содержимое из TEMP в C:\Zapret с заменой
+                // Если нужно сохранить lists — делаем резервную копию
+                string? listsBackupDir = null;
+                if (preserveLists)
+                {
+                    string listsDir = Path.Combine(mainInstallDir, "lists");
+                    if (Directory.Exists(listsDir))
+                    {
+                        listsBackupDir = Path.Combine(Path.GetTempPath(),
+                            $"NetFix_Lists_Backup_{Guid.NewGuid()}");
+                        onLog("📋 Сохраняю папку lists...");
+                        CopyDirectory(listsDir, listsBackupDir);
+                        onLog("✅ Папка lists сохранена");
+                    }
+                }
+
                 onLog("Копирую файлы в C:\\Zapret (с заменой существующих)...");
                 MoveDirectoryContents(tempInstallDir, mainInstallDir);
+
+                // Восстанавливаем lists если делали резервную копию
+                if (preserveLists && listsBackupDir is not null
+                    && Directory.Exists(listsBackupDir))
+                {
+                    string listsTarget = Path.Combine(mainInstallDir, "lists");
+                    onLog("📋 Восстанавливаю папку lists...");
+                    if (Directory.Exists(listsTarget))
+                        Directory.Delete(listsTarget, true);
+                    CopyDirectory(listsBackupDir, listsTarget);
+                    Directory.Delete(listsBackupDir, true);
+                    onLog("✅ Папка lists восстановлена");
+                }
 
                 // Проверяем успешность установки
                 onLog("Проверяю результат установки...");
@@ -349,6 +378,18 @@ public static class AutoDownloadService
     }
     
     // Метод для перемещения содержимого из одной папки в другую
+    private static void CopyDirectory(string source, string destination)
+    {
+        Directory.CreateDirectory(destination);
+        foreach (var file in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
+        {
+            var relative = Path.GetRelativePath(source, file);
+            var target = Path.Combine(destination, relative);
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            File.Copy(file, target, true);
+        }
+    }
+
     private static void MoveDirectoryContents(string sourceDir, string targetDir)
     {
         // Создаем целевую папку если не существует

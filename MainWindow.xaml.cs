@@ -870,7 +870,7 @@ public partial class MainWindow : Window
             BorderBrush = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
             BorderThickness = new Thickness(0, 3, 0, 0),
             CornerRadius = new CornerRadius(14),
-            MaxWidth = 480,
+            MaxWidth = 560,
             Margin = new Thickness(40),
             HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
@@ -926,7 +926,7 @@ public partial class MainWindow : Window
         cardContent.Children.Add(titleText);
 
         // Описание
-        var descText = new TextBlock
+        cardContent.Children.Add(new TextBlock
         {
             Text = "Приложение скачает и установит последние версии Zapret и TgWsProxy.\n\n" +
                    "Это может занять несколько секунд. Существующие файлы будут обновлены.",
@@ -935,9 +935,33 @@ public partial class MainWindow : Window
             TextAlignment = TextAlignment.Center,
             TextWrapping = TextWrapping.Wrap,
             LineHeight = 22,
-            Margin = new Thickness(0, 0, 0, 24)
+            Margin = new Thickness(0, 0, 0, 12)
+        });
+
+        // Предупреждение про lists
+        cardContent.Children.Add(new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(30, 251, 191, 36)),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(80, 251, 191, 36)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(14, 10, 14, 10),
+            Margin = new Thickness(0, 0, 0, 24),
+            Child = CreateWarningGrid()
+        });
+
+        // Чекбокс сохранения lists
+        var preserveListsCB = new System.Windows.Controls.CheckBox
+        {
+            Content = "Не обновлять папку lists (сохранить мои настройки блокировок)",
+            IsChecked = true,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc)),
+            FontSize = 12,
+            Margin = new Thickness(0, 0, 0, 20),
+            Cursor = System.Windows.Input.Cursors.Hand
         };
-        cardContent.Children.Add(descText);
+        preserveListsCB.Style = (Style)FindResource("Toggle");
+        cardContent.Children.Add(preserveListsCB);
 
         // Кнопки
         var buttonsPanel = new StackPanel
@@ -967,7 +991,7 @@ public partial class MainWindow : Window
             CloseServicesPanel();
             
             // Запускаем обновление компонентов
-            await RunAutoInstallAsync();
+            await RunAutoInstallAsync(preserveListsCB.IsChecked == true);
         };
 
         var cancelBtn = new Button
@@ -1019,6 +1043,41 @@ public partial class MainWindow : Window
             MainGrid.Children.Remove(overlay);
             MainGrid.Children.Remove(dialogCard);
         };
+    }
+
+    private static System.Windows.Controls.Grid CreateWarningGrid()
+    {
+        var grid = new System.Windows.Controls.Grid { Margin = new Thickness(0) };
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+        var icon = new System.Windows.Shapes.Path
+        {
+            Data = System.Windows.Media.Geometry.Parse("M12,2 L22,20 L2,20 Z M12,9 L12,14 M12,16 L12,18"),
+            Stroke = new SolidColorBrush(Color.FromRgb(0xfb, 0xbf, 0x24)),
+            StrokeThickness = 2,
+            Width = 16,
+            Height = 16,
+            Stretch = Stretch.Uniform,
+            Margin = new Thickness(0, 2, 8, 0),
+            VerticalAlignment = VerticalAlignment.Top
+        };
+        Grid.SetColumn(icon, 0);
+        grid.Children.Add(icon);
+
+        var text = new TextBlock
+        {
+            TextWrapping = TextWrapping.Wrap,
+            FontSize = 12,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xfb, 0xbf, 0x24)),
+            LineHeight = 20,
+            Text = "Если Zapret перестал работать, просто нажмите «Обновить».\n" +
+                   "Если вы вручную редактировали списки блокировок в C:\\Zapret\\lists и не хотите их потерять, включите галочку ниже."
+        };
+        Grid.SetColumn(text, 1);
+        grid.Children.Add(text);
+
+        return grid;
     }
 
     private void UpdateSelectedConfigDisplay()
@@ -1545,7 +1604,7 @@ public partial class MainWindow : Window
             BorderBrush = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
             BorderThickness = new Thickness(0, 3, 0, 0),
             CornerRadius = new CornerRadius(14),
-            MaxWidth = 520,
+            MaxWidth = 560,
             Margin = new Thickness(40),
             HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
@@ -1714,10 +1773,9 @@ public partial class MainWindow : Window
         var notificationCard = new Border
         {
             Background = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x18)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
             BorderThickness = new Thickness(0, 3, 0, 0),
             CornerRadius = new CornerRadius(14),
-            MaxWidth = 480,
             Margin = new Thickness(40),
             HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
@@ -2973,21 +3031,9 @@ public partial class MainWindow : Window
                     NetDot.Fill = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
                     NetLbl.Text = "Нет сети";
                     NetLbl.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
-                    NoInternetPage.Visibility = Visibility.Visible;
                 }
             });
         });
-    }
-
-    private void RetryNet_Click(object s, RoutedEventArgs e)
-    {
-        NoInternetPage.Visibility = Visibility.Collapsed;
-        CheckInternetOnStart();
-    }
-
-    private void ForceOpenNet_Click(object s, RoutedEventArgs e)
-    {
-        NoInternetPage.Visibility = Visibility.Collapsed;
     }
 
     // ── Active apps monitor ──────────────────────────────────────────────────
@@ -3048,9 +3094,6 @@ public partial class MainWindow : Window
                     NetDot.Fill = greenBrush;
                     NetLbl.Text = "Сеть";
                     NetLbl.Foreground = grayBrush;
-                    
-                    if (NoInternetPage.Visibility == Visibility.Visible)
-                        NoInternetPage.Visibility = Visibility.Collapsed;
                 }
                 else
                 {
@@ -3883,7 +3926,7 @@ public partial class MainWindow : Window
     /// <summary>
     /// Запускает автоматическую установку/обновление компонентов
     /// </summary>
-    private async Task RunAutoInstallAsync()
+    private async Task RunAutoInstallAsync(bool preserveLists = false)
     {
         FixBtn.IsEnabled = false;
         SetupProg.Value = 0;
@@ -3910,7 +3953,8 @@ public partial class MainWindow : Window
             onError: err => Dispatcher.Invoke(() => {
                 AppendLog("spacer");
                 AppendLog(err, "error");
-            })
+            }),
+            preserveLists: preserveLists
         );
 
         Dispatcher.Invoke(() => {
