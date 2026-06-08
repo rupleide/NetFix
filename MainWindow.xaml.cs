@@ -26,6 +26,7 @@ using Microsoft.Win32;
 using System.Windows.Threading;
 using NetFix.Models;
 using NetFix.Services;
+using NetFix.Services.Mods;
 using NetFix.Views;
 using System.Runtime.InteropServices;
 
@@ -42,8 +43,11 @@ using TextBox      = System.Windows.Controls.TextBox;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using Brush        = System.Windows.Media.Brush;
 using Panel        = System.Windows.Controls.Panel;
+using ListBox      = System.Windows.Controls.ListBox;
 using Size         = System.Windows.Size;
 using Path         = System.IO.Path;
+using DragEventArgs = System.Windows.DragEventArgs;
+using DragDropEffects = System.Windows.DragDropEffects;
 
 namespace NetFix;
 
@@ -201,6 +205,14 @@ public partial class MainWindow : Window
     private string _statsSearchText = string.Empty;
 
     private bool _settingsLoaded; // защита от срабатывания событий при загрузке
+
+    // ── Моды: состояние ───────────────────────────────────────────────────────
+    private List<ModEntry> _allMods = [];
+    private bool _isStrategyTab = true;
+    private bool _modsLoaded;
+    private string _modsSearchText = "";
+    private ModEntry? _dragMod;
+    private bool _dragFromActive;
 
     // ── Network Monitor ──────────────────────────────────────────────────────
     private DispatcherTimer _netTimer = null!;
@@ -847,10 +859,324 @@ public partial class MainWindow : Window
 
     private void ModsBtn_Click(object s, RoutedEventArgs e)
     {
-        var modsWindow = new Views.ModsWindow(_settings);
-        modsWindow.Owner = this;
-        modsWindow.ShowDialog();
-        _settings = SettingsService.Load();
+        CloseServicesPanel();
+        ShowModsPage();
+    }
+
+    private void ModsNavBtn_Click(object s, RoutedEventArgs e)
+    {
+        StopGame();
+        StopEditorRecording();
+        ShowModsPage();
+    }
+
+    private void ShowModsPage()
+    {
+        MainPage.Visibility = Visibility.Collapsed;
+        GamePage.Visibility = Visibility.Collapsed;
+        FaqPage.Visibility = Visibility.Collapsed;
+        DiagPage.Visibility = Visibility.Collapsed;
+        SolutionPage.Visibility = Visibility.Collapsed;
+        ModsPage.Visibility = Visibility.Visible;
+
+        ModsNavBtn.Foreground = Brushes.White;
+        ServicesBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+        GameNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+        FaqNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+        DiagNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+
+        if (!_modsLoaded)
+        {
+            _modsLoaded = true;
+            ModScanner.EnsureDirectories();
+            RefreshMods();
+            UpdateModsStatus();
+        }
+    }
+
+    private void ModsBackBtn_Click(object s, RoutedEventArgs e)
+    {
+        ModsPage.Visibility = Visibility.Collapsed;
+        MainPage.Visibility = Visibility.Visible;
+        ModsNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+    }
+
+    // ── Mods Logic ────────────────────────────────────────────────────────────
+    private void RefreshMods()
+    {
+        var activeStrategy = _settings.ActiveStrategyMods ?? [];
+        var activeLists = _settings.ActiveListMods ?? [];
+        _allMods = ModScanner.ScanAll(activeStrategy, activeLists);
+        RefreshModsLists();
+    }
+
+    private void RefreshModsLists()
+    {
+        var activeNames = _isStrategyTab
+            ? (_settings.ActiveStrategyMods ?? [])
+            : (_settings.ActiveListMods ?? []);
+
+        var filtered = string.IsNullOrWhiteSpace(_modsSearchText)
+            ? _allMods
+            : _allMods.Where(m => m.Name.Contains(_modsSearchText, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        var activeMods = filtered
+            .Where(m => (_isStrategyTab ? m.Type == ModType.Strategy : m.Type == ModType.List) && m.IsActive)
+            .OrderBy(m => { var idx = activeNames.IndexOf(ModScanner.GetModDirName(m)); return idx < 0 ? 999 : idx; })
+            .ToList();
+
+        var availableMods = filtered
+            .Where(m => (_isStrategyTab ? m.Type == ModType.Strategy : m.Type == ModType.List) && !m.IsActive)
+            .ToList();
+
+        AvailableList.ItemsSource = null;
+        AvailableList.ItemsSource = availableMods;
+
+        ActiveList.ItemsSource = null;
+        ActiveList.ItemsSource = activeMods;
+
+        UpdateModsStatus();
+    }
+
+    private void UpdateModsStatus()
+    {
+        var isStrategy = _isStrategyTab;
+        var typeName = isStrategy ? "Стратегий" : "Листов";
+        var allCount = _allMods.Count(m => isStrategy ? m.Type == ModType.Strategy : m.Type == ModType.List);
+        var activeCount = ActiveList.Items.Count;
+        var availCount = AvailableList.Items.Count;
+
+        ModsStatusText.Text = $"{typeName}: {allCount} | Активных: {activeCount}";
+
+        if (AvailableCount is not null)
+            AvailableCount.Text = availCount.ToString();
+        if (ActiveCount is not null)
+            ActiveCount.Text = activeCount.ToString();
+    }
+
+    private void Tab_Checked(object sender, RoutedEventArgs e)
+    {
+        _isStrategyTab = TabStrategies.IsChecked == true;
+        if (_modsLoaded)
+            RefreshModsLists();
+    }
+
+    private void MoveRightBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (AvailableList.SelectedItem is ModEntry mod)
+            ToggleModActive(mod, true);
+    }
+
+    private void MoveLeftBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (ActiveList.SelectedItem is ModEntry mod)
+            ToggleModActive(mod, false);
+    }
+
+    private void ToggleModActive(ModEntry mod, bool activate)
+    {
+        mod.IsActive = activate;
+
+        var list = _isStrategyTab ? _settings.ActiveStrategyMods : _settings.ActiveListMods;
+        var dirName = ModScanner.GetModDirName(mod);
+
+        if (activate)
+        {
+            if (!list.Contains(dirName))
+                list.Add(dirName);
+        }
+        else
+        {
+            list.Remove(dirName);
+        }
+
+        SaveModsSettings();
+        RefreshModsLists();
+    }
+
+    private void ListBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is ListBox listBox)
+        {
+            var item = FindListBoxItem(e.OriginalSource as DependencyObject);
+            if (item?.DataContext is ModEntry mod)
+            {
+                _dragMod = mod;
+                _dragFromActive = listBox == ActiveList;
+                DragDrop.DoDragDrop(listBox, _dragMod, DragDropEffects.Move);
+            }
+        }
+    }
+
+    private void ListBox_DragEnter(object sender, DragEventArgs e)
+    {
+        e.Effects = e.Data.GetData(typeof(ModEntry)) is ModEntry ? DragDropEffects.Move : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void AvailableList_Drop(object sender, DragEventArgs e)
+    {
+        if (_dragMod is null) return;
+        if (_dragFromActive)
+            ToggleModActive(_dragMod, false);
+        _dragMod = null;
+    }
+
+    private void ActiveList_Drop(object sender, DragEventArgs e)
+    {
+        if (_dragMod is null) return;
+        if (!_dragFromActive)
+            ToggleModActive(_dragMod, true);
+        _dragMod = null;
+    }
+
+    private static ListBoxItem? FindListBoxItem(DependencyObject? element)
+    {
+        while (element is not null and not ListBoxItem)
+            element = VisualTreeHelper.GetParent(element);
+        return element as ListBoxItem;
+    }
+
+    private void CreateModBtn_Click(object sender, RoutedEventArgs e)
+    {
+        var type = _isStrategyTab ? ModType.Strategy : ModType.List;
+        var dialog = new CreateModWindow(type);
+        dialog.Owner = this;
+
+        if (dialog.ShowDialog() == true && dialog.CreatedEntry is not null)
+        {
+            _allMods.Add(dialog.CreatedEntry);
+            SaveModsSettings();
+            RefreshModsLists();
+        }
+    }
+
+    private async void ModsImportBtn_Click(object sender, RoutedEventArgs e)
+    {
+        var openDialog = new OpenFileDialog
+        {
+            Filter = "NetFix Mod (*.netfix-mod)|*.netfix-mod|All files (*.*)|*.*",
+            Title = "Выберите файл мода",
+        };
+
+        if (openDialog.ShowDialog() == true)
+            await ModsImportModAsync(openDialog.FileName);
+    }
+
+    private async Task ModsImportModAsync(string zipPath)
+    {
+        var (meta, readError) = await ModPackager.ReadModMetaFromArchive(zipPath);
+        if (meta is null || readError is not null)
+        {
+            ShowModsError(readError ?? "Не удалось прочитать файл мода");
+            return;
+        }
+
+        var importDialog = new ImportModWindow(meta);
+        importDialog.Owner = this;
+
+        if (importDialog.ShowDialog() == true)
+        {
+            var activeStrategy = _settings.ActiveStrategyMods ?? [];
+            var activeLists = _settings.ActiveListMods ?? [];
+            var (entry, importError) = await ModPackager.ImportAsync(zipPath, activeStrategy, activeLists);
+
+            if (entry is not null)
+            {
+                _allMods.Add(entry);
+                SaveModsSettings();
+                RefreshModsLists();
+                ShowModsSuccess($"Мод '{meta.Name}' импортирован");
+            }
+            else
+            {
+                ShowModsError(importError ?? "Ошибка импорта");
+            }
+        }
+    }
+
+    private void ModsApplyBtn_Click(object sender, RoutedEventArgs e)
+    {
+        SaveModsSettings();
+
+        if (!_isStrategyTab)
+        {
+            var activeLists = _allMods
+                .Where(m => m.Type == ModType.List && m.IsActive)
+                .ToList();
+
+            var (success, error) = ModActivator.ApplyListMods(activeLists);
+            if (!success)
+                ShowModsError(error ?? "Ошибка применения");
+            else
+                ShowModsSuccess("Списки доменов применены");
+        }
+        else
+        {
+            ShowModsSuccess("Порядок стратегий сохранён");
+        }
+
+        UpdateModsStatus();
+    }
+
+    private void AnyList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        DeleteModBtn.IsEnabled = AvailableList.SelectedItem is not null || ActiveList.SelectedItem is not null;
+    }
+
+    private void ModsSearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        _modsSearchText = ModsSearchBox.Text ?? "";
+        if (_modsLoaded)
+            RefreshModsLists();
+    }
+
+    private void RefreshMods_Click(object sender, RoutedEventArgs e) => RefreshMods();
+
+    private async void ExportSingleMod_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is ModEntry mod)
+        {
+            var dir = System.IO.Path.Combine(AppContext.BaseDirectory, "Mods", "export");
+            Directory.CreateDirectory(dir);
+            var result = await ModPackager.ExportAsync(mod, dir);
+            ModsStatusText.Text = $"✅ Экспортировано: {System.IO.Path.GetFileName(result)}";
+            ModsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+        }
+    }
+
+    private void DeleteBtn_Click(object sender, RoutedEventArgs e)
+    {
+        var selected = AvailableList.SelectedItem as ModEntry;
+        if (selected is null)
+            selected = ActiveList.SelectedItem as ModEntry;
+        if (selected is null) return;
+
+        try
+        {
+            if (Directory.Exists(selected.FolderPath))
+                Directory.Delete(selected.FolderPath, true);
+        }
+        catch { }
+
+        _allMods.Remove(selected);
+        SaveModsSettings();
+        RefreshModsLists();
+        ShowModsSuccess($"Мод '{selected.Name}' удалён");
+    }
+
+    private void SaveModsSettings() => SettingsService.Save(_settings);
+
+    private void ShowModsError(string message)
+    {
+        ModsStatusText.Text = $"❌ {message}";
+        ModsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
+    }
+
+    private void ShowModsSuccess(string message)
+    {
+        ModsStatusText.Text = $"✅ {message}";
+        ModsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
     }
 
     private void UpdateComponentsBtn_Click(object s, RoutedEventArgs e)
@@ -2118,10 +2444,12 @@ public partial class MainWindow : Window
         GamePage.Visibility = Visibility.Collapsed;
         FaqPage.Visibility = Visibility.Collapsed;
         SolutionPage.Visibility = Visibility.Collapsed;
+        ModsPage.Visibility = Visibility.Collapsed;
         DiagPage.Visibility = Visibility.Visible;
         DiagNavBtn.Foreground = Brushes.White;
         GameNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
         FaqNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+        ModsNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
     }
 
     private void GameNavBtn_Click(object s, RoutedEventArgs e)
@@ -2164,12 +2492,14 @@ public partial class MainWindow : Window
         FaqPage.Visibility = Visibility.Collapsed;
         DiagPage.Visibility = Visibility.Collapsed;
         SolutionPage.Visibility = Visibility.Collapsed;
+        ModsPage.Visibility = Visibility.Collapsed;
         GamePage.Visibility = Visibility.Visible;
 
         GameNavBtn.Foreground = Brushes.White;
         ServicesBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
         FaqNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
         DiagNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+        ModsNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
 
         ShowGameView(GameMenuView);
         LoadUserLevels();
@@ -2288,10 +2618,12 @@ public partial class MainWindow : Window
         GamePage.Visibility = Visibility.Collapsed;
         DiagPage.Visibility = Visibility.Collapsed;
         SolutionPage.Visibility = Visibility.Collapsed;
+        ModsPage.Visibility = Visibility.Collapsed;
         FaqPage.Visibility = Visibility.Visible;
         FaqNavBtn.Foreground = Brushes.White;
         GameNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
         DiagNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+        ModsNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
         ShowFaqCategories();
     }
 
@@ -3006,6 +3338,7 @@ public partial class MainWindow : Window
             SolutionAutoFixBtn.Content = CreateButtonContentWithIcon("BoltIcon", autoBtnText, Brushes.White);
             
             FaqPage.Visibility = Visibility.Collapsed;
+            ModsPage.Visibility = Visibility.Collapsed;
             SolutionPage.Visibility = Visibility.Visible;
         };
         grid.Children.Add(btn);

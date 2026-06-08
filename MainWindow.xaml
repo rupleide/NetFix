@@ -768,7 +768,13 @@
                             </StackPanel>
                         </Button>
 
-<Button x:Name="FaqNavBtn" Content="Частые вопросы"
+<Button x:Name="ModsNavBtn" Content="Моды"
+        Style="{StaticResource FlatBtn}" Foreground="#888888"
+        Padding="12,6" Margin="0,0,10,0"
+        WindowChrome.IsHitTestVisibleInChrome="True"
+        Click="ModsNavBtn_Click"/>
+
+<Button x:Name="FaqNavBtn" Content="FAQ"
         Style="{StaticResource FlatBtn}" Foreground="#888888"
         Padding="12,6" Margin="0,0,10,0"
         WindowChrome.IsHitTestVisibleInChrome="True"
@@ -2786,6 +2792,499 @@
                     </ScrollViewer>
                 </Grid>
 
+                <!-- ── MODS PAGE ── -->
+                <Grid x:Name="ModsPage" Visibility="Collapsed">
+                    <Grid.Resources>
+                        <Style x:Key="TabRadio" TargetType="RadioButton">
+                            <Setter Property="FontFamily" Value="Segoe UI"/>
+                            <Setter Property="FontSize" Value="13"/>
+                            <Setter Property="Cursor" Value="Hand"/>
+                            <Setter Property="Padding" Value="18,0"/>
+                            <Setter Property="Height" Value="40"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="RadioButton">
+                                        <Grid>
+                                            <Border x:Name="bg" Background="Transparent" CornerRadius="7" Margin="0,4,0,4"/>
+                                            <TextBlock x:Name="tb" Text="{TemplateBinding Content}"
+                                                       Foreground="#555558"
+                                                       Margin="{TemplateBinding Padding}"
+                                                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                            <Border x:Name="indicator" Height="2" VerticalAlignment="Bottom"
+                                                    Margin="8,0" Background="Transparent" CornerRadius="1"/>
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter TargetName="bg" Property="Background" Value="#1e1e22"/>
+                                                <Setter TargetName="tb" Property="Foreground" Value="#93c5fd"/>
+                                                <Setter TargetName="tb" Property="FontWeight" Value="SemiBold"/>
+                                                <Setter TargetName="indicator" Property="Background" Value="#3b82f6"/>
+                                            </Trigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="bg" Property="Background" Value="#1a1a1a"/>
+                                                <Setter TargetName="tb" Property="Foreground" Value="#888888"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+
+                        <Style x:Key="ArrowBtn" TargetType="Button">
+                            <Setter Property="Background" Value="#1c1c1e"/>
+                            <Setter Property="BorderBrush" Value="#333333"/>
+                            <Setter Property="BorderThickness" Value="1"/>
+                            <Setter Property="Cursor" Value="Hand"/>
+                            <Setter Property="Width" Value="34"/>
+                            <Setter Property="Height" Value="34"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="bd"
+                                                Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                CornerRadius="10">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="bd" Property="Background" Value="#1a2a3a"/>
+                                                <Setter TargetName="bd" Property="BorderBrush" Value="#3b82f6"/>
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter TargetName="bd" Property="Background" Value="#172040"/>
+                                            </Trigger>
+                                            <Trigger Property="IsEnabled" Value="False">
+                                                <Setter Property="Opacity" Value="0.3"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+
+                        <Style x:Key="DeleteOutlineBtn" TargetType="Button">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="BorderBrush" Value="#4a2020"/>
+                            <Setter Property="BorderThickness" Value="1"/>
+                            <Setter Property="Foreground" Value="#e05050"/>
+                            <Setter Property="FontFamily" Value="Segoe UI"/>
+                            <Setter Property="FontSize" Value="12.5"/>
+                            <Setter Property="Cursor" Value="Hand"/>
+                            <Setter Property="Padding" Value="14,9"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="bd"
+                                                Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                CornerRadius="8"
+                                                Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="bd" Property="Background" Value="#2a1010"/>
+                                                <Setter TargetName="bd" Property="BorderBrush" Value="#ef4444"/>
+                                                <Setter Property="Foreground" Value="#ff6b6b"/>
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter TargetName="bd" Property="Background" Value="#1a0a0a"/>
+                                            </Trigger>
+                                            <Trigger Property="IsEnabled" Value="False">
+                                                <Setter Property="Opacity" Value="0.25"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+
+                        <DataTemplate x:Key="ModCardTpl">
+                            <Border x:Name="card"
+                                    MinHeight="56" Margin="2,1"
+                                    CornerRadius="8"
+                                    Background="#161618"
+                                    BorderBrush="#2a2a2d"
+                                    BorderThickness="1"
+                                    Cursor="Hand">
+                                <Grid Margin="10,8,8,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="3" CornerRadius="2"
+                                            Background="#3b82f6" Margin="0,2,8,2"/>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontFamily="Segoe UI" FontSize="12"
+                                                   FontWeight="SemiBold" Foreground="#f0f0f0"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                            <Border CornerRadius="4" Background="#1e1e22" Padding="5,1" Margin="0,0,5,0">
+                                                <TextBlock Text="{Binding Author}"
+                                                           FontFamily="Segoe UI" FontSize="10"
+                                                           Foreground="#5a9fd4"/>
+                                            </Border>
+                                            <Border CornerRadius="4" Background="#1a1a1e" Padding="5,1">
+                                                <TextBlock Text="{Binding Version}"
+                                                           FontFamily="Segoe UI" FontSize="10"
+                                                           Foreground="#555558"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Style="{StaticResource FlatBtn}"
+                                            Width="24" Height="24" Padding="0"
+                                            Opacity="0" x:Name="exportBtn"
+                                            Tag="{Binding}" Click="ExportSingleMod_Click">
+                                        <Path Data="{StaticResource ExportIcon}"
+                                              Stroke="#555558" StrokeThickness="1.5"
+                                              Width="11" Height="11" Stretch="Uniform"/>
+                                    </Button>
+                                </Grid>
+                            </Border>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                    <Setter TargetName="card" Property="Background" Value="#1c1c20"/>
+                                    <Setter TargetName="card" Property="BorderBrush" Value="#3a3a3d"/>
+                                    <Setter TargetName="exportBtn" Property="Opacity" Value="1"/>
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+
+                        <Style x:Key="ModListBox" TargetType="ListBox">
+                            <Setter Property="Background" Value="#111113"/>
+                            <Setter Property="BorderBrush" Value="#22222a"/>
+                            <Setter Property="BorderThickness" Value="1"/>
+                            <Setter Property="Padding" Value="4"/>
+                            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+                            <Setter Property="AllowDrop" Value="True"/>
+                            <Setter Property="ItemTemplate" Value="{StaticResource ModCardTpl}"/>
+                            <Setter Property="ItemContainerStyle">
+                                <Setter.Value>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                        <Setter Property="Padding" Value="0"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListBoxItem">
+                                                    <Border x:Name="bd" Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
+                                                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsSelected" Value="True">
+                                                            <Setter TargetName="bd" Property="Background" Value="#1e1e22"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBox">
+                                        <Border CornerRadius="10" BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
+                                            <ScrollViewer Focusable="False" Padding="{TemplateBinding Padding}"
+                                                          HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}">
+                                                <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                            </ScrollViewer>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+
+                        <Style TargetType="ScrollBar">
+                            <Setter Property="MinWidth" Value="0"/>
+                            <Setter Property="Width" Value="8"/>
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ScrollBar">
+                                        <Grid Background="{TemplateBinding Background}">
+                                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                                <Track.Thumb>
+                                                    <Thumb>
+                                                        <Thumb.Template>
+                                                            <ControlTemplate TargetType="Thumb">
+                                                                <Border Background="#3a3a3a" CornerRadius="4" Width="4" HorizontalAlignment="Right" Margin="0,4,12,4"/>
+                                                            </ControlTemplate>
+                                                        </Thumb.Template>
+                                                    </Thumb>
+                                                </Track.Thumb>
+                                                <Track.IncreaseRepeatButton>
+                                                    <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0" Focusable="False"/>
+                                                </Track.IncreaseRepeatButton>
+                                                <Track.DecreaseRepeatButton>
+                                                    <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" Focusable="False"/>
+                                                </Track.DecreaseRepeatButton>
+                                            </Track>
+                                        </Grid>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+
+                        <PathGeometry x:Key="PlusIcon">M12,4 L12,20 M4,12 L20,12</PathGeometry>
+                        <PathGeometry x:Key="ImportIcon">M4,16 L4,18 C4,19.1 4.9,20 6,20 L18,20 C19.1,20 20,19.1 20,18 L20,16 M12,4 L12,15 M8,11 L12,15 L16,11</PathGeometry>
+                        <PathGeometry x:Key="ExportIcon">M4,16 L4,18 C4,19.1 4.9,20 6,20 L18,20 C19.1,20 20,19.1 20,18 L20,16 M12,15 L12,4 M8,8 L12,4 L16,8</PathGeometry>
+                        <PathGeometry x:Key="TrashIcon">M3,6 L21,6 M8,6 L8,4 Q8,3 9,3 L15,3 Q16,3 16,4 L16,6 M10,11 L10,17 M14,11 L14,17 M5,6 L6,20 Q6,21 7,21 L17,21 Q18,21 18,20 L19,6</PathGeometry>
+                        <PathGeometry x:Key="SearchIcon">M21,21 L15,15 M17,11 C17,14.3 14.3,17 11,17 C7.7,17 5,14.3 5,11 C5,7.7 7.7,5 11,5 C14.3,5 17,7.7 17,11 Z</PathGeometry>
+                        <PathGeometry x:Key="RefreshIcon">M1,4 L1,10 L7,10 M23,20 L23,14 L17,14 M20.49,9 C19.53,6.13 16.9,4 13.72,4 C9.44,4 6,7.45 6,11.73 M3.51,15 C4.47,17.87 7.1,20 10.28,20 C14.56,20 18,16.55 18,12.27</PathGeometry>
+                        <PathGeometry x:Key="GridIcon">M3,3 L10,3 L10,10 L3,10 Z M14,3 L21,3 L21,10 L14,10 Z M14,14 L21,14 L21,21 L14,21 Z M3,14 L10,14 L10,21 L14,21 Z</PathGeometry>
+                        <PathGeometry x:Key="CheckmarkIconMods">M2,12 L8,18 L22,4</PathGeometry>
+                        <PathGeometry x:Key="ArrowRightIcon">M5,12 L19,12 M13,6 L19,12 L13,18</PathGeometry>
+                        <PathGeometry x:Key="CloseIconMods">M6,6 L18,18 M18,6 L6,18</PathGeometry>
+                    </Grid.Resources>
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Page title + back (как на всех страницах) -->
+                    <Grid Grid.Row="0" Margin="32,20,32,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Style="{StaticResource BackBtn}"
+                                    WindowChrome.IsHitTestVisibleInChrome="True"
+                                    Click="ModsBackBtn_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource ArrowLeftIcon}" 
+                                          Stroke="#888888"
+                                          StrokeThickness="2"
+                                          Width="14" Height="14"
+                                          Stretch="Uniform"
+                                          Margin="0,0,6,0"
+                                          VerticalAlignment="Center"/>
+                                    <TextBlock Text="Назад" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <TextBlock Text="Модификации" FontFamily="Segoe UI" FontSize="18"
+                                       FontWeight="Bold" Foreground="White"
+                                       VerticalAlignment="Center" Margin="16,0,0,0"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Grid.Row="1" Height="1" Background="#333333" Margin="32,14,32,16"/>
+
+                    <!-- Tab bar + search -->
+                    <Border Grid.Row="2" BorderBrush="#22222a" BorderThickness="0,0,0,1" Margin="32,0,32,0">
+                        <Grid Margin="0,0,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="TabStrategies" Content=".bat Стратегии"
+                                             Style="{StaticResource TabRadio}" GroupName="ModsTabs"
+                                             IsChecked="True" Checked="Tab_Checked"/>
+                                <RadioButton x:Name="TabLists" Content="Листы доменов"
+                                             Style="{StaticResource TabRadio}" GroupName="ModsTabs"
+                                             Margin="4,0,0,0" Checked="Tab_Checked"/>
+                            </StackPanel>
+
+                            <Border HorizontalAlignment="Right" VerticalAlignment="Center"
+                                    Background="#161618" BorderBrush="#2a2a2d"
+                                    BorderThickness="1" CornerRadius="7"
+                                    Height="30" Width="200" Margin="0,6">
+                                <Grid Margin="8,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Path Grid.Column="0" Data="{StaticResource SearchIcon}"
+                                          Stroke="#555558" StrokeThickness="1.5"
+                                          Width="12" Height="12" Stretch="Uniform"
+                                          Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBox Grid.Column="1" x:Name="ModsSearchBox"
+                                             Background="Transparent" BorderThickness="0"
+                                             Foreground="#f0f0f0" CaretBrush="#3b82f6"
+                                             FontFamily="Segoe UI" FontSize="12"
+                                             VerticalAlignment="Center"
+                                             TextChanged="ModsSearchBox_TextChanged">
+                                        <TextBox.Style>
+                                            <Style TargetType="TextBox">
+                                                <Style.Resources>
+                                                    <VisualBrush x:Key="WM" TileMode="None" Stretch="None" AlignmentX="Left">
+                                                        <VisualBrush.Visual>
+                                                            <TextBlock Text="Поиск..." Foreground="#555558" FontFamily="Segoe UI" FontSize="12"/>
+                                                        </VisualBrush.Visual>
+                                                    </VisualBrush>
+                                                </Style.Resources>
+                                                <Style.Triggers>
+                                                    <Trigger Property="Text" Value="">
+                                                        <Setter Property="Background" Value="{StaticResource WM}"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBox.Style>
+                                    </TextBox>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- Two list boxes with arrows -->
+                    <Grid Grid.Row="3" Margin="32,14,32,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="62"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Grid Grid.Column="0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid Grid.Row="0" Margin="0,0,0,8">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="ДОСТУПНЫЕ" FontFamily="Segoe UI" FontSize="10"
+                                               FontWeight="SemiBold" Foreground="#888888" VerticalAlignment="Center"/>
+                                    <Border Background="#1e1e22" CornerRadius="5" Padding="7,2" Margin="8,0,0,0">
+                                        <TextBlock x:Name="AvailableCount" Text="0"
+                                                   FontFamily="Segoe UI" FontSize="10.5" Foreground="#888888"/>
+                                    </Border>
+                                </StackPanel>
+                                <Button HorizontalAlignment="Right" Style="{StaticResource FlatBtn}"
+                                        Padding="0" Click="RefreshMods_Click">
+                                    <Path Data="{StaticResource RefreshIcon}" Stroke="#555558" StrokeThickness="1.8"
+                                          Width="13" Height="13" Stretch="Uniform"/>
+                                </Button>
+                            </Grid>
+                            <ListBox Grid.Row="1" x:Name="AvailableList"
+                                     Style="{StaticResource ModListBox}"
+                                     SelectionChanged="AnyList_SelectionChanged"
+                                     PreviewMouseLeftButtonDown="ListBox_PreviewMouseLeftButtonDown"
+                                     Drop="AvailableList_Drop" DragEnter="ListBox_DragEnter"/>
+                        </Grid>
+
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <Button x:Name="MoveRightBtn" Style="{StaticResource ArrowBtn}"
+                                    Click="MoveRightBtn_Click" ToolTip="Активировать">
+                                <Path Data="{StaticResource ArrowRightIcon}" Stroke="#5090d0"
+                                      StrokeThickness="1.8" Width="14" Height="14" Stretch="Uniform"/>
+                            </Button>
+                            <Button x:Name="MoveLeftBtn" Style="{StaticResource ArrowBtn}"
+                                    Margin="0,8,0,0" Click="MoveLeftBtn_Click" ToolTip="Деактивировать">
+                                <Path Data="{StaticResource ArrowLeftIcon}" Stroke="#555558"
+                                      StrokeThickness="1.8" Width="14" Height="14" Stretch="Uniform"/>
+                            </Button>
+                        </StackPanel>
+
+                        <Grid Grid.Column="2">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid Grid.Row="0" Margin="0,0,0,8">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="АКТИВНЫЕ" FontFamily="Segoe UI" FontSize="10"
+                                               FontWeight="SemiBold" Foreground="#888888" VerticalAlignment="Center"/>
+                                    <Border Background="#1e1e22" CornerRadius="5" Padding="7,2" Margin="8,0,0,0">
+                                        <TextBlock x:Name="ActiveCount" Text="0"
+                                                   FontFamily="Segoe UI" FontSize="10.5" Foreground="#93c5fd"/>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                            <ListBox Grid.Row="1" x:Name="ActiveList"
+                                     Style="{StaticResource ModListBox}"
+                                     SelectionChanged="AnyList_SelectionChanged"
+                                     PreviewMouseLeftButtonDown="ListBox_PreviewMouseLeftButtonDown"
+                                     Drop="ActiveList_Drop" DragEnter="ListBox_DragEnter">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                        <Setter Property="Padding" Value="0"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListBoxItem">
+                                                    <Border x:Name="bd" Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
+                                                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsSelected" Value="True">
+                                                            <Setter TargetName="bd" Property="Background" Value="#1a1a2e"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                            </ListBox>
+                        </Grid>
+                    </Grid>
+
+                    <!-- Bottom bar -->
+                    <Border Grid.Row="4" Background="#111113"
+                            BorderBrush="#22222a" BorderThickness="0,1,0,0"
+                            Padding="32,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                <Button x:Name="CreateModBtn" Style="{StaticResource OutlineBtn}"
+                                        Margin="0,0,8,0" Click="CreateModBtn_Click" Foreground="#aaaaaa">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource PlusIcon}" Stroke="#aaaaaa"
+                                              StrokeThickness="1.8" Width="12" Height="12" Stretch="Uniform"
+                                              Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Создать" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="ModsImportBtn" Style="{StaticResource OutlineBtn}"
+                                        Margin="0,0,8,0" Click="ModsImportBtn_Click" Foreground="#aaaaaa">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource ImportIcon}" Stroke="#aaaaaa"
+                                              StrokeThickness="1.8" Width="12" Height="12" Stretch="Uniform"
+                                              Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Импорт" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="DeleteModBtn" Style="{StaticResource DeleteOutlineBtn}"
+                                        IsEnabled="False" Click="DeleteBtn_Click"
+                                        Foreground="#ff6b6b" BorderBrush="#6a3030">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource TrashIcon}" Stroke="#ff6b6b"
+                                              StrokeThickness="1.5" Width="12" Height="12" Stretch="Uniform"
+                                              Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Удалить" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+
+                            <TextBlock Grid.Column="1" x:Name="ModsStatusText" Text=""
+                                       FontFamily="Segoe UI" FontSize="11.5" Foreground="#888888"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"/>
+
+                            <Button Grid.Column="2" x:Name="ModsApplyBtn" Style="{StaticResource AccentBtn}"
+                                    Width="130" Height="36" Click="ModsApplyBtn_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource CheckmarkIcon}" Stroke="White"
+                                          StrokeThickness="2.2" Width="13" Height="13" Stretch="Uniform"
+                                          Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Применить" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </Grid>
 
             </Grid>
 
