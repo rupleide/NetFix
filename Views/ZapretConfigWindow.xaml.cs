@@ -508,11 +508,12 @@ public partial class ZapretConfigWindow : Window
         {
             LogContainer.Visibility = Visibility.Collapsed;
             ConfigListScroll.Visibility = Visibility.Visible;
-            PrimaryBtn.Visibility = Visibility.Collapsed;
-            PrimaryBtn.Content = "Проверить конфиг";
-            SecondaryBtn.Content = "Закрыть";
             
-            // Восстановить обработчик события для PrimaryBtn
+            SecondaryBtn.Content = "Применить";
+            
+            PrimaryBtn.Content = "Проверить конфиг";
+            PrimaryBtn.Visibility = Visibility.Visible;
+            
             PrimaryBtn.Click -= PrimaryBtn_Click;
             PrimaryBtn.Click += PrimaryBtn_Click;
             return;
