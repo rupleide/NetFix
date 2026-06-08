@@ -120,6 +120,8 @@ public class AppSettings
     public string StatsSortMode { get; set; } = "LastPlayedDesc";
     public string UserSortMode { get; set; } = "DateAddedDesc";
     public string OsuSortMode { get; set; } = "DateAddedDesc";
+    public bool TgWsProxyCheckUpdates { get; set; } = true;
+    public bool StartMinimizedToTray { get; set; } = false;
 }
 
 /// <summary>

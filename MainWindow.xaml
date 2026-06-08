@@ -2884,8 +2884,19 @@
                                           Content="tg-ws-proxy в автозапуск Windows" Margin="0,0,0,10"
                                           Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
                                 <CheckBox x:Name="AutoAppCB" Style="{StaticResource Toggle}"
-                                          Content="NetFix в автозапуск Windows" Margin="0,0,0,20"
+                                          Content="NetFix в автозапуск Windows" Margin="0,0,0,10"
                                           Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
+                                <CheckBox x:Name="StartMinimizedCB" Style="{StaticResource Toggle}"
+                                          Content="NetFix в трей при запуске" Margin="0,0,0,20"
+                                          Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
+
+                                <Border Height="1" Background="#333333" Margin="0,0,0,16"/>
+                                <TextBlock Text="TgWsProxy" FontFamily="Segoe UI" FontSize="11"
+                                           Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
+
+                                <CheckBox x:Name="TgWsCheckUpdatesCB" Style="{StaticResource Toggle}"
+                                          Content="Проверять обновления TgWsProxy" Margin="0,0,0,20"
+                                          Checked="TgWsSetting_Checked" Unchecked="TgWsSetting_Unchecked"/>
 
                                 <Border Height="1" Background="#333333" Margin="0,0,0,16"/>
                                 <TextBlock Text="РЕЖИМ КНОПКИ «ПОЧИНИТЬ ИНТЕРНЕТ»" FontFamily="Segoe UI" FontSize="11"

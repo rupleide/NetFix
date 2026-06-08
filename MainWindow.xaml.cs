@@ -318,7 +318,7 @@ public partial class MainWindow : Window
         (byte)(c1.G + (c2.G - c1.G) * t),
         (byte)(c1.B + (c2.B - c1.B) * t));
 
-    private void OnLoaded(object sender, RoutedEventArgs e)
+    private async void OnLoaded(object sender, RoutedEventArgs e)
     {
         if (_settings.DiscordRpcEnabled)
             _discord.Initialize();
@@ -348,10 +348,36 @@ public partial class MainWindow : Window
         
         // Инициализируем монитор сети
         InitNetworkMonitor();
+
+        // Автозапуск TgWsProxy при старте
+        if (_settings.AutostartTgWsProxy
+            && !string.IsNullOrEmpty(_settings.TgWsProxyPath)
+            && File.Exists(_settings.TgWsProxyPath)
+            && Process.GetProcessesByName("TgWsProxy").Length == 0)
+        {
+            _ = Task.Delay(TimeSpan.FromSeconds(2)).ContinueWith(_ =>
+                Dispatcher.Invoke(() => StartTgWsProxyWithActivation()),
+                TaskScheduler.Default);
+        }
         
         // Обработчик кликов по ссылкам в логе
         LogBox.PreviewMouseLeftButtonDown += LogBox_PreviewMouseLeftButtonDown;
         LogBox.PreviewMouseMove += LogBox_PreviewMouseMove;
+
+        if (_settings.StartMinimizedToTray)
+        {
+            // Показываем на 1 кадр чтобы WPF инициализировал GPU-композитор,
+            // затем сразу прячем — иначе после Show() из трея будет software rendering
+            Opacity = 0;
+            Show();
+            await Task.Delay(50);
+            Hide();
+            Opacity = 1;
+            RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true, compacting: true);
+            GC.WaitForPendingFinalizers();
+            SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle, -1, -1);
+        }
     }
 
     private void OnSizeChanged(object sender, SizeChangedEventArgs e)
@@ -433,8 +459,9 @@ public partial class MainWindow : Window
         popup.Top  = top;
     }
 
-    private void ShowFromTray()
+    public void ShowFromTray()
     {
+        RenderOptions.ProcessRenderMode = RenderMode.Default;
         Show();
         WindowState = WindowState.Normal;
         Activate();
@@ -442,7 +469,6 @@ public partial class MainWindow : Window
         _monitorTimer?.Start();
         _netTimer?.Start();
         _pingTimer?.Start();
-        RenderOptions.ProcessRenderMode = RenderMode.Default;
     }
     
     public void StartAuroraTimer()
@@ -4383,6 +4409,9 @@ public partial class MainWindow : Window
         // AutoZapretCB убран - Zapret больше не в автозапуске
         AutoTgWsCB.IsChecked    = _settings.AutostartTgWsProxy;
         AutoAppCB.IsChecked     = _settings.AutostartApp;
+        StartMinimizedCB.IsChecked = _settings.StartMinimizedToTray;
+        _settings.TgWsProxyCheckUpdates = TgWsProxySettingsService.GetCheckUpdates();
+        TgWsCheckUpdatesCB.IsChecked    = _settings.TgWsProxyCheckUpdates;
         DiscordRpcCB.IsChecked      = _settings.DiscordRpcEnabled;
         AutoUpdatesCB.IsChecked     = _settings.AutoUpdates;
         ShowGameOfferCB.IsChecked   = _settings.ShowGameOfferDialog;
@@ -4405,6 +4434,7 @@ public partial class MainWindow : Window
         _settings.TgWsProxyPath    = TgWsBox.Text.Trim();
         _settings.AutostartTgWsProxy = AutoTgWsCB.IsChecked == true;
         _settings.AutostartApp     = AutoAppCB.IsChecked == true;
+        _settings.StartMinimizedToTray = StartMinimizedCB.IsChecked == true;
         _settings.AutoUpdates      = AutoUpdatesCB.IsChecked == true;
         _settings.ShowGameOfferDialog  = ShowGameOfferCB.IsChecked == true;
         _settings.ShowLongCheckDialog  = ShowServiceReminderCB.IsChecked == true;
@@ -4457,6 +4487,30 @@ public partial class MainWindow : Window
 
     private void SettingCB_Checked(object sender, RoutedEventArgs e) { if (_settingsLoaded) AutoSaveSettings(); }
     private void SettingCB_Unchecked(object sender, RoutedEventArgs e) { if (_settingsLoaded) AutoSaveSettings(); }
+
+    private void TgWsSetting_Checked(object sender, RoutedEventArgs e)
+    {
+        if (!_settingsLoaded) return;
+        HandleTgWsToggle(sender, true);
+    }
+
+    private void TgWsSetting_Unchecked(object sender, RoutedEventArgs e)
+    {
+        if (!_settingsLoaded) return;
+        HandleTgWsToggle(sender, false);
+    }
+
+    private void HandleTgWsToggle(object sender, bool newValue)
+    {
+        if (sender == TgWsCheckUpdatesCB)
+        {
+            TgWsProxySettingsService.SetCheckUpdates(newValue);
+            bool actual = TgWsProxySettingsService.GetCheckUpdates();
+            _settings.TgWsProxyCheckUpdates = actual;
+            TgWsCheckUpdatesCB.IsChecked = actual;
+        }
+        SettingsService.Save(_settings);
+    }
 
     private void ZapretBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {

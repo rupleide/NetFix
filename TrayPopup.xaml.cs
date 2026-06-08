@@ -221,7 +221,7 @@ public partial class TrayPopup : Window
         {
             var main = Application.Current.MainWindow as MainWindow;
             if (main == null) return;
-            ShowMain(main);
+            main.ShowFromTray();
             var settings = SettingsService.Load();
             if (!string.IsNullOrEmpty(settings.ZapretPath) && System.IO.File.Exists(settings.ZapretPath))
             {
@@ -235,19 +235,9 @@ public partial class TrayPopup : Window
     {
         Close();
         Application.Current.Dispatcher.BeginInvoke(() =>
-            ShowMain(Application.Current.MainWindow as MainWindow));
+            (Application.Current.MainWindow as MainWindow)?.ShowFromTray());
     }
 
     private void ExitBtn_Click(object s, MouseButtonEventArgs e) =>
         Application.Current.Shutdown();
-
-    private static void ShowMain(MainWindow? main)
-    {
-        if (main == null) return;
-        if (!main.IsVisible) main.Show();
-        if (main.WindowState == WindowState.Minimized) main.WindowState = WindowState.Normal;
-        main.Activate();
-        main.Focus();
-        main.StartAuroraTimer();
-    }
 }
