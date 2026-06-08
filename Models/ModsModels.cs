@@ -26,5 +26,3 @@ public record ModMeta(
     string Type,
     string RequiredBuild
 );
-
-public record FileItem(string Name, string Path);
