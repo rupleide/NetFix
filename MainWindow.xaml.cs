@@ -21,6 +21,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Interop;
 using Microsoft.Win32;
 using System.Windows.Threading;
 using NetFix.Models;
@@ -69,6 +70,9 @@ public partial class MainWindow : Window
     
     [DllImport("user32.dll")]
     private static extern bool SetCursorPos(int X, int Y);
+    
+    [DllImport("kernel32.dll")]
+    private static extern bool SetProcessWorkingSetSize(IntPtr handle, IntPtr min, IntPtr max);
     
     [StructLayout(LayoutKind.Sequential)]
     private struct RECT
@@ -234,23 +238,6 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-
-        // UI freeze detector
-        var lastTick = DateTime.UtcNow;
-        var freezeTimer = new System.Windows.Threading.DispatcherTimer
-        {
-            Interval = TimeSpan.FromMilliseconds(50)
-        };
-        freezeTimer.Tick += (_, _) =>
-        {
-            var now = DateTime.UtcNow;
-            var delta = (now - lastTick).TotalMilliseconds;
-            if (delta > 16) // больше одного кадра при 60fps = уже заметно
-            Console.WriteLine($"[FREEZE] +{delta:0}ms @ {now:HH:mm:ss.fff} (норма 50ms, опоздал на {delta - 50:0}ms)");
-                Console.WriteLine($"[FREEZE] {delta:0}ms задержка в {now:HH:mm:ss.fff}");
-            lastTick = now;
-        };
-        freezeTimer.Start();
 
         Loaded += OnLoaded;
         SizeChanged += OnSizeChanged;
@@ -451,7 +438,11 @@ public partial class MainWindow : Window
         Show();
         WindowState = WindowState.Normal;
         Activate();
-        _auroraTimer?.Start(); // Запускаем Aurora анимацию при показе окна
+        _auroraTimer?.Start();
+        _monitorTimer?.Start();
+        _netTimer?.Start();
+        _pingTimer?.Start();
+        RenderOptions.ProcessRenderMode = RenderMode.Default;
     }
     
     public void StartAuroraTimer()
@@ -2007,8 +1998,15 @@ public partial class MainWindow : Window
     
     private void CloseBtn_Click(object s, RoutedEventArgs e)
     {
-        _auroraTimer?.Stop(); // Останавливаем Aurora анимацию при скрытии
+        _auroraTimer?.Stop();
+        _monitorTimer?.Stop();
+        _netTimer?.Stop();
+        _pingTimer?.Stop();
+        RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
         Hide();
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true, compacting: true);
+        GC.WaitForPendingFinalizers();
+        SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle, -1, -1);
     }
 
     // ── Nav ──────────────────────────────────────────────────────────────────
@@ -9711,9 +9709,9 @@ public partial class MainWindow : Window
         this.StateChanged += (s, e) =>
         {
             if (this.WindowState == WindowState.Minimized)
-            { _netTimer?.Stop(); _pingTimer?.Stop(); }
+            { _monitorTimer?.Stop(); _netTimer?.Stop(); _pingTimer?.Stop(); }
             else
-            { _netTimer?.Start(); _pingTimer?.Start(); }
+            { _monitorTimer?.Start(); _netTimer?.Start(); _pingTimer?.Start(); }
         };
 
         // Запускаем тест и пинг сразу
