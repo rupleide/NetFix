@@ -8570,6 +8570,24 @@ public partial class MainWindow : Window
         Dispatcher.BeginInvoke(new Action(StopEditorRecording));
     }
 
+    private void AudioFaqToggleBtn_Click(object sender, RoutedEventArgs e)
+    {
+        AudioFaqPanel.Visibility = AudioFaqPanel.Visibility == Visibility.Collapsed
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
+
+    private void OpenPowerShellCmd_Click(object sender, RoutedEventArgs e)
+    {
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "powershell.exe",
+            Arguments = "-NoExit -Command \"Enable-WindowsOptionalFeature -Online -FeatureName 'WindowsMediaPlayer'\"",
+            UseShellExecute = true,
+            Verb = "runas"
+        });
+    }
+
     private void EditorStopBtn_Click(object s, RoutedEventArgs e) => StopEditorRecording();
 
     private void StopEditorRecording()

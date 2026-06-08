@@ -1964,11 +1964,48 @@
                                                                 <Run Text="Подписывайтесь, чтобы играть в классные новинки и делиться своим творчеством!"/>
                                                             </TextBlock>
                                                         </Grid>
-                                                    </Border>
-                                                </StackPanel>
-                                            </Border>
+                                                     </Border>
 
-                                            <!-- ═══ ПОИСК ═══ -->
+                                                        <!-- FAQ: Нет звука -->
+                                                         <StackPanel Margin="0,4,0,0">
+                                                            <TextBlock HorizontalAlignment="Center">
+                                                                <Hyperlink x:Name="AudioFaqToggleBtn"
+                                                                           Click="AudioFaqToggleBtn_Click"
+                                                                           TextDecorations="None" Foreground="#666" FontSize="11">
+                                                                    Нет звука в треках?
+                                                                </Hyperlink>
+                                                            </TextBlock>
+                                                            <Border x:Name="AudioFaqPanel"
+                                                                    Background="Transparent" CornerRadius="6"
+                                                                    Padding="12" Margin="0,4,0,0"
+                                                                   BorderBrush="#333" BorderThickness="1"
+                                                                   Visibility="Collapsed">
+                                                               <StackPanel>
+                                                                   <TextBlock FontFamily="Segoe UI" FontSize="11" Foreground="#999"
+                                                                              TextWrapping="Wrap" LineHeight="18" Margin="0,0,0,10">
+                                                                       <Run>Если в ритм-игре нет звука, включите Windows Media Player:</Run>
+                                                                       <LineBreak/>
+                                                                       <Run Foreground="#ddd">Параметры, Приложения, Дополнительные компоненты, Добавить компонент, Windows Media Player</Run>
+                                                                       <LineBreak/><LineBreak/>
+                                                                       <Run>Или выполните команду в PowerShell (от администратора):</Run>
+                                                                       <LineBreak/>
+                                                                       <Run Foreground="#7c6af7" FontFamily="Consolas">Enable-WindowsOptionalFeature -Online -FeatureName "WindowsMediaPlayer"</Run>
+                                                                   </TextBlock>
+                                                                   <Button Content="Отправить в PowerShell"
+                                                                           Style="{StaticResource OutlineBtn}"
+                                                                           HorizontalAlignment="Left"
+                                                                           Click="OpenPowerShellCmd_Click"
+                                                                           Foreground="#7c6af7"
+                                                                           BorderBrush="#7c6af7"
+                                                                           Padding="12,6"
+                                                                           FontSize="11"/>
+                                                               </StackPanel>
+                                                           </Border>
+                                                       </StackPanel>
+                                                  </StackPanel>
+                                              </Border>
+
+                                              <!-- ═══ ПОИСК ═══ -->
                                             <Border Background="#1a1a1a" CornerRadius="6" Padding="6,2" Margin="0,0,0,8"
                                                     BorderBrush="#2a2a2a" BorderThickness="1">
                                                 <Grid>
