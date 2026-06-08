@@ -149,7 +149,7 @@ public static class ModPackager
     }
 
     public static ModEntry CreateNewMod(
-        string name, string author, string description, ModType type,
+        string name, string author, string version, string description, ModType type,
         string? batSourcePath, string? listContent,
         List<string> activeStrategyMods, List<string> activeListMods)
     {
@@ -167,7 +167,7 @@ public static class ModPackager
         var meta = new ModMeta(
             Name: name,
             Author: author,
-            Version: "1.0",
+            Version: version,
             Description: description,
             Type: type.ToString().ToLowerInvariant(),
             RequiredBuild: ""
@@ -187,7 +187,7 @@ public static class ModPackager
         return new ModEntry(
             Name: name,
             Author: author,
-            Version: "1.0",
+            Version: version,
             Description: description,
             Type: type,
             FolderPath: modDir,

@@ -980,6 +980,9 @@ public partial class MainWindow : Window
         ActiveList.ItemsSource = null;
         ActiveList.ItemsSource = activeMods;
 
+        var hasActive = activeMods.Count > 0;
+        ModsApplyBtn.IsEnabled = hasActive;
+        ModsApplyBtn.Style = (Style)FindResource(hasActive ? "AccentBtn" : "OutlineBtn");
         UpdateModsStatus();
     }
 
@@ -1215,6 +1218,13 @@ public partial class MainWindow : Window
         }
     }
 
+    private void EditModCard_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not ModEntry mod) return;
+        ShowModsSubScreen(ModsEditorScreen, "Редактор");
+        LoadEditorFileLists(mod.FolderPath);
+    }
+
     private void MyModCard_Click(object sender, MouseButtonEventArgs e)
     {
         if (sender is not Border border || border.DataContext is not ModEntry mod) return;
@@ -1263,6 +1273,24 @@ public partial class MainWindow : Window
         SaveModsSettings();
         RefreshModsLists();
         ShowModsSuccess($"Мод '{selected.Name}' удалён");
+    }
+
+    private void DeleteModCard_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not ModEntry mod) return;
+
+        try
+        {
+            if (Directory.Exists(mod.FolderPath))
+                Directory.Delete(mod.FolderPath, true);
+        }
+        catch { }
+
+        _allMods.Remove(mod);
+        SaveModsSettings();
+        RefreshModsLists();
+        LoadMyMods();
+        ShowModsSuccess($"Мод '{mod.Name}' удалён");
     }
 
     private void SaveModsSettings() => SettingsService.Save(_settings);
@@ -1540,6 +1568,8 @@ public partial class MainWindow : Window
         ListsAvailableCount.Text = availableMods.Count.ToString();
         ListsActiveCount.Text = activeMods.Count.ToString();
         ListsStatusText.Text = $"Листов: {lists.Count} | Активных: {activeMods.Count}";
+        ListsApplyBtn.IsEnabled = activeMods.Count > 0;
+        ListsApplyBtn.Style = (Style)FindResource(activeMods.Count > 0 ? "AccentBtn" : "OutlineBtn");
     }
 
     private async void ListsCreateBtn_Click(object sender, RoutedEventArgs e)
