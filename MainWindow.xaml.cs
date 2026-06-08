@@ -1177,6 +1177,38 @@ public partial class MainWindow : Window
         }
     }
 
+    private void MyModDetails_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not ModEntry mod) return;
+
+        // TODO: Open sub-screen with mod details
+        // Pass mod.Name, mod.Author, mod.Version, mod.Description, mod.FolderPath
+        // Show diff, change history, metadata editing button
+    }
+
+    private async void EditorAddFile_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Создать новый файл",
+            Filter = _isStrategyTab
+                ? "BAT файлы (*.bat)|*.bat"
+                : "Текстовые файлы (*.txt)|*.txt",
+            InitialDirectory = _isStrategyTab
+                ? System.IO.Path.Combine(AppContext.BaseDirectory, "Mods", "strategies")
+                : System.IO.Path.Combine(AppContext.BaseDirectory, "Mods", "lists"),
+            OverwritePrompt = true
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            await File.WriteAllTextAsync(dialog.FileName, "");
+            LoadEditorFileLists();
+
+            ModsEditorFileList.SelectedItem = dialog.FileName;
+        }
+    }
+
     private void DeleteBtn_Click(object sender, RoutedEventArgs e)
     {
         var selected = AvailableList.SelectedItem as ModEntry;
