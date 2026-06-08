@@ -4873,11 +4873,16 @@ public partial class MainWindow : Window
         MainGrid.Children.Add(card);
     }
 
+    // ── Donate ────────────────────────────────────────────────────────────────
+    private void DonateBtn_Click(object s, RoutedEventArgs e)
+    {
+        var w = new DonateWindow { Owner = this };
+        w.ShowDialog();
+    }
+
     // ── Links ────────────────────────────────────────────────────────────────
     private void SupportBtn_Click(object s, RoutedEventArgs e) =>
         OpenUrl("https://t.me/sofirka_hanabi");
-    private void DonateBtn_Click(object s, RoutedEventArgs e) =>
-        OpenUrl("https://www.tinkoff.ru/rm/r_eELpDmupvc.SCiWRkVJON/bgKkD30493");
     private void LinkZapret_Click(object s, RoutedEventArgs e) =>
         OpenUrl("https://github.com/Flowseal/zapret-discord-youtube");
     private void LinkTgWs_Click(object s, RoutedEventArgs e) =>

@@ -1,0 +1,143 @@
+<Window x:Class="NetFix.Views.DonateWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Поддержать разработку"
+        Height="387" Width="420"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize">
+
+    <Border Background="#1e1e1e" CornerRadius="12" BorderBrush="#2e2e2e" BorderThickness="1">
+        <Grid Margin="28,28,28,16" RenderTransformOrigin="0.508,0.685">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>   <!-- заголовок -->
+                <RowDefinition Height="*"/>      <!-- текст -->
+                <RowDefinition Height="Auto"/>   <!-- TON -->
+                <RowDefinition Height="Auto"/>   <!-- СБП -->
+                <RowDefinition Height="Auto"/>   <!-- Закрыть -->
+            </Grid.RowDefinitions>
+
+            <!-- Заголовок -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
+                <Path Width="18" Height="18" Stretch="Uniform" Margin="0,0,10,0"
+                      VerticalAlignment="Center" Fill="#e05c5c"
+                      Data="M12,21 L10.55,19.7 C5.4,15.0 2,12.0 2,8.5 C2,5.4 4.42,3 7.5,3 C9.24,3 10.91,3.81 12,5.09 C13.09,3.81 14.76,3 16.5,3 C19.58,3 22,5.4 22,8.5 C22,12.0 18.6,15.0 13.45,19.7 Z"/>
+                <TextBlock Text="Поддержать разработку" FontSize="16" FontWeight="SemiBold"
+                           Foreground="#f0f0f0" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Текст -->
+            <TextBlock Grid.Row="1" TextWrapping="Wrap" FontSize="12" Foreground="#888888"
+                       LineHeight="20" Margin="0,0,0,24">
+                <Run Foreground="#aaaaaa">Все пожертвования идут напрямую российскому разработчику из города Пермь.</Run>
+                <Run>Авторизация и оплата происходят на официальном и безопасном сайте Т-Банка. Даже если у вас банк другого плательщика, вы всё равно сможете совершить перевод через СБП.</Run>
+            </TextBlock>
+
+            <!-- Кнопка TON -->
+            <Button Grid.Row="2" x:Name="TonBtn" Height="52" Margin="0,16,0,10"
+                    Background="#0088CC" BorderThickness="0" Cursor="Hand" Click="TonBtn_Click">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="#0088CC" BlurRadius="12" ShadowDepth="0" Opacity="0.4"/>
+                                        </Border.Effect>
+                                        <StackPanel Orientation="Horizontal"
+                                                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Path Width="20" Height="20" Stretch="Uniform" Fill="White" Margin="0,0,10,0"
+                                                  Data="m20.661 7.22l-7.846 12.494a1.06 1.06 0 0 1-1.794-.006L3.328 7.214A2.2 2.2 0 0 1 3 6.05a2.29 2.29 0 0 1 2.324-2.255h13.362C19.963 3.794 21 4.8 21 6.044c0 .413-.116.82-.339 1.175M5.218 6.8l5.723 8.826V5.912H5.816c-.592 0-.857.392-.598.89m7.84 8.826L18.783 6.8c.265-.497-.006-.89-.599-.89H13.06z"/>
+                                            <TextBlock Text="Донат через TON" FontSize="14" Foreground="White" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#0077BB"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Button.Style>
+            </Button>
+
+            <!-- Кнопка СБП -->
+            <Button Grid.Row="3" x:Name="SbpBtn" Height="52" Margin="0,0,0,16"
+                    Background="#FF6B00" BorderThickness="0" Cursor="Hand" Click="SbpBtn_Click">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="#FF6B00" BlurRadius="12" ShadowDepth="0" Opacity="0.4"/>
+                                        </Border.Effect>
+                                        <StackPanel Orientation="Horizontal"
+                                                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Path Width="20" Height="20" Stretch="Uniform" Fill="White" Margin="0,0,10,0">
+                                                <Path.Data>
+                                                    <GeometryGroup>
+                                                        <PathGeometry Figures="M100.3,199.4l-52,30L0,313.1l196.9-113.7L100.3,199.4z"/>
+                                                        <PathGeometry Figures="M248.9,113.7l-52,30l-48.3,83.7l196.9-113.7L248.9,113.7z"/>
+                                                        <PathGeometry Figures="M196.9,83.7 148.6,0 148.6,171.5 148.6,227.4 148.6,398.9 196.9,315.2"/>
+                                                        <PathGeometry Figures="M148.6,0 196.9,83.7 248.9,113.7 345.5,113.7"/>
+                                                        <PathGeometry Figures="M148.6,171.5 148.6,398.9 196.9,315.2 196.9,255.2"/>
+                                                        <PathGeometry Figures="M248.9,285.2l-52,30l-48.3,83.7l196.9-113.7L248.9,285.2z"/>
+                                                        <PathGeometry Figures="M0,85.8 0,313.1 48.3,229.5 48.3,169.4"/>
+                                                        <PathGeometry Figures="M148.6,171.5 148.7,171.6 0,85.8 48.3,169.4 248.9,285.2 345.5,285.2"/>
+                                                    </GeometryGroup>
+                                                </Path.Data>
+                                            </Path>
+                                            <TextBlock Text="Донат через СБП" FontSize="14" Foreground="White" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#E05E00"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Button.Style>
+            </Button>
+
+            <!-- Кнопка Закрыть -->
+            <Button Grid.Row="4" x:Name="CloseBtn" Content="Закрыть"
+                    Width="100" Height="34" HorizontalAlignment="Right"
+                    Background="Transparent" Foreground="#666666"
+                    BorderBrush="#333333" BorderThickness="1"
+                    Cursor="Hand" Click="CloseBtn_Click">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            CornerRadius="8">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#2a2a2a"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Button.Style>
+            </Button>
+
+        </Grid>
+    </Border>
+</Window>
