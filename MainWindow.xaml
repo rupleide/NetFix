@@ -3049,12 +3049,10 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Page title + back (как на всех страницах) -->
+                    <!-- Page title + back -->
                     <Grid Grid.Row="0" Margin="32,20,32,0">
                         <StackPanel Orientation="Horizontal">
                             <Button Style="{StaticResource BackBtn}"
@@ -3071,7 +3069,7 @@
                                     <TextBlock Text="Назад" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
-                            <TextBlock Text="Модификации" FontFamily="Segoe UI" FontSize="18"
+                            <TextBlock x:Name="ModsHeaderTitle" Text="Модификации" FontFamily="Segoe UI" FontSize="18"
                                        FontWeight="Bold" Foreground="White"
                                        VerticalAlignment="Center" Margin="16,0,0,0"/>
                         </StackPanel>
@@ -3079,211 +3077,674 @@
 
                     <Border Grid.Row="1" Height="1" Background="#333333" Margin="32,14,32,16"/>
 
-                    <!-- Tab bar + search -->
-                    <Border Grid.Row="2" BorderBrush="#22222a" BorderThickness="0,0,0,1" Margin="32,0,32,0">
-                        <Grid Margin="0,0,0,0">
-                            <StackPanel Orientation="Horizontal">
-                                <RadioButton x:Name="TabStrategies" Content=".bat Стратегии"
-                                             Style="{StaticResource TabRadio}" GroupName="ModsTabs"
-                                             IsChecked="True" Checked="Tab_Checked"/>
-                                <RadioButton x:Name="TabLists" Content="Листы доменов"
-                                             Style="{StaticResource TabRadio}" GroupName="ModsTabs"
-                                             Margin="4,0,0,0" Checked="Tab_Checked"/>
-                            </StackPanel>
+                    <!-- ═══ CONTENT AREA (Row 2) — 5 sub-screens ═══ -->
+                    <Grid Grid.Row="2" x:Name="ModsContentArea">
 
-                            <Border HorizontalAlignment="Right" VerticalAlignment="Center"
-                                    Background="#161618" BorderBrush="#2a2a2d"
-                                    BorderThickness="1" CornerRadius="7"
-                                    Height="30" Width="200" Margin="0,6">
-                                <Grid Margin="8,0">
+                        <!-- ─── MODS HOME SCREEN (root: 4 FAQ-style cards) ─── -->
+                        <Grid x:Name="ModsHomeScreen" Visibility="Visible">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="32,0,32,0">
+                                <UniformGrid Columns="2" HorizontalAlignment="Left" Margin="0,0,0,20">
+
+                                    <!-- Tile: .bat Стратегии -->
+                                    <Button x:Name="CardStrategies" Style="{StaticResource FlatBtn}" Padding="0"
+                                            Width="164" Height="164"
+                                            Click="ModsCardStrategies_Click" Margin="0,0,12,12">
+                                        <Border Background="#1e1e1e" CornerRadius="12"
+                                                BorderBrush="#3b82f6" BorderThickness="2"
+                                                Padding="12">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="*"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Border Grid.Row="0" Height="3" CornerRadius="1.5"
+                                                        Background="#3b82f6" HorizontalAlignment="Stretch" Margin="-12,0"/>
+                                                <Border Grid.Row="1" Width="44" Height="44" CornerRadius="10"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        Background="#3b82f6" Opacity="0.15">
+                                                    <Path Data="M9,3 L5,3 C3.9,3 3,3.9 3,5 L3,19 C3,20.1 3.9,21 5,21 L19,21 C20.1,21 21,20.1 21,19 L21,8 L15,3 M9,3 L15,3 L15,8 L21,8"
+                                                          Stroke="#3b82f6" StrokeThickness="1.5"
+                                                          Width="20" Height="20" Stretch="Uniform"
+                                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <StackPanel Grid.Row="2" VerticalAlignment="Bottom">
+                                                    <TextBlock Text=".bat Стратегии" FontSize="14"
+                                                               FontWeight="SemiBold" Foreground="White"
+                                                               HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Запуск Zapret" FontSize="11"
+                                                               Foreground="#888888" HorizontalAlignment="Center"
+                                                               Margin="0,1,0,0"/>
+                                                </StackPanel>
+                                                <Border Width="24" Height="24" CornerRadius="12"
+                                                        Background="#3b82f6" Opacity="0.12"
+                                                        HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                        Margin="0,0,-4,-4">
+                                                    <TextBlock Text="›" FontSize="14" FontWeight="Bold"
+                                                               Foreground="#3b82f6"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </Button>
+
+                                    <!-- Tile: Листы доменов -->
+                                    <Button Style="{StaticResource FlatBtn}" Padding="0"
+                                            Width="164" Height="164"
+                                            Click="ModsCardLists_Click" Margin="0,0,0,12">
+                                        <Border Background="#1e1e1e" CornerRadius="12"
+                                                BorderBrush="#22c55e" BorderThickness="2"
+                                                Padding="12">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="*"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Border Grid.Row="0" Height="3" CornerRadius="1.5"
+                                                        Background="#22c55e" HorizontalAlignment="Stretch" Margin="-12,0"/>
+                                                <Border Grid.Row="1" Width="44" Height="44" CornerRadius="10"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        Background="#22c55e" Opacity="0.15">
+                                                    <Path Data="M4,4 L20,4 L20,20 L4,20 Z M4,8 L20,8 M8,4 L8,8 M16,4 L16,8 M8,12 L16,12 M8,16 L14,16"
+                                                          Stroke="#22c55e" StrokeThickness="1.5"
+                                                          Width="20" Height="20" Stretch="Uniform"
+                                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <StackPanel Grid.Row="2" VerticalAlignment="Bottom">
+                                                    <TextBlock Text="Листы доменов" FontSize="14"
+                                                               FontWeight="SemiBold" Foreground="White"
+                                                               HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Списки сайтов" FontSize="11"
+                                                               Foreground="#888888" HorizontalAlignment="Center"
+                                                               Margin="0,1,0,0"/>
+                                                </StackPanel>
+                                                <Border Width="24" Height="24" CornerRadius="12"
+                                                        Background="#22c55e" Opacity="0.12"
+                                                        HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                        Margin="0,0,-4,-4">
+                                                    <TextBlock Text="›" FontSize="14" FontWeight="Bold"
+                                                               Foreground="#22c55e"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </Button>
+
+                                    <!-- Tile: Ваши моды -->
+                                    <Button Style="{StaticResource FlatBtn}" Padding="0"
+                                            Width="164" Height="164"
+                                            Click="ModsCardMyMods_Click" Margin="0,0,12,0">
+                                        <Border Background="#1e1e1e" CornerRadius="12"
+                                                BorderBrush="#a855f7" BorderThickness="2"
+                                                Padding="12">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="*"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Border Grid.Row="0" Height="3" CornerRadius="1.5"
+                                                        Background="#a855f7" HorizontalAlignment="Stretch" Margin="-12,0"/>
+                                                <Border Grid.Row="1" Width="44" Height="44" CornerRadius="10"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        Background="#a855f7" Opacity="0.15">
+                                                    <Path Data="M2,6 L2,18 C2,19.1 2.9,20 4,20 L20,20 C21.1,20 22,19.1 22,18 L22,8 C22,6.9 21.1,6 20,6 L12,6 L10,4 L4,4 C2.9,4 2,4.9 2,6 Z"
+                                                          Stroke="#a855f7" StrokeThickness="1.5"
+                                                          Width="20" Height="20" Stretch="Uniform"
+                                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <StackPanel Grid.Row="2" VerticalAlignment="Bottom">
+                                                    <TextBlock Text="Ваши моды" FontSize="14"
+                                                               FontWeight="SemiBold" Foreground="White"
+                                                               HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Установленные моды" FontSize="11"
+                                                               Foreground="#888888" HorizontalAlignment="Center"
+                                                               Margin="0,1,0,0"/>
+                                                </StackPanel>
+                                                <Border Width="24" Height="24" CornerRadius="12"
+                                                        Background="#a855f7" Opacity="0.12"
+                                                        HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                        Margin="0,0,-4,-4">
+                                                    <TextBlock Text="›" FontSize="14" FontWeight="Bold"
+                                                               Foreground="#a855f7"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </Button>
+
+                                    <!-- Tile: Редактор -->
+                                    <Button Style="{StaticResource FlatBtn}" Padding="0"
+                                            Width="164" Height="164"
+                                            Click="ModsCardEditor_Click">
+                                        <Border Background="#1e1e1e" CornerRadius="12"
+                                                BorderBrush="#f97316" BorderThickness="2"
+                                                Padding="12">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="*"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Border Grid.Row="0" Height="3" CornerRadius="1.5"
+                                                        Background="#f97316" HorizontalAlignment="Stretch" Margin="-12,0"/>
+                                                <Border Grid.Row="1" Width="44" Height="44" CornerRadius="10"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        Background="#f97316" Opacity="0.15">
+                                                    <Path Data="M17,3 C17.3,2.7 17.7,2.5 18.2,2.5 C18.7,2.5 19.1,2.7 19.4,3 L21,4.6 C21.3,4.9 21.5,5.3 21.5,5.8 C21.5,6.3 21.3,6.7 21,7 L7.5,20.5 L2,22 L3.5,16.5 Z"
+                                                          Stroke="#f97316" StrokeThickness="1.5"
+                                                          Width="20" Height="20" Stretch="Uniform"
+                                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <StackPanel Grid.Row="2" VerticalAlignment="Bottom">
+                                                    <TextBlock Text="Редактор" FontSize="14"
+                                                               FontWeight="SemiBold" Foreground="White"
+                                                               HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Правка .bat и .txt" FontSize="11"
+                                                               Foreground="#888888" HorizontalAlignment="Center"
+                                                               Margin="0,1,0,0"/>
+                                                </StackPanel>
+                                                <Border Width="24" Height="24" CornerRadius="12"
+                                                        Background="#f97316" Opacity="0.12"
+                                                        HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                        Margin="0,0,-4,-4">
+                                                    <TextBlock Text="›" FontSize="14" FontWeight="Bold"
+                                                               Foreground="#f97316"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </Button>
+
+                                </UniformGrid>
+                            </ScrollViewer>
+                        </Grid>
+
+                        <!-- ─── STRATEGIES SCREEN (.bat drag & drop) ─── -->
+                        <Grid x:Name="ModsStrategiesScreen" Visibility="Collapsed">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text=".bat Стратегии" FontSize="15"
+                                       FontWeight="SemiBold" Foreground="#888888" Margin="0,0,0,12"/>
+
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="62"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Grid Grid.Column="0">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid Grid.Row="0" Margin="0,0,0,8">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="ДОСТУПНЫЕ" FontFamily="Segoe UI" FontSize="10"
+                                                       FontWeight="SemiBold" Foreground="#888888" VerticalAlignment="Center"/>
+                                            <Border Background="#1e1e22" CornerRadius="5" Padding="7,2" Margin="8,0,0,0">
+                                                <TextBlock x:Name="AvailableCount" Text="0"
+                                                           FontFamily="Segoe UI" FontSize="10.5" Foreground="#888888"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <Button HorizontalAlignment="Right" Style="{StaticResource FlatBtn}"
+                                                Padding="0" Click="RefreshMods_Click">
+                                            <Path Data="{StaticResource RefreshIcon}" Stroke="#555558" StrokeThickness="1.8"
+                                                  Width="13" Height="13" Stretch="Uniform"/>
+                                        </Button>
+                                    </Grid>
+                                    <ListBox Grid.Row="1" x:Name="AvailableList"
+                                             Style="{StaticResource ModListBox}"
+                                             SelectionChanged="AnyList_SelectionChanged"
+                                             PreviewMouseLeftButtonDown="ListBox_PreviewMouseLeftButtonDown"
+                                             Drop="AvailableList_Drop" DragEnter="ListBox_DragEnter"/>
+                                </Grid>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <Button x:Name="MoveRightBtn" Style="{StaticResource ArrowBtn}"
+                                            Click="MoveRightBtn_Click" ToolTip="Активировать">
+                                        <Path Data="{StaticResource ArrowRightIcon}" Stroke="#5090d0"
+                                              StrokeThickness="1.8" Width="14" Height="14" Stretch="Uniform"/>
+                                    </Button>
+                                    <Button x:Name="MoveLeftBtn" Style="{StaticResource ArrowBtn}"
+                                            Margin="0,8,0,0" Click="MoveLeftBtn_Click" ToolTip="Деактивировать">
+                                        <Path Data="{StaticResource ArrowLeftIcon}" Stroke="#555558"
+                                              StrokeThickness="1.8" Width="14" Height="14" Stretch="Uniform"/>
+                                    </Button>
+                                </StackPanel>
+
+                                <Grid Grid.Column="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid Grid.Row="0" Margin="0,0,0,8">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="АКТИВНЫЕ" FontFamily="Segoe UI" FontSize="10"
+                                                       FontWeight="SemiBold" Foreground="#888888" VerticalAlignment="Center"/>
+                                            <Border Background="#1e1e22" CornerRadius="5" Padding="7,2" Margin="8,0,0,0">
+                                                <TextBlock x:Name="ActiveCount" Text="0"
+                                                           FontFamily="Segoe UI" FontSize="10.5" Foreground="#93c5fd"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+                                    <ListBox Grid.Row="1" x:Name="ActiveList"
+                                             Style="{StaticResource ModListBox}"
+                                             SelectionChanged="AnyList_SelectionChanged"
+                                             PreviewMouseLeftButtonDown="ListBox_PreviewMouseLeftButtonDown"
+                                             Drop="ActiveList_Drop" DragEnter="ListBox_DragEnter">
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="ListBoxItem">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                <Setter Property="Padding" Value="0"/>
+                                                <Setter Property="BorderThickness" Value="0"/>
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="ListBoxItem">
+                                                            <Border x:Name="bd" Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
+                                                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsSelected" Value="True">
+                                                                    <Setter TargetName="bd" Property="Background" Value="#1a1a2e"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
+                                    </ListBox>
+                                </Grid>
+                            </Grid>
+
+                            <!-- Bottom bar -->
+                            <Border Grid.Row="2" Background="#111113"
+                                    BorderBrush="#22222a" BorderThickness="0,1,0,0"
+                                    Padding="32,12" Margin="0,10,0,0">
+                                <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <Path Grid.Column="0" Data="{StaticResource SearchIcon}"
-                                          Stroke="#555558" StrokeThickness="1.5"
-                                          Width="12" Height="12" Stretch="Uniform"
-                                          Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                    <TextBox Grid.Column="1" x:Name="ModsSearchBox"
-                                             Background="Transparent" BorderThickness="0"
-                                             Foreground="#f0f0f0" CaretBrush="#3b82f6"
-                                             FontFamily="Segoe UI" FontSize="12"
-                                             VerticalAlignment="Center"
-                                             TextChanged="ModsSearchBox_TextChanged">
-                                        <TextBox.Style>
-                                            <Style TargetType="TextBox">
-                                                <Style.Resources>
-                                                    <VisualBrush x:Key="WM" TileMode="None" Stretch="None" AlignmentX="Left">
-                                                        <VisualBrush.Visual>
-                                                            <TextBlock Text="Поиск..." Foreground="#555558" FontFamily="Segoe UI" FontSize="12"/>
-                                                        </VisualBrush.Visual>
-                                                    </VisualBrush>
-                                                </Style.Resources>
-                                                <Style.Triggers>
-                                                    <Trigger Property="Text" Value="">
-                                                        <Setter Property="Background" Value="{StaticResource WM}"/>
-                                                    </Trigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBox.Style>
-                                    </TextBox>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                        <Button x:Name="CreateModBtn" Style="{StaticResource OutlineBtn}"
+                                                Margin="0,0,8,0" Click="CreateModBtn_Click" Foreground="#aaaaaa">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Data="{StaticResource PlusIcon}" Stroke="#aaaaaa"
+                                                      StrokeThickness="1.8" Width="12" Height="12" Stretch="Uniform"
+                                                      Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Создать" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button x:Name="ModsImportBtn" Style="{StaticResource OutlineBtn}"
+                                                Margin="0,0,8,0" Click="ModsImportBtn_Click" Foreground="#aaaaaa">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Data="{StaticResource ImportIcon}" Stroke="#aaaaaa"
+                                                      StrokeThickness="1.8" Width="12" Height="12" Stretch="Uniform"
+                                                      Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Импорт" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button x:Name="DeleteModBtn" Style="{StaticResource DeleteOutlineBtn}"
+                                                IsEnabled="False" Click="DeleteBtn_Click"
+                                                Foreground="#ff6b6b" BorderBrush="#6a3030">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Data="{StaticResource TrashIcon}" Stroke="#ff6b6b"
+                                                      StrokeThickness="1.5" Width="12" Height="12" Stretch="Uniform"
+                                                      Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Удалить" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" x:Name="ModsStatusText" Text=""
+                                               FontFamily="Segoe UI" FontSize="11.5" Foreground="#888888"
+                                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <Button Grid.Column="2" x:Name="ModsApplyBtn" Style="{StaticResource AccentBtn}"
+                                            Width="130" Height="36" Click="ModsApplyBtn_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource CheckmarkIcon}" Stroke="White"
+                                                  StrokeThickness="2.2" Width="13" Height="13" Stretch="Uniform"
+                                                  Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Применить" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
                                 </Grid>
                             </Border>
                         </Grid>
-                    </Border>
 
-                    <!-- Two list boxes with arrows -->
-                    <Grid Grid.Row="3" Margin="32,14,32,10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="62"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+                        <!-- ─── LISTS SCREEN (lists drag & drop + footer) ─── -->
+                        <Grid x:Name="ModsListsScreen" Visibility="Collapsed">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
 
-                        <Grid Grid.Column="0">
+                            <TextBlock Grid.Row="0" Text="Листы доменов" FontSize="15"
+                                       FontWeight="SemiBold" Foreground="#888888" Margin="0,0,0,12"/>
+
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="62"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Grid Grid.Column="0">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid Grid.Row="0" Margin="0,0,0,8">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="ДОСТУПНЫЕ" FontFamily="Segoe UI" FontSize="10"
+                                                       FontWeight="SemiBold" Foreground="#888888" VerticalAlignment="Center"/>
+                                            <Border Background="#1e1e22" CornerRadius="5" Padding="7,2" Margin="8,0,0,0">
+                                                <TextBlock x:Name="ListsAvailableCount" Text="0"
+                                                           FontFamily="Segoe UI" FontSize="10.5" Foreground="#888888"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+                                    <ListBox Grid.Row="1" x:Name="ListsAvailableList"
+                                             Style="{StaticResource ModListBox}"
+                                             SelectionChanged="ListsList_SelectionChanged"
+                                             PreviewMouseLeftButtonDown="ListsListBox_PreviewMouseLeftButtonDown"
+                                             Drop="ListsAvailableList_Drop" DragEnter="ListBox_DragEnter"/>
+                                </Grid>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <Button x:Name="ListsMoveRightBtn" Style="{StaticResource ArrowBtn}"
+                                            Click="ListsMoveRightBtn_Click" ToolTip="Активировать">
+                                        <Path Data="{StaticResource ArrowRightIcon}" Stroke="#5090d0"
+                                              StrokeThickness="1.8" Width="14" Height="14" Stretch="Uniform"/>
+                                    </Button>
+                                    <Button x:Name="ListsMoveLeftBtn" Style="{StaticResource ArrowBtn}"
+                                            Margin="0,8,0,0" Click="ListsMoveLeftBtn_Click" ToolTip="Деактивировать">
+                                        <Path Data="{StaticResource ArrowLeftIcon}" Stroke="#555558"
+                                              StrokeThickness="1.8" Width="14" Height="14" Stretch="Uniform"/>
+                                    </Button>
+                                </StackPanel>
+
+                                <Grid Grid.Column="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid Grid.Row="0" Margin="0,0,0,8">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="АКТИВНЫЕ" FontFamily="Segoe UI" FontSize="10"
+                                                       FontWeight="SemiBold" Foreground="#888888" VerticalAlignment="Center"/>
+                                            <Border Background="#1e1e22" CornerRadius="5" Padding="7,2" Margin="8,0,0,0">
+                                                <TextBlock x:Name="ListsActiveCount" Text="0"
+                                                           FontFamily="Segoe UI" FontSize="10.5" Foreground="#93c5fd"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+                                    <ListBox Grid.Row="1" x:Name="ListsActiveList"
+                                             Style="{StaticResource ModListBox}"
+                                             SelectionChanged="ListsList_SelectionChanged"
+                                             PreviewMouseLeftButtonDown="ListsListBox_PreviewMouseLeftButtonDown"
+                                             Drop="ListsActiveList_Drop" DragEnter="ListBox_DragEnter">
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="ListBoxItem">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                <Setter Property="Padding" Value="0"/>
+                                                <Setter Property="BorderThickness" Value="0"/>
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="ListBoxItem">
+                                                            <Border x:Name="bd" Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
+                                                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsSelected" Value="True">
+                                                                    <Setter TargetName="bd" Property="Background" Value="#1a1a2e"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
+                                    </ListBox>
+                                </Grid>
+                            </Grid>
+
+                            <!-- Bottom bar for lists -->
+                            <Border Grid.Row="2" Background="#111113"
+                                    BorderBrush="#22222a" BorderThickness="0,1,0,0"
+                                    Padding="32,12" Margin="0,10,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                        <Button x:Name="ListsCreateBtn" Style="{StaticResource OutlineBtn}"
+                                                Margin="0,0,8,0" Click="ListsCreateBtn_Click" Foreground="#aaaaaa">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Data="{StaticResource PlusIcon}" Stroke="#aaaaaa"
+                                                      StrokeThickness="1.8" Width="12" Height="12" Stretch="Uniform"
+                                                      Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Создать" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button x:Name="ListsImportBtn" Style="{StaticResource OutlineBtn}"
+                                                Margin="0,0,8,0" Click="ListsImportBtn_Click" Foreground="#aaaaaa">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Data="{StaticResource ImportIcon}" Stroke="#aaaaaa"
+                                                      StrokeThickness="1.8" Width="12" Height="12" Stretch="Uniform"
+                                                      Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Импорт" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button x:Name="ListsDeleteBtn" Style="{StaticResource DeleteOutlineBtn}"
+                                                IsEnabled="False" Click="ListsDeleteBtn_Click"
+                                                Foreground="#ff6b6b" BorderBrush="#6a3030">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Data="{StaticResource TrashIcon}" Stroke="#ff6b6b"
+                                                      StrokeThickness="1.5" Width="12" Height="12" Stretch="Uniform"
+                                                      Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Удалить" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" x:Name="ListsStatusText" Text=""
+                                               FontFamily="Segoe UI" FontSize="11.5" Foreground="#888888"
+                                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <Button Grid.Column="2" x:Name="ListsApplyBtn" Style="{StaticResource AccentBtn}"
+                                            Width="130" Height="36" Click="ListsApplyBtn_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource CheckmarkIcon}" Stroke="White"
+                                                  StrokeThickness="2.2" Width="13" Height="13" Stretch="Uniform"
+                                                  Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Применить" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <!-- ─── MY MODS SCREEN ─── -->
+                        <Grid x:Name="ModsMyModsScreen" Visibility="Collapsed">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <Grid Grid.Row="0" Margin="0,0,0,8">
+
+                            <Grid Grid.Row="0">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="ДОСТУПНЫЕ" FontFamily="Segoe UI" FontSize="10"
+                                    <TextBlock Text="Ваши моды" FontSize="15"
                                                FontWeight="SemiBold" Foreground="#888888" VerticalAlignment="Center"/>
-                                    <Border Background="#1e1e22" CornerRadius="5" Padding="7,2" Margin="8,0,0,0">
-                                        <TextBlock x:Name="AvailableCount" Text="0"
-                                                   FontFamily="Segoe UI" FontSize="10.5" Foreground="#888888"/>
+                                    <Border Background="#1e1e22" CornerRadius="5" Padding="7,2" Margin="10,0,0,0">
+                                        <TextBlock x:Name="MyModsCount" Text="0"
+                                                   FontFamily="Segoe UI" FontSize="10.5" Foreground="#a855f7"/>
                                     </Border>
                                 </StackPanel>
-                                <Button HorizontalAlignment="Right" Style="{StaticResource FlatBtn}"
-                                        Padding="0" Click="RefreshMods_Click">
-                                    <Path Data="{StaticResource RefreshIcon}" Stroke="#555558" StrokeThickness="1.8"
-                                          Width="13" Height="13" Stretch="Uniform"/>
-                                </Button>
                             </Grid>
-                            <ListBox Grid.Row="1" x:Name="AvailableList"
-                                     Style="{StaticResource ModListBox}"
-                                     SelectionChanged="AnyList_SelectionChanged"
-                                     PreviewMouseLeftButtonDown="ListBox_PreviewMouseLeftButtonDown"
-                                     Drop="AvailableList_Drop" DragEnter="ListBox_DragEnter"/>
+
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,12,0,0">
+                                <Grid>
+                                    <!-- Grid of mod cards (2 columns, square) -->
+                                    <ItemsControl x:Name="MyModsGrid" Margin="0,0,0,20"
+                                                  Visibility="Visible">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <UniformGrid Columns="2" HorizontalAlignment="Left"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Width="140" Height="140" CornerRadius="12"
+                                                        Background="#1e1e1e" BorderBrush="#2a2a2e" BorderThickness="1"
+                                                        Margin="0,0,12,12" Padding="14,12">
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="*"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        <Border Grid.Row="0" Height="3" CornerRadius="1.5"
+                                                                Background="#a855f7" Margin="0,0,0,10"
+                                                                HorizontalAlignment="Stretch"/>
+                                                        <TextBlock Grid.Row="1" Text="{Binding Name}"
+                                                                   FontSize="14" FontWeight="SemiBold"
+                                                                   Foreground="#f0f0f0"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   TextWrapping="Wrap"/>
+                                                        <StackPanel Grid.Row="2" Orientation="Horizontal"
+                                                                    VerticalAlignment="Bottom" Margin="0,8,0,0">
+                                                            <Border CornerRadius="4" Background="#1e1e22" Padding="5,1" Margin="0,0,5,0">
+                                                                <TextBlock Text="{Binding Author}"
+                                                                           FontSize="10" Foreground="#5a9fd4"/>
+                                                            </Border>
+                                                            <Border CornerRadius="4" Background="#1a1a1e" Padding="5,1">
+                                                                <TextBlock Text="{Binding Version}"
+                                                                           FontSize="10" Foreground="#555558"/>
+                                                            </Border>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- Empty placeholder (overlaid when no mods) -->
+                                    <Grid x:Name="MyModsEmpty" Visibility="Collapsed"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          IsHitTestVisible="False">
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Path Data="M2,6 L2,18 C2,19.1 2.9,20 4,20 L20,20 C21.1,20 22,19.1 22,18 L22,8 C22,6.9 21.1,6 20,6 L12,6 L10,4 L4,4 C2.9,4 2,4.9 2,6 Z"
+                                                  Stroke="#555558" StrokeThickness="1.5"
+                                                  Width="48" Height="48" Stretch="Uniform"
+                                                  HorizontalAlignment="Center" Margin="0,0,0,12"
+                                                  Opacity="0.5"/>
+                                            <TextBlock Text="Модов пока нет" FontSize="16" FontWeight="SemiBold"
+                                                       Foreground="#555558" HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                                            <TextBlock Text="Создайте или импортируйте первый мод"
+                                                       FontSize="13" Foreground="#444444" HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Grid>
+                            </ScrollViewer>
                         </Grid>
 
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center">
-                            <Button x:Name="MoveRightBtn" Style="{StaticResource ArrowBtn}"
-                                    Click="MoveRightBtn_Click" ToolTip="Активировать">
-                                <Path Data="{StaticResource ArrowRightIcon}" Stroke="#5090d0"
-                                      StrokeThickness="1.8" Width="14" Height="14" Stretch="Uniform"/>
-                            </Button>
-                            <Button x:Name="MoveLeftBtn" Style="{StaticResource ArrowBtn}"
-                                    Margin="0,8,0,0" Click="MoveLeftBtn_Click" ToolTip="Деактивировать">
-                                <Path Data="{StaticResource ArrowLeftIcon}" Stroke="#555558"
-                                      StrokeThickness="1.8" Width="14" Height="14" Stretch="Uniform"/>
-                            </Button>
-                        </StackPanel>
-
-                        <Grid Grid.Column="2">
+                        <!-- ─── EDITOR SCREEN ─── -->
+                        <Grid x:Name="ModsEditorScreen" Visibility="Collapsed">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-                            <Grid Grid.Row="0" Margin="0,0,0,8">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="АКТИВНЫЕ" FontFamily="Segoe UI" FontSize="10"
-                                               FontWeight="SemiBold" Foreground="#888888" VerticalAlignment="Center"/>
-                                    <Border Background="#1e1e22" CornerRadius="5" Padding="7,2" Margin="8,0,0,0">
-                                        <TextBlock x:Name="ActiveCount" Text="0"
-                                                   FontFamily="Segoe UI" FontSize="10.5" Foreground="#93c5fd"/>
-                                    </Border>
-                                </StackPanel>
-                            </Grid>
-                            <ListBox Grid.Row="1" x:Name="ActiveList"
-                                     Style="{StaticResource ModListBox}"
-                                     SelectionChanged="AnyList_SelectionChanged"
-                                     PreviewMouseLeftButtonDown="ListBox_PreviewMouseLeftButtonDown"
-                                     Drop="ActiveList_Drop" DragEnter="ListBox_DragEnter">
-                                <ListBox.ItemContainerStyle>
-                                    <Style TargetType="ListBoxItem">
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                        <Setter Property="Padding" Value="0"/>
-                                        <Setter Property="BorderThickness" Value="0"/>
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="ListBoxItem">
-                                                    <Border x:Name="bd" Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
-                                                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsSelected" Value="True">
-                                                            <Setter TargetName="bd" Property="Background" Value="#1a1a2e"/>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </ListBox.ItemContainerStyle>
-                            </ListBox>
-                        </Grid>
-                    </Grid>
 
-                    <!-- Bottom bar -->
-                    <Border Grid.Row="4" Background="#111113"
-                            BorderBrush="#22222a" BorderThickness="0,1,0,0"
-                            Padding="32,12">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                <Button x:Name="CreateModBtn" Style="{StaticResource OutlineBtn}"
-                                        Margin="0,0,8,0" Click="CreateModBtn_Click" Foreground="#aaaaaa">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Path Data="{StaticResource PlusIcon}" Stroke="#aaaaaa"
-                                              StrokeThickness="1.8" Width="12" Height="12" Stretch="Uniform"
-                                              Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Создать" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
-                                <Button x:Name="ModsImportBtn" Style="{StaticResource OutlineBtn}"
-                                        Margin="0,0,8,0" Click="ModsImportBtn_Click" Foreground="#aaaaaa">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Path Data="{StaticResource ImportIcon}" Stroke="#aaaaaa"
-                                              StrokeThickness="1.8" Width="12" Height="12" Stretch="Uniform"
-                                              Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Импорт" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
-                                <Button x:Name="DeleteModBtn" Style="{StaticResource DeleteOutlineBtn}"
-                                        IsEnabled="False" Click="DeleteBtn_Click"
-                                        Foreground="#ff6b6b" BorderBrush="#6a3030">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Path Data="{StaticResource TrashIcon}" Stroke="#ff6b6b"
-                                              StrokeThickness="1.5" Width="12" Height="12" Stretch="Uniform"
-                                              Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Удалить" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
+                            <!-- Tab bar -->
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                                <RadioButton x:Name="ModsEditorTabLists" Content="Листы"
+                                             Style="{StaticResource TabRadio}" GroupName="ModsEditorTabs"
+                                             IsChecked="True" Checked="ModsEditorTab_Checked"/>
+                                <RadioButton x:Name="ModsEditorTabBat" Content=".bat файлы"
+                                             Style="{StaticResource TabRadio}" GroupName="ModsEditorTabs"
+                                             Margin="4,0,0,0" Checked="ModsEditorTab_Checked"/>
                             </StackPanel>
 
-                            <TextBlock Grid.Column="1" x:Name="ModsStatusText" Text=""
-                                       FontFamily="Segoe UI" FontSize="11.5" Foreground="#888888"
-                                       VerticalAlignment="Center" HorizontalAlignment="Center"
-                                       TextTrimming="CharacterEllipsis"/>
+                            <!-- Two-column editor -->
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="200"/>
+                                    <ColumnDefinition Width="6"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
 
-                            <Button Grid.Column="2" x:Name="ModsApplyBtn" Style="{StaticResource AccentBtn}"
-                                    Width="130" Height="36" Click="ModsApplyBtn_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource CheckmarkIcon}" Stroke="White"
-                                          StrokeThickness="2.2" Width="13" Height="13" Stretch="Uniform"
-                                          Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Применить" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
+                                <ListBox x:Name="ModsEditorFileList" Grid.Column="0"
+                                         Background="#1e1e1e" BorderBrush="#2a2a2e" BorderThickness="1"
+                                         SelectionChanged="ModsEditorFileList_SelectionChanged">
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="Padding" Value="10,6"/>
+                                            <Setter Property="Foreground" Value="#cccccc"/>
+                                            <Setter Property="FontFamily" Value="Consolas"/>
+                                            <Setter Property="FontSize" Value="12"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ListBoxItem">
+                                                        <Border x:Name="bd" Background="{TemplateBinding Background}" SnapsToDevicePixels="True" Padding="{TemplateBinding Padding}">
+                                                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="bd" Property="Background" Value="#252525"/>
+                                                            </Trigger>
+                                                            <Trigger Property="IsSelected" Value="True">
+                                                                <Setter TargetName="bd" Property="Background" Value="#1a2a3a"/>
+                                                                <Setter Property="Foreground" Value="#93c5fd"/>
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                </ListBox>
+
+                                <Border Grid.Column="1" Width="1" Background="#2a2a2e" HorizontalAlignment="Stretch"/>
+
+                                <TextBox x:Name="ModsEditorTextBox" Grid.Column="2"
+                                         Background="#161618" Foreground="#e0e0e0"
+                                         BorderBrush="#2a2a2e" BorderThickness="1"
+                                         FontFamily="Consolas" FontSize="12"
+                                         AcceptsReturn="True" AcceptsTab="True"
+                                         VerticalScrollBarVisibility="Auto"
+                                         HorizontalScrollBarVisibility="Auto"
+                                         TextWrapping="NoWrap" Padding="12"/>
+                            </Grid>
+
+                            <!-- Save / Reset buttons -->
+                            <StackPanel Grid.Row="2" Orientation="Horizontal"
+                                        HorizontalAlignment="Right" Margin="0,10,0,0">
+                                <Button x:Name="ModsEditorResetBtn" Content="Сбросить"
+                                        Style="{StaticResource OutlineBtn}"
+                                        Margin="0,0,8,0" Click="ModsEditorResetBtn_Click"/>
+                                <Button x:Name="ModsEditorSaveBtn" Content="Сохранить"
+                                        Style="{StaticResource AccentBtn}"
+                                        Click="ModsEditorSaveBtn_Click"/>
+                            </StackPanel>
                         </Grid>
-                    </Border>
+
+                    </Grid>
                 </Grid>
 
             </Grid>
