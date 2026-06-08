@@ -999,7 +999,10 @@ public partial class MainWindow : Window
         if (AvailableCount is not null)
             AvailableCount.Text = availCount.ToString();
         if (ActiveCount is not null)
+        {
             ActiveCount.Text = activeCount.ToString();
+            ActiveCount.Foreground = new SolidColorBrush(activeCount > 0 ? Color.FromRgb(0x22, 0xc5, 0x5e) : Color.FromRgb(0x88, 0x88, 0x88));
+        }
     }
 
     private void ModsEditorTab_Checked(object sender, RoutedEventArgs e) => LoadEditorFileLists();
@@ -1046,32 +1049,6 @@ public partial class MainWindow : Window
             {
                 _dragMod = mod;
                 _dragFromActive = listBox == ActiveList;
-
-                var layer = AdornerLayer.GetAdornerLayer(listBox);
-                if (layer is not null)
-                {
-                    var ghost = new Border
-                    {
-                        Width = 160, Height = 50,
-                        Background = new SolidColorBrush(Color.FromArgb(200, 30, 30, 35)),
-                        BorderBrush = new SolidColorBrush(Color.FromArgb(180, 168, 85, 247)),
-                        BorderThickness = new Thickness(1),
-                        CornerRadius = new CornerRadius(8),
-                        Child = new TextBlock
-                        {
-                            Text = mod.Name,
-                            Foreground = Brushes.White,
-                            FontSize = 13,
-                            VerticalAlignment = System.Windows.VerticalAlignment.Center,
-                            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
-                        }
-                    };
-                    ghost.Measure(new Size(160, 50));
-                    ghost.Arrange(new Rect(0, 0, 160, 50));
-                    _currentDragAdorner = new DragAdorner(listBox, ghost);
-                    layer.Add(_currentDragAdorner);
-                    _currentDragAdorner.UpdatePosition(e.GetPosition(listBox).X + 15, e.GetPosition(listBox).Y + 15);
-                }
 
                 DragDrop.DoDragDrop(listBox, _dragMod, DragDropEffects.Move);
             }
@@ -1307,6 +1284,12 @@ public partial class MainWindow : Window
         ModsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
     }
 
+    private void OnModCardSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (sender is Grid grid)
+            grid.Clip = new RectangleGeometry(new Rect(0, 0, e.NewSize.Width, e.NewSize.Height), 10, 10);
+    }
+
     // ── My Mods Screen ────────────────────────────────────────────────────────
     private void LoadMyMods()
     {
@@ -1497,32 +1480,6 @@ public partial class MainWindow : Window
                 _dragMod = mod;
                 _dragFromActive = listBox == ListsActiveList;
 
-                var layer = AdornerLayer.GetAdornerLayer(listBox);
-                if (layer is not null)
-                {
-                    var ghost = new Border
-                    {
-                        Width = 160, Height = 50,
-                        Background = new SolidColorBrush(Color.FromArgb(200, 30, 30, 35)),
-                        BorderBrush = new SolidColorBrush(Color.FromArgb(180, 168, 85, 247)),
-                        BorderThickness = new Thickness(1),
-                        CornerRadius = new CornerRadius(8),
-                        Child = new TextBlock
-                        {
-                            Text = mod.Name,
-                            Foreground = Brushes.White,
-                            FontSize = 13,
-                            VerticalAlignment = System.Windows.VerticalAlignment.Center,
-                            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
-                        }
-                    };
-                    ghost.Measure(new Size(160, 50));
-                    ghost.Arrange(new Rect(0, 0, 160, 50));
-                    _currentDragAdorner = new DragAdorner(listBox, ghost);
-                    layer.Add(_currentDragAdorner);
-                    _currentDragAdorner.UpdatePosition(e.GetPosition(listBox).X + 15, e.GetPosition(listBox).Y + 15);
-                }
-
                 DragDrop.DoDragDrop(listBox, _dragMod, DragDropEffects.Move);
             }
         }
@@ -1567,6 +1524,7 @@ public partial class MainWindow : Window
 
         ListsAvailableCount.Text = availableMods.Count.ToString();
         ListsActiveCount.Text = activeMods.Count.ToString();
+        ListsActiveCount.Foreground = new SolidColorBrush(activeMods.Count > 0 ? Color.FromRgb(0x22, 0xc5, 0x5e) : Color.FromRgb(0x88, 0x88, 0x88));
         ListsStatusText.Text = $"Листов: {lists.Count} | Активных: {activeMods.Count}";
         ListsApplyBtn.IsEnabled = activeMods.Count > 0;
         ListsApplyBtn.Style = (Style)FindResource(activeMods.Count > 0 ? "AccentBtn" : "OutlineBtn");

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using NetFix.Models;
 using NetFix.Services;
 using NetFix.Services.Mods;
@@ -128,6 +129,19 @@ public partial class CreateModWindow : Window
             return;
         }
 
+        if (_modType == ModType.Strategy && string.IsNullOrEmpty(_selectedBatPath))
+        {
+            ShowValidationHint("Выберите .bat файл стратегии");
+            return;
+        }
+
+        if (_modType == ModType.List && string.IsNullOrWhiteSpace(ListTextBox.Text))
+        {
+            ShowValidationHint("Добавьте хотя бы один домен");
+            ListTextBox.Focus();
+            return;
+        }
+
         ValidationHint.Visibility = Visibility.Collapsed;
 
         var description = DescBox.Text;
@@ -178,4 +192,11 @@ public partial class CreateModWindow : Window
     private void Header_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e) => DragMove();
     private void MinBtn_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
     private void CloseBtn_Click(object sender, RoutedEventArgs e) { DialogResult = false; Close(); }
+
+    private void CreateWindowGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (sender is Grid grid && grid.ActualWidth > 0 && grid.ActualHeight > 0)
+            grid.Clip = new RectangleGeometry(
+                new Rect(0, 0, grid.ActualWidth, grid.ActualHeight), 14, 14);
+    }
 }

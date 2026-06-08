@@ -2912,14 +2912,49 @@
                         <Border MinHeight="90" Margin="0,2" CornerRadius="10"
                                 Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" 
                                 BorderThickness="1">
-                            <Grid>
+                            <Grid SizeChanged="OnModCardSizeChanged">
+                                <!-- Aurora glow — левый нижний, цвет как у полоски -->
+                                <Rectangle x:Name="BottomGlow" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                           Width="120" Height="90" Opacity="0.25"
+                                           RenderOptions.EdgeMode="Aliased">
+                                    <Rectangle.Fill>
+                                        <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                             Center="0.0,1.0" GradientOrigin="0.0,1.0"
+                                                             RadiusX="0.6" RadiusY="0.5">
+                                            <GradientStop Color="#3b82f6" Offset="0.0"/>
+                                            <GradientStop Color="#00000000" Offset="1.0"/>
+                                        </RadialGradientBrush>
+                                    </Rectangle.Fill>
+                                </Rectangle>
+                                <!-- Aurora glow — правый верхний, цвет как у полоски -->
+                                <Rectangle x:Name="TopGlow" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                           Width="120" Height="90" Opacity="0.15"
+                                           RenderOptions.EdgeMode="Aliased">
+                                    <Rectangle.Fill>
+                                        <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                             Center="1.0,0.0" GradientOrigin="1.0,0.0"
+                                                             RadiusX="0.6" RadiusY="0.5">
+                                            <GradientStop Color="#3b82f6" Offset="0.0"/>
+                                            <GradientStop Color="#00000000" Offset="1.0"/>
+                                        </RadialGradientBrush>
+                                    </Rectangle.Fill>
+                                </Rectangle>
+                                <!-- Noise — антибандинг -->
+                                <Rectangle IsHitTestVisible="False" Opacity="0.04"
+                                           RenderOptions.BitmapScalingMode="NearestNeighbor">
+                                    <Rectangle.Fill>
+                                        <ImageBrush ImageSource="Assets/noise.png"
+                                                    TileMode="Tile" ViewportUnits="Absolute"
+                                                    Viewport="0,0,512,512" Stretch="None"/>
+                                    </Rectangle.Fill>
+                                </Rectangle>
                                 <Grid Margin="12,10,10,10">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <Border Grid.Column="0" Width="3" CornerRadius="1.5"
+                                    <Border x:Name="StatusStrip" Grid.Column="0" Width="3" CornerRadius="1.5"
                                             Background="{StaticResource AccentBrush}" Margin="0,4,10,4"/>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Top" MaxWidth="280">
                                         <TextBlock Text="{Binding Name}" FontFamily="Segoe UI" FontSize="13"
@@ -2927,7 +2962,7 @@
                                                    TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
                                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                                             <Border CornerRadius="4" Background="#1e1e22" Padding="6,2" Margin="0,0,6,0">
-                                                <TextBlock FontFamily="Segoe UI" FontSize="10" Foreground="#5a9fd4">
+                                                <TextBlock x:Name="CardAuthor" FontFamily="Segoe UI" FontSize="10" Foreground="#5a9fd4">
                                                     <Run Text="Автор: " FontWeight="SemiBold"/>
                                                     <Run Text="{Binding Author}"/>
                                                 </TextBlock>
@@ -2972,6 +3007,30 @@
                             <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
                                 <Setter TargetName="editOverlay" Property="Visibility" Value="Visible"/>
                                 <Setter TargetName="editBtn" Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                <Setter TargetName="StatusStrip" Property="Background" Value="#22c55e"/>
+                                <Setter TargetName="BottomGlow" Property="Fill">
+                                    <Setter.Value>
+                                        <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                             Center="0.0,1.0" GradientOrigin="0.0,1.0"
+                                                             RadiusX="0.6" RadiusY="0.5">
+                                            <GradientStop Color="#22c55e" Offset="0.0"/>
+                                            <GradientStop Color="#00000000" Offset="1.0"/>
+                                        </RadialGradientBrush>
+                                    </Setter.Value>
+                                 </Setter>
+                                <Setter TargetName="TopGlow" Property="Fill">
+                                    <Setter.Value>
+                                        <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                             Center="1.0,0.0" GradientOrigin="1.0,0.0"
+                                                             RadiusX="0.6" RadiusY="0.5">
+                                            <GradientStop Color="#22c55e" Offset="0.0"/>
+                                            <GradientStop Color="#00000000" Offset="1.0"/>
+                                        </RadialGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="CardAuthor" Property="Foreground" Value="#22c55e"/>
                             </DataTrigger>
                         </DataTemplate.Triggers>
                      </DataTemplate>
@@ -3021,7 +3080,7 @@
                     </DataTemplate>
 
                     <Style x:Key="ModListBox" TargetType="ListBox">
-                       <Setter Property="Background" Value="#111113"/>
+                        <Setter Property="Background" Value="#30111113"/>
                        <Setter Property="BorderBrush" Value="#22222a"/>
                        <Setter Property="BorderThickness" Value="1"/>
                        <Setter Property="Padding" Value="6"/>
@@ -3168,10 +3227,112 @@
                     </StackPanel>
                 </Grid>
 
-               <Border Grid.Row="1" Height="1" Background="#333333" Margin="32,14,32,0"/>
+                <Border Grid.Row="1" Height="1" Background="#333333" Margin="32,14,32,0"/>
 
-               <!-- ═══ CONTENT AREA (Row 2) — 5 sub-screens ═══ -->
-               <Grid Grid.Row="2" x:Name="ModsContentArea" Margin="32,20,32,20">
+                <!-- Aurora background — идентично игровой вкладке -->
+                <Grid Grid.Row="2" IsHitTestVisible="False" Panel.ZIndex="-1"
+                      VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                      ClipToBounds="True" RenderOptions.EdgeMode="Aliased">
+                    <!-- Layer 1: нижнее индиго свечение -->
+                    <Rectangle x:Name="ModsAurora1" Opacity="0.5">
+                        <Rectangle.Fill>
+                            <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                 Center="0.5,1.0" GradientOrigin="0.5,1.0"
+                                                 RadiusX="0.55" RadiusY="0.45">
+                                <GradientStop Color="#506366f1" Offset="0.000"/>
+                                <GradientStop Color="#4D6366f1" Offset="0.053"/>
+                                <GradientStop Color="#476366f1" Offset="0.105"/>
+                                <GradientStop Color="#416366f1" Offset="0.158"/>
+                                <GradientStop Color="#3A6366f1" Offset="0.211"/>
+                                <GradientStop Color="#346366f1" Offset="0.263"/>
+                                <GradientStop Color="#2D6366f1" Offset="0.316"/>
+                                <GradientStop Color="#276366f1" Offset="0.368"/>
+                                <GradientStop Color="#216366f1" Offset="0.421"/>
+                                <GradientStop Color="#1B6366f1" Offset="0.474"/>
+                                <GradientStop Color="#166366f1" Offset="0.526"/>
+                                <GradientStop Color="#116366f1" Offset="0.579"/>
+                                <GradientStop Color="#0D6366f1" Offset="0.632"/>
+                                <GradientStop Color="#096366f1" Offset="0.684"/>
+                                <GradientStop Color="#066366f1" Offset="0.737"/>
+                                <GradientStop Color="#046366f1" Offset="0.789"/>
+                                <GradientStop Color="#026366f1" Offset="0.842"/>
+                                <GradientStop Color="#016366f1" Offset="0.895"/>
+                                <GradientStop Color="#006366f1" Offset="0.947"/>
+                                <GradientStop Color="#006366f1" Offset="1.000"/>
+                            </RadialGradientBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+                    <!-- Layer 2: верхний фиолетовый -->
+                    <Rectangle x:Name="ModsAurora2" Opacity="0.4">
+                        <Rectangle.Fill>
+                            <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                 Center="0.1,0.1" GradientOrigin="0.1,0.1"
+                                                 RadiusX="0.35" RadiusY="0.30">
+                                <GradientStop Color="#308B5CF6" Offset="0.000"/>
+                                <GradientStop Color="#2E8B5CF6" Offset="0.053"/>
+                                <GradientStop Color="#298B5CF6" Offset="0.105"/>
+                                <GradientStop Color="#248B5CF6" Offset="0.158"/>
+                                <GradientStop Color="#1F8B5CF6" Offset="0.211"/>
+                                <GradientStop Color="#1A8B5CF6" Offset="0.263"/>
+                                <GradientStop Color="#168B5CF6" Offset="0.316"/>
+                                <GradientStop Color="#128B5CF6" Offset="0.368"/>
+                                <GradientStop Color="#0E8B5CF6" Offset="0.421"/>
+                                <GradientStop Color="#0B8B5CF6" Offset="0.474"/>
+                                <GradientStop Color="#088B5CF6" Offset="0.526"/>
+                                <GradientStop Color="#068B5CF6" Offset="0.579"/>
+                                <GradientStop Color="#048B5CF6" Offset="0.632"/>
+                                <GradientStop Color="#038B5CF6" Offset="0.684"/>
+                                <GradientStop Color="#028B5CF6" Offset="0.737"/>
+                                <GradientStop Color="#018B5CF6" Offset="0.789"/>
+                                <GradientStop Color="#018B5CF6" Offset="0.842"/>
+                                <GradientStop Color="#008B5CF6" Offset="0.895"/>
+                                <GradientStop Color="#008B5CF6" Offset="0.947"/>
+                                <GradientStop Color="#008B5CF6" Offset="1.000"/>
+                            </RadialGradientBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+                    <!-- Layer 3: правый нижний индиго -->
+                    <Rectangle x:Name="ModsAurora3" Opacity="0.3">
+                        <Rectangle.Fill>
+                            <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                 Center="0.9,0.8" GradientOrigin="0.9,0.8"
+                                                 RadiusX="0.30" RadiusY="0.25">
+                                <GradientStop Color="#284F46E5" Offset="0.000"/>
+                                <GradientStop Color="#264F46E5" Offset="0.053"/>
+                                <GradientStop Color="#234F46E5" Offset="0.105"/>
+                                <GradientStop Color="#1F4F46E5" Offset="0.158"/>
+                                <GradientStop Color="#1C4F46E5" Offset="0.211"/>
+                                <GradientStop Color="#184F46E5" Offset="0.263"/>
+                                <GradientStop Color="#154F46E5" Offset="0.316"/>
+                                <GradientStop Color="#124F46E5" Offset="0.368"/>
+                                <GradientStop Color="#0F4F46E5" Offset="0.421"/>
+                                <GradientStop Color="#0C4F46E5" Offset="0.474"/>
+                                <GradientStop Color="#094F46E5" Offset="0.526"/>
+                                <GradientStop Color="#074F46E5" Offset="0.579"/>
+                                <GradientStop Color="#054F46E5" Offset="0.632"/>
+                                <GradientStop Color="#044F46E5" Offset="0.684"/>
+                                <GradientStop Color="#034F46E5" Offset="0.737"/>
+                                <GradientStop Color="#024F46E5" Offset="0.789"/>
+                                <GradientStop Color="#014F46E5" Offset="0.842"/>
+                                <GradientStop Color="#014F46E5" Offset="0.895"/>
+                                <GradientStop Color="#004F46E5" Offset="0.947"/>
+                                <GradientStop Color="#004F46E5" Offset="1.000"/>
+                            </RadialGradientBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+                    <!-- noise — антибандинг -->
+                    <Rectangle IsHitTestVisible="False" Opacity="0.04"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor">
+                        <Rectangle.Fill>
+                            <ImageBrush ImageSource="Assets/noise.png"
+                                        TileMode="Tile" ViewportUnits="Absolute"
+                                        Viewport="0,0,512,512" Stretch="None"/>
+                        </Rectangle.Fill>
+                    </Rectangle>
+                </Grid>
+
+                <!-- ═══ CONTENT AREA (Row 2) — 5 sub-screens ═══ -->
+                <Grid Grid.Row="2" x:Name="ModsContentArea" Margin="32,20,32,20">
 
                    <!-- ─── MODS HOME SCREEN (root: 4 FAQ-style cards) ─── -->
                    <Grid x:Name="ModsHomeScreen" Visibility="Visible">
@@ -3363,20 +3524,15 @@
                                </Grid.RowDefinitions>
                                <Grid Grid.Row="0" Margin="0,0,0,10">
                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                       <TextBlock Text="ДОСТУПНЫЕ" FontFamily="Segoe UI" FontSize="11"
+                                       <TextBlock Text="ДОСТУПНЫЕ:" FontFamily="Segoe UI" FontSize="11"
                                                   FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"
                                                   />
                                        <Border Background="#1e1e22" CornerRadius="6" Padding="8,3" Margin="10,0,0,0">
                                            <TextBlock x:Name="AvailableCount" Text="0"
                                                       FontFamily="Segoe UI" FontSize="11" Foreground="#888888"/>
-                                       </Border>
-                                   </StackPanel>
-                                   <Button HorizontalAlignment="Right" Style="{StaticResource FlatBtn}"
-                                           Padding="0" Click="RefreshMods_Click" ToolTip="Обновить">
-                                       <Path Data="{StaticResource RefreshIcon}" Stroke="#555558" StrokeThickness="1.8"
-                                             Width="14" Height="14" Stretch="Uniform"/>
-                                   </Button>
-                               </Grid>
+                                        </Border>
+                                    </StackPanel>
+                                </Grid>
                                <ListBox Grid.Row="1" x:Name="AvailableList"
                                         Style="{StaticResource ModListBox}"
                                         SelectionChanged="AnyList_SelectionChanged"
@@ -3404,12 +3560,12 @@
                                </Grid.RowDefinitions>
                                <Grid Grid.Row="0" Margin="0,0,0,10">
                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                       <TextBlock Text="АКТИВНЫЕ" FontFamily="Segoe UI" FontSize="11"
+                                       <TextBlock Text="АКТИВНЫЕ:" FontFamily="Segoe UI" FontSize="11"
                                                   FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"
                                                   />
                                        <Border Background="#1e1e22" CornerRadius="6" Padding="8,3" Margin="10,0,0,0">
-                                           <TextBlock x:Name="ActiveCount" Text="0"
-                                                      FontFamily="Segoe UI" FontSize="11" Foreground="#93c5fd"/>
+                                            <TextBlock x:Name="ActiveCount" Text="0"
+                                                       FontFamily="Segoe UI" FontSize="11" Foreground="#888888"/>
                                        </Border>
                                    </StackPanel>
                                </Grid>
@@ -3517,7 +3673,7 @@
                                 </Grid.RowDefinitions>
                                 <Grid Grid.Row="0" Margin="0,0,0,10">
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="ДОСТУПНЫЕ" FontFamily="Segoe UI" FontSize="11"
+                                        <TextBlock Text="ДОСТУПНЫЕ:" FontFamily="Segoe UI" FontSize="11"
                                                    FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"
                                                    />
                                         <Border Background="#1e1e22" CornerRadius="6" Padding="8,3" Margin="10,0,0,0">
@@ -3553,12 +3709,12 @@
                                 </Grid.RowDefinitions>
                                 <Grid Grid.Row="0" Margin="0,0,0,10">
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="АКТИВНЫЕ" FontFamily="Segoe UI" FontSize="11"
+                                        <TextBlock Text="АКТИВНЫЕ:" FontFamily="Segoe UI" FontSize="11"
                                                    FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"
                                                    />
                                         <Border Background="#1e1e22" CornerRadius="6" Padding="8,3" Margin="10,0,0,0">
                                             <TextBlock x:Name="ListsActiveCount" Text="0"
-                                                       FontFamily="Segoe UI" FontSize="11" Foreground="#93c5fd"/>
+                                                       FontFamily="Segoe UI" FontSize="11" Foreground="#888888"/>
                                         </Border>
                                     </StackPanel>
                                 </Grid>

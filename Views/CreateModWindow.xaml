@@ -177,22 +177,22 @@
         <Style x:Key="FieldLabel" TargetType="TextBlock">
             <Setter Property="Foreground" Value="#888888"/>
             <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Margin" Value="0,0,0,6"/>
         </Style>
 
-        <!-- Input text box -->
+        <!-- Input text box — идентично игре -->
         <Style x:Key="InputBox" TargetType="TextBox">
-            <Setter Property="Background" Value="#1a1a1c"/>
-            <Setter Property="Foreground" Value="#e0e0e0"/>
-            <Setter Property="CaretBrush" Value="#3b82f6"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#2a2a2d"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="SelectionBrush" Value="#3b82f6"/>
+            <Setter Property="Background"       Value="#1a1a1c"/>
+            <Setter Property="Foreground"       Value="#e0e0e0"/>
+            <Setter Property="BorderBrush"      Value="#2a2a2d"/>
+            <Setter Property="BorderThickness"  Value="1"/>
+            <Setter Property="CaretBrush"       Value="#3b82f6"/>
+            <Setter Property="SelectionBrush"   Value="#3b82f6"/>
+            <Setter Property="FontFamily"       Value="Segoe UI"/>
+            <Setter Property="FontSize"         Value="12"/>
+            <Setter Property="Padding"          Value="10,8"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -201,10 +201,8 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8"
-                                Padding="{TemplateBinding Padding}">
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
                             <ScrollViewer x:Name="PART_ContentHost"
-                                          VerticalScrollBarVisibility="Auto"
                                           VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -218,8 +216,54 @@
         </Style>
     </Window.Resources>
 
-    <!-- Основной фон -->
-    <Border Background="#161618" CornerRadius="14" BorderBrush="#2a2a2d" BorderThickness="1" ClipToBounds="True">
+    <!-- Основной фон + рамка — Grid с Clip вместо Border -->
+    <Grid SizeChanged="CreateWindowGrid_SizeChanged">
+        <!-- Сплошной фон -->
+        <Rectangle Fill="#161618"/>
+        <!-- Aurora — нижнее индиго -->
+        <Rectangle Opacity="0.3" RenderOptions.EdgeMode="Aliased">
+            <Rectangle.Fill>
+                <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                     Center="0.5,1.0" GradientOrigin="0.5,1.0"
+                                     RadiusX="0.55" RadiusY="0.45">
+                    <GradientStop Color="#506366f1" Offset="0.000"/>
+                    <GradientStop Color="#006366f1" Offset="1.000"/>
+                </RadialGradientBrush>
+            </Rectangle.Fill>
+        </Rectangle>
+        <!-- Aurora — верхний фиолетовый -->
+        <Rectangle Opacity="0.25" RenderOptions.EdgeMode="Aliased">
+            <Rectangle.Fill>
+                <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                     Center="0.1,0.1" GradientOrigin="0.1,0.1"
+                                     RadiusX="0.35" RadiusY="0.30">
+                    <GradientStop Color="#308B5CF6" Offset="0.000"/>
+                    <GradientStop Color="#008B5CF6" Offset="1.000"/>
+                </RadialGradientBrush>
+            </Rectangle.Fill>
+        </Rectangle>
+        <!-- Aurora — правый нижний индиго -->
+        <Rectangle Opacity="0.15" RenderOptions.EdgeMode="Aliased">
+            <Rectangle.Fill>
+                <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                     Center="0.9,0.8" GradientOrigin="0.9,0.8"
+                                     RadiusX="0.30" RadiusY="0.25">
+                    <GradientStop Color="#284F46E5" Offset="0.000"/>
+                    <GradientStop Color="#004F46E5" Offset="1.000"/>
+                </RadialGradientBrush>
+            </Rectangle.Fill>
+        </Rectangle>
+        <!-- Noise — антибандинг -->
+        <Rectangle IsHitTestVisible="False" Opacity="0.04"
+                   RenderOptions.BitmapScalingMode="NearestNeighbor"
+                   RenderOptions.EdgeMode="Aliased">
+            <Rectangle.Fill>
+                <ImageBrush ImageSource="pack://application:,,,/Assets/noise.png"
+                            TileMode="Tile" ViewportUnits="Absolute"
+                            Viewport="0,0,512,512" Stretch="None"/>
+            </Rectangle.Fill>
+        </Rectangle>
+        <!-- Контент -->
         <Grid x:Name="RootGrid" Margin="1,1,-1,-1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" MinHeight="71"/>
@@ -272,7 +316,7 @@
 
                     <!-- Название -->
                     <Grid Margin="0,0,0,6">
-                        <TextBlock Text="НАЗВАНИЕ" Style="{StaticResource FieldLabel}" Margin="0"/>
+                        <TextBlock Text="Название:" Style="{StaticResource FieldLabel}" Margin="0"/>
                     <TextBlock x:Name="NameCounter"
                                    Text="0 / 20"
                                    Foreground="#555558"
@@ -289,7 +333,7 @@
 
                     <!-- Автор -->
                     <Grid Margin="0,0,0,6">
-                        <TextBlock Text="АВТОР" Style="{StaticResource FieldLabel}" Margin="0"/>
+                        <TextBlock Text="Автор:" Style="{StaticResource FieldLabel}" Margin="0"/>
                     <TextBlock x:Name="AuthorCounter"
                                    Text="0 / 10"
                                    Foreground="#555558"
@@ -306,7 +350,7 @@
 
                      <!-- Версия -->
                      <Grid Margin="0,0,0,6">
-                         <TextBlock Text="ВЕРСИЯ" Style="{StaticResource FieldLabel}" Margin="0"/>
+                         <TextBlock Text="Версия:" Style="{StaticResource FieldLabel}" Margin="0"/>
                      </Grid>
                      <TextBox x:Name="VersionBox"
                               Style="{StaticResource InputBox}"
@@ -317,7 +361,7 @@
 
                      <!-- Описание -->
                      <Grid Margin="0,0,0,6">
-                         <TextBlock Text="ОПИСАНИЕ" Style="{StaticResource FieldLabel}" Margin="0"/>
+                         <TextBlock Text="Описание:" Style="{StaticResource FieldLabel}" Margin="0"/>
                          <TextBlock x:Name="DescCounter"
                                    Text="0 / 100"
                                    Foreground="#555558"
@@ -338,7 +382,7 @@
 
                     <!-- ═══ СТРАТЕГИЯ ═══ -->
                     <StackPanel x:Name="StrategySection" Visibility="Collapsed">
-                        <TextBlock Text=".BAT ФАЙЛ СТРАТЕГИИ" Style="{StaticResource FieldLabel}"/>
+                        <TextBlock Text=".bat файл стратегии:" Style="{StaticResource FieldLabel}"/>
 
                         <Border Background="#1a1a1c"
                                 BorderBrush="#2a2a2d"
@@ -346,7 +390,7 @@
                                 CornerRadius="8"
                                 Padding="12"
                                 Margin="0,0,0,4">
-                            <Grid>
+        <Grid SizeChanged="CreateWindowGrid_SizeChanged">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
@@ -381,7 +425,7 @@
                     <!-- ═══ СПИСОК ДОМЕНОВ ═══ -->
                     <StackPanel x:Name="ListSection" Visibility="Collapsed">
                         <Grid Margin="0,0,0,6">
-                            <TextBlock Text="ДОМЕНЫ" Style="{StaticResource FieldLabel}" Margin="0"/>
+                            <TextBlock Text="Домены:" Style="{StaticResource FieldLabel}" Margin="0"/>
                             <TextBlock Text="по одному на строку"
                                        Foreground="#555558"
                                        FontFamily="Segoe UI"
@@ -409,8 +453,8 @@
             </ScrollViewer>
 
             <!-- ═══ FOOTER ═══ -->
-            <Border Grid.Row="2" Background="#111113" CornerRadius="0,0,14,14"
-                    BorderBrush="#22222a" BorderThickness="0,1,0,0"
+            <Border Grid.Row="2" Background="#1a1a1c" CornerRadius="0,0,14,14"
+                    BorderBrush="#333338" BorderThickness="0,1,0,0"
                     Margin="0,16,0,0" Padding="28,12,28,12">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -442,5 +486,8 @@
             </Border>
 
         </Grid>
-    </Border>
+        <!-- Рамка поверх всего, без фона — только BorderThickness -->
+        <Border BorderBrush="#2a2a2d" BorderThickness="1" CornerRadius="14"
+                IsHitTestVisible="False" Background="Transparent"/>
+    </Grid>
 </Window>
