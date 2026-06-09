@@ -23,7 +23,6 @@ public static class DomainListImporter
             if (string.IsNullOrWhiteSpace(response))
                 return (null, "Список доменов пуст");
 
-            // Parse lines, filter comments and empty
             var lines = response.Split('\n', StringSplitOptions.RemoveEmptyEntries);
             var domains = new List<string>();
 
@@ -76,7 +75,6 @@ public static class DomainListImporter
         {
             var uri = new Uri(url);
             var host = uri.Host;
-            // Take first two parts of hostname
             var parts = host.Split('.');
             if (parts.Length >= 2)
                 return parts[^2];

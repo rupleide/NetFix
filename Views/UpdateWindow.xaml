@@ -8,21 +8,12 @@
         AllowsTransparency="True"
         Background="Transparent"
         ResizeMode="NoResize">
-    
     <Window.Resources>
-        <!-- Checkmark Icon -->
         <PathGeometry x:Key="CheckmarkIcon">M2,12 L8,18 L22,4</PathGeometry>
-        
-        <!-- Close/X Icon -->
         <PathGeometry x:Key="CloseIcon">M4,4 L20,20 M20,4 L4,20</PathGeometry>
-        
-        <!-- Rocket Icon -->
         <PathGeometry x:Key="RocketIcon">M15 14 L17.045 12.467C19.469 10.648 20.542 6.98 20 4C17.019 3.458 13.351 4.531 11.533 6.955L10 9M15 14L11.5 16.5L7.5 12.5L10 9M15 14V16.667C15 17.467 14.733 18.267 14.2 19.067L13.5 20L12.5 19M10 9H7.333C6.533 9 5.733 9.267 4.933 9.8L4 10.5L5 11.5M8.5 18L5 19L6.166 15.5M15.5 9C16.328 9 17 8.328 17 7.5C17 6.672 16.328 6 15.5 6C14.672 6 14 6.672 14 7.5C14 8.328 14.672 9 15.5 9Z</PathGeometry>
-        
-        <!-- Warning Icon -->
         <PathGeometry x:Key="WarningIcon">M12,2 L22,20 L2,20 Z M12,9 L12,13 M12,15 L12,17</PathGeometry>
     </Window.Resources>
-    
     <Border Background="#1e1e1e" CornerRadius="12" BorderBrush="#2e2e2e" BorderThickness="1">
         <Grid Margin="28">
             <Grid.RowDefinitions>
@@ -32,16 +23,12 @@
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-
-            
             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,20">
                 <Path Width="18" Height="18" Stretch="Uniform" Margin="0,0,10,0" VerticalAlignment="Center"
                       Data="M13,2 L3,14 L10,14 L9,22 L19,10 L12,10 Z" Fill="#888888"/>
                 <TextBlock Text="Обновление NetFix" FontSize="16" FontWeight="SemiBold"
                            Foreground="#f0f0f0" VerticalAlignment="Center"/>
             </StackPanel>
-
-            
             <Grid x:Name="StatusPanel" Grid.Row="1" Margin="0,0,0,16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -54,11 +41,8 @@
                            Foreground="#888888" FontSize="13"
                            TextWrapping="Wrap"/>
             </Grid>
-
-            
             <Border Grid.Row="2" Height="6" CornerRadius="3" Background="#252525" Margin="0,0,0,0"
                     ClipToBounds="True">
-                
                 <Border x:Name="IndeterminateBar" Height="6" CornerRadius="3"
                         Background="#3b82f6" HorizontalAlignment="Left" Width="80">
                     <Border.Effect>
@@ -69,8 +53,6 @@
                     </Border.RenderTransform>
                 </Border>
             </Border>
-
-            
             <Border Grid.Row="2" Height="6" CornerRadius="3" Background="Transparent"
                     HorizontalAlignment="Left" ClipToBounds="True">
                 <Border x:Name="ProgressFill" Height="6" CornerRadius="3"
@@ -80,8 +62,6 @@
                     </Border.Effect>
                 </Border>
             </Border>
-
-            
             <StackPanel x:Name="ButtonPanel" Grid.Row="4"
                         Orientation="Horizontal" HorizontalAlignment="Right"
                         Margin="0,20,0,0">
@@ -132,7 +112,6 @@
                     </Button.Style>
                 </Button>
             </StackPanel>
-
         </Grid>
     </Border>
 </Window>

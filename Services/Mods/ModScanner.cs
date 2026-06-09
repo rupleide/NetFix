@@ -88,7 +88,6 @@ public static class ModScanner
             }
             catch
             {
-                // skip invalid mod
             }
         }
 

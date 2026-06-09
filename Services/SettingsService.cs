@@ -46,9 +46,8 @@ public static class SettingsService
         try { if (File.Exists(OnboardFile)) File.Delete(OnboardFile); }
         catch { }
     }
-    
-    // ── Экспорт/Импорт конфигов ──────────────────────────────────────────────
-    
+
+
     /// <summary>
     /// Экспортирует настройки в файл
     /// </summary>
@@ -66,7 +65,7 @@ public static class SettingsService
             return false;
         }
     }
-    
+
     /// <summary>
     /// Импортирует настройки из файла
     /// </summary>
@@ -75,12 +74,12 @@ public static class SettingsService
         try
         {
             if (!File.Exists(filePath)) return false;
-            
+
             var json = File.ReadAllText(filePath);
             var settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOpts);
-            
+
             if (settings == null) return false;
-            
+
             Save(settings);
             return true;
         }

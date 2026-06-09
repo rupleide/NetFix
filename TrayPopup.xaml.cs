@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
@@ -16,7 +16,6 @@ namespace NetFix;
 
 public partial class TrayPopup : Window
 {
-    // Цвета для кнопок-тогглов
     private static readonly SolidColorBrush _brushGreen    = new(Color.FromRgb(0x4A, 0xDE, 0x80));
     private static readonly SolidColorBrush _brushRed      = new(Color.FromRgb(0xF8, 0x71, 0x71));
     private static readonly SolidColorBrush _brushRunning  = new(Color.FromArgb(30, 0xF8, 0x71, 0x71));
@@ -29,11 +28,9 @@ public partial class TrayPopup : Window
     public TrayPopup()
     {
         InitializeComponent();
-        
-        // Привязываем версию из AssemblyInfo
+
         VersionLabel.Text = AppVersion.Display;
 
-        // Закрытие при потере фокуса, самый надёжный способ
         Deactivated += (_, _) => SafeClose();
 
         Loaded += OnLoaded;
@@ -51,7 +48,6 @@ public partial class TrayPopup : Window
             Dispatcher.BeginInvoke(Close);
     }
 
-    // ── Статус сервисов ──────────────────────────────────────────────────────
 
     private void UpdateStatus()
     {
@@ -125,7 +121,6 @@ public partial class TrayPopup : Window
         catch { PingValue.Text = "— мс"; }
     }
 
-    // ── Hover: сервисные кнопки ──────────────────────────────────────────────
 
     private void ZapretBtn_Enter(object s, MouseEventArgs e) => ZapretBtn.Background = _brushHover;
     private void ZapretBtn_Leave(object s, MouseEventArgs e)
@@ -141,7 +136,6 @@ public partial class TrayPopup : Window
         TgWsBtn.Background = st.TgWsProxyRunning ? _brushRunning : _brushStopped;
     }
 
-    // ── Hover: пункты меню ───────────────────────────────────────────────────
 
     private void ConfigBtn_Enter(object s, MouseEventArgs e) =>
         ConfigBtn.Background = new SolidColorBrush(Color.FromArgb(0x0D, 0xFF, 0xFF, 0xFF));
@@ -158,7 +152,6 @@ public partial class TrayPopup : Window
     private void ExitBtn_Leave(object s, MouseEventArgs e) =>
         ExitBtn.Background = _brushTransparent;
 
-    // ── Клики: тоггл ────────────────────────────────────────────────────────
 
     private async void ZapretBtn_Click(object s, MouseButtonEventArgs e)
     {
@@ -212,7 +205,6 @@ public partial class TrayPopup : Window
         TgWsBtn.IsHitTestVisible = true;
     }
 
-    // ── Клики: меню ─────────────────────────────────────────────────────────
 
     private void ConfigBtn_Click(object s, MouseButtonEventArgs e)
     {

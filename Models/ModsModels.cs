@@ -21,14 +21,14 @@ public record ModEntry(
 
     private static readonly Color[] _palette =
     [
-        Color.FromRgb(59, 130, 246),   // синий
-        Color.FromRgb(139, 92, 246),   // фиолетовый
-        Color.FromRgb(236, 72, 153),   // розовый
-        Color.FromRgb(245, 158, 11),   // янтарный
-        Color.FromRgb(16, 185, 129),   // зелёный
-        Color.FromRgb(6, 182, 212),    // циан
-        Color.FromRgb(249, 115, 22),   // оранжевый
-        Color.FromRgb(168, 85, 247),   // пурпурный
+        Color.FromRgb(59, 130, 246),
+        Color.FromRgb(139, 92, 246),
+        Color.FromRgb(236, 72, 153),
+        Color.FromRgb(245, 158, 11),
+        Color.FromRgb(16, 185, 129),
+        Color.FromRgb(6, 182, 212),
+        Color.FromRgb(249, 115, 22),
+        Color.FromRgb(168, 85, 247),
     ];
 
     private static Color GetAccentColor(string name)
