@@ -2467,7 +2467,8 @@
                 </Grid>
            <Grid x:Name="ModsPage" Visibility="Collapsed">
                <Grid.Resources>
-                   <Style x:Key="TabRadio" TargetType="RadioButton">
+                    <PathGeometry x:Key="OpenLocationIcon">M17,3 L21,3 L21,7 M11,13 L21,3 M19,13.89 L19,20 Q19,21 18,21 L4,21 Q3,21 3,20 L3,6 Q3,5 4,5 L10.11,5</PathGeometry>
+                    <Style x:Key="TabRadio" TargetType="RadioButton">
                        <Setter Property="FontFamily" Value="Segoe UI"/>
                        <Setter Property="FontSize" Value="13"/>
                        <Setter Property="Cursor" Value="Hand"/>
@@ -2575,6 +2576,7 @@
                     <PathGeometry x:Key="PlusIcon">M12,4 L12,20 M4,12 L20,12</PathGeometry>
                     <PathGeometry x:Key="ImportIcon">M4,16 L4,18 C4,19.1 4.9,20 6,20 L18,20 C19.1,20 20,19.1 20,18 L20,16 M12,4 L12,15 M8,11 L12,15 L16,11</PathGeometry>
                     <PathGeometry x:Key="ExportIcon">M4,16 L4,18 C4,19.1 4.9,20 6,20 L18,20 C19.1,20 20,19.1 20,18 L20,16 M12,15 L12,4 M8,8 L12,4 L16,8</PathGeometry>
+                    <PathGeometry x:Key="PencilIcon">M17,3 C17.3,2.7 17.7,2.5 18.2,2.5 C18.7,2.5 19.1,2.7 19.4,3 L21,4.6 C21.3,4.9 21.5,5.3 21.5,5.8 C21.5,6.3 21.3,6.7 21,7 L7.5,20.5 L2,22 L3.5,16.5 Z</PathGeometry>
                     <PathGeometry x:Key="TrashIcon">M3,6 L21,6 M8,6 L8,4 Q8,3 9,3 L15,3 Q16,3 16,4 L16,6 M10,11 L10,17 M14,11 L14,17 M5,6 L6,20 Q6,21 7,21 L17,21 Q18,21 18,20 L19,6</PathGeometry>
                     <PathGeometry x:Key="SearchIcon">M21,21 L15,15 M17,11 C17,14.3 14.3,17 11,17 C7.7,17 5,14.3 5,11 C5,7.7 7.7,5 11,5 C14.3,5 17,7.7 17,11 Z</PathGeometry>
                     <PathGeometry x:Key="RefreshIcon">M1,4 L1,10 L7,10 M23,20 L23,14 L17,14 M20.49,9 C19.53,6.13 16.9,4 13.72,4 C9.44,4 6,7.45 6,11.73 M3.51,15 C4.47,17.87 7.1,20 10.28,20 C14.56,20 18,16.55 18,12.27</PathGeometry>
@@ -2687,15 +2689,15 @@
                                      <Button Style="{StaticResource HoverActionBtn}" Margin="6,0,0,0"
                                              Tag="{Binding}" Click="EditModCard_Click"
                                              ToolTip="Открыть">
-                                         <Path Data="{StaticResource FolderOpenIcon}" Stroke="#cccccc" StrokeThickness="1.5"
-                                               Width="16" Height="16" Stretch="Uniform"/>
-                                     </Button>
-                                     <Button Style="{StaticResource HoverActionBtn}" Margin="6,0,0,0"
-                                             Tag="{Binding}" Click="ExportSingleMod_Click"
-                                             ToolTip="Экспортировать">
-                                         <Path Data="{StaticResource ExportIcon}" Stroke="#cccccc" StrokeThickness="1.5"
-                                               Width="16" Height="16" Stretch="Uniform"/>
-                                     </Button>
+                                           <Path Data="{StaticResource PencilIcon}" Stroke="#cccccc" StrokeThickness="1.5"
+                                                 Width="16" Height="16" Stretch="Uniform"/>
+                                      </Button>
+                                      <Button Style="{StaticResource HoverActionBtn}" Margin="6,0,0,0"
+                                              Tag="{Binding}" Click="ExportSingleMod_Click"
+                                              ToolTip="Экспортировать">
+                                          <Path Data="{StaticResource ExportIcon}" Stroke="#cccccc" StrokeThickness="1.5"
+                                                Width="16" Height="16" Stretch="Uniform"/>
+                                      </Button>
                                      <Button Style="{StaticResource HoverActionBtn}" Margin="6,0,0,0"
                                              Tag="{Binding}" Click="DeleteModCard_Click"
                                              ToolTip="Удалить">
@@ -2703,34 +2705,68 @@
                                                Width="16" Height="16" Stretch="Uniform"/>
                                      </Button>
                                  </StackPanel>
-                            </Grid>
-                        </Border>
-                        <DataTemplate.Triggers>
-                             <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
-                                 <DataTrigger.EnterActions>
-                                     <BeginStoryboard>
-                                         <Storyboard>
-                                             <DoubleAnimation Storyboard.TargetName="hoverActions"
-                                                              Storyboard.TargetProperty="Opacity"
-                                                              Duration="0:0:0.2" From="0" To="1">
-                                                 <DoubleAnimation.EasingFunction>
-                                                     <QuadraticEase EasingMode="EaseOut"/>
-                                                 </DoubleAnimation.EasingFunction>
-                                             </DoubleAnimation>
-                                             <DoubleAnimation Storyboard.TargetName="editOverlay"
-                                                              Storyboard.TargetProperty="Opacity"
-                                                              Duration="0:0:0.2" From="0" To="1">
-                                                 <DoubleAnimation.EasingFunction>
-                                                     <QuadraticEase EasingMode="EaseOut"/>
-                                                 </DoubleAnimation.EasingFunction>
-                                             </DoubleAnimation>
-                                         </Storyboard>
-                                     </BeginStoryboard>
-                                 </DataTrigger.EnterActions>
-                                 <Setter TargetName="editOverlay" Property="Visibility" Value="Visible"/>
-                                 <Setter TargetName="hoverActions" Property="Visibility" Value="Visible"/>
-                             </DataTrigger>
-                            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                              </Grid>
+                          </Border>
+                           <DataTemplate.Triggers>
+                               <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True">
+                                   <DataTrigger.EnterActions>
+                                       <BeginStoryboard>
+                                           <Storyboard>
+                                               <ObjectAnimationUsingKeyFrames Storyboard.TargetName="hoverActions"
+                                                                              Storyboard.TargetProperty="Visibility">
+                                                   <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
+                                               </ObjectAnimationUsingKeyFrames>
+                                               <ObjectAnimationUsingKeyFrames Storyboard.TargetName="editOverlay"
+                                                                              Storyboard.TargetProperty="Visibility">
+                                                   <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
+                                               </ObjectAnimationUsingKeyFrames>
+                                               <DoubleAnimation Storyboard.TargetName="hoverActions"
+                                                                Storyboard.TargetProperty="Opacity"
+                                                                Duration="0:0:0.2" From="0" To="1">
+                                                   <DoubleAnimation.EasingFunction>
+                                                       <QuadraticEase EasingMode="EaseOut"/>
+                                                   </DoubleAnimation.EasingFunction>
+                                               </DoubleAnimation>
+                                               <DoubleAnimation Storyboard.TargetName="editOverlay"
+                                                                Storyboard.TargetProperty="Opacity"
+                                                                Duration="0:0:0.2" From="0" To="1">
+                                                   <DoubleAnimation.EasingFunction>
+                                                       <QuadraticEase EasingMode="EaseOut"/>
+                                                   </DoubleAnimation.EasingFunction>
+                                               </DoubleAnimation>
+                                           </Storyboard>
+                                       </BeginStoryboard>
+                                   </DataTrigger.EnterActions>
+                                   <DataTrigger.ExitActions>
+                                       <BeginStoryboard>
+                                           <Storyboard>
+                                               <DoubleAnimation Storyboard.TargetName="hoverActions"
+                                                                Storyboard.TargetProperty="Opacity"
+                                                                Duration="0:0:0.15" From="1" To="0">
+                                                   <DoubleAnimation.EasingFunction>
+                                                       <QuadraticEase EasingMode="EaseOut"/>
+                                                   </DoubleAnimation.EasingFunction>
+                                               </DoubleAnimation>
+                                               <DoubleAnimation Storyboard.TargetName="editOverlay"
+                                                                Storyboard.TargetProperty="Opacity"
+                                                                Duration="0:0:0.15" From="1" To="0">
+                                                   <DoubleAnimation.EasingFunction>
+                                                       <QuadraticEase EasingMode="EaseOut"/>
+                                                   </DoubleAnimation.EasingFunction>
+                                               </DoubleAnimation>
+                                               <ObjectAnimationUsingKeyFrames Storyboard.TargetName="hoverActions"
+                                                                              Storyboard.TargetProperty="Visibility">
+                                                   <DiscreteObjectKeyFrame KeyTime="0:0:0.15" Value="{x:Static Visibility.Collapsed}"/>
+                                               </ObjectAnimationUsingKeyFrames>
+                                               <ObjectAnimationUsingKeyFrames Storyboard.TargetName="editOverlay"
+                                                                              Storyboard.TargetProperty="Visibility">
+                                                   <DiscreteObjectKeyFrame KeyTime="0:0:0.15" Value="{x:Static Visibility.Collapsed}"/>
+                                               </ObjectAnimationUsingKeyFrames>
+                                           </Storyboard>
+                                       </BeginStoryboard>
+                                   </DataTrigger.ExitActions>
+                              </DataTrigger>
+                               <DataTrigger Binding="{Binding IsActive}" Value="True">
                                 <Setter TargetName="StatusStrip" Property="Background" Value="#22c55e"/>
                                 <Setter TargetName="BottomGlow" Property="Fill">
                                     <Setter.Value>
@@ -2752,11 +2788,11 @@
                                         </RadialGradientBrush>
                                     </Setter.Value>
                                 </Setter>
-                                 <Setter TargetName="CardAuthor" Property="Foreground" Value="#22c55e"/>
-                                <Setter TargetName="MoveArrowRight" Property="Visibility" Value="Collapsed"/>
-                                <Setter TargetName="MoveArrowLeft" Property="Visibility" Value="Visible"/>
-                                <Setter TargetName="CardMoveBtn" Property="ToolTip" Value="В доступные"/>
-                            </DataTrigger>
+                                    <Setter TargetName="CardAuthor" Property="Foreground" Value="#22c55e"/>
+                                    <Setter TargetName="MoveArrowRight" Property="Visibility" Value="Collapsed"/>
+                                    <Setter TargetName="MoveArrowLeft" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="CardMoveBtn" Property="ToolTip" Value="Убрать"/>
+                             </DataTrigger>
                         </DataTemplate.Triggers>
                      </DataTemplate>
                     <DataTemplate x:Key="MyModCardTpl">
@@ -2814,8 +2850,207 @@
                                 </StackPanel>
                             </Grid>
                         </Border>
-                    </DataTemplate>
-                    <Style x:Key="ModListBox" TargetType="ListBox">
+                     </DataTemplate>
+                       <DataTemplate x:Key="MyModCardTplBig">
+                             <Border MinHeight="130" Margin="6" CornerRadius="12"
+                                     Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" 
+                                     BorderThickness="1">
+                              <Border.Triggers>
+                                  <EventTrigger RoutedEvent="Mouse.MouseEnter">
+                                      <BeginStoryboard>
+                                          <Storyboard>
+                                              <ObjectAnimationUsingKeyFrames Storyboard.TargetName="hoverActions"
+                                                                             Storyboard.TargetProperty="Visibility">
+                                                  <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
+                                              </ObjectAnimationUsingKeyFrames>
+                                              <ObjectAnimationUsingKeyFrames Storyboard.TargetName="editOverlay"
+                                                                             Storyboard.TargetProperty="Visibility">
+                                                  <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
+                                              </ObjectAnimationUsingKeyFrames>
+                                              <DoubleAnimation Storyboard.TargetName="hoverActions"
+                                                               Storyboard.TargetProperty="Opacity"
+                                                               Duration="0:0:0.2" From="0" To="1">
+                                                  <DoubleAnimation.EasingFunction>
+                                                      <QuadraticEase EasingMode="EaseOut"/>
+                                                  </DoubleAnimation.EasingFunction>
+                                              </DoubleAnimation>
+                                              <DoubleAnimation Storyboard.TargetName="editOverlay"
+                                                               Storyboard.TargetProperty="Opacity"
+                                                               Duration="0:0:0.2" From="0" To="1">
+                                                  <DoubleAnimation.EasingFunction>
+                                                      <QuadraticEase EasingMode="EaseOut"/>
+                                                  </DoubleAnimation.EasingFunction>
+                                              </DoubleAnimation>
+                                          </Storyboard>
+                                      </BeginStoryboard>
+                                  </EventTrigger>
+                                  <EventTrigger RoutedEvent="Mouse.MouseLeave">
+                                      <BeginStoryboard>
+                                          <Storyboard>
+                                              <DoubleAnimation Storyboard.TargetName="hoverActions"
+                                                               Storyboard.TargetProperty="Opacity"
+                                                               Duration="0:0:0.15" From="1" To="0">
+                                                  <DoubleAnimation.EasingFunction>
+                                                      <QuadraticEase EasingMode="EaseOut"/>
+                                                  </DoubleAnimation.EasingFunction>
+                                              </DoubleAnimation>
+                                              <DoubleAnimation Storyboard.TargetName="editOverlay"
+                                                               Storyboard.TargetProperty="Opacity"
+                                                               Duration="0:0:0.15" From="1" To="0">
+                                                  <DoubleAnimation.EasingFunction>
+                                                      <QuadraticEase EasingMode="EaseOut"/>
+                                                  </DoubleAnimation.EasingFunction>
+                                              </DoubleAnimation>
+                                              <ObjectAnimationUsingKeyFrames Storyboard.TargetName="hoverActions"
+                                                                             Storyboard.TargetProperty="Visibility">
+                                                  <DiscreteObjectKeyFrame KeyTime="0:0:0.15" Value="{x:Static Visibility.Collapsed}"/>
+                                              </ObjectAnimationUsingKeyFrames>
+                                              <ObjectAnimationUsingKeyFrames Storyboard.TargetName="editOverlay"
+                                                                             Storyboard.TargetProperty="Visibility">
+                                                  <DiscreteObjectKeyFrame KeyTime="0:0:0.15" Value="{x:Static Visibility.Collapsed}"/>
+                                              </ObjectAnimationUsingKeyFrames>
+                                          </Storyboard>
+                                      </BeginStoryboard>
+                                  </EventTrigger>
+                              </Border.Triggers>
+                               <Grid SizeChanged="OnModCardSizeChanged">
+                                 <Rectangle x:Name="BottomGlow" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                            Width="160" Height="130" Opacity="0.25"
+                                            RenderOptions.EdgeMode="Aliased">
+                                     <Rectangle.Fill>
+                                         <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                              Center="0.0,1.0" GradientOrigin="0.0,1.0"
+                                                              RadiusX="0.6" RadiusY="0.5">
+                                             <GradientStop Color="#3b82f6" Offset="0.0"/>
+                                             <GradientStop Color="#00000000" Offset="1.0"/>
+                                         </RadialGradientBrush>
+                                     </Rectangle.Fill>
+                                 </Rectangle>
+                                 <Rectangle x:Name="TopGlow" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                            Width="160" Height="130" Opacity="0.15"
+                                            RenderOptions.EdgeMode="Aliased">
+                                     <Rectangle.Fill>
+                                         <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                              Center="1.0,0.0" GradientOrigin="1.0,0.0"
+                                                              RadiusX="0.6" RadiusY="0.5">
+                                             <GradientStop Color="#3b82f6" Offset="0.0"/>
+                                             <GradientStop Color="#00000000" Offset="1.0"/>
+                                         </RadialGradientBrush>
+                                     </Rectangle.Fill>
+                                 </Rectangle>
+                                 <Rectangle IsHitTestVisible="False" Opacity="0.04"
+                                            RenderOptions.BitmapScalingMode="NearestNeighbor">
+                                     <Rectangle.Fill>
+                                         <ImageBrush ImageSource="Assets/noise.png"
+                                                     TileMode="Tile" ViewportUnits="Absolute"
+                                                     Viewport="0,0,512,512" Stretch="None"/>
+                                     </Rectangle.Fill>
+                                 </Rectangle>
+                                 <Grid Margin="16,14,14,14">
+                                     <Grid.ColumnDefinitions>
+                                         <ColumnDefinition Width="Auto"/>
+                                         <ColumnDefinition Width="*"/>
+                                         <ColumnDefinition Width="Auto"/>
+                                     </Grid.ColumnDefinitions>
+                                     <Border x:Name="StatusStrip" Grid.Column="0" Width="4" CornerRadius="2"
+                                             Background="{StaticResource AccentBrush}" Margin="0,6,12,6"/>
+                                     <StackPanel Grid.Column="1" VerticalAlignment="Top" MaxWidth="320">
+                                         <TextBlock Text="{Binding Name}" FontFamily="Segoe UI" FontSize="16"
+                                                    FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"
+                                                    TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                                           <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                               <Border CornerRadius="4" Background="#1e1e22" Padding="5,2" Margin="0,0,5,0">
+                                                   <TextBlock x:Name="CardAuthor" FontFamily="Segoe UI" FontSize="10" Foreground="#5a9fd4">
+                                                       <Run Text="Автор: " FontWeight="SemiBold"/>
+                                                       <Run Text="{Binding Author}"/>
+                                                   </TextBlock>
+                                               </Border>
+                                               <Border CornerRadius="4" Background="#1a1a1e" Padding="5,2">
+                                                   <TextBlock FontFamily="Segoe UI" FontSize="10" Foreground="{StaticResource DimTextBrush}"
+                                                              Text="{Binding Version}"/>
+                                               </Border>
+                                               <Border CornerRadius="4" Background="#16161a" Padding="5,1" Margin="5,0,0,0">
+                                                   <Border.Style>
+                                                       <Style TargetType="Border">
+                                                           <Setter Property="Visibility" Value="Collapsed"/>
+                                                           <Style.Triggers>
+                                                               <DataTrigger Binding="{Binding HasSourceFileName}" Value="True">
+                                                                   <Setter Property="Visibility" Value="Visible"/>
+                                                               </DataTrigger>
+                                                           </Style.Triggers>
+                                                       </Style>
+                                                   </Border.Style>
+                                                   <TextBlock FontFamily="Consolas" FontSize="8" Foreground="#6b7280"
+                                                              Text="{Binding SourceFileName}"/>
+                                               </Border>
+                                           </StackPanel>
+                                         <Border Height="1" Background="#2a2a2d" Margin="0,8,0,6"/>
+                                         <TextBlock Text="{Binding Description}" FontFamily="Segoe UI" FontSize="13"
+                                                    Foreground="#999999" TextWrapping="Wrap"
+                                                    TextTrimming="CharacterEllipsis" MaxHeight="44"/>
+                                     </StackPanel>
+                                  </Grid>
+                                  <Border x:Name="editOverlay" Background="#aa111113" CornerRadius="12"
+                                          Visibility="Collapsed" IsHitTestVisible="False" Opacity="0"/>
+                                   <StackPanel x:Name="hoverActions" Orientation="Horizontal"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Visibility="Collapsed" IsHitTestVisible="True"
+                                               Margin="0,14,0,0" Opacity="0">
+                                         <Button Style="{StaticResource HoverActionBtn}" Margin="6,0,0,0"
+                                                 Tag="{Binding}" Click="EditModCard_Click"
+                                                 ToolTip="Открыть">
+                                               <Path Data="{StaticResource PencilIcon}" Stroke="#cccccc" StrokeThickness="1.5"
+                                                     Width="16" Height="16" Stretch="Uniform"/>
+                                         </Button>
+                                          <Button Style="{StaticResource HoverActionBtn}" Margin="6,0,0,0"
+                                                  Tag="{Binding}" Click="OpenModLocation_Click"
+                                                  ToolTip="Открыть расположение">
+                                              <Path Data="{StaticResource FolderOpenIcon}" Stroke="#cccccc" StrokeThickness="1.5"
+                                                    Width="16" Height="16" Stretch="Uniform"/>
+                                         </Button>
+                                         <Button Style="{StaticResource HoverActionBtn}" Margin="6,0,0,0"
+                                                 Tag="{Binding}" Click="ExportSingleMod_Click"
+                                                 ToolTip="Экспортировать">
+                                             <Path Data="{StaticResource OpenLocationIcon}" Stroke="#cccccc" StrokeThickness="1.5"
+                                                   Width="16" Height="16" Stretch="Uniform"/>
+                                         </Button>
+                                         <Button Style="{StaticResource HoverActionBtn}" Margin="6,0,0,0"
+                                                 Tag="{Binding}" Click="DeleteModCard_Click"
+                                                 ToolTip="Удалить">
+                                             <Path Data="{StaticResource TrashIcon}" Stroke="#ef4444" StrokeThickness="1.5"
+                                                   Width="16" Height="16" Stretch="Uniform"/>
+                                         </Button>
+                                   </StackPanel>
+                             </Grid>
+                         </Border>
+                          <DataTemplate.Triggers>
+                              <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                 <Setter TargetName="StatusStrip" Property="Background" Value="#22c55e"/>
+                                 <Setter TargetName="BottomGlow" Property="Fill">
+                                     <Setter.Value>
+                                         <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                              Center="0.0,1.0" GradientOrigin="0.0,1.0"
+                                                              RadiusX="0.6" RadiusY="0.5">
+                                             <GradientStop Color="#22c55e" Offset="0.0"/>
+                                             <GradientStop Color="#00000000" Offset="1.0"/>
+                                         </RadialGradientBrush>
+                                     </Setter.Value>
+                                  </Setter>
+                                 <Setter TargetName="TopGlow" Property="Fill">
+                                     <Setter.Value>
+                                         <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                              Center="1.0,0.0" GradientOrigin="1.0,0.0"
+                                                              RadiusX="0.6" RadiusY="0.5">
+                                             <GradientStop Color="#22c55e" Offset="0.0"/>
+                                             <GradientStop Color="#00000000" Offset="1.0"/>
+                                         </RadialGradientBrush>
+                                     </Setter.Value>
+                                 </Setter>
+                                   <Setter TargetName="CardAuthor" Property="Foreground" Value="#22c55e"/>
+                              </DataTrigger>
+                          </DataTemplate.Triggers>
+                       </DataTemplate>
+                      <Style x:Key="ModListBox" TargetType="ListBox">
                         <Setter Property="Background" Value="#30111113"/>
                        <Setter Property="BorderBrush" Value="#22222a"/>
                        <Setter Property="BorderThickness" Value="1"/>
@@ -3474,12 +3709,12 @@
                            </Grid>
                        </Border>
                    </Grid>
-                   <Grid x:Name="ModsMyModsScreen" Visibility="Collapsed">
-                       <Grid.RowDefinitions>
-                           <RowDefinition Height="Auto"/>
-                           <RowDefinition Height="*"/>
-                       </Grid.RowDefinitions>
-                       <Grid Grid.Row="0" Margin="0,0,0,16">
+                     <Grid x:Name="ModsMyModsScreen" Visibility="Collapsed">
+                         <Grid.RowDefinitions>
+                             <RowDefinition Height="Auto"/>
+                             <RowDefinition Height="*"/>
+                         </Grid.RowDefinitions>
+                        <Grid Grid.Row="0" Margin="0,0,0,10">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <TextBlock Text="ВАШИ МОДЫ:" FontFamily="Segoe UI" FontSize="11"
                                            FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"/>
@@ -3488,36 +3723,21 @@
                                                FontFamily="Segoe UI" FontSize="11" Foreground="#888888"/>
                                 </Border>
                             </StackPanel>
-                       </Grid>
-                       <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,12,0">
-                           <Grid>
-                                <ItemsControl x:Name="MyModsGrid" Margin="0,0,0,20"
-                                              Visibility="Visible"
-                                              ItemTemplate="{StaticResource MyModCardTpl}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <WrapPanel HorizontalAlignment="Left"/>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                </ItemsControl>
-                               <Grid x:Name="MyModsEmpty" Visibility="Collapsed"
-                                     HorizontalAlignment="Center" VerticalAlignment="Center"
-                                     IsHitTestVisible="False">
-                                   <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                       <Path Data="M2,6 L2,18 C2,19.1 2.9,20 4,20 L20,20 C21.1,20 22,19.1 22,18 L22,8 C22,6.9 21.1,6 20,6 L12,6 L10,4 L4,4 C2.9,4 2,4.9 2,6 Z"
-                                             Stroke="#444448" StrokeThickness="1.5"
-                                             Width="56" Height="56" Stretch="Uniform"
-                                             HorizontalAlignment="Center" Margin="0,0,0,16"
-                                             Opacity="0.6"/>
-                                       <TextBlock Text="Модов пока нет" FontSize="18" FontWeight="SemiBold"
-                                                  Foreground="#666669" HorizontalAlignment="Center" Margin="0,0,0,6"/>
-                                       <TextBlock Text="Создайте или импортируйте первый мод"
-                                                  FontSize="13" Foreground="#444448" HorizontalAlignment="Center"/>
-                                   </StackPanel>
-                               </Grid>
-                           </Grid>
-                       </ScrollViewer>
-                   </Grid>
+                        </Grid>
+                          <Border Grid.Row="1" CornerRadius="8" Background="#30111113" BorderBrush="#22222a" BorderThickness="1"
+                                           ClipToBounds="True">
+                             <ScrollViewer VerticalScrollBarVisibility="Auto" SizeChanged="MyModsScrollViewer_SizeChanged">
+                                 <ItemsControl x:Name="MyModsList" ItemTemplate="{StaticResource MyModCardTplBig}">
+                                     <ItemsControl.ItemsPanel>
+                                         <ItemsPanelTemplate>
+                                             <UniformGrid Margin="6"/>
+                                         </ItemsPanelTemplate>
+                                     </ItemsControl.ItemsPanel>
+                                 </ItemsControl>
+                             </ScrollViewer>
+                         </Border>
+
+                     </Grid>
                         <Grid x:Name="ModsEditorScreen" Visibility="Collapsed" Margin="-32,-20,-32,-20">
                          <Grid.RowDefinitions>
                              <RowDefinition Height="*"/>
@@ -3528,28 +3748,44 @@
                                  <ColumnDefinition Width="Auto"/>
                                  <ColumnDefinition Width="*" MinWidth="150"/>
                              </Grid.ColumnDefinitions>
-                                <Grid Grid.Column="0" Background="#141416">
-                                        <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="*"/>
-                                            </Grid.RowDefinitions>
-                                            <Border Grid.Row="0" Background="#1a1a1e" Padding="12,8" Height="40">
-                                                 <Grid>
-                                                     <TextBlock Text="Файлы" FontFamily="Segoe UI" FontSize="11"
-                                                                FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"/>
-                                                     <Button HorizontalAlignment="Right" Style="{StaticResource FlatBtn}"
-                                                             Padding="0" Click="EditorAddFile_Click"
-                                                             Width="24" Height="24">
-                                                         <Path Data="{StaticResource FileAddIcon}" Stroke="#888888"
-                                                               StrokeThickness="1.8" Width="13" Height="13" Stretch="Uniform"/>
-                                                     </Button>
-                                                 </Grid>
-                                             </Border>
-                                            <Rectangle Grid.Row="0" Height="1" Fill="#2a2a2e" VerticalAlignment="Bottom"/>
-                                            <ListBox x:Name="ModsEditorFileList" Grid.Row="1"
-                                                   Background="#141416" BorderThickness="0"
-                                                   ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                                                   ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                                 <Grid Grid.Column="0" Background="#141416">
+                                         <Grid.RowDefinitions>
+                                                 <RowDefinition Height="Auto"/>
+                                                 <RowDefinition Height="*"/>
+                                             </Grid.RowDefinitions>
+                                             <Border Grid.Row="0" Background="#1a1a1e" Padding="12,8" Height="40">
+                                                  <Grid>
+                                                      <TextBlock Text="Файлы" FontFamily="Segoe UI" FontSize="11"
+                                                                 FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"/>
+                                                       <Button HorizontalAlignment="Right" Padding="0"
+                                                               BorderThickness="0" Background="Transparent"
+                                                               Width="24" Height="24" Cursor="Hand"
+                                                               Click="EditorOpenFileLocation_Click"
+                                                               ToolTip="Открыть расположение файла">
+                                                           <Button.Template>
+                                                               <ControlTemplate TargetType="Button">
+                                                                   <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                                                           BorderBrush="#2a2a2e" BorderThickness="1"
+                                                                           CornerRadius="6" Width="24" Height="24">
+                                                                       <Path Data="{StaticResource FolderOpenIcon}" Stroke="#888888"
+                                                                             StrokeThickness="1.5" Width="14" Height="14" Stretch="Uniform"
+                                                                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                   </Border>
+                                                                   <ControlTemplate.Triggers>
+                                                                       <Trigger Property="IsMouseOver" Value="True">
+                                                                           <Setter TargetName="bd" Property="Background" Value="#2a2a2e"/>
+                                                                       </Trigger>
+                                                                   </ControlTemplate.Triggers>
+                                                               </ControlTemplate>
+                                                           </Button.Template>
+                                                       </Button>
+                                                  </Grid>
+                                              </Border>
+                                             <Rectangle Grid.Row="0" Height="1" Fill="#2a2a2e" VerticalAlignment="Bottom"/>
+                                             <ListBox x:Name="ModsEditorFileList" Grid.Row="1"
+                                                    Background="#141416" BorderThickness="0"
+                                                    ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                                    ScrollViewer.VerticalScrollBarVisibility="Hidden"
                                                    SelectionChanged="ModsEditorFileList_SelectionChanged">
                                               <ListBox.ItemTemplate>
                                                   <DataTemplate>
