@@ -1590,6 +1590,17 @@ public partial class MainWindow : Window
         Padding: new Thickness(12, 10, 12, 4)
     );
 
+    private static FileListItem MakeSubHeader(string text) => new(
+        Display: text,
+        FilePath: null,
+        IsHeader: true,
+        FontFamily: "Segoe UI",
+        FontSize: 10,
+        FontWeight: FontWeights.SemiBold,
+        Foreground: new SolidColorBrush(Color.FromRgb(0x77, 0x77, 0x7a)),
+        Padding: new Thickness(20, 6, 12, 2)
+    );
+
     private static FileListItem MakeFile(string fileName, string fullPath) => new(
         Display: fileName,
         FilePath: fullPath,
@@ -1626,14 +1637,31 @@ public partial class MainWindow : Window
 
     private static void AddModFolders(System.Collections.IList items)
     {
-        var strategiesDir = Path.Combine(AppContext.BaseDirectory, "Mods", "strategies");
-        if (!Directory.Exists(strategiesDir)) return;
+        var modsDir = Path.Combine(AppContext.BaseDirectory, "Mods");
+        if (!Directory.Exists(modsDir)) return;
 
         items.Add(MakeHeader("Моды:"));
-        foreach (var dir in Directory.GetDirectories(strategiesDir).OrderBy(d => System.IO.Path.GetFileName(d)))
+
+        var strategiesDir = Path.Combine(modsDir, "strategies");
+        if (Directory.Exists(strategiesDir))
         {
-            var name = System.IO.Path.GetFileName(dir);
-            items.Add(MakeFile(name, dir));
+            items.Add(MakeSubHeader("strategies:"));
+            foreach (var dir in Directory.GetDirectories(strategiesDir).OrderBy(d => System.IO.Path.GetFileName(d)))
+            {
+                var name = System.IO.Path.GetFileName(dir);
+                items.Add(MakeFile(name, dir));
+            }
+        }
+
+        var listsDir = Path.Combine(modsDir, "lists");
+        if (Directory.Exists(listsDir))
+        {
+            items.Add(MakeSubHeader("lists:"));
+            foreach (var dir in Directory.GetDirectories(listsDir).OrderBy(d => System.IO.Path.GetFileName(d)))
+            {
+                var name = System.IO.Path.GetFileName(dir);
+                items.Add(MakeFile(name, dir));
+            }
         }
     }
 
