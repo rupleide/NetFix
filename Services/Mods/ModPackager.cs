@@ -1,5 +1,6 @@
 using System.IO;
 using System.IO.Compression;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using NetFix.Models;
 
@@ -11,6 +12,7 @@ public static class ModPackager
     {
         WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
     public static async Task<string> ExportAsync(ModEntry mod, string outputDir)
