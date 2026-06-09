@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using NetFix.Models;
 
@@ -14,6 +15,7 @@ public static class SettingsService
     {
         WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
     public static AppSettings Load()

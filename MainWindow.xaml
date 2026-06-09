@@ -3480,14 +3480,14 @@
                            <RowDefinition Height="*"/>
                        </Grid.RowDefinitions>
                        <Grid Grid.Row="0" Margin="0,0,0,16">
-                           <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                               <TextBlock Text="Ваши моды" FontSize="16"
-                                          FontWeight="SemiBold" Foreground="#999999" VerticalAlignment="Center"/>
-                               <Border Background="#1e1e22" CornerRadius="6" Padding="8,3" Margin="12,0,0,0">
-                                   <TextBlock x:Name="MyModsCount" Text="0"
-                                              FontFamily="Segoe UI" FontSize="11" Foreground="#a855f7"/>
-                               </Border>
-                           </StackPanel>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="ВАШИ МОДЫ:" FontFamily="Segoe UI" FontSize="11"
+                                           FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"/>
+                                <Border Background="#1e1e22" CornerRadius="6" Padding="8,3" Margin="10,0,0,0">
+                                    <TextBlock x:Name="MyModsCount" Text="0"
+                                               FontFamily="Segoe UI" FontSize="11" Foreground="#888888"/>
+                                </Border>
+                            </StackPanel>
                        </Grid>
                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,12,0">
                            <Grid>
@@ -3518,93 +3518,302 @@
                            </Grid>
                        </ScrollViewer>
                    </Grid>
-                   <Grid x:Name="ModsEditorScreen" Visibility="Collapsed">
-                       <Grid.RowDefinitions>
-                           <RowDefinition Height="Auto"/>
-                           <RowDefinition Height="*"/>
-                           <RowDefinition Height="Auto"/>
-                       </Grid.RowDefinitions>
-                       <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
-                           <RadioButton x:Name="ModsEditorTabLists" Content="Листы"
-                                        Style="{StaticResource TabRadio}" GroupName="ModsEditorTabs"
-                                        IsChecked="True" Checked="ModsEditorTab_Checked"/>
-                           <RadioButton x:Name="ModsEditorTabBat" Content=".bat файлы"
-                                        Style="{StaticResource TabRadio}" GroupName="ModsEditorTabs"
-                                        Margin="6,0,0,0" Checked="ModsEditorTab_Checked"/>
-                       </StackPanel>
-                        <Grid Grid.Row="1">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="220"/>
-                                <ColumnDefinition Width="8"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid Grid.Column="0">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                </Grid.RowDefinitions>
-                                <Grid Grid.Row="0" Margin="0,0,0,6">
-                                    <TextBlock Text="Файлы" FontFamily="Segoe UI" FontSize="11"
-                                               FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"/>
-                                    <Button HorizontalAlignment="Right" Style="{StaticResource FlatBtn}"
-                                            Padding="0" Click="EditorAddFile_Click" ToolTip="Создать файл"
-                                            Width="28" Height="28">
-                                        <Path Data="{StaticResource FileAddIcon}" Stroke="#888888"
-                                              StrokeThickness="1.8" Width="14" Height="14" Stretch="Uniform"/>
-                                    </Button>
+                        <Grid x:Name="ModsEditorScreen" Visibility="Collapsed" Margin="-32,-20,-32,-20">
+                         <Grid.RowDefinitions>
+                             <RowDefinition Height="*"/>
+                         </Grid.RowDefinitions>
+                          <Grid Grid.Row="0" Margin="0">
+                             <Grid.ColumnDefinitions>
+                                  <ColumnDefinition Width="220" MinWidth="100" MaxWidth="400"/>
+                                 <ColumnDefinition Width="Auto"/>
+                                 <ColumnDefinition Width="*" MinWidth="150"/>
+                             </Grid.ColumnDefinitions>
+                               <Grid Grid.Column="0">
+                                   <Grid.RowDefinitions>
+                                       <RowDefinition Height="*"/>
+                                   </Grid.RowDefinitions>
+                                    <Border BorderBrush="#2a2a2e" BorderThickness="1,1,1,0" CornerRadius="8" ClipToBounds="True" Background="#141416">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                            </Grid.RowDefinitions>
+                                            <Border Grid.Row="0" Background="#1a1a1e" Padding="12,8">
+                                                <Grid>
+                                                    <TextBlock Text="Файлы" FontFamily="Segoe UI" FontSize="11"
+                                                               FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"/>
+                                                    <Button HorizontalAlignment="Right" Style="{StaticResource FlatBtn}"
+                                                            Padding="0" Click="EditorAddFile_Click"
+                                                            Width="24" Height="24">
+                                                        <Path Data="{StaticResource FileAddIcon}" Stroke="#888888"
+                                                              StrokeThickness="1.8" Width="13" Height="13" Stretch="Uniform"/>
+                                                    </Button>
+                                                </Grid>
+                                            </Border>
+                                            <Rectangle Grid.Row="0" Height="1" Fill="#2a2a2e" VerticalAlignment="Bottom"/>
+                                            <ListBox x:Name="ModsEditorFileList" Grid.Row="1"
+                                                   Background="#141416" BorderThickness="0"
+                                                   ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                                   ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                                                   SelectionChanged="ModsEditorFileList_SelectionChanged">
+                                              <ListBox.ItemTemplate>
+                                                  <DataTemplate>
+                                                      <TextBlock Text="{Binding Display}"
+                                                                 FontFamily="{Binding FontFamily}"
+                                                                 FontSize="{Binding FontSize}"
+                                                                 FontWeight="{Binding FontWeight}"
+                                                                 Foreground="{Binding Foreground}"
+                                                                 Padding="{Binding Padding}"/>
+                                                  </DataTemplate>
+                                              </ListBox.ItemTemplate>
+                                              <ListBox.ItemContainerStyle>
+                                                  <Style TargetType="ListBoxItem">
+                                                      <Setter Property="Background" Value="Transparent"/>
+                                                      <Setter Property="Padding" Value="0"/>
+                                                      <Setter Property="Template">
+                                                          <Setter.Value>
+                                                              <ControlTemplate TargetType="ListBoxItem">
+                                                                  <Border x:Name="bd" Background="{TemplateBinding Background}" SnapsToDevicePixels="True"
+                                                                          CornerRadius="6" Margin="2,1">
+                                                                      <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+                                                                  </Border>
+                                                                  <ControlTemplate.Triggers>
+                                                                      <Trigger Property="IsMouseOver" Value="True">
+                                                                          <Setter TargetName="bd" Property="Background" Value="#222226"/>
+                                                                      </Trigger>
+                                                                      <Trigger Property="IsSelected" Value="True">
+                                                                          <Setter TargetName="bd" Property="Background" Value="#1a2a3a"/>
+                                                                      </Trigger>
+                                                                  </ControlTemplate.Triggers>
+                                                              </ControlTemplate>
+                                                          </Setter.Value>
+                                                      </Setter>
+                                                  </Style>
+                                               </ListBox.ItemContainerStyle>
+                                           </ListBox>
+                                       </Grid>
+                                   </Border>
+                               </Grid>
+                             <GridSplitter Grid.Column="1" Width="5" ResizeDirection="Columns"
+                                          Background="Transparent" HorizontalAlignment="Stretch">
+                                 <GridSplitter.Style>
+                                     <Style TargetType="GridSplitter">
+                                         <Setter Property="Template">
+                                             <Setter.Value>
+                                                 <ControlTemplate TargetType="GridSplitter">
+                                                     <Border x:Name="splitterBg" Background="Transparent"
+                                                             Width="5" Cursor="SizeWE">
+                                                         <Border Width="1" Background="#2a2a2e"
+                                                                 HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                                                                 Margin="0,0,0,0"/>
+                                                     </Border>
+                                                     <ControlTemplate.Triggers>
+                                                         <Trigger Property="IsMouseOver" Value="True">
+                                                             <Setter TargetName="splitterBg" Property="Background" Value="#1a2a3a"/>
+                                                             <Setter TargetName="splitterBg" Property="Opacity" Value="0.5"/>
+                                                         </Trigger>
+                                                     </ControlTemplate.Triggers>
+                                                 </ControlTemplate>
+                                             </Setter.Value>
+                                         </Setter>
+                                     </Style>
+                                 </GridSplitter.Style>
+                             </GridSplitter>
+                               <Grid Grid.Column="2">
+                                    <Border BorderBrush="#2a2a2e" BorderThickness="1,1,1,0" CornerRadius="8" ClipToBounds="True" Background="#141416">
+                                         <Grid>
+                                             <Grid.RowDefinitions>
+                                                 <RowDefinition Height="Auto"/>
+                                                 <RowDefinition Height="*"/>
+                                                 <RowDefinition Height="Auto"/>
+                                             </Grid.RowDefinitions>
+                                             <Border Grid.Row="0" Background="#1a1a1e" Padding="12,8">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" Text="Редактор" FontFamily="Segoe UI" FontSize="11"
+                                                               FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"/>
+                                                    <Border Grid.Column="1" BorderBrush="#2a2a2e" BorderThickness="1" CornerRadius="6">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <Button x:Name="EditorZoomOutBtn" Width="32" Height="28" Padding="0"
+                                                                    BorderThickness="0" Background="Transparent"
+                                                                    Click="EditorZoomOut_Click" ToolTip="Уменьшить"
+                                                                    Cursor="Hand">
+                                                                <Button.Template>
+                                                                    <ControlTemplate TargetType="Button">
+                                                                        <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                                                                CornerRadius="6" Width="32" Height="28">
+                                                                            <Path Data="M5,12 L19,12" Stroke="#888888" StrokeThickness="2"
+                                                                                  Width="14" Height="14" Stretch="Uniform"
+                                                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                        </Border>
+                                                                        <ControlTemplate.Triggers>
+                                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                                <Setter TargetName="bd" Property="Background" Value="#2a2a2e"/>
+                                                                            </Trigger>
+                                                                        </ControlTemplate.Triggers>
+                                                                    </ControlTemplate>
+                                                                </Button.Template>
+                                                            </Button>
+                                                            <TextBlock x:Name="EditorZoomLevel" Text="12.5"
+                                                                       FontFamily="Consolas" FontSize="10" Foreground="#666669"
+                                                                       VerticalAlignment="Center" Margin="4,0,4,0" Width="32"
+                                                                       TextAlignment="Center"/>
+                                                            <Button x:Name="EditorZoomInBtn" Width="32" Height="28" Padding="0"
+                                                                    BorderThickness="0" Background="Transparent"
+                                                                    Click="EditorZoomIn_Click" ToolTip="Увеличить"
+                                                                    Cursor="Hand">
+                                                                <Button.Template>
+                                                                    <ControlTemplate TargetType="Button">
+                                                                        <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                                                                CornerRadius="6" Width="32" Height="28">
+                                                                            <Path Data="M12,5 L12,19 M5,12 L19,12" Stroke="#888888" StrokeThickness="2"
+                                                                                  Width="14" Height="14" Stretch="Uniform"
+                                                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                        </Border>
+                                                                        <ControlTemplate.Triggers>
+                                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                                <Setter TargetName="bd" Property="Background" Value="#2a2a2e"/>
+                                                                            </Trigger>
+                                                                        </ControlTemplate.Triggers>
+                                                                    </ControlTemplate>
+                                                                </Button.Template>
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                            <Rectangle Grid.Row="0" Height="1" Fill="#2a2a2e" VerticalAlignment="Bottom"/>
+                                            <TextBox x:Name="ModsEditorTextBox" Grid.Row="1"
+                                                     Background="#141416" Foreground="#e0e0e0"
+                                                     BorderThickness="0"
+                                                     FontFamily="Consolas" FontSize="12.5"
+                                                     AcceptsReturn="True" AcceptsTab="True"
+                                                     VerticalScrollBarVisibility="Visible"
+                                                      HorizontalScrollBarVisibility="Auto"
+                                                     TextWrapping="NoWrap" Padding="14,12"
+                                                     PreviewMouseWheel="ModsEditorTextBox_PreviewMouseWheel">
+                                                 <TextBox.Resources>
+                                                     <Style TargetType="ScrollViewer">
+                                                         <Setter Property="Template">
+                                                             <Setter.Value>
+                                                                 <ControlTemplate TargetType="ScrollViewer">
+                                                                     <Grid>
+                                                                         <Grid.ColumnDefinitions>
+                                                                             <ColumnDefinition Width="*"/>
+                                                                             <ColumnDefinition Width="Auto"/>
+                                                                         </Grid.ColumnDefinitions>
+                                                                         <Grid.RowDefinitions>
+                                                                             <RowDefinition Height="*"/>
+                                                                             <RowDefinition Height="Auto"/>
+                                                                         </Grid.RowDefinitions>
+                                                                         <ScrollContentPresenter Grid.Row="0" Grid.Column="0"
+                                                                             Margin="{TemplateBinding Padding}"
+                                                                             Content="{TemplateBinding Content}"
+                                                                             ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                                             CanContentScroll="{TemplateBinding CanContentScroll}"/>
+                                                                          <ScrollBar Grid.Row="0" Grid.Column="1"
+                                                                              x:Name="PART_VerticalScrollBar"
+                                                                              Width="12"
+                                                                              Value="{TemplateBinding VerticalOffset}"
+                                                                              Maximum="{TemplateBinding ScrollableHeight}"
+                                                                              ViewportSize="{TemplateBinding ViewportHeight}"
+                                                                              Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"/>
+                                                                          <ScrollBar Grid.Row="1" Grid.Column="0"
+                                                                              x:Name="PART_HorizontalScrollBar"
+                                                                              Height="12"
+                                                                              Value="{TemplateBinding HorizontalOffset}"
+                                                                              Maximum="{TemplateBinding ScrollableWidth}"
+                                                                              ViewportSize="{TemplateBinding ViewportWidth}"
+                                                                              Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"
+                                                                              Orientation="Horizontal"/>
+                                                                         <Rectangle Grid.Row="1" Grid.Column="1" Fill="#141416"/>
+                                                                     </Grid>
+                                                                 </ControlTemplate>
+                                                             </Setter.Value>
+                                                         </Setter>
+                                                     </Style>
+                                                      <Style TargetType="ScrollBar">
+                                                          <Setter Property="Background" Value="Transparent"/>
+                                                          <Setter Property="Template">
+                                                             <Setter.Value>
+                                                                  <ControlTemplate TargetType="ScrollBar">
+                                                                      <Grid Width="12">
+                                                                          <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                                                             <Track.DecreaseRepeatButton>
+                                                                                 <RepeatButton Command="ScrollBar.PageUpCommand"
+                                                                                               Opacity="0" Height="0"/>
+                                                                             </Track.DecreaseRepeatButton>
+                                                                             <Track.Thumb>
+                                                                                 <Thumb>
+                                                                                     <Thumb.Template>
+                                                                                         <ControlTemplate TargetType="Thumb">
+                                                                                             <Border Background="#404048" CornerRadius="4"/>
+                                                                                         </ControlTemplate>
+                                                                                     </Thumb.Template>
+                                                                                 </Thumb>
+                                                                             </Track.Thumb>
+                                                                             <Track.IncreaseRepeatButton>
+                                                                                 <RepeatButton Command="ScrollBar.PageDownCommand"
+                                                                                               Opacity="0" Height="0"/>
+                                                                             </Track.IncreaseRepeatButton>
+                                                                         </Track>
+                                                                     </Grid>
+                                                                 </ControlTemplate>
+                                                             </Setter.Value>
+                                                         </Setter>
+                                                         <Style.Triggers>
+                                                              <Trigger Property="Orientation" Value="Horizontal">
+                                                                  <Setter Property="Template">
+                                                                     <Setter.Value>
+                                                                         <ControlTemplate TargetType="ScrollBar">
+                                                                             <Grid Height="12">
+                                                                                 <Track x:Name="PART_Track" IsDirectionReversed="False">
+                                                                                     <Track.DecreaseRepeatButton>
+                                                                                         <RepeatButton Command="ScrollBar.PageLeftCommand"
+                                                                                                       Opacity="0" Width="0"/>
+                                                                                     </Track.DecreaseRepeatButton>
+                                                                                     <Track.Thumb>
+                                                                                         <Thumb>
+                                                                                             <Thumb.Template>
+                                                                                                 <ControlTemplate TargetType="Thumb">
+                                                                                                     <Border Background="#404048" CornerRadius="4"/>
+                                                                                                 </ControlTemplate>
+                                                                                             </Thumb.Template>
+                                                                                         </Thumb>
+                                                                                     </Track.Thumb>
+                                                                                     <Track.IncreaseRepeatButton>
+                                                                                         <RepeatButton Command="ScrollBar.PageRightCommand"
+                                                                                                       Opacity="0" Width="0"/>
+                                                                                     </Track.IncreaseRepeatButton>
+                                                                                 </Track>
+                                                                             </Grid>
+                                                                         </ControlTemplate>
+                                                                     </Setter.Value>
+                                                                 </Setter>
+                                                             </Trigger>
+                                                         </Style.Triggers>
+                                                     </Style>
+                                                </TextBox.Resources>
+                                            </TextBox>
+                                            <Border Grid.Row="2" Background="#1a1a1e" Padding="12,8"
+                                                    BorderBrush="#2a2a2e" BorderThickness="0,1,0,0">
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                    <Button x:Name="ModsEditorResetBtn" Content="Сбросить"
+                                                            Style="{StaticResource OutlineBtn}"
+                                                            Margin="0,0,10,0" Click="ModsEditorResetBtn_Click"/>
+                                                    <Button x:Name="ModsEditorSaveBtn" Content="Сохранить"
+                                                            Style="{StaticResource AccentBtn}"
+                                                            Click="ModsEditorSaveBtn_Click"/>
+                                                </StackPanel>
+                                            </Border>
+                                       </Grid>
+                                   </Border>
                                 </Grid>
-                            <ListBox x:Name="ModsEditorFileList" Grid.Row="1"
-                                    Background="#1a1a1e" BorderBrush="#2a2a2e" BorderThickness="1"
-                                    SelectionChanged="ModsEditorFileList_SelectionChanged">
-                               <ListBox.ItemContainerStyle>
-                                   <Style TargetType="ListBoxItem">
-                                       <Setter Property="Background" Value="Transparent"/>
-                                       <Setter Property="Padding" Value="12,8"/>
-                                       <Setter Property="Foreground" Value="#bbbbbb"/>
-                                       <Setter Property="FontFamily" Value="Consolas"/>
-                                       <Setter Property="FontSize" Value="12"/>
-                                       <Setter Property="Template">
-                                           <Setter.Value>
-                                               <ControlTemplate TargetType="ListBoxItem">
-                                                   <Border x:Name="bd" Background="{TemplateBinding Background}" SnapsToDevicePixels="True" Padding="{TemplateBinding Padding}">
-                                                       <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
-                                                   </Border>
-                                                   <ControlTemplate.Triggers>
-                                                       <Trigger Property="IsMouseOver" Value="True">
-                                                           <Setter TargetName="bd" Property="Background" Value="#222226"/>
-                                                       </Trigger>
-                                                       <Trigger Property="IsSelected" Value="True">
-                                                           <Setter TargetName="bd" Property="Background" Value="#1a2a3a"/>
-                                                           <Setter Property="Foreground" Value="#93c5fd"/>
-                                                       </Trigger>
-                                                   </ControlTemplate.Triggers>
-                                               </ControlTemplate>
-                                           </Setter.Value>
-                                       </Setter>
-                                   </Style>
-                                </ListBox.ItemContainerStyle>
-                            </ListBox>
-                            </Grid>
-                            <Border Grid.Column="1" Width="1" Background="#2a2a2e" HorizontalAlignment="Center"/>
-                           <TextBox x:Name="ModsEditorTextBox" Grid.Column="2"
-                                    Background="#141416" Foreground="#e0e0e0"
-                                    BorderBrush="#2a2a2e" BorderThickness="1"
-                                    FontFamily="Consolas" FontSize="12.5"
-                                    AcceptsReturn="True" AcceptsTab="True"
-                                    VerticalScrollBarVisibility="Auto"
-                                    HorizontalScrollBarVisibility="Auto"
-                                    TextWrapping="NoWrap" Padding="14,12"/>
-                       </Grid>
-                       <StackPanel Grid.Row="2" Orientation="Horizontal"
-                                   HorizontalAlignment="Right" Margin="0,14,0,0">
-                           <Button x:Name="ModsEditorResetBtn" Content="Сбросить"
-                                   Style="{StaticResource OutlineBtn}"
-                                   Margin="0,0,10,0" Click="ModsEditorResetBtn_Click"/>
-                           <Button x:Name="ModsEditorSaveBtn" Content="Сохранить"
-                                   Style="{StaticResource AccentBtn}"
-                                   Click="ModsEditorSaveBtn_Click"/>
-                       </StackPanel>
-                   </Grid>
+                         </Grid>
+                    </Grid>
                </Grid>
            </Grid>
             </Grid>

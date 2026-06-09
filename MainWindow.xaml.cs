@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -1005,8 +1006,6 @@ public partial class MainWindow : Window
             lp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
     }
 
-    private void ModsEditorTab_Checked(object sender, RoutedEventArgs e) => LoadEditorFileLists();
-
     private void MoveRightBtn_Click(object sender, RoutedEventArgs e)
     {
         Debug.WriteLine($"[MoveRightBtn] Clicked, pendingToggleMod={_pendingToggleMod?.Name}");
@@ -1230,24 +1229,34 @@ public partial class MainWindow : Window
     {
         SaveModsSettings();
 
-        if (!_isStrategyTab)
-        {
-            var activeLists = _allMods
-                .Where(m => m.Type == ModType.List && m.IsActive)
-                .ToList();
+        var title = _isStrategyTab ? "Применение стратегий" : "Применение списков";
+        var message = _isStrategyTab
+            ? "Сохранить порядок .bat стратегий?"
+            : "Применить активные списки доменов?";
 
-            var (success, error) = ModActivator.ApplyListMods(activeLists);
-            if (!success)
-                ShowModsError(error ?? "Ошибка применения");
+        ShowConfirmDialog(title, message, ok =>
+        {
+            if (!ok) return;
+
+            if (!_isStrategyTab)
+            {
+                var activeLists = _allMods
+                    .Where(m => m.Type == ModType.List && m.IsActive)
+                    .ToList();
+
+                var (success, error) = ModActivator.ApplyListMods(activeLists);
+                if (!success)
+                    ShowModsError(error ?? "Ошибка применения");
+                else
+                    ShowModsSuccess("Списки доменов применены");
+            }
             else
-                ShowModsSuccess("Списки доменов применены");
-        }
-        else
-        {
-            ShowModsSuccess("Порядок стратегий сохранён");
-        }
+            {
+                ShowModsSuccess("Порядок стратегий сохранён");
+            }
 
-        UpdateModsStatus();
+            UpdateModsStatus();
+        }, confirmText: "Применить", confirmIsDestructive: false);
     }
 
     private void RefreshMods_Click(object sender, RoutedEventArgs e) => RefreshMods();
@@ -1288,13 +1297,32 @@ public partial class MainWindow : Window
 
     private async void ExportSingleMod_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button btn && btn.Tag is ModEntry mod)
+        if (sender is not Button btn || btn.Tag is not ModEntry mod) return;
+
+        var dlg = new Microsoft.Win32.SaveFileDialog
         {
-            var dir = System.IO.Path.Combine(AppContext.BaseDirectory, "Mods", "export");
-            Directory.CreateDirectory(dir);
+            FileName = mod.Name,
+            DefaultExt = ".netfix-mod",
+            Filter = "NetFix Mod (*.netfix-mod)|*.netfix-mod|ZIP Archive (*.zip)|*.zip"
+        };
+
+        if (dlg.ShowDialog() != true) return;
+
+        var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"NetFix_Export_{Guid.NewGuid()}");
+        Directory.CreateDirectory(dir);
+        try
+        {
             var result = await ModPackager.ExportAsync(mod, dir);
-            ModsStatusText.Text = $"✅ Экспортировано: {System.IO.Path.GetFileName(result)}";
-            ModsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+            if (result is not null && File.Exists(result))
+            {
+                File.Copy(result, dlg.FileName!, overwrite: true);
+                ModsStatusText.Text = $"✅ Экспортировано: {System.IO.Path.GetFileName(dlg.FileName)}";
+                ModsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+            }
+        }
+        finally
+        {
+            try { Directory.Delete(dir, true); } catch { }
         }
     }
 
@@ -1317,12 +1345,8 @@ public partial class MainWindow : Window
         var dialog = new Microsoft.Win32.SaveFileDialog
         {
             Title = "Создать новый файл",
-            Filter = _isStrategyTab
-                ? "BAT файлы (*.bat)|*.bat"
-                : "Текстовые файлы (*.txt)|*.txt",
-            InitialDirectory = _isStrategyTab
-                ? System.IO.Path.Combine(AppContext.BaseDirectory, "Mods", "strategies")
-                : System.IO.Path.Combine(AppContext.BaseDirectory, "Mods", "lists"),
+            Filter = "Все поддерживаемые (*.bat;*.txt)|*.bat;*.txt",
+            InitialDirectory = @"C:\Zapret",
             OverwritePrompt = true
         };
 
@@ -1331,7 +1355,15 @@ public partial class MainWindow : Window
             await File.WriteAllTextAsync(dialog.FileName, "");
             LoadEditorFileLists();
 
-            ModsEditorFileList.SelectedItem = dialog.FileName;
+            // Найти созданный файл в списке
+            for (int i = 0; i < ModsEditorFileList.Items.Count; i++)
+            {
+                if (ModsEditorFileList.Items[i] is FileListItem fi && fi.FilePath == dialog.FileName)
+                {
+                    ModsEditorFileList.SelectedIndex = i;
+                    break;
+                }
+            }
         }
     }
 
@@ -1339,18 +1371,25 @@ public partial class MainWindow : Window
     {
         if (sender is not Button btn || btn.Tag is not ModEntry mod) return;
 
-        try
-        {
-            if (Directory.Exists(mod.FolderPath))
-                Directory.Delete(mod.FolderPath, true);
-        }
-        catch { }
+        ShowConfirmDialog(
+            "Удалить мод?",
+            $"Мод «{mod.Name}» будет удалён безвозвратно.",
+            confirmed =>
+            {
+                if (!confirmed) return;
+                try
+                {
+                    if (Directory.Exists(mod.FolderPath))
+                        Directory.Delete(mod.FolderPath, true);
+                }
+                catch { }
 
-        _allMods.Remove(mod);
-        SaveModsSettings();
-        RefreshModsLists();
-        LoadMyMods();
-        ShowModsSuccess($"Мод '{mod.Name}' удалён");
+                _allMods.Remove(mod);
+                SaveModsSettings();
+                RefreshModsLists();
+                LoadMyMods();
+                ShowModsSuccess($"Мод '{mod.Name}' удалён");
+            });
     }
 
     private void SaveModsSettings() => SettingsService.Save(_settings);
@@ -1417,6 +1456,9 @@ public partial class MainWindow : Window
         MyModsGrid.ItemsSource = null;
         MyModsGrid.ItemsSource = mods;
         MyModsCount.Text = mods.Count.ToString();
+        MyModsCount.Foreground = mods.Count > 0
+            ? new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e))
+            : new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
 
         MyModsGrid.Visibility = mods.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         MyModsEmpty.Visibility = mods.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
@@ -1425,21 +1467,32 @@ public partial class MainWindow : Window
     private string? _modsEditorFilePath;
 
     private ListBox? _editorFileList;
-    private RadioButton? _editorTabLists;
     private TextBox? _editorTextBox;
     private Button? _editorResetBtn;
     private Button? _editorSaveBtn;
+    private TextBlock? _editorZoomLevel;
     private bool _editorLoaded;
+
+    private sealed record FileListItem(
+        string Display,
+        string? FilePath,
+        bool IsHeader,
+        FontWeight FontWeight,
+        Brush Foreground,
+        Thickness Padding,
+        string FontFamily = "Consolas",
+        double FontSize = 12
+    );
 
     private void EnsureEditorControls()
     {
         if (_editorLoaded) return;
         _editorLoaded = true;
         _editorFileList = FindName("ModsEditorFileList") as ListBox;
-        _editorTabLists = FindName("ModsEditorTabLists") as RadioButton;
         _editorTextBox = FindName("ModsEditorTextBox") as TextBox;
         _editorResetBtn = FindName("ModsEditorResetBtn") as Button;
         _editorSaveBtn = FindName("ModsEditorSaveBtn") as Button;
+        _editorZoomLevel = FindName("EditorZoomLevel") as TextBlock;
     }
 
     private void LoadEditorFileLists(string? folderPath = null)
@@ -1448,30 +1501,93 @@ public partial class MainWindow : Window
         if (_editorFileList is null) { ModsStatusText.Text = "❌ Ошибка инициализации редактора"; return; }
 
         _editorFileList.Items.Clear();
-        var isListsTab = _editorTabLists?.IsChecked == true;
-        var dir = folderPath ?? (isListsTab ? @"C:\Zapret" : System.IO.Path.Combine(AppContext.BaseDirectory, "Mods", "strategies"));
-        var ext = isListsTab ? "*.txt" : "*.bat";
 
-        if (!Directory.Exists(dir))
+        if (folderPath is not null)
         {
-            if (_editorTextBox is not null) _editorTextBox.Text = "Папка не найдена";
+            // Режим — конкретная папка мода
+            var items = new List<FileListItem>();
+            AddFolderFiles(items, folderPath);
+            foreach (var item in items)
+                _editorFileList.Items.Add(item);
+            if (items.Count > 0 && !items[0].IsHeader)
+                _editorFileList.SelectedIndex = 0;
             return;
         }
 
-        foreach (var f in Directory.GetFiles(dir, ext).OrderBy(f => System.IO.Path.GetFileName(f)))
-            _editorFileList.Items.Add(System.IO.Path.GetFileName(f));
+        // Полный режим — C:\Zapret\lists + C:\Zapret
+        AddFolderFiles(_editorFileList.Items, @"C:\Zapret\lists", "Листы:", "*.txt");
+        AddFolderFiles(_editorFileList.Items, @"C:\Zapret", "Bat файлы:", "*.bat");
 
         if (_editorFileList.Items.Count > 0)
-            _editorFileList.SelectedIndex = 0;
+        {
+            // Выбрать первый не-заголовок
+            for (int i = 0; i < _editorFileList.Items.Count; i++)
+            {
+                if (_editorFileList.Items[i] is FileListItem fi && !fi.IsHeader)
+                {
+                    _editorFileList.SelectedIndex = i;
+                    break;
+                }
+            }
+        }
+    }
+
+    private static FileListItem MakeHeader(string text) => new(
+        Display: text,
+        FilePath: null,
+        IsHeader: true,
+        FontFamily: "Segoe UI",
+        FontSize: 11,
+        FontWeight: FontWeights.Bold,
+        Foreground: new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x69)),
+        Padding: new Thickness(12, 10, 12, 4)
+    );
+
+    private static FileListItem MakeFile(string fileName, string fullPath) => new(
+        Display: fileName,
+        FilePath: fullPath,
+        IsHeader: false,
+        FontFamily: "Consolas",
+        FontSize: 12,
+        FontWeight: FontWeights.Normal,
+        Foreground: new SolidColorBrush(Color.FromRgb(0xbb, 0xbb, 0xbb)),
+        Padding: new Thickness(24, 6, 12, 6)
+    );
+
+    private static void AddFolderFiles(System.Collections.IList items, string dir, string? header = null, string? pattern = null)
+    {
+        if (!Directory.Exists(dir)) return;
+
+        // Режим конкретной папки — все файлы без заголовка
+        if (header is null && pattern is null)
+        {
+            foreach (var f in Directory.GetFiles(dir).OrderBy(f => System.IO.Path.GetFileName(f)))
+                items.Add(MakeFile(System.IO.Path.GetFileName(f), f));
+            return;
+        }
+
+        if (header is not null)
+            items.Add(MakeHeader(header));
+        if (pattern is not null)
+        {
+            foreach (var f in Directory.GetFiles(dir, pattern)
+                .Where(f => !System.IO.Path.GetFileName(f).Equals("service.bat", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(f => System.IO.Path.GetFileName(f)))
+                items.Add(MakeFile(System.IO.Path.GetFileName(f), f));
+        }
     }
 
     private void ModsEditorFileList_SelectionChanged(object s, SelectionChangedEventArgs e)
     {
         EnsureEditorControls();
-        if (_editorFileList?.SelectedItem is not string fileName) return;
-        var isListsTab = _editorTabLists?.IsChecked == true;
-        var dir = isListsTab ? @"C:\Zapret" : System.IO.Path.Combine(AppContext.BaseDirectory, "Mods", "strategies");
-        _modsEditorFilePath = System.IO.Path.Combine(dir, fileName);
+        if (_editorFileList?.SelectedItem is not FileListItem fi || fi.IsHeader || fi.FilePath is null)
+        {
+            if (_editorTextBox is not null)
+                _editorTextBox.Text = "";
+            return;
+        }
+
+        _modsEditorFilePath = fi.FilePath;
 
         try
         {
@@ -1489,28 +1605,78 @@ public partial class MainWindow : Window
     {
         EnsureEditorControls();
         if (_modsEditorFilePath is null || _editorTextBox is null) return;
-        try
-        {
-            File.WriteAllText(_modsEditorFilePath, _editorTextBox.Text, Encoding.UTF8);
-            ModsStatusText.Text = $"✅ Сохранено: {System.IO.Path.GetFileName(_modsEditorFilePath)}";
-            ModsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
-        }
-        catch (Exception ex)
-        {
-            ModsStatusText.Text = $"❌ Ошибка: {ex.Message}";
-            ModsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
-        }
+
+        ShowConfirmDialog(
+            "Сохранение",
+            $"Сохранить изменения в «{System.IO.Path.GetFileName(_modsEditorFilePath)}»?",
+            ok =>
+            {
+                if (!ok) return;
+                try
+                {
+                    File.WriteAllText(_modsEditorFilePath, _editorTextBox.Text, Encoding.UTF8);
+                    ModsStatusText.Text = $"✅ Сохранено: {System.IO.Path.GetFileName(_modsEditorFilePath)}";
+                    ModsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+                }
+                catch (Exception ex)
+                {
+                    ModsStatusText.Text = $"❌ Ошибка: {ex.Message}";
+                    ModsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
+                }
+            },
+            confirmText: "Сохранить",
+            confirmIsDestructive: false);
     }
 
     private void ModsEditorResetBtn_Click(object s, RoutedEventArgs e)
     {
         EnsureEditorControls();
         if (_modsEditorFilePath is null || _editorTextBox is null) return;
-        try
-        {
-            _editorTextBox.Text = File.ReadAllText(_modsEditorFilePath, Encoding.UTF8);
-        }
-        catch { }
+
+        ShowConfirmDialog(
+            "Сброс",
+            "Сбросить изменения? Все несохранённые изменения будут потеряны.",
+            ok =>
+            {
+                if (!ok) return;
+                try
+                {
+                    _editorTextBox.Text = File.ReadAllText(_modsEditorFilePath, Encoding.UTF8);
+                }
+                catch { }
+            },
+            confirmText: "Сбросить");
+    }
+
+    private void UpdateZoomDisplay()
+    {
+        if (_editorTextBox is not null && _editorZoomLevel is not null)
+            _editorZoomLevel.Text = _editorTextBox.FontSize.ToString("0.0");
+    }
+
+    private void EditorZoomIn_Click(object sender, RoutedEventArgs e)
+    {
+        EnsureEditorControls();
+        if (_editorTextBox is null) return;
+        _editorTextBox.FontSize = Math.Min(40, _editorTextBox.FontSize + 1);
+        UpdateZoomDisplay();
+    }
+
+    private void EditorZoomOut_Click(object sender, RoutedEventArgs e)
+    {
+        EnsureEditorControls();
+        if (_editorTextBox is null) return;
+        _editorTextBox.FontSize = Math.Max(6, _editorTextBox.FontSize - 1);
+        UpdateZoomDisplay();
+    }
+
+    private void ModsEditorTextBox_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (Keyboard.Modifiers != ModifierKeys.Control || _editorTextBox is null) return;
+        _editorTextBox.FontSize = Math.Clamp(
+            _editorTextBox.FontSize + (e.Delta > 0 ? 1 : -1), 6, 40);
+        UpdateZoomDisplay();
+        e.Handled = true;
     }
 
     private void ResetListsArrows()
@@ -1689,21 +1855,27 @@ public partial class MainWindow : Window
     private void ListsApplyBtn_Click(object sender, RoutedEventArgs e)
     {
         SaveModsSettings();
-        var activeLists = _allMods
-            .Where(m => m.Type == ModType.List && m.IsActive)
-            .ToList();
 
-        var (success, error) = ModActivator.ApplyListMods(activeLists);
-        if (!success)
+        ShowConfirmDialog("Применение списков", "Применить активные списки доменов?", ok =>
         {
-            ListsStatusText.Text = $"❌ {error ?? "Ошибка применения"}";
-            ListsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
-        }
-        else
-        {
-            ListsStatusText.Text = "✅ Списки доменов применены";
-            ListsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
-        }
+            if (!ok) return;
+
+            var activeLists = _allMods
+                .Where(m => m.Type == ModType.List && m.IsActive)
+                .ToList();
+
+            var (success, error) = ModActivator.ApplyListMods(activeLists);
+            if (!success)
+            {
+                ListsStatusText.Text = $"❌ {error ?? "Ошибка применения"}";
+                ListsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
+            }
+            else
+            {
+                ListsStatusText.Text = "✅ Списки доменов применены";
+                ListsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+            }
+        }, confirmText: "Применить", confirmIsDestructive: false);
     }
 
     private void UpdateComponentsBtn_Click(object s, RoutedEventArgs e)
@@ -8262,7 +8434,7 @@ public partial class MainWindow : Window
                 };
 
                 File.WriteAllText(Path.Combine(tempDir, "notes.json"),
-                    JsonSerializer.Serialize(map, new JsonSerializerOptions { WriteIndented = true }));
+                    JsonSerializer.Serialize(map, new JsonSerializerOptions { WriteIndented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
 
                 if (isOsuMode)
                     File.WriteAllText(Path.Combine(tempDir, "source.osz.path"), oszPath);
@@ -9209,7 +9381,7 @@ public partial class MainWindow : Window
 
         File.WriteAllText(
             System.IO.Path.Combine(dir, "notes.json"),
-            JsonSerializer.Serialize(map, new JsonSerializerOptions { WriteIndented = true }));
+            JsonSerializer.Serialize(map, new JsonSerializerOptions { WriteIndented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
 
         EditorStatusText.Text = $"Уровень «{title}» сохранён!";
         LoadUserLevels();
