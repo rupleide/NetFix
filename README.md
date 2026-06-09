@@ -43,7 +43,7 @@
 ### 📋 Системные требования:
 *   **ОС:** Windows 10 / 11 (x64).
 *   **Права:** Запуск от имени **администратора** (необходимо для работы драйвера WinDivert).
-*   **Среда:** Наличие **[.NET Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)** (если вы скачали версию приложения, которая не является Self-contained).
+*   **Среда:** Наличие **[.NET Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)**
 
 ---
 
