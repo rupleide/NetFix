@@ -943,6 +943,9 @@ public partial class MainWindow : Window
         ModsEditorScreen.Visibility = Visibility.Collapsed;
         screen.Visibility = Visibility.Visible;
         ModsHeaderTitle.Text = title;
+
+        var showStatus = screen == ModsStrategiesScreen || screen == ModsListsScreen || screen == ModsMyModsScreen;
+        ModsHeaderStatus.Visibility = showStatus ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void ModsBackBtn_Click(object s, RoutedEventArgs e)
@@ -1032,7 +1035,12 @@ public partial class MainWindow : Window
         var activeCount = ActiveList.Items.Count;
         var availCount = AvailableList.Items.Count;
 
-        ModsStatusText.Text = $"{typeName}: {allCount} | Активных: {activeCount}";
+        ModsHeaderStatus.Text = activeCount > 0
+            ? $"ВКЛЮЧЕНО: {activeCount} модов"
+            : "Нет активных";
+        ModsHeaderStatus.Foreground = new SolidColorBrush(activeCount > 0
+            ? Color.FromRgb(0x22, 0xc5, 0x5e)
+            : Color.FromRgb(0x88, 0x88, 0x88));
 
         if (AvailableCount is not null)
             AvailableCount.Text = availCount.ToString();

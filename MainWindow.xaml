@@ -3250,28 +3250,37 @@
                    <RowDefinition Height="*"/>
                </Grid.RowDefinitions>
 
-               <!-- Page title + back -->
-                <Grid Grid.Row="0" Margin="32,20,32,0">
-                    <StackPanel Orientation="Horizontal">
-                        <Button Style="{StaticResource BackBtn}"
-                                WindowChrome.IsHitTestVisibleInChrome="True"
-                                Click="ModsBackBtn_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <Path Data="{StaticResource ArrowLeftIcon}" 
-                                      Stroke="#888888"
-                                      StrokeThickness="2"
-                                      Width="14" Height="14"
-                                      Stretch="Uniform"
-                                      Margin="0,0,6,0"
-                                      VerticalAlignment="Center"/>
-                                <TextBlock Text="Назад" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
-                        <TextBlock x:Name="ModsHeaderTitle" Text="Модификации" FontFamily="Segoe UI" FontSize="18"
-                                   FontWeight="Bold" Foreground="White"
-                                   VerticalAlignment="Center" Margin="16,0,0,0"/>
-                    </StackPanel>
-                </Grid>
+                <!-- Page title + back -->
+                 <Grid Grid.Row="0" Margin="32,20,32,0">
+                     <Grid.ColumnDefinitions>
+                         <ColumnDefinition Width="Auto"/>
+                         <ColumnDefinition Width="*"/>
+                         <ColumnDefinition Width="Auto"/>
+                     </Grid.ColumnDefinitions>
+                     <StackPanel Grid.Column="0" Orientation="Horizontal">
+                         <Button Style="{StaticResource BackBtn}"
+                                 WindowChrome.IsHitTestVisibleInChrome="True"
+                                 Click="ModsBackBtn_Click">
+                             <StackPanel Orientation="Horizontal">
+                                 <Path Data="{StaticResource ArrowLeftIcon}" 
+                                       Stroke="#888888"
+                                       StrokeThickness="2"
+                                       Width="14" Height="14"
+                                       Stretch="Uniform"
+                                       Margin="0,0,6,0"
+                                       VerticalAlignment="Center"/>
+                                 <TextBlock Text="Назад" VerticalAlignment="Center"/>
+                             </StackPanel>
+                         </Button>
+                         <TextBlock x:Name="ModsHeaderTitle" Text="Модификации" FontFamily="Segoe UI" FontSize="18"
+                                    FontWeight="Bold" Foreground="White"
+                                    VerticalAlignment="Center" Margin="16,0,0,0"/>
+                      </StackPanel>
+                      <TextBlock Grid.Column="2" x:Name="ModsHeaderStatus" Text=""
+                                FontFamily="Segoe UI" FontSize="12" FontWeight="Bold"
+                                Foreground="#22c55e" VerticalAlignment="Center"
+                                Visibility="Collapsed"/>
+                 </Grid>
 
                 <Border Grid.Row="1" Height="1" Background="#333333" Margin="32,14,32,0"/>
 
