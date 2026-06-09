@@ -3528,28 +3528,23 @@
                                  <ColumnDefinition Width="Auto"/>
                                  <ColumnDefinition Width="*" MinWidth="150"/>
                              </Grid.ColumnDefinitions>
-                               <Grid Grid.Column="0">
-                                   <Grid.RowDefinitions>
-                                       <RowDefinition Height="*"/>
-                                   </Grid.RowDefinitions>
-                                    <Border BorderBrush="#2a2a2e" BorderThickness="1,1,1,0" CornerRadius="8" ClipToBounds="True" Background="#141416">
-                                        <Grid>
-                                            <Grid.RowDefinitions>
+                                <Grid Grid.Column="0" Background="#141416">
+                                        <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="*"/>
                                             </Grid.RowDefinitions>
-                                            <Border Grid.Row="0" Background="#1a1a1e" Padding="12,8">
-                                                <Grid>
-                                                    <TextBlock Text="Файлы" FontFamily="Segoe UI" FontSize="11"
-                                                               FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"/>
-                                                    <Button HorizontalAlignment="Right" Style="{StaticResource FlatBtn}"
-                                                            Padding="0" Click="EditorAddFile_Click"
-                                                            Width="24" Height="24">
-                                                        <Path Data="{StaticResource FileAddIcon}" Stroke="#888888"
-                                                              StrokeThickness="1.8" Width="13" Height="13" Stretch="Uniform"/>
-                                                    </Button>
-                                                </Grid>
-                                            </Border>
+                                            <Border Grid.Row="0" Background="#1a1a1e" Padding="12,8" Height="40">
+                                                 <Grid>
+                                                     <TextBlock Text="Файлы" FontFamily="Segoe UI" FontSize="11"
+                                                                FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"/>
+                                                     <Button HorizontalAlignment="Right" Style="{StaticResource FlatBtn}"
+                                                             Padding="0" Click="EditorAddFile_Click"
+                                                             Width="24" Height="24">
+                                                         <Path Data="{StaticResource FileAddIcon}" Stroke="#888888"
+                                                               StrokeThickness="1.8" Width="13" Height="13" Stretch="Uniform"/>
+                                                     </Button>
+                                                 </Grid>
+                                             </Border>
                                             <Rectangle Grid.Row="0" Height="1" Fill="#2a2a2e" VerticalAlignment="Bottom"/>
                                             <ListBox x:Name="ModsEditorFileList" Grid.Row="1"
                                                    Background="#141416" BorderThickness="0"
@@ -3591,60 +3586,47 @@
                                                   </Style>
                                                </ListBox.ItemContainerStyle>
                                            </ListBox>
-                                       </Grid>
-                                   </Border>
-                               </Grid>
-                             <GridSplitter Grid.Column="1" Width="5" ResizeDirection="Columns"
-                                          Background="Transparent" HorizontalAlignment="Stretch">
-                                 <GridSplitter.Style>
-                                     <Style TargetType="GridSplitter">
-                                         <Setter Property="Template">
-                                             <Setter.Value>
-                                                 <ControlTemplate TargetType="GridSplitter">
-                                                     <Border x:Name="splitterBg" Background="Transparent"
-                                                             Width="5" Cursor="SizeWE">
-                                                         <Border Width="1" Background="#2a2a2e"
-                                                                 HorizontalAlignment="Center" VerticalAlignment="Stretch"
-                                                                 Margin="0,0,0,0"/>
-                                                     </Border>
-                                                     <ControlTemplate.Triggers>
-                                                         <Trigger Property="IsMouseOver" Value="True">
-                                                             <Setter TargetName="splitterBg" Property="Background" Value="#1a2a3a"/>
-                                                             <Setter TargetName="splitterBg" Property="Opacity" Value="0.5"/>
-                                                         </Trigger>
-                                                     </ControlTemplate.Triggers>
-                                                 </ControlTemplate>
-                                             </Setter.Value>
-                                         </Setter>
-                                     </Style>
-                                 </GridSplitter.Style>
+                                </Grid>
+                               <GridSplitter Grid.Column="1" Width="4" ResizeDirection="Columns"
+                                           Background="#2a2a2e" HorizontalAlignment="Stretch">
+                                  <GridSplitter.Style>
+                                      <Style TargetType="GridSplitter">
+                                          <Setter Property="Template">
+                                              <Setter.Value>
+                                                  <ControlTemplate TargetType="GridSplitter">
+                                                      <Border x:Name="splitterBg" Background="{TemplateBinding Background}"
+                                                              Width="4" Cursor="SizeWE"/>
+                                                  </ControlTemplate>
+                                              </Setter.Value>
+                                          </Setter>
+                                      </Style>
+                                  </GridSplitter.Style>
                              </GridSplitter>
-                               <Grid Grid.Column="2">
-                                    <Border BorderBrush="#2a2a2e" BorderThickness="1,1,1,0" CornerRadius="8" ClipToBounds="True" Background="#141416">
-                                         <Grid>
-                                             <Grid.RowDefinitions>
-                                                 <RowDefinition Height="Auto"/>
-                                                 <RowDefinition Height="*"/>
-                                                 <RowDefinition Height="Auto"/>
-                                             </Grid.RowDefinitions>
-                                             <Border Grid.Row="0" Background="#1a1a1e" Padding="12,8">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Grid.Column="0" Text="Редактор" FontFamily="Segoe UI" FontSize="11"
-                                                               FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"/>
-                                                    <Border Grid.Column="1" BorderBrush="#2a2a2e" BorderThickness="1" CornerRadius="6">
+                                 <Grid Grid.Column="2" Background="#141416">
+                                          <Grid>
+                                              <Grid.RowDefinitions>
+                                                  <RowDefinition Height="Auto"/>
+                                                  <RowDefinition Height="*"/>
+                                                  <RowDefinition Height="Auto"/>
+                                              </Grid.RowDefinitions>
+                                              <Border Grid.Row="0" Background="#1a1a1e" Padding="12,8" Height="40">
+                                                 <Grid>
+                                                     <Grid.ColumnDefinitions>
+                                                         <ColumnDefinition Width="*"/>
+                                                         <ColumnDefinition Width="Auto"/>
+                                                     </Grid.ColumnDefinitions>
+                                                     <TextBlock Grid.Column="0" Text="Редактор" FontFamily="Segoe UI" FontSize="11"
+                                                                FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"/>
+                                                     <Border Grid.Column="1" BorderBrush="#2a2a2e" BorderThickness="1" CornerRadius="6">
                                                         <StackPanel Orientation="Horizontal">
-                                                            <Button x:Name="EditorZoomOutBtn" Width="32" Height="28" Padding="0"
-                                                                    BorderThickness="0" Background="Transparent"
-                                                                    Click="EditorZoomOut_Click" ToolTip="Уменьшить"
-                                                                    Cursor="Hand">
-                                                                <Button.Template>
-                                                                    <ControlTemplate TargetType="Button">
-                                                                        <Border x:Name="bd" Background="{TemplateBinding Background}"
-                                                                                CornerRadius="6" Width="32" Height="28">
+                                                             <Button x:Name="EditorZoomOutBtn" Width="24" Height="24" Padding="0"
+                                                                     BorderThickness="0" Background="Transparent"
+                                                                     Click="EditorZoomOut_Click" ToolTip="Уменьшить"
+                                                                     Cursor="Hand">
+                                                                 <Button.Template>
+                                                                     <ControlTemplate TargetType="Button">
+                                                                         <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                                                                 CornerRadius="6" Width="24" Height="24">
                                                                             <Path Data="M5,12 L19,12" Stroke="#888888" StrokeThickness="2"
                                                                                   Width="14" Height="14" Stretch="Uniform"
                                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -3657,18 +3639,18 @@
                                                                     </ControlTemplate>
                                                                 </Button.Template>
                                                             </Button>
-                                                            <TextBlock x:Name="EditorZoomLevel" Text="12.5"
-                                                                       FontFamily="Consolas" FontSize="10" Foreground="#666669"
-                                                                       VerticalAlignment="Center" Margin="4,0,4,0" Width="32"
-                                                                       TextAlignment="Center"/>
-                                                            <Button x:Name="EditorZoomInBtn" Width="32" Height="28" Padding="0"
-                                                                    BorderThickness="0" Background="Transparent"
-                                                                    Click="EditorZoomIn_Click" ToolTip="Увеличить"
-                                                                    Cursor="Hand">
-                                                                <Button.Template>
-                                                                    <ControlTemplate TargetType="Button">
-                                                                        <Border x:Name="bd" Background="{TemplateBinding Background}"
-                                                                                CornerRadius="6" Width="32" Height="28">
+                                                             <TextBlock x:Name="EditorZoomLevel" Text="12.5"
+                                                                        FontFamily="Consolas" FontSize="10" Foreground="#666669"
+                                                                        VerticalAlignment="Center" Margin="4,0,4,0" Width="28"
+                                                                        TextAlignment="Center"/>
+                                                             <Button x:Name="EditorZoomInBtn" Width="24" Height="24" Padding="0"
+                                                                     BorderThickness="0" Background="Transparent"
+                                                                     Click="EditorZoomIn_Click" ToolTip="Увеличить"
+                                                                     Cursor="Hand">
+                                                                 <Button.Template>
+                                                                     <ControlTemplate TargetType="Button">
+                                                                         <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                                                                 CornerRadius="6" Width="24" Height="24">
                                                                             <Path Data="M12,5 L12,19 M5,12 L19,12" Stroke="#888888" StrokeThickness="2"
                                                                                   Width="14" Height="14" Stretch="Uniform"
                                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -3809,10 +3791,9 @@
                                                             Click="ModsEditorSaveBtn_Click"/>
                                                 </StackPanel>
                                             </Border>
-                                       </Grid>
-                                   </Border>
-                                </Grid>
-                         </Grid>
+                                        </Grid>
+                                 </Grid>
+                          </Grid>
                     </Grid>
                </Grid>
            </Grid>
