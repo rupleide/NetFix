@@ -1,6 +1,7 @@
 <Window x:Class="NetFix.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:models="clr-namespace:NetFix.Models"
         Title="NetFix" Height="680" Width="880"
         MinHeight="580" MinWidth="760"
         WindowStyle="None" AllowsTransparency="True"
@@ -2765,9 +2766,9 @@
                                            </Storyboard>
                                        </BeginStoryboard>
                                    </DataTrigger.ExitActions>
-                              </DataTrigger>
-                               <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                <Setter TargetName="StatusStrip" Property="Background" Value="#22c55e"/>
+                                </DataTrigger>
+                                 <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                 <Setter TargetName="StatusStrip" Property="Background" Value="#22c55e"/>
                                 <Setter TargetName="BottomGlow" Property="Fill">
                                     <Setter.Value>
                                         <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
@@ -2791,11 +2792,11 @@
                                     <Setter TargetName="CardAuthor" Property="Foreground" Value="#22c55e"/>
                                     <Setter TargetName="MoveArrowRight" Property="Visibility" Value="Collapsed"/>
                                     <Setter TargetName="MoveArrowLeft" Property="Visibility" Value="Visible"/>
-                                    <Setter TargetName="CardMoveBtn" Property="ToolTip" Value="Убрать"/>
-                             </DataTrigger>
-                        </DataTemplate.Triggers>
-                     </DataTemplate>
-                    <DataTemplate x:Key="MyModCardTpl">
+                                     <Setter TargetName="CardMoveBtn" Property="ToolTip" Value="Убрать"/>
+                                </DataTrigger>
+                             </DataTemplate.Triggers>
+                        </DataTemplate>
+                     <DataTemplate x:Key="MyModCardTpl">
                         <Border Width="160" Height="170" CornerRadius="14"
                                 Background="#1a1a1e" BorderBrush="#2a2a2e" BorderThickness="1"
                                 Margin="0,0,14,14" Padding="16,14,10,10"
@@ -3023,8 +3024,8 @@
                                    </StackPanel>
                              </Grid>
                          </Border>
-                          <DataTemplate.Triggers>
-                              <DataTrigger Binding="{Binding IsActive}" Value="True">
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IsActive}" Value="True">
                                  <Setter TargetName="StatusStrip" Property="Background" Value="#22c55e"/>
                                  <Setter TargetName="BottomGlow" Property="Fill">
                                      <Setter.Value>
@@ -3046,9 +3047,36 @@
                                          </RadialGradientBrush>
                                      </Setter.Value>
                                  </Setter>
-                                   <Setter TargetName="CardAuthor" Property="Foreground" Value="#22c55e"/>
-                              </DataTrigger>
-                          </DataTemplate.Triggers>
+                                    <Setter TargetName="CardAuthor" Property="Foreground" Value="#22c55e"/>
+                               </DataTrigger>
+                                 <DataTrigger Binding="{Binding Type}">
+                                     <DataTrigger.Value>
+                                         <models:ModType>List</models:ModType>
+                                     </DataTrigger.Value>
+                                     <Setter TargetName="StatusStrip" Property="Background" Value="#a855f7"/>
+                                     <Setter TargetName="BottomGlow" Property="Fill">
+                                         <Setter.Value>
+                                             <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                                  Center="0.0,1.0" GradientOrigin="0.0,1.0"
+                                                                  RadiusX="0.6" RadiusY="0.5">
+                                                 <GradientStop Color="#a855f7" Offset="0.0"/>
+                                                 <GradientStop Color="#00000000" Offset="1.0"/>
+                                             </RadialGradientBrush>
+                                         </Setter.Value>
+                                     </Setter>
+                                     <Setter TargetName="TopGlow" Property="Fill">
+                                         <Setter.Value>
+                                             <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                                  Center="1.0,0.0" GradientOrigin="1.0,0.0"
+                                                                  RadiusX="0.6" RadiusY="0.5">
+                                                 <GradientStop Color="#a855f7" Offset="0.0"/>
+                                                 <GradientStop Color="#00000000" Offset="1.0"/>
+                                             </RadialGradientBrush>
+                                         </Setter.Value>
+                                     </Setter>
+                                     <Setter TargetName="CardAuthor" Property="Foreground" Value="#a855f7"/>
+                                 </DataTrigger>
+                           </DataTemplate.Triggers>
                        </DataTemplate>
                       <Style x:Key="ModListBox" TargetType="ListBox">
                         <Setter Property="Background" Value="#30111113"/>
