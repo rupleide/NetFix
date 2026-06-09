@@ -1019,6 +1019,12 @@ public partial class MainWindow : Window
             ToggleModActive(mod, false);
     }
 
+    private void CardToggleActive_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is ModEntry mod)
+            ToggleModActive(mod, !mod.IsActive);
+    }
+
     private void ToggleModActive(ModEntry mod, bool activate)
     {
         mod.IsActive = activate;
