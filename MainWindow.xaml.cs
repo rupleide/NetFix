@@ -14,6 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -901,7 +902,7 @@ public partial class MainWindow : Window
     private void ModsCardMyMods_Click(object s, RoutedEventArgs e)
     {
         ShowModsSubScreen(ModsMyModsScreen, "Ваши моды");
-        LoadMyMods();
+        if (_modsLoaded) RefreshMyMods();
     }
 
     private void ModsCardEditor_Click(object s, RoutedEventArgs e)
@@ -1059,32 +1060,70 @@ public partial class MainWindow : Window
 
     private void ToggleModActive(ModEntry mod, bool activate)
     {
-        Debug.WriteLine($"[ToggleModActive] entering: mod={mod.Name}, activate={activate}, isStrategyTab={_isStrategyTab}");
-
         mod.IsActive = activate;
 
-        var list = _isStrategyTab ? _settings.ActiveStrategyMods : _settings.ActiveListMods;
+        var list = mod.Type == ModType.Strategy
+            ? _settings.ActiveStrategyMods
+            : _settings.ActiveListMods;
         var dirName = ModScanner.GetModDirName(mod);
 
         if (activate)
         {
             if (!list.Contains(dirName))
-            {
                 list.Add(dirName);
-                Debug.WriteLine($"[ToggleModActive] added {dirName}");
-            }
-            else
-                Debug.WriteLine($"[ToggleModActive] already in list, skipped: {dirName}");
         }
         else
         {
-            var removed = list.Remove(dirName);
-            Debug.WriteLine($"[ToggleModActive] removed {dirName}: {removed}");
+            list.Remove(dirName);
         }
 
         SaveModsSettings();
-        Debug.WriteLine("[ToggleModActive] calling RefreshModsLists");
-        RefreshModsLists();
+
+        if (ModsMyModsScreen.Visibility == Visibility.Visible)
+            RefreshMyMods();
+        else
+            RefreshModsLists();
+    }
+
+    private void RefreshMyMods()
+    {
+        var activeMods = _allMods.Where(m => m.IsActive).ToList();
+        MyModsList.ItemsSource = null;
+        MyModsList.ItemsSource = activeMods;
+        MyModsCount.Text = activeMods.Count.ToString();
+        MyModsCount.Foreground = activeMods.Count > 0
+            ? new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e))
+            : new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+    }
+
+    private void MyModsScrollViewer_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        RecalcMyModsColumns();
+    }
+
+    private void RecalcMyModsColumns()
+    {
+        if (!MyModsList.IsLoaded) return;
+        double available = MyModsList.ActualWidth;
+        if (available <= 0) return;
+
+        const double targetTile = 280;
+        const double gap = 12;
+        int cols = Math.Max(1, (int)((available + gap) / (targetTile + gap)));
+        var grid = FindVisualChild<UniformGrid>(MyModsList);
+        if (grid is not null) grid.Columns = cols;
+    }
+
+    private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T found) return found;
+            var nested = FindVisualChild<T>(child);
+            if (nested is not null) return nested;
+        }
+        return null;
     }
 
     private void ListBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -1178,6 +1217,22 @@ public partial class MainWindow : Window
             _allMods.Add(dialog.CreatedEntry);
             SaveModsSettings();
             RefreshModsLists();
+            if (ModsMyModsScreen.Visibility == Visibility.Visible)
+                RefreshMyMods();
+        }
+    }
+
+    private void MyModsCreateBtn_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new CreateModWindow(ModType.Strategy);
+        dialog.Owner = this;
+
+        if (dialog.ShowDialog() == true && dialog.CreatedEntry is not null)
+        {
+            _allMods.Add(dialog.CreatedEntry);
+            SaveModsSettings();
+            RefreshModsLists();
+            RefreshMyMods();
         }
     }
 
@@ -1216,6 +1271,8 @@ public partial class MainWindow : Window
                 _allMods.Add(entry);
                 SaveModsSettings();
                 RefreshModsLists();
+                if (ModsMyModsScreen.Visibility == Visibility.Visible)
+                    RefreshMyMods();
                 ShowModsSuccess($"Мод '{meta.Name}' импортирован");
             }
             else
@@ -1256,6 +1313,22 @@ public partial class MainWindow : Window
             }
 
             UpdateModsStatus();
+        }, confirmText: "Применить", confirmIsDestructive: false);
+    }
+
+    private void MyModsApplyBtn_Click(object sender, RoutedEventArgs e)
+    {
+        SaveModsSettings();
+        ShowConfirmDialog("Применение модов", "Применить активные моды?", ok =>
+        {
+            if (!ok) return;
+
+            var activeLists = _allMods
+                .Where(m => m.Type == ModType.List && m.IsActive)
+                .ToList();
+
+            if (activeLists.Count > 0)
+                ModActivator.ApplyListMods(activeLists);
         }, confirmText: "Применить", confirmIsDestructive: false);
     }
 
@@ -1333,11 +1406,28 @@ public partial class MainWindow : Window
         LoadEditorFileLists(mod.FolderPath);
     }
 
+    private void OpenModLocation_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement fe || fe.Tag is not ModEntry mod) return;
+        if (Directory.Exists(mod.FolderPath))
+            Process.Start("explorer.exe", mod.FolderPath);
+    }
+
     private void MyModCard_Click(object sender, MouseButtonEventArgs e)
     {
         if (sender is not Border border || border.DataContext is not ModEntry mod) return;
         ShowModsSubScreen(ModsEditorScreen, "Редактор");
         LoadEditorFileLists(mod.FolderPath);
+    }
+
+    private void EditorOpenFileLocation_Click(object sender, RoutedEventArgs e)
+    {
+        if (ModsEditorFileList.SelectedItem is FileListItem item && !string.IsNullOrEmpty(item.FilePath))
+        {
+            var dir = System.IO.Path.GetDirectoryName(item.FilePath);
+            if (Directory.Exists(dir))
+                Process.Start("explorer.exe", dir);
+        }
     }
 
     private async void EditorAddFile_Click(object sender, RoutedEventArgs e)
@@ -1387,7 +1477,7 @@ public partial class MainWindow : Window
                 _allMods.Remove(mod);
                 SaveModsSettings();
                 RefreshModsLists();
-                LoadMyMods();
+                RefreshMyMods();
                 ShowModsSuccess($"Мод '{mod.Name}' удалён");
             });
     }
@@ -1410,58 +1500,6 @@ public partial class MainWindow : Window
     {
         if (sender is Grid grid)
             grid.Clip = new RectangleGeometry(new Rect(0, 0, e.NewSize.Width, e.NewSize.Height), 10, 10);
-    }
-
-    private void LoadMyMods()
-    {
-        var mods = new List<ModEntry>();
-        var opts = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-
-        foreach (var root in new[] { ModScanner.StrategiesRoot, ModScanner.ListsRoot })
-        {
-            if (!Directory.Exists(root)) continue;
-            foreach (var dir in Directory.GetDirectories(root))
-            {
-                try
-                {
-                    var metaPath = System.IO.Path.Combine(dir, "mod.json");
-                    if (!File.Exists(metaPath)) continue;
-
-                    var json = File.ReadAllText(metaPath, Encoding.UTF8);
-                    var meta = JsonSerializer.Deserialize<ModMeta>(json, opts);
-                    if (meta is null || string.IsNullOrEmpty(meta.Name)) continue;
-
-                    var modType = meta.Type switch
-                    {
-                        "strategy" => ModType.Strategy,
-                        "list" => ModType.List,
-                        "build" => ModType.Build,
-                        _ => ModType.Strategy,
-                    };
-
-                    mods.Add(new ModEntry(
-                        Name: meta.Name,
-                        Author: meta.Author,
-                        Version: meta.Version,
-                        Description: meta.Description,
-                        Type: modType,
-                        FolderPath: dir,
-                        RequiredBuild: string.IsNullOrEmpty(meta.RequiredBuild) ? null : meta.RequiredBuild
-                    ));
-                }
-                catch { }
-            }
-        }
-
-        MyModsGrid.ItemsSource = null;
-        MyModsGrid.ItemsSource = mods;
-        MyModsCount.Text = mods.Count.ToString();
-        MyModsCount.Foreground = mods.Count > 0
-            ? new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e))
-            : new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
-
-        MyModsGrid.Visibility = mods.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        MyModsEmpty.Visibility = mods.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private string? _modsEditorFilePath;
@@ -1506,17 +1544,26 @@ public partial class MainWindow : Window
         {
             // Режим — конкретная папка мода
             var items = new List<FileListItem>();
+            // Кнопка назад
+            items.Add(new FileListItem("← Назад", null, false,
+                FontWeights.Normal, new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+                new Thickness(12, 6, 12, 6), "Segoe UI", 12));
             AddFolderFiles(items, folderPath);
             foreach (var item in items)
                 _editorFileList.Items.Add(item);
-            if (items.Count > 0 && !items[0].IsHeader)
-                _editorFileList.SelectedIndex = 0;
+            // Выбрать первый не-заголовок, не назад
+            for (int i = 0; i < items.Count; i++)
+            {
+                if (items[i] is FileListItem fi && !fi.IsHeader && fi.FilePath is not null)
+                { _editorFileList.SelectedIndex = i; break; }
+            }
             return;
         }
 
-        // Полный режим — C:\Zapret\lists + C:\Zapret
+        // Полный режим — C:\Zapret\lists + C:\Zapret + Mods
         AddFolderFiles(_editorFileList.Items, @"C:\Zapret\lists", "Листы:", "*.txt");
         AddFolderFiles(_editorFileList.Items, @"C:\Zapret", "Bat файлы:", "*.bat");
+        AddModFolders(_editorFileList.Items);
 
         if (_editorFileList.Items.Count > 0)
         {
@@ -1577,13 +1624,47 @@ public partial class MainWindow : Window
         }
     }
 
+    private static void AddModFolders(System.Collections.IList items)
+    {
+        var strategiesDir = Path.Combine(AppContext.BaseDirectory, "Mods", "strategies");
+        if (!Directory.Exists(strategiesDir)) return;
+
+        items.Add(MakeHeader("Моды:"));
+        foreach (var dir in Directory.GetDirectories(strategiesDir).OrderBy(d => System.IO.Path.GetFileName(d)))
+        {
+            var name = System.IO.Path.GetFileName(dir);
+            items.Add(MakeFile(name, dir));
+        }
+    }
+
     private void ModsEditorFileList_SelectionChanged(object s, SelectionChangedEventArgs e)
     {
         EnsureEditorControls();
-        if (_editorFileList?.SelectedItem is not FileListItem fi || fi.IsHeader || fi.FilePath is null)
+        if (_editorFileList?.SelectedItem is not FileListItem fi || fi.IsHeader)
         {
             if (_editorTextBox is not null)
                 _editorTextBox.Text = "";
+            return;
+        }
+
+        // ← Назад — вернуться в корень
+        if (fi.Display == "← Назад")
+        {
+            LoadEditorFileLists();
+            return;
+        }
+
+        if (fi.FilePath is null)
+        {
+            if (_editorTextBox is not null)
+                _editorTextBox.Text = "";
+            return;
+        }
+
+        // Если это папка мода — перейти в неё
+        if (Directory.Exists(fi.FilePath))
+        {
+            LoadEditorFileLists(fi.FilePath);
             return;
         }
 
