@@ -866,6 +866,7 @@ public partial class MainWindow : Window
 
         var showStatus = screen == ModsStrategiesScreen || screen == ModsListsScreen || screen == ModsMyModsScreen;
         ModsHeaderStatus.Visibility = showStatus ? Visibility.Visible : Visibility.Collapsed;
+        if (showStatus) ModsStatusText.Text = "";
     }
 
     private void ModsBackBtn_Click(object s, RoutedEventArgs e)
@@ -932,25 +933,50 @@ public partial class MainWindow : Window
             .Where(m => (_isStrategyTab ? m.Type == ModType.Strategy : m.Type == ModType.List) && !m.IsActive)
             .ToList();
 
-        AvailableList.ItemsSource = availableMods;
-        ActiveList.ItemsSource = activeMods;
-        Debug.WriteLine($"[RefreshModsLists] setting SelectedItem=null on both lists. Avail={availableMods.Count}, Active={activeMods.Count}");
-        AvailableList.SelectedItem = null;
-        ActiveList.SelectedItem = null;
+        if (_isStrategyTab)
+        {
+            AvailableList.ItemsSource = availableMods;
+            ActiveList.ItemsSource = activeMods;
+            AvailableList.SelectedItem = null;
+            ActiveList.SelectedItem = null;
 
-        var hasActive = activeMods.Count > 0;
-        ModsApplyBtn.IsEnabled = hasActive;
-        ModsApplyBtn.Style = (Style)FindResource(hasActive ? "AccentBtn" : "OutlineBtn");
+            AvailableCount.Text = availableMods.Count.ToString();
+            ActiveCount.Text = activeMods.Count.ToString();
+            ActiveCount.Foreground = new SolidColorBrush(activeMods.Count > 0
+                ? Color.FromRgb(0x22, 0xc5, 0x5e)
+                : Color.FromRgb(0x88, 0x88, 0x88));
+
+            ModsApplyBtn.IsEnabled = activeMods.Count > 0;
+            ModsApplyBtn.Style = (Style)FindResource(activeMods.Count > 0 ? "AccentBtn" : "OutlineBtn");
+        }
+        else
+        {
+            ListsAvailableList.ItemsSource = availableMods;
+            ListsActiveList.ItemsSource = activeMods;
+            ListsAvailableList.SelectedItem = null;
+            ListsActiveList.SelectedItem = null;
+
+            ListsAvailableCount.Text = availableMods.Count.ToString();
+            ListsActiveCount.Text = activeMods.Count.ToString();
+            ListsActiveCount.Foreground = new SolidColorBrush(activeMods.Count > 0
+                ? Color.FromRgb(0x22, 0xc5, 0x5e)
+                : Color.FromRgb(0x88, 0x88, 0x88));
+
+            ListsStatusText.Text = $"Листов: {availableMods.Count + activeMods.Count} | Активных: {activeMods.Count}";
+            ListsApplyBtn.IsEnabled = activeMods.Count > 0;
+            ListsApplyBtn.Style = (Style)FindResource(activeMods.Count > 0 ? "AccentBtn" : "OutlineBtn");
+            ResetListsArrows();
+        }
+
         UpdateModsStatus();
     }
 
     private void UpdateModsStatus()
     {
         var isStrategy = _isStrategyTab;
-        var typeName = isStrategy ? "Стратегий" : "Листов";
         var allCount = _allMods.Count(m => isStrategy ? m.Type == ModType.Strategy : m.Type == ModType.List);
-        var activeCount = ActiveList.Items.Count;
-        var availCount = AvailableList.Items.Count;
+        var activeCount = isStrategy ? ActiveList.Items.Count : ListsActiveList.Items.Count;
+        var availCount = isStrategy ? AvailableList.Items.Count : ListsAvailableList.Items.Count;
 
         ModsHeaderStatus.Text = activeCount > 0
             ? $"ВКЛЮЧЕНО: {activeCount} модов"
@@ -959,12 +985,13 @@ public partial class MainWindow : Window
             ? Color.FromRgb(0x22, 0xc5, 0x5e)
             : Color.FromRgb(0x88, 0x88, 0x88));
 
-        if (AvailableCount is not null)
-            AvailableCount.Text = availCount.ToString();
-        if (ActiveCount is not null)
+        if (isStrategy)
         {
+            AvailableCount.Text = availCount.ToString();
             ActiveCount.Text = activeCount.ToString();
-            ActiveCount.Foreground = new SolidColorBrush(activeCount > 0 ? Color.FromRgb(0x22, 0xc5, 0x5e) : Color.FromRgb(0x88, 0x88, 0x88));
+            ActiveCount.Foreground = new SolidColorBrush(activeCount > 0
+                ? Color.FromRgb(0x22, 0xc5, 0x5e)
+                : Color.FromRgb(0x88, 0x88, 0x88));
         }
     }
 
@@ -1513,8 +1540,8 @@ public partial class MainWindow : Window
             lp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
 
         _pendingToggleMod = null;
-        Debug.WriteLine($"[ListsMoveRightBtn] calling ListsToggleModActive({mod.Name}, true)");
-        ListsToggleModActive(mod, true);
+        Debug.WriteLine($"[ListsMoveRightBtn] calling ToggleModActive({mod.Name}, true)");
+        ToggleModActive(mod, true);
     }
 
     private void ListsMoveLeftBtn_Click(object sender, RoutedEventArgs e)
@@ -1534,38 +1561,8 @@ public partial class MainWindow : Window
             lp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
 
         _pendingToggleMod = null;
-        Debug.WriteLine($"[ListsMoveLeftBtn] calling ListsToggleModActive({mod.Name}, false)");
-        ListsToggleModActive(mod, false);
-    }
-
-
-    private void ListsToggleModActive(ModEntry mod, bool activate)
-    {
-        Debug.WriteLine($"[ListsToggleModActive] entering: mod={mod.Name}, activate={activate}");
-
-        mod.IsActive = activate;
-        var list = _settings.ActiveListMods;
-        var dirName = ModScanner.GetModDirName(mod);
-
-        if (activate)
-        {
-            if (!list.Contains(dirName))
-            {
-                list.Add(dirName);
-                Debug.WriteLine($"[ListsToggleModActive] added {dirName}");
-            }
-            else
-                Debug.WriteLine($"[ListsToggleModActive] already in list, skipped: {dirName}");
-        }
-        else
-        {
-            var removed = list.Remove(dirName);
-            Debug.WriteLine($"[ListsToggleModActive] removed {dirName}: {removed}");
-        }
-
-        SaveModsSettings();
-        Debug.WriteLine("[ListsToggleModActive] calling RefreshListsInfo");
-        RefreshListsInfo();
+        Debug.WriteLine($"[ListsMoveLeftBtn] calling ToggleModActive({mod.Name}, false)");
+        ToggleModActive(mod, false);
     }
 
     private void ListsAvailableList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -1625,7 +1622,7 @@ public partial class MainWindow : Window
         Debug.WriteLine($"[Drop -> ListsAvail] dragMod={_dragMod?.Name}, dragFromActive={_dragFromActive}");
         if (_dragMod is null) return;
         if (_dragFromActive)
-            ListsToggleModActive(_dragMod, false);
+            ToggleModActive(_dragMod, false);
         _dragMod = null;
         RemoveDragAdorner();
     }
@@ -1635,51 +1632,14 @@ public partial class MainWindow : Window
         Debug.WriteLine($"[Drop -> ListsActive] dragMod={_dragMod?.Name}, dragFromActive={_dragFromActive}");
         if (_dragMod is null) return;
         if (!_dragFromActive)
-            ListsToggleModActive(_dragMod, true);
+            ToggleModActive(_dragMod, true);
         _dragMod = null;
         RemoveDragAdorner();
     }
-
-    private void RefreshListsInfo()
+    private void ListsCreateBtn_Click(object sender, RoutedEventArgs e)
     {
-        Debug.WriteLine("[RefreshListsInfo] entering");
-        var lists = _allMods.Where(m => m.Type == ModType.List).ToList();
-        var activeNames = _settings.ActiveListMods ?? [];
-
-        var activeMods = lists
-            .Where(m => m.IsActive)
-            .OrderBy(m => { var idx = activeNames.IndexOf(ModScanner.GetModDirName(m)); return idx < 0 ? 999 : idx; })
-            .ToList();
-
-        var availableMods = lists
-            .Where(m => !m.IsActive)
-            .ToList();
-
-        ListsAvailableList.ItemsSource = availableMods;
-        ListsActiveList.ItemsSource = activeMods;
-        Debug.WriteLine($"[RefreshListsInfo] setting SelectedItem=null on both lists. Avail={availableMods.Count}, Active={activeMods.Count}");
-        ListsAvailableList.SelectedItem = null;
-        ListsActiveList.SelectedItem = null;
-
-        ListsAvailableCount.Text = availableMods.Count.ToString();
-        ListsActiveCount.Text = activeMods.Count.ToString();
-        ListsActiveCount.Foreground = new SolidColorBrush(activeMods.Count > 0 ? Color.FromRgb(0x22, 0xc5, 0x5e) : Color.FromRgb(0x88, 0x88, 0x88));
-        ListsStatusText.Text = $"Листов: {lists.Count} | Активных: {activeMods.Count}";
-        ListsApplyBtn.IsEnabled = activeMods.Count > 0;
-        ListsApplyBtn.Style = (Style)FindResource(activeMods.Count > 0 ? "AccentBtn" : "OutlineBtn");
-        ResetListsArrows();
-    }
-
-    private async void ListsCreateBtn_Click(object sender, RoutedEventArgs e)
-    {
-        var dialog = new CreateModWindow(ModType.List);
-        dialog.Owner = this;
-        if (dialog.ShowDialog() == true && dialog.CreatedEntry is not null)
-        {
-            _allMods.Add(dialog.CreatedEntry);
-            SaveModsSettings();
-            RefreshListsInfo();
-        }
+        _isStrategyTab = false;
+        CreateModBtn_Click(sender, e);
     }
 
     private async void ListsImportBtn_Click(object sender, RoutedEventArgs e)
@@ -1695,7 +1655,7 @@ public partial class MainWindow : Window
             var (meta, readError) = await ModPackager.ReadModMetaFromArchive(openDialog.FileName);
             if (meta is null || readError is not null)
             {
-                ListsStatusText.Text = $"❌ {readError ?? "Не удалось прочитать"}";
+                ListsStatusText.Text = $"Ошибка: {readError ?? "Не удалось прочитать"}";
                 ListsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
                 return;
             }
@@ -1713,7 +1673,7 @@ public partial class MainWindow : Window
                 {
                     _allMods.Add(entry);
                     SaveModsSettings();
-                    RefreshListsInfo();
+                    RefreshModsLists();
                     ListsStatusText.Text = $"✅ Мод '{meta.Name}' импортирован";
                     ListsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
                 }

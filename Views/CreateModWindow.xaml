@@ -376,6 +376,40 @@
                                    Margin="0,6,0,16"/>
                     </StackPanel>
                     <StackPanel x:Name="ListSection" Visibility="Collapsed">
+                        <TextBlock Text="Файл списка:" Style="{StaticResource FieldLabel}"/>
+                        <Border Background="#1a1a1c"
+                                BorderBrush="#2a2a2d"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="12"
+                                Margin="0,0,0,4">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock x:Name="ListFilePathDisplay"
+                                               Text="Файл не выбран"
+                                               FontFamily="Segoe UI"
+                                               FontSize="12"
+                                               Foreground="#555558"
+                                               TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                                <Button Grid.Column="1"
+                                        Content="Выбрать"
+                                        MinWidth="80" MinHeight="32"
+                                        Style="{StaticResource OutlineBtn}"
+                                        Margin="10,0,0,0"
+                                        Click="SelectListFile_Click"/>
+                            </Grid>
+                        </Border>
+                        <TextBlock Text="Домены из файла и текст введённый ниже будут объединены."
+                                   Foreground="#555558"
+                                   FontFamily="Segoe UI"
+                                   FontSize="11"
+                                   TextWrapping="Wrap"
+                                   Margin="0,6,0,16"/>
                         <Grid Margin="0,0,0,6">
                             <TextBlock Text="Домены:" Style="{StaticResource FieldLabel}" Margin="0"/>
                             <TextBlock Text="по одному на строку"
