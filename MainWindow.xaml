@@ -3315,9 +3315,9 @@
                     </Rectangle>
                 </Grid>
                 <Grid Grid.Row="2" x:Name="ModsContentArea" Margin="32,20,32,20">
-                   <Grid x:Name="ModsHomeScreen" Visibility="Visible">
-                       <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,12,0">
-                            <UniformGrid Columns="2" HorizontalAlignment="Left">
+                    <Grid x:Name="ModsHomeScreen" Visibility="Visible">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,12,0">
+                             <UniformGrid Columns="2" HorizontalAlignment="Right">
                                <Button x:Name="CardStrategies" Style="{StaticResource FlatBtn}" Padding="0"
                                        Width="180" Height="180"
                                        Click="ModsCardStrategies_Click" Margin="0,0,16,16">
@@ -3469,11 +3469,39 @@
                                            </StackPanel>
                                        </Grid>
                                    </Border>
-                               </Button>
-                            </UniformGrid>
-                       </ScrollViewer>
-                   </Grid>
-                    <Grid x:Name="ModsStrategiesScreen" Visibility="Collapsed">
+                                </Button>
+                             </UniformGrid>
+                        </ScrollViewer>
+                         <Border HorizontalAlignment="Left" VerticalAlignment="Top"
+                                 Background="#cc1a1a1e" CornerRadius="16" Padding="16"
+                                 BorderBrush="#2a2a30" BorderThickness="1"
+                                 Width="180" Height="180" Margin="0,0,16,0">
+                             <Grid>
+                                 <Grid.RowDefinitions>
+                                     <RowDefinition Height="*"/>
+                                     <RowDefinition Height="Auto"/>
+                                 </Grid.RowDefinitions>
+                                 <Border Grid.Row="0" Width="52" Height="52" CornerRadius="14"
+                                         HorizontalAlignment="Center" VerticalAlignment="Center"
+                                         Background="#2a2a30">
+                                     <Path Data="M12,2 L22,20 L2,20 Z M12,9 L12,14 M12,16 L12,18"
+                                           Stroke="#f59e0b" StrokeThickness="2" Width="24" Height="24"
+                                           Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                 </Border>
+                                 <StackPanel Grid.Row="1" VerticalAlignment="Bottom">
+                                     <TextBlock Text="ВАЖНАЯ ИНФОРМАЦИЯ!" FontSize="11"
+                                                FontWeight="Bold" Foreground="#f59e0b"
+                                                HorizontalAlignment="Center" TextWrapping="Wrap"
+                                                TextAlignment="Center"/>
+                                     <TextBlock Text="Контент будет добавлен позже." FontSize="10"
+                                                Foreground="#77777a" HorizontalAlignment="Center"
+                                                TextWrapping="Wrap" TextAlignment="Center"
+                                                Margin="0,2,0,0"/>
+                                 </StackPanel>
+                             </Grid>
+                         </Border>
+                    </Grid>
+                     <Grid x:Name="ModsStrategiesScreen" Visibility="Collapsed">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
