@@ -29,7 +29,6 @@ public static class AutoSetupService
         Action<bool, string> done,
         AppSettings settings)
     {
-        // Step 1, internet
         log("Проверяю подключение к интернету…", "info");
         progress(0.05);
         bool hasNet = await DiagnosticsEngine.CheckInternetAsync();
@@ -43,13 +42,11 @@ public static class AutoSetupService
         progress(0.10);
         await Task.Delay(200);
 
-        // Step 2, GitHub versions
         log("Проверяю последние версии инструментов…", "info");
         string zapretVer   = await GetLatestGitHubRelease(ZapretRepo);
         string tgWsVer     = await GetLatestGitHubRelease(TgWsProxyRepo);
         progress(0.20);
 
-        // Step 3, Zapret
         if (string.IsNullOrEmpty(settings.ZapretPath) || !File.Exists(settings.ZapretPath))
         {
             log($"Нахожу Zapret {(string.IsNullOrEmpty(zapretVer) ? "последнюю версию" : zapretVer)}…", "info");
@@ -67,7 +64,6 @@ public static class AutoSetupService
         progress(0.50);
         await Task.Delay(200);
 
-        // Step 4, tg-ws-proxy
         if (string.IsNullOrEmpty(settings.TgWsProxyPath) || !File.Exists(settings.TgWsProxyPath))
         {
             log($"Нахожу tg-ws-proxy {(string.IsNullOrEmpty(tgWsVer) ? "последнюю версию" : tgWsVer)}…", "info");
@@ -85,7 +81,6 @@ public static class AutoSetupService
         progress(0.75);
         await Task.Delay(200);
 
-        // Step 5, manual instructions
         log("", "spacer");
         progress(1.0);
         await Task.Delay(200);

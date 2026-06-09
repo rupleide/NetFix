@@ -8,14 +8,11 @@
         AllowsTransparency="True"
         Background="Transparent"
         ResizeMode="NoResize">
-
     <Window.Resources>
         <PathGeometry x:Key="SettingsIcon">M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z</PathGeometry>
         <PathGeometry x:Key="CheckmarkIcon">M2,12 L8,18 L22,4</PathGeometry>
         <PathGeometry x:Key="WarningIcon">M12,2 L22,20 L2,20 Z M12,9 L12,13 M12,15 L12,17</PathGeometry>
         <PathGeometry x:Key="CloseIcon">M6,6 L18,18 M18,6 L6,18</PathGeometry>
-
-        <!-- Flat button (base) -->
         <Style x:Key="FlatBtn" TargetType="Button">
             <Setter Property="Background"   Value="Transparent"/>
             <Setter Property="BorderBrush"  Value="Transparent"/>
@@ -39,8 +36,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- Accent button (синяя, для основного действия) -->
         <Style x:Key="AccentBtn" TargetType="Button">
             <Setter Property="Background"   Value="#3b82f6"/>
             <Setter Property="Foreground"   Value="White"/>
@@ -72,8 +67,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- Flat button centered (minimize) -->
         <Style x:Key="FlatBtnCentered" TargetType="Button" BasedOn="{StaticResource FlatBtn}">
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -98,8 +91,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- Close button -->
         <Style x:Key="CloseBtn" TargetType="Button" BasedOn="{StaticResource FlatBtn}">
             <Setter Property="Template">
                 <Setter.Value>
@@ -122,8 +113,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- Outline button -->
         <Style x:Key="OutlineBtn" TargetType="Button" BasedOn="{StaticResource FlatBtn}">
             <Setter Property="Template">
                 <Setter.Value>
@@ -142,8 +131,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- Scrollbar -->
         <Style TargetType="ScrollBar">
             <Setter Property="MinWidth" Value="0"/>
             <Setter Property="Width" Value="8"/>
@@ -175,22 +162,14 @@
             </Setter>
         </Style>
     </Window.Resources>
-
-    <!-- Основной фон -->
     <Border Background="#161618" CornerRadius="14" BorderBrush="#2a2a2d" BorderThickness="1" ClipToBounds="True">
         <Grid x:Name="RootGrid" Margin="1,1,-1,-1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" MinHeight="71"/>
-                <!-- Header -->
                 <RowDefinition Height="Auto"/>
-                <!-- Status + Progress -->
                 <RowDefinition/>
-                <!-- Content -->
                 <RowDefinition Height="Auto" MinHeight="77"/>
-                <!-- Buttons -->
             </Grid.RowDefinitions>
-
-            <!-- Header -->
             <Grid Grid.Row="0" Margin="28,14,28,10">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <Border Width="32" Height="32" CornerRadius="8" Background="#1e1e22" Margin="0,0,12,0">
@@ -202,8 +181,6 @@
                         <TextBlock Text="Настройка конфига" FontSize="15" FontWeight="SemiBold" Foreground="#f0f0f0"/>
                     </StackPanel>
                 </StackPanel>
-                
-                <!-- Кнопки скрытия/закрытия -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                     <Button Style="{StaticResource FlatBtnCentered}"
                             Width="34" Height="18.62" MinWidth="34" MinHeight="18.62" Padding="0,0,0,1" FontSize="14"
@@ -221,11 +198,7 @@
                     </Button>
                 </StackPanel>
             </Grid>
-
-            <!-- Разделитель -->
             <Border Grid.Row="0" Height="1" Background="#22222a" Margin="28,70,28,0" VerticalAlignment="Top"/>
-
-            <!-- Status Panel -->
             <StackPanel x:Name="StatusPanel" Grid.Row="1" Orientation="Horizontal" Margin="28,10,28,10">
                 <Border Width="36" Height="36" CornerRadius="10" Background="#1e1e22" Margin="0,0,14,0" VerticalAlignment="Top">
                     <Path x:Name="StatusIcon" Width="16" Height="16" Stretch="Uniform"
@@ -237,19 +210,15 @@
                                TextWrapping="Wrap"
                                MaxWidth="460"/>
             </StackPanel>
-
-            <!-- Progress -->
             <Grid Grid.Row="1" Margin="28,16,28,0" x:Name="ProgressBarContainer">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-
                 <Grid Grid.Row="0" Margin="0,0,0,6">
                     <TextBlock x:Name="ProgressText" Text="" Foreground="#888888" FontSize="11" HorizontalAlignment="Left" Visibility="Collapsed"/>
                     <TextBlock x:Name="TimeRemainingText" Text="" Foreground="#555558" FontSize="11" HorizontalAlignment="Right" Visibility="Collapsed"/>
                 </Grid>
-
                 <Border Grid.Row="1" Height="4" CornerRadius="2" Background="#22222a" ClipToBounds="True">
                     <Border x:Name="ProgressBar" Height="4" CornerRadius="2" HorizontalAlignment="Left" Width="0">
                         <Border.Background>
@@ -261,8 +230,6 @@
                     </Border>
                 </Border>
             </Grid>
-
-            <!-- Log -->
             <Border Grid.Row="2" Background="#111113" CornerRadius="10"
                     BorderBrush="#22222a" BorderThickness="1"
                     x:Name="LogContainer" Visibility="Collapsed"
@@ -281,8 +248,6 @@
                                  IsDocumentEnabled="True"/>
                 </ScrollViewer>
             </Border>
-
-            <!-- Config List -->
             <ScrollViewer x:Name="ConfigListScroll" Grid.Row="2"
                           VerticalScrollBarVisibility="Auto"
                           Visibility="Collapsed"
@@ -290,8 +255,6 @@
                           VerticalAlignment="Stretch" Height="Auto">
                 <StackPanel x:Name="ConfigListPanel"/>
             </ScrollViewer>
-
-            <!-- Buttons -->
             <Border Grid.Row="3" Background="#111113" CornerRadius="0,0,14,14"
                         BorderBrush="#22222a" BorderThickness="0,1,0,0"
                         Margin="0,16,0,0" Padding="28,12,28,12">
@@ -302,18 +265,12 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-
-                        <!-- Подсказка слева -->
                         <TextBlock Grid.Column="0" Text="Zapret Config Manager" 
                                        Foreground="#333336" FontSize="11" VerticalAlignment="Center"/>
-
-                        <!-- Да, начать / Выбрать конфиг (accent, слева) -->
                         <Button x:Name="SecondaryBtn" Grid.Column="1" Content="Применить"
                                     MinWidth="140" MinHeight="38" Padding="16,8" Margin="0,0,10,0"
                                     Style="{StaticResource AccentBtn}"
                                     Click="SecondaryBtn_Click"/>
-
-                        <!-- Нет, выйти (теперь outline, справа) -->
                         <Button x:Name="PrimaryBtn" Grid.Column="2" Content="Проверить конфиг"
                                     MinWidth="140" MinHeight="38" Padding="16,8"
                                     Background="Transparent" Foreground="#666669"
@@ -346,8 +303,6 @@
                             </Button.Style>
                         </Button>
                     </Grid>
-                    
-                    <!-- Прогресс-бар для применения конфига -->
                     <ProgressBar x:Name="ApplyConfigProgress"
                                  Height="3"
                                  Margin="0,8,0,0"

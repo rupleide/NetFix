@@ -125,7 +125,6 @@ public static class ModPackager
         }
         catch (Exception ex)
         {
-            // cleanup on failure
             try { Directory.Delete(modDir, true); } catch { }
             return (null, $"Ошибка распаковки: {ex.Message}");
         }

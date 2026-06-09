@@ -24,17 +24,14 @@ public static class ComponentVersionService
     {
         try
         {
-            // Проверяем, установлены ли компоненты
             bool zapretInstalled = !string.IsNullOrEmpty(settings.ZapretPath) && File.Exists(settings.ZapretPath);
             bool tgWsProxyInstalled = !string.IsNullOrEmpty(settings.TgWsProxyPath) && File.Exists(settings.TgWsProxyPath);
 
-            // Если ничего не установлено - требуется установка
             if (!zapretInstalled && !tgWsProxyInstalled)
             {
                 return (true, "Компоненты не установлены");
             }
 
-            // Проверяем версии установленных компонентов
             bool zapretNeedsUpdate = false;
             bool tgWsProxyNeedsUpdate = false;
 
@@ -42,8 +39,8 @@ public static class ComponentVersionService
             {
                 var zapretVersion = GetInstalledZapretVersion(settings.ZapretPath);
                 var latestZapretVersion = await GetLatestGitHubVersionAsync(ZapretRepo);
-                
-                if (!string.IsNullOrEmpty(latestZapretVersion) && 
+
+                if (!string.IsNullOrEmpty(latestZapretVersion) &&
                     !string.IsNullOrEmpty(zapretVersion) &&
                     IsNewerVersion(latestZapretVersion, zapretVersion))
                 {
@@ -55,8 +52,8 @@ public static class ComponentVersionService
             {
                 var tgWsProxyVersion = GetInstalledTgWsProxyVersion(settings.TgWsProxyPath);
                 var latestTgWsProxyVersion = await GetLatestGitHubVersionAsync(TgWsProxyRepo);
-                
-                if (!string.IsNullOrEmpty(latestTgWsProxyVersion) && 
+
+                if (!string.IsNullOrEmpty(latestTgWsProxyVersion) &&
                     !string.IsNullOrEmpty(tgWsProxyVersion) &&
                     IsNewerVersion(latestTgWsProxyVersion, tgWsProxyVersion))
                 {
@@ -73,7 +70,7 @@ public static class ComponentVersionService
                     components = "Zapret";
                 else
                     components = "TgWsProxy";
-                
+
                 return (true, $"Доступно обновление для {components}");
             }
 
@@ -82,7 +79,6 @@ public static class ComponentVersionService
         catch (Exception ex)
         {
             Console.WriteLine($"Ошибка проверки версий: {ex.Message}");
-            // В случае ошибки проверки версий не блокируем работу
             return (false, "Не удалось проверить версии");
         }
     }
@@ -94,19 +90,16 @@ public static class ComponentVersionService
     {
         try
         {
-            // Ищем файл version.txt или README в папке с Zapret
             var zapretDir = Path.GetDirectoryName(serviceBatPath);
             if (string.IsNullOrEmpty(zapretDir))
                 return null;
 
-            // Пытаемся найти файл с версией
             var versionFile = Path.Combine(zapretDir, "version.txt");
             if (File.Exists(versionFile))
             {
                 return File.ReadAllText(versionFile).Trim();
             }
 
-            // Если файла версии нет, пытаемся извлечь из README
             var readmeFiles = Directory.GetFiles(zapretDir, "README*", SearchOption.TopDirectoryOnly);
             if (readmeFiles.Length > 0)
             {
@@ -118,7 +111,6 @@ public static class ComponentVersionService
                 }
             }
 
-            // Если не удалось определить версию, возвращаем дату модификации файла
             var fileInfo = new FileInfo(serviceBatPath);
             return fileInfo.LastWriteTime.ToString("yyyy.MM.dd");
         }
@@ -136,15 +128,13 @@ public static class ComponentVersionService
         try
         {
             var fileInfo = new FileInfo(exePath);
-            
-            // Пытаемся получить версию из метаданных файла
+
             var versionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(exePath);
             if (!string.IsNullOrEmpty(versionInfo.FileVersion))
             {
                 return versionInfo.FileVersion;
             }
 
-            // Если метаданных нет, используем дату модификации
             return fileInfo.LastWriteTime.ToString("yyyy.MM.dd");
         }
         catch
@@ -162,7 +152,7 @@ public static class ComponentVersionService
         {
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
             http.DefaultRequestHeaders.UserAgent.ParseAdd("NetFix/1.0");
-            
+
             var json = await http.GetStringAsync($"https://api.github.com/repos/{repo}/releases/latest");
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
@@ -184,36 +174,27 @@ public static class ComponentVersionService
     {
         try
         {
-            // Убираем префикс 'v' если есть
             version1 = version1.TrimStart('v').Trim();
             version2 = version2.TrimStart('v').Trim();
 
-            // Разделяем версию на числовую часть и суффикс (например, "1.9.8b" -> "1.9.8" и "b")
             var (numPart1, suffix1) = SplitVersionAndSuffix(version1);
             var (numPart2, suffix2) = SplitVersionAndSuffix(version2);
 
-            // Сравниваем числовые части
             if (Version.TryParse(numPart1, out var v1) && Version.TryParse(numPart2, out var v2))
             {
                 int comparison = v1.CompareTo(v2);
-                
-                // Если числовые части разные, возвращаем результат
+
                 if (comparison != 0)
                     return comparison > 0;
-                
-                // Если числовые части одинаковые, сравниваем суффиксы
-                // Версия без суффикса считается новее версии с суффиксом
-                // Например: 1.9.8 > 1.9.8b
+
                 if (string.IsNullOrEmpty(suffix1) && !string.IsNullOrEmpty(suffix2))
                     return true;
                 if (!string.IsNullOrEmpty(suffix1) && string.IsNullOrEmpty(suffix2))
                     return false;
-                
-                // Если оба суффикса есть, сравниваем их лексикографически
+
                 return string.Compare(suffix1, suffix2, StringComparison.OrdinalIgnoreCase) > 0;
             }
 
-            // Если не получилось распарсить как Version, сравниваем как строки
             return string.Compare(version1, version2, StringComparison.OrdinalIgnoreCase) > 0;
         }
         catch
@@ -228,7 +209,6 @@ public static class ComponentVersionService
     /// </summary>
     private static (string numericPart, string suffix) SplitVersionAndSuffix(string version)
     {
-        // Ищем первую букву в версии
         int firstLetterIndex = -1;
         for (int i = 0; i < version.Length; i++)
         {
@@ -241,14 +221,12 @@ public static class ComponentVersionService
 
         if (firstLetterIndex == -1)
         {
-            // Нет букв, вся строка - числовая часть
             return (version, "");
         }
 
-        // Разделяем на числовую часть и суффикс
         string numericPart = version.Substring(0, firstLetterIndex);
         string suffix = version.Substring(firstLetterIndex);
-        
+
         return (numericPart, suffix);
     }
 }

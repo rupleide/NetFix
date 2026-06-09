@@ -16,10 +16,9 @@ public partial class UpdateWindow : Window
     public UpdateWindow()
     {
         InitializeComponent();
-        ShowWarningState(); // Сразу показываем предупреждение
+        ShowWarningState();
     }
 
-    // Состояние 1: Предупреждение перед проверкой
     private void ShowWarningState()
     {
         StopIndeterminateAnimation();
@@ -33,7 +32,6 @@ public partial class UpdateWindow : Window
         SecondaryBtn.Content = "Закрыть";
     }
 
-    // Состояние 2: Идёт проверка
     private void ShowCheckingState()
     {
         PrimaryBtn.Visibility = Visibility.Collapsed;
@@ -43,7 +41,6 @@ public partial class UpdateWindow : Window
         StartIndeterminateAnimation();
     }
 
-    // Состояние 3: Ошибка подключения
     private void ShowErrorState()
     {
         StopIndeterminateAnimation();
@@ -57,7 +54,6 @@ public partial class UpdateWindow : Window
         SecondaryBtn.Content = "Закрыть";
     }
 
-    // Состояние 4а: Нет обновлений
     private void ShowUpToDateState()
     {
         StopIndeterminateAnimation();
@@ -74,7 +70,6 @@ public partial class UpdateWindow : Window
         ShowUpdateAvailableState(newVersion, downloadUrl);
     }
 
-    // Состояние 4б: Есть обновление
     private void ShowUpdateAvailableState(string newVersion, string downloadUrl)
     {
         StopIndeterminateAnimation();
@@ -89,7 +84,6 @@ public partial class UpdateWindow : Window
         SecondaryBtn.Content = "Закрыть";
     }
 
-    // Проверка с 3 попытками
     private async Task CheckWithRetriesAsync()
     {
         const int maxAttempts = 3;
@@ -100,11 +94,9 @@ public partial class UpdateWindow : Window
 
             var (hasUpdate, newVersion, downloadUrl, error) = await UpdateService.CheckAsync();
 
-            // Если есть ошибка, показываем в окне
             if (!string.IsNullOrEmpty(error))
             {
                 StatusText.Text = $"⚠ {error}";
-                // не возвращаемся, идём на следующую попытку
                 if (attempt < maxAttempts)
                 {
                     await Task.Delay(1500);
@@ -112,13 +104,11 @@ public partial class UpdateWindow : Window
                 }
                 else
                 {
-                    // Последняя попытка провалилась
                     ShowErrorState();
                     return;
                 }
             }
 
-            // Успешный ответ от GitHub
             if (!string.IsNullOrEmpty(newVersion))
             {
                 if (hasUpdate)
@@ -132,11 +122,9 @@ public partial class UpdateWindow : Window
                 await Task.Delay(1500);
         }
 
-        // Все попытки провалились
         ShowErrorState();
     }
 
-    // Кнопка основного действия
     private async void PrimaryBtn_Click(object sender, RoutedEventArgs e)
     {
         string content = PrimaryBtn.Content.ToString() ?? "";
@@ -152,8 +140,8 @@ public partial class UpdateWindow : Window
         {
             PrimaryBtn.IsEnabled = false;
             SecondaryBtn.Content = "Отмена";
-            SecondaryBtn.Width = 100; // Возвращаем обычную ширину
-            this.Height = 260; // Возвращаем обычную высоту
+            SecondaryBtn.Width = 100;
+            this.Height = 260;
             StartIndeterminateAnimation();
             StatusText.Text = "Скачивание обновления...";
             StatusText.Foreground = Brush("#888888");
@@ -188,18 +176,17 @@ public partial class UpdateWindow : Window
 
         if (secContent == "Закрыть" && primContent == "Установить" && PrimaryBtn.Visibility == Visibility.Visible)
         {
-            // Показать предупреждение
             SetStatusIcon("WarningIcon", "#eab308", true);
             StatusText.Text = "Ты точно не хочешь обновить приложение?\n\nВ обновлении куча нового! То, что могло не работать раньше, теперь может работать стабильнее, а также добавлены полезные фишки и улучшения.";
             StatusText.Foreground = Brush("#eab308");
-            
+
             PrimaryBtn.Content = "Обновить";
             PrimaryBtn.Background = Brush("#22c55e");
-            
+
             SecondaryBtn.Content = "Закрыть!";
-            SecondaryBtn.Width = 100; // Возвращаем стандартную ширину
-            
-            this.Height = 290; // Немного увеличиваем высоту окна, чтобы текст точно поместился
+            SecondaryBtn.Width = 100;
+
+            this.Height = 290;
         }
         else
         {
@@ -207,7 +194,6 @@ public partial class UpdateWindow : Window
         }
     }
 
-    // Хелперы
     private void StartIndeterminateAnimation()
     {
         IndeterminateBar.Visibility = Visibility.Visible;
@@ -239,7 +225,7 @@ public partial class UpdateWindow : Window
 
     private static Color ToColor(string hex) =>
         (Color)new ColorConverter().ConvertFrom(hex)!;
-    
+
     private void SetStatusIcon(string iconKey, string colorHex, bool useFill)
     {
         var geometry = TryFindResource(iconKey) as PathGeometry;
@@ -247,7 +233,7 @@ public partial class UpdateWindow : Window
         {
             StatusIcon.Data = geometry;
             StatusIcon.Visibility = Visibility.Visible;
-            
+
             if (useFill)
             {
                 StatusIcon.Fill = Brush(colorHex);

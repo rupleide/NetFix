@@ -17,12 +17,10 @@ public class ZapretConfigService
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "NetFix", "zapret_configs.json");
 
-    // Regex для парсинга вывода тестов
     private static readonly Regex ConfigRegex = new Regex(@"\[(\d+)/(\d+)\]\s+(.+\.bat)", RegexOptions.Compiled);
     private static readonly Regex TestLineRegex = new Regex(
         @"^\s*(\w+)\s+HTTP:(\w+)\s+TLS1\.2:(\w+)\s+TLS1\.3:(\w+)\s+\|\s+Ping:\s*(\d+)\s*ms",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
-    // Regex для строк только с Ping (DNS тесты и т.д.)
     private static readonly Regex PingOnlyRegex = new Regex(
         @"^\s*(\w+)\s+Ping:\s*(\d+)\s*ms",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -62,8 +60,7 @@ public class ZapretConfigService
     {
         var configs = new List<ZapretConfig>();
         Process? process = null;
-        
-        // Получить директорию Zapret
+
         var zapretDir = Path.GetDirectoryName(zapretPath);
         if (string.IsNullOrEmpty(zapretDir) || !Directory.Exists(zapretDir))
         {
@@ -71,7 +68,6 @@ public class ZapretConfigService
             return (configs, null);
         }
 
-        // Найти PowerShell скрипт для тестирования
         var testScript = Path.Combine(zapretDir, "utils", "test zapret.ps1");
         if (!File.Exists(testScript))
         {
@@ -81,7 +77,6 @@ public class ZapretConfigService
 
         onProgress?.Invoke("🚀 Начинаем полное тестирование конфигов...");
 
-        // Запустить PowerShell скрипт
         var psi = new ProcessStartInfo
         {
             FileName = "powershell.exe",
@@ -96,7 +91,7 @@ public class ZapretConfigService
         };
 
         process = new Process { StartInfo = psi };
-        
+
         ZapretConfig? currentConfig = null;
         int totalConfigs = 0;
         int testedConfigs = 0;
@@ -106,54 +101,47 @@ public class ZapretConfigService
             if (string.IsNullOrEmpty(e.Data)) return;
 
             var line = e.Data;
-            
-            // Логирование для отладки
+
             System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] {line}");
-            
-            // Парсинг строки конфига: [2/19] general (ALT2).bat
+
             var configMatch = ConfigRegex.Match(line);
             if (configMatch.Success)
             {
-                // Сохранить предыдущий конфиг
                 if (currentConfig != null)
                 {
-                    // Подсчитываем результаты предыдущего конфига
                     var successCount = currentConfig.SuccessCount;
                     var totalCount = currentConfig.Tests.Count;
                     var failedTests = totalCount - successCount;
-                    
-                    // Конфиг валиден только если: 0 ошибок И минимум 12 успешных тестов (если всего 12 сайтов)
-                    // Для гарантии, что Идеальный конфиг - это когда ДОСТУПНЫ ВСЕ протестированные сайты
+
                     currentConfig.IsValid = currentConfig.ErrorCount == 0 && currentConfig.SuccessCount == totalCount && totalCount > 0;
-                    
+
                     if (currentConfig.IsValid)
                     {
                         configs.Add(currentConfig);
                         onProgress?.Invoke($"[HEADER]✅ {currentConfig.Name} - ИДЕАЛЬНЫЙ[/HEADER]");
                         onProgress?.Invoke($"   🔹 Протестировано: {successCount}/{totalCount}, Пинг: {currentConfig.AveragePing}мс");
-                        onProgress?.Invoke(""); // Пустая строка для отступа
+                        onProgress?.Invoke("");
                     }
                     else if (currentConfig.IsPartiallyUsable)
                     {
                         configs.Add(currentConfig);
                         onProgress?.Invoke($"[HEADER]⚠️ {currentConfig.Name} - ЧАСТИЧНО РАБОЧИЙ[/HEADER]");
                         onProgress?.Invoke($"   🔹 Протестировано: {successCount}/{totalCount}, Пинг: {currentConfig.AveragePing}мс");
-                        onProgress?.Invoke(""); // Пустая строка для отступа
+                        onProgress?.Invoke("");
                     }
                     else
                     {
                         onProgress?.Invoke($"[HEADER]❌ {currentConfig.Name} - НЕРАБОЧИЙ[/HEADER]");
                         onProgress?.Invoke($"   🔹 Протестировано: {successCount}/{totalCount}, Не работает: {failedTests} сайтов");
-                        onProgress?.Invoke(""); // Пустая строка для отступа
+                        onProgress?.Invoke("");
                     }
-                    
+
                     System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Config: {currentConfig.Name}, Valid: {currentConfig.IsValid}, Success: {successCount}/{totalCount}, Errors: {currentConfig.ErrorCount}");
-                    
+
                     testedConfigs++;
                     onConfigTested?.Invoke(testedConfigs, totalConfigs);
                 }
 
-                // Создать новый конфиг
                 var current = int.Parse(configMatch.Groups[1].Value);
                 totalConfigs = int.Parse(configMatch.Groups[2].Value);
                 var configName = configMatch.Groups[3].Value;
@@ -164,12 +152,11 @@ public class ZapretConfigService
                     Tests = new Dictionary<string, ServiceTestResult>()
                 };
 
-                onProgress?.Invoke(""); // Пустая строка для отступа перед новым конфигом
+                onProgress?.Invoke("");
                 onProgress?.Invoke($"[HEADER]🔄 Тестирую конфиг [{current}/{totalConfigs}]: {configName}[/HEADER]");
                 return;
             }
 
-            // Парсинг строки теста - проверяем только ключевые результаты
             var testMatch = TestLineRegex.Match(line);
             if (testMatch.Success && currentConfig != null)
             {
@@ -193,35 +180,30 @@ public class ZapretConfigService
 
                 currentConfig.Tests[serviceName] = testResult;
 
-                // Обновляем прогресс теста - показываем только основные сервисы
                 if (serviceName.StartsWith("Discord") || serviceName.StartsWith("YouTube") || serviceName.StartsWith("Google"))
                 {
-                    var statusText = httpStatus == "OK" && (tls12Status == "OK" || tls13Status == "OK") 
-                        ? "РАБОТАЕТ" 
-                        : (httpStatus == "ERROR" || tls12Status == "ERROR" || tls13Status == "ERROR" 
-                            ? "НЕ РАБОТАЕТ" 
+                    var statusText = httpStatus == "OK" && (tls12Status == "OK" || tls13Status == "OK")
+                        ? "РАБОТАЕТ"
+                        : (httpStatus == "ERROR" || tls12Status == "ERROR" || tls13Status == "ERROR"
+                            ? "НЕ РАБОТАЕТ"
                             : "ЧАСТИЧНО");
-                    
+
                     onProgress?.Invoke($"   🟢 {serviceName}: {statusText} | {ping}мс");
                 }
 
-                // Считаем только полностью успешные тесты (все OK)
                 if (testResult.IsSuccess)
                     currentConfig.SuccessCount++;
-                
-                // Любая ошибка - это провал конфига (UNSUP не считаем за фатальную ошибку, это просто сайт не поддерживает TLS)
+
                 if (httpStatus == "ERROR" || tls12Status == "ERROR" || tls13Status == "ERROR")
                     currentConfig.ErrorCount++;
 
-                // Обновить средний пинг
                 if (currentConfig.Tests.Count > 0)
                     currentConfig.AveragePing = (int)currentConfig.Tests.Values.Average(t => t.Ping);
-                
+
                 System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Average ping for {currentConfig.Name}: {currentConfig.AveragePing}ms");
                 return;
             }
-            
-            // Парсинг строк только с Ping (DNS тесты)
+
             var pingOnlyMatch = PingOnlyRegex.Match(line);
             if (pingOnlyMatch.Success && currentConfig != null)
             {
@@ -234,7 +216,7 @@ public class ZapretConfigService
                 var testResult = new ServiceTestResult
                 {
                     ServiceName = serviceName,
-                    HttpStatus = "OK",  // DNS тесты считаем OK если есть пинг
+                    HttpStatus = "OK",
                     Tls12Status = "N/A",
                     Tls13Status = "N/A",
                     Ping = ping
@@ -242,17 +224,14 @@ public class ZapretConfigService
 
                 currentConfig.Tests[serviceName] = testResult;
 
-                // DNS тесты с пингом считаем успешными
                 if (ping > 0)
                     currentConfig.SuccessCount++;
 
-                // Обновить средний пинг
                 if (currentConfig.Tests.Count > 0)
                     currentConfig.AveragePing = (int)currentConfig.Tests.Values.Average(t => t.Ping);
-                
+
                 System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Average ping for {currentConfig.Name}: {currentConfig.AveragePing}ms");
             }
-            // Пропускаем все остальные строки - не показываем технический мусор
         };
 
         process.Start();
@@ -260,7 +239,6 @@ public class ZapretConfigService
 
         try
         {
-            // Отправить "1\n1\n" для выбора "standard tests" -> "all configs"
             await Task.Delay(1000);
             await process.StandardInput.WriteLineAsync("1");
             await Task.Delay(500);
@@ -269,21 +247,17 @@ public class ZapretConfigService
         }
         catch (IOException)
         {
-            // Игнорируем ошибки записи в stdin
         }
 
         await process.WaitForExitAsync();
 
-        // Сохранить последний конфиг
         if (currentConfig != null)
         {
             var totalCountEnd = currentConfig.Tests.Count;
-            // Конфиг валиден только если: 0 ошибок И все протестированные сайты успешны
             currentConfig.IsValid = currentConfig.ErrorCount == 0 && currentConfig.SuccessCount == totalCountEnd && totalCountEnd > 0;
-            // Добавляем конфиг, если он идеальный или частично рабочий
             if (currentConfig.IsValid || currentConfig.IsPartiallyUsable)
                 configs.Add(currentConfig);
-            
+
             System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Last config: {currentConfig.Name}, Valid: {currentConfig.IsValid}, Success: {currentConfig.SuccessCount}/12, Errors: {currentConfig.ErrorCount}");
         }
 
@@ -293,7 +267,6 @@ public class ZapretConfigService
             System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Config: {cfg.Name}, Ping: {cfg.AveragePing}, Success: {cfg.SuccessCount}/12");
         }
 
-        // Сначала идеальные, затем частично рабочие; внутри группы сортировка по пингу
         configs = configs
             .OrderByDescending(c => c.IsValid)
             .ThenBy(c => c.AveragePing)
@@ -311,7 +284,6 @@ public class ZapretConfigService
         string configName,
         Action<string>? onProgress = null)
     {
-        // Получить директорию Zapret
         var zapretDir = Path.GetDirectoryName(zapretPath);
         if (string.IsNullOrEmpty(zapretDir) || !Directory.Exists(zapretDir))
         {
@@ -319,7 +291,6 @@ public class ZapretConfigService
             return (false, "Ошибка: директория Zapret не найдена");
         }
 
-        // Найти PowerShell скрипт для тестирования
         var testScript = Path.Combine(zapretDir, "utils", "test zapret.ps1");
         if (!File.Exists(testScript))
         {
@@ -329,7 +300,6 @@ public class ZapretConfigService
 
         onProgress?.Invoke("🚀 Начинаем тестирование конфига...");
 
-        // Запустить PowerShell скрипт
         var psi = new ProcessStartInfo
         {
             FileName = "powershell.exe",
@@ -344,7 +314,7 @@ public class ZapretConfigService
         };
 
         var process = new Process { StartInfo = psi };
-        
+
         ZapretConfig? currentConfig = null;
         bool foundTargetConfig = false;
         bool configTestComplete = false;
@@ -354,19 +324,16 @@ public class ZapretConfigService
             if (string.IsNullOrEmpty(e.Data)) return;
 
             var line = e.Data;
-            
-            // Отладочный вывод
+
             System.Diagnostics.Debug.WriteLine($"[TEST OUTPUT] {line}");
-            
-            // Парсинг строки конфига: [2/19] general (ALT2).bat
+
             var configMatch = ConfigRegex.Match(line);
             if (configMatch.Success)
             {
                 var configNameFromTest = configMatch.Groups[3].Value;
-                
+
                 System.Diagnostics.Debug.WriteLine($"[CONFIG MATCH] Found: {configNameFromTest}, Looking for: {configName}");
-                
-                // Если это наш конфиг
+
                 if (configNameFromTest == configName)
                 {
                     foundTargetConfig = true;
@@ -375,24 +342,21 @@ public class ZapretConfigService
                         Name = configNameFromTest,
                         Tests = new Dictionary<string, ServiceTestResult>()
                     };
-                    
+
                     onProgress?.Invoke("");
                     onProgress?.Invoke($"[HEADER]🔄 Тестирую конфиг: {configName}[/HEADER]");
                 }
                 else if (foundTargetConfig)
                 {
-                    // Если мы уже нашли наш конфиг и теперь видим другой - значит тестирование завершено
                     configTestComplete = true;
                     System.Diagnostics.Debug.WriteLine($"[CONFIG COMPLETE] Test complete for {configName}");
                 }
-                
+
                 return;
             }
 
-            // Если нашли нужный конфиг и он еще не завершен, обрабатываем тесты
             if (foundTargetConfig && !configTestComplete && currentConfig != null)
             {
-                // Парсинг строки теста
                 var testMatch = TestLineRegex.Match(line);
                 if (testMatch.Success)
                 {
@@ -414,30 +378,25 @@ public class ZapretConfigService
 
                     currentConfig.Tests[serviceName] = testResult;
 
-                    // Показываем результаты тестов
-                    var statusText = httpStatus == "OK" && (tls12Status == "OK" || tls13Status == "OK") 
-                        ? "РАБОТАЕТ" 
-                        : (httpStatus == "ERROR" || tls12Status == "ERROR" || tls13Status == "ERROR" 
-                            ? "НЕ РАБОТАЕТ" 
+                    var statusText = httpStatus == "OK" && (tls12Status == "OK" || tls13Status == "OK")
+                        ? "РАБОТАЕТ"
+                        : (httpStatus == "ERROR" || tls12Status == "ERROR" || tls13Status == "ERROR"
+                            ? "НЕ РАБОТАЕТ"
                             : "ЧАСТИЧНО");
-                    
+
                     onProgress?.Invoke($"   🟢 {serviceName}: {statusText} | {ping}мс");
 
-                    // Считаем только полностью успешные тесты (все OK)
                     if (testResult.IsSuccess)
                         currentConfig.SuccessCount++;
-                    
-                    // Любая ошибка - это провал конфига (UNSUP не считаем за фатальную ошибку)
+
                     if (httpStatus == "ERROR" || tls12Status == "ERROR" || tls13Status == "ERROR")
                         currentConfig.ErrorCount++;
 
-                    // Обновить средний пинг
                     if (currentConfig.Tests.Count > 0)
                         currentConfig.AveragePing = (int)currentConfig.Tests.Values.Average(t => t.Ping);
                     return;
                 }
-                
-                // Парсинг строк только с Ping (DNS тесты)
+
                 var pingOnlyMatch = PingOnlyRegex.Match(line);
                 if (pingOnlyMatch.Success)
                 {
@@ -456,11 +415,9 @@ public class ZapretConfigService
 
                     currentConfig.Tests[serviceName] = testResult;
 
-                    // DNS тесты с пингом считаем успешными
                     if (ping > 0)
                         currentConfig.SuccessCount++;
 
-                    // Обновить средний пинг
                     if (currentConfig.Tests.Count > 0)
                         currentConfig.AveragePing = (int)currentConfig.Tests.Values.Average(t => t.Ping);
                 }
@@ -472,24 +429,20 @@ public class ZapretConfigService
 
         try
         {
-            // Отправить "1\n2\n{номер конфига}\n" для выбора "standard tests" -> "selected configs" -> номер
-            await Task.Delay(2000);  // Увеличил с 1000 до 2000мс
-            await process.StandardInput.WriteLineAsync("1");  // Standard tests
-            await Task.Delay(1000);  // Увеличил с 500 до 1000мс
-            await process.StandardInput.WriteLineAsync("2");  // Selected configs
-            await Task.Delay(1000);  // Увеличил с 500 до 1000мс
-            
-            // Найти номер конфига в списке
-            // Получаем список всех .bat файлов, исключая service*.bat
-            // ВАЖНО: Используем естественную сортировку как в PowerShell скрипте
+            await Task.Delay(2000);
+            await process.StandardInput.WriteLineAsync("1");
+            await Task.Delay(1000);
+            await process.StandardInput.WriteLineAsync("2");
+            await Task.Delay(1000);
+
             var configFiles = Directory.GetFiles(zapretDir, "*.bat")
                 .Where(f => !Path.GetFileName(f).StartsWith("service", StringComparison.OrdinalIgnoreCase))
                 .Select(Path.GetFileName)
                 .OrderBy(f => f, new NaturalStringComparer())
                 .ToList();
-            
-            int configIndex = configFiles.IndexOf(configName) + 1; // +1 потому что нумерация с 1
-            
+
+            int configIndex = configFiles.IndexOf(configName) + 1;
+
             System.Diagnostics.Debug.WriteLine($"[CONFIG SEARCH] Looking for: {configName}");
             System.Diagnostics.Debug.WriteLine($"[CONFIG SEARCH] Found at index: {configIndex - 1}, sending: {configIndex}");
             System.Diagnostics.Debug.WriteLine($"[CONFIG LIST] Total configs: {configFiles.Count}");
@@ -497,11 +450,11 @@ public class ZapretConfigService
             {
                 System.Diagnostics.Debug.WriteLine($"[CONFIG LIST] [{i + 1}] {configFiles[i]}");
             }
-            
+
             if (configIndex > 0)
             {
                 await process.StandardInput.WriteLineAsync(configIndex.ToString());
-                await Task.Delay(1000);  // Дополнительная задержка после отправки номера конфига
+                await Task.Delay(1000);
             }
             else
             {
@@ -509,26 +462,23 @@ public class ZapretConfigService
                 process.StandardInput.Close();
                 return (false, $"Не удалось найти конфиг {configName} в списке");
             }
-            
+
             process.StandardInput.Close();
         }
         catch (IOException)
         {
-            // Игнорируем ошибки записи в stdin
         }
 
         await process.WaitForExitAsync();
 
-        // Проверить результат
         if (currentConfig != null && foundTargetConfig)
         {
-            // Конфиг валиден только если: 0 ошибок И все протестированные сайты успешны
             currentConfig.IsValid = currentConfig.ErrorCount == 0 && currentConfig.SuccessCount == currentConfig.Tests.Count && currentConfig.Tests.Count > 0;
-            
+
             var successCount = currentConfig.SuccessCount;
             var totalCount = currentConfig.Tests.Count;
             var failedTests = totalCount - successCount;
-            
+
             if (currentConfig.IsValid)
             {
                 onProgress?.Invoke($"[HEADER]✅ {currentConfig.Name} - РАБОЧИЙ[/HEADER]");
@@ -570,11 +520,11 @@ public class ZapretConfigService
         var httpEmoji = http switch
         {
             "OK" => "✅",
-            "ERROR" => "❌", 
+            "ERROR" => "❌",
             "UNSUP" => "⚠️",
             _ => "❓"
         };
-        
+
         var tls12Emoji = tls12 switch
         {
             "OK" => "✅",
@@ -582,7 +532,7 @@ public class ZapretConfigService
             "UNSUP" => "⚠️",
             _ => "❓"
         };
-        
+
         var tls13Emoji = tls13 switch
         {
             "OK" => "✅",
@@ -590,7 +540,7 @@ public class ZapretConfigService
             "UNSUP" => "⚠️",
             _ => "❓"
         };
-        
+
         return $"{httpEmoji} {http} | {tls12Emoji} {tls12} | {tls13Emoji} {tls13}";
     }
 
@@ -599,7 +549,7 @@ public class ZapretConfigService
         try
         {
             Console.WriteLine($"[ApplyConfig] Starting with zapretPath: {zapretPath}, configName: {configName}");
-            
+
             var zapretDir = Path.GetDirectoryName(zapretPath);
             if (string.IsNullOrEmpty(zapretDir))
             {
@@ -625,7 +575,6 @@ public class ZapretConfigService
             }
             Console.WriteLine($"[ApplyConfig] winwsExe: {winwsExe}");
 
-            // Парсим конфиг и извлекаем аргументы
             Console.WriteLine("[ApplyConfig] Parsing config args...");
             var args = await ParseConfigArgsAsync(configPath, zapretDir, binPath);
             if (string.IsNullOrEmpty(args))
@@ -635,22 +584,18 @@ public class ZapretConfigService
             }
             Console.WriteLine($"[ApplyConfig] Parsed args: {args}");
 
-            // Останавливаем и удаляем старый сервис если есть
             Console.WriteLine("[ApplyConfig] Stopping and removing old service...");
             await StopAndRemoveServiceAsync("zapret");
 
-            // Включаем TCP timestamps
             Console.WriteLine("[ApplyConfig] Enabling TCP timestamps...");
             EnableTcpTimestamps();
 
-            // Создаём новый сервис
             Console.WriteLine("[ApplyConfig] Creating service...");
             var success = await CreateServiceAsync("zapret", winwsExe, args, configName);
-            
+
             if (success)
             {
                 Console.WriteLine("[ApplyConfig] Service created successfully, starting...");
-                // Запускаем сервис
                 await StartServiceAsync("zapret");
                 Console.WriteLine("[ApplyConfig] Service started successfully");
             }
@@ -676,16 +621,15 @@ public class ZapretConfigService
             Console.WriteLine($"[ParseConfigArgs] Reading file: {configPath}");
             var lines = await File.ReadAllLinesAsync(configPath);
             Console.WriteLine($"[ParseConfigArgs] Read {lines.Length} lines");
-            
+
             var listsPath = Path.Combine(zapretDir, "lists");
             var fullText = "";
             bool capture = false;
 
-            // Собираем весь текст после winws.exe
             foreach (var line in lines)
             {
                 var trimmed = line.Trim();
-                
+
                 if (trimmed.Contains("winws.exe"))
                 {
                     Console.WriteLine($"[ParseConfigArgs] Found winws.exe in line: {trimmed}");
@@ -698,27 +642,23 @@ public class ZapretConfigService
                 }
 
                 if (!capture) continue;
-                
-                // Убираем символ продолжения строки
+
                 if (trimmed.EndsWith("^"))
                 {
                     trimmed = trimmed.Substring(0, trimmed.Length - 1).Trim();
                 }
-                
+
                 fullText += " " + trimmed;
             }
 
-            // Заменяем переменные
             fullText = fullText.Replace("%BIN%", binPath + "\\");
             fullText = fullText.Replace("%LISTS%", listsPath + "\\");
             fullText = fullText.Replace("%GameFilter%", "12");
             fullText = fullText.Replace("%GameFilterTCP%", "12");
             fullText = fullText.Replace("%GameFilterUDP%", "12");
-            
-            // ВАЖНО: Убираем ВСЕ кавычки из аргументов, т.к. весь binPath будет в кавычках
+
             fullText = fullText.Replace("\"", "");
-            
-            // Убираем лишние пробелы
+
             fullText = System.Text.RegularExpressions.Regex.Replace(fullText, @"\s+", " ").Trim();
 
             Console.WriteLine($"[ParseConfigArgs] Final args: {fullText}");
@@ -772,7 +712,6 @@ public class ZapretConfigService
     {
         try
         {
-            // Останавливаем сервис
             var stopPsi = new ProcessStartInfo
             {
                 FileName = "net",
@@ -793,7 +732,6 @@ public class ZapretConfigService
 
             await Task.Delay(500);
 
-            // Удаляем сервис
             var deletePsi = new ProcessStartInfo
             {
                 FileName = "sc",
@@ -814,7 +752,6 @@ public class ZapretConfigService
 
             await Task.Delay(500);
 
-            // Убиваем процессы winws.exe
             foreach (var proc in Process.GetProcessesByName("winws"))
             {
                 try { proc.Kill(); proc.Dispose(); } catch { }
@@ -850,11 +787,9 @@ public class ZapretConfigService
             Console.WriteLine($"[CreateService] Creating service '{serviceName}'");
             Console.WriteLine($"[CreateService] exePath: {exePath}");
             Console.WriteLine($"[CreateService] args: {args}");
-            
-            // Формируем binPath правильно - весь путь с аргументами в одних кавычках
-            // ВАЖНО: добавляем пробел между exe и аргументами
+
             var binPathValue = $"\"{exePath}\" {args}";
-            
+
             var createPsi = new ProcessStartInfo
             {
                 FileName = "sc",
@@ -874,16 +809,15 @@ public class ZapretConfigService
                     var output = await createProc.StandardOutput.ReadToEndAsync();
                     var error = await createProc.StandardError.ReadToEndAsync();
                     await createProc.WaitForExitAsync();
-                    
+
                     Console.WriteLine($"[CreateService] Exit code: {createProc.ExitCode}");
                     if (!string.IsNullOrEmpty(output)) Console.WriteLine($"[CreateService] Output: {output}");
                     if (!string.IsNullOrEmpty(error)) Console.WriteLine($"[CreateService] Error: {error}");
-                    
+
                     if (createProc.ExitCode != 0) return false;
                 }
             }
 
-            // Устанавливаем описание
             Console.WriteLine("[CreateService] Setting description...");
             var descPsi = new ProcessStartInfo
             {
@@ -903,7 +837,6 @@ public class ZapretConfigService
                 }
             }
 
-            // Сохраняем имя конфига в реестр
             Console.WriteLine("[CreateService] Saving config name to registry...");
             var regPsi = new ProcessStartInfo
             {
@@ -938,7 +871,7 @@ public class ZapretConfigService
         try
         {
             Console.WriteLine($"[StartService] Starting service '{serviceName}'...");
-            
+
             var startPsi = new ProcessStartInfo
             {
                 FileName = "sc",
@@ -955,7 +888,7 @@ public class ZapretConfigService
                 var output = await startProc.StandardOutput.ReadToEndAsync();
                 var error = await startProc.StandardError.ReadToEndAsync();
                 await startProc.WaitForExitAsync();
-                
+
                 Console.WriteLine($"[StartService] Exit code: {startProc.ExitCode}");
                 if (!string.IsNullOrEmpty(output)) Console.WriteLine($"[StartService] Output: {output}");
                 if (!string.IsNullOrEmpty(error)) Console.WriteLine($"[StartService] Error: {error}");
@@ -968,7 +901,6 @@ public class ZapretConfigService
     }
 }
 
-// Класс для естественной сортировки (ALT, ALT2, ALT3... ALT10, ALT11)
 public class NaturalStringComparer : IComparer<string>
 {
     public int Compare(string? x, string? y)
@@ -982,10 +914,9 @@ public class NaturalStringComparer : IComparer<string>
         {
             if (char.IsDigit(x[ix]) && char.IsDigit(y[iy]))
             {
-                // Извлекаем числа
                 var numX = GetNumber(x, ref ix);
                 var numY = GetNumber(y, ref iy);
-                
+
                 var result = numX.CompareTo(numY);
                 if (result != 0) return result;
             }
@@ -997,7 +928,7 @@ public class NaturalStringComparer : IComparer<string>
                 iy++;
             }
         }
-        
+
         return x.Length.CompareTo(y.Length);
     }
 
@@ -1006,7 +937,7 @@ public class NaturalStringComparer : IComparer<string>
         int start = index;
         while (index < s.Length && char.IsDigit(s[index]))
             index++;
-        
+
         return int.Parse(s.Substring(start, index - start));
     }
 }

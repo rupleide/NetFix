@@ -8,7 +8,6 @@
         ShowInTaskbar="False"
         SizeToContent="WidthAndHeight"
         UseLayoutRounding="True">
-
     <Window.Resources>
         <Style x:Key="MenuItemStyle" TargetType="Border">
             <Setter Property="Background" Value="Transparent"/>
@@ -18,18 +17,13 @@
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
     </Window.Resources>
-
-    <!-- Margin даёт место для тени, чтобы она не обрезалась -->
     <Border Margin="12" Background="#18181B" CornerRadius="14"
             BorderBrush="#27272A" BorderThickness="1">
         <Border.Effect>
             <DropShadowEffect BlurRadius="24" ShadowDepth="0"
                               Color="Black" Opacity="0.7" Direction="270"/>
         </Border.Effect>
-
         <StackPanel Width="248">
-
-            <!-- Заголовок -->
             <Grid Margin="14,12,14,10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -50,13 +44,8 @@
                 <TextBlock Grid.Column="1" x:Name="VersionLabel" Text="v1.0" Foreground="#52525B"
                            FontFamily="Segoe UI" FontSize="11" VerticalAlignment="Center"/>
             </Grid>
-
             <Border Height="1" Background="#27272A" Margin="0"/>
-
-            <!-- Сервисы -->
             <StackPanel Margin="8,8,8,4">
-
-                <!-- Zapret -->
                 <Border Background="#1F1F22" CornerRadius="8" Margin="0,0,0,4" Padding="8,7">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -83,8 +72,6 @@
                         </Border>
                     </Grid>
                 </Border>
-
-                <!-- TgWsProxy -->
                 <Border Background="#1F1F22" CornerRadius="8" Margin="0,0,0,4" Padding="8,7">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -111,8 +98,6 @@
                         </Border>
                     </Grid>
                 </Border>
-
-                <!-- Пинг -->
                 <StackPanel Orientation="Horizontal" Margin="8,2,0,4">
                     <Ellipse Width="6" Height="6" Fill="#3B82F6" VerticalAlignment="Center" Margin="0,0,7,0"/>
                     <TextBlock Text="Пинг: " Foreground="#71717A" FontFamily="Segoe UI" FontSize="11"/>
@@ -120,12 +105,8 @@
                                FontFamily="Segoe UI" FontSize="11" FontWeight="Medium"/>
                 </StackPanel>
             </StackPanel>
-
             <Border Height="1" Background="#27272A" Margin="0"/>
-
-            <!-- Пункты меню -->
             <StackPanel Margin="0,6,0,6">
-
                 <Border x:Name="ConfigBtn" Style="{StaticResource MenuItemStyle}"
                         MouseEnter="ConfigBtn_Enter" MouseLeave="ConfigBtn_Leave"
                         MouseLeftButtonUp="ConfigBtn_Click">
@@ -140,7 +121,6 @@
                                    FontFamily="Segoe UI" FontSize="12" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>
-
                 <Border x:Name="OpenBtn" Style="{StaticResource MenuItemStyle}"
                         MouseEnter="OpenBtn_Enter" MouseLeave="OpenBtn_Leave"
                         MouseLeftButtonUp="OpenBtn_Click">
@@ -155,9 +135,7 @@
                                    FontFamily="Segoe UI" FontSize="12" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>
-
                 <Border Height="1" Background="#27272A" Margin="6,4"/>
-
                 <Border x:Name="ExitBtn" Style="{StaticResource MenuItemStyle}"
                         MouseEnter="ExitBtn_Enter" MouseLeave="ExitBtn_Leave"
                         MouseLeftButtonUp="ExitBtn_Click">
@@ -172,7 +150,6 @@
                                    FontFamily="Segoe UI" FontSize="12" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>
-
             </StackPanel>
         </StackPanel>
     </Border>

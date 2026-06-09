@@ -31,25 +31,23 @@ public static class AutoDownloadService
         {
             onLog("=== Запуск автоматической установки ===");
             onLog("Подготовка папки установки...");
-            
-            // ═══ ШАГ 1: ОСТАНОВКА ЗАПУЩЕННЫХ ПРОЦЕССОВ ═══
+
             onLog("Проверяю запущенные процессы...");
             bool zapretWasRunning = false;
             bool tgWsProxyWasRunning = false;
-            
-            // Проверяем и останавливаем winws.exe (Zapret)
+
             var winwsProcesses = System.Diagnostics.Process.GetProcessesByName("winws");
             if (winwsProcesses.Length > 0)
             {
                 zapretWasRunning = true;
                 onLog($"⚠️ Обнаружено {winwsProcesses.Length} процессов winws.exe (Zapret)");
                 onLog("Останавливаю Zapret...");
-                
+
                 foreach (var proc in winwsProcesses)
                 {
                     try
                     {
-                        proc.Kill(true); // true = убить дочерние процессы тоже
+                        proc.Kill(true);
                         proc.WaitForExit(3000);
                         proc.Dispose();
                     }
@@ -58,20 +56,18 @@ public static class AutoDownloadService
                         onLog($"⚠️ Не удалось остановить процесс winws.exe (PID {proc.Id}): {ex.Message}");
                     }
                 }
-                
-                // Даем время на завершение
+
                 await Task.Delay(1000);
                 onLog("✅ Zapret остановлен");
             }
-            
-            // Проверяем и останавливаем TgWsProxy.exe
+
             var tgWsProxyProcesses = System.Diagnostics.Process.GetProcessesByName("TgWsProxy");
             if (tgWsProxyProcesses.Length > 0)
             {
                 tgWsProxyWasRunning = true;
                 onLog($"⚠️ Обнаружено {tgWsProxyProcesses.Length} процессов TgWsProxy.exe");
                 onLog("Останавливаю TgWsProxy...");
-                
+
                 foreach (var proc in tgWsProxyProcesses)
                 {
                     try
@@ -85,38 +81,33 @@ public static class AutoDownloadService
                         onLog($"⚠️ Не удалось остановить процесс TgWsProxy.exe (PID {proc.Id}): {ex.Message}");
                     }
                 }
-                
-                // Даем время на завершение
+
                 await Task.Delay(1000);
                 onLog("✅ TgWsProxy остановлен");
             }
-            
+
             if (!zapretWasRunning && !tgWsProxyWasRunning)
             {
                 onLog("✅ Процессы не запущены, продолжаю установку");
             }
-            
-            // ═══ ШАГ 2: УСТАНОВКА/ОБНОВЛЕНИЕ ═══
-            
-            // Используем временную папку для избежания конфликта с файлами
+
+
             string mainInstallDir = @"C:\Zapret";
             string tempInstallDir = Path.Combine(Path.GetTempPath(), $"NetFix_Zapret_Temp_{Guid.NewGuid()}");
-            
+
             try
             {
-                // Проверяем существование старой папки
                 bool hasExistingZapret = false;
                 bool hasExistingTgWsProxy = false;
-                
+
                 if (Directory.Exists(mainInstallDir))
                 {
-                    // Проверяем, есть ли в папке ключевые файлы
                     var existingServiceBat = FindFile(mainInstallDir, "service.bat");
                     var existingTgWsProxy = FindFile(mainInstallDir, "TgWsProxy.exe");
-                    
+
                     hasExistingZapret = !string.IsNullOrEmpty(existingServiceBat);
                     hasExistingTgWsProxy = !string.IsNullOrEmpty(existingTgWsProxy);
-                    
+
                     if (hasExistingZapret || hasExistingTgWsProxy)
                     {
                         onLog("⚠️ Найдена существующая установка:");
@@ -124,7 +115,7 @@ public static class AutoDownloadService
                             onLog($"   • Zapret (service.bat)");
                         if (hasExistingTgWsProxy)
                             onLog($"   • TgWsProxy (TgWsProxy.exe)");
-                        
+
                         onLog("🔄 Обновляю файлы (с заменой существующих)...");
                     }
                     else
@@ -136,12 +127,10 @@ public static class AutoDownloadService
                 {
                     onLog("📂 Создаю папку C:\\Zapret...");
                 }
-                
-                // Создаём временную папку для установки
+
                 onLog("Создаю временную папку для установки...");
                 Directory.CreateDirectory(tempInstallDir);
-                
-                // Скачиваем и устанавливаем Zapret
+
                 onLog("Получаю информацию о последней версии Zapret...");
                 var zapretInfo = await GetLatestReleaseInfoAsync(ZapretRepo);
                 if (zapretInfo == null)
@@ -153,9 +142,9 @@ public static class AutoDownloadService
 
                 onLog($"✅ Найдена версия Zapret: {zapretInfo.Version}");
                 onLog($"Загружаю архив по ссылке: {zapretInfo.DownloadUrl}");
-                
+
                 var zapretArchive = await DownloadFileAsync(
-                    zapretInfo.DownloadUrl, 
+                    zapretInfo.DownloadUrl,
                     Path.Combine(Path.GetTempPath(), "zapret_autoinstall.zip"),
                     p => onProgress(0.10 + p * 0.30));
 
@@ -167,12 +156,10 @@ public static class AutoDownloadService
 
                 onLog("✅ Zapret успешно скачан");
                 onLog("Распаковываю Zapret в TEMP папку...");
-                
+
                 var zapretPath = await ExtractArchiveAsync(zapretArchive, tempInstallDir);
                 onProgress(0.50);
 
-                // Копируем содержимое из TEMP в C:\Zapret с заменой
-                // Сохраняем пользовательские файлы если нужно
                 var preservedFiles = new List<(string Source, string Backup)>();
                 if (preserveLists)
                 {
@@ -201,7 +188,6 @@ public static class AutoDownloadService
                 onLog("Копирую файлы в C:\\Zapret (с заменой существующих)...");
                 MoveDirectoryContents(tempInstallDir, mainInstallDir);
 
-                // Восстанавливаем сохранённые файлы
                 if (preservedFiles.Count > 0)
                 {
                     onLog("📋 Восстанавливаю пользовательские файлы...");
@@ -223,7 +209,6 @@ public static class AutoDownloadService
                     onLog("✅ Пользовательские файлы восстановлены");
                 }
 
-                // Если галочка снята — удаляем user-файлы, чтобы применились дефолтные
                 if (!preserveLists)
                 {
                     string listsDir = Path.Combine(mainInstallDir, "lists");
@@ -248,7 +233,6 @@ public static class AutoDownloadService
                     }
                 }
 
-                // Проверяем успешность установки
                 onLog("Проверяю результат установки...");
                 if (!IsInstallationSuccessful(mainInstallDir))
                 {
@@ -256,22 +240,18 @@ public static class AutoDownloadService
                     return false;
                 }
 
-                // Ищем service.bat
                 onLog("Ищу файл service.bat...");
                 var serviceBat = FindFile(mainInstallDir, "service.bat");
-                
+
                 onLog($"✅ service.bat найден: {serviceBat}");
                 onProgress(0.60);
 
-                // Объявляем переменную для TgWsProxy здесь
                 string? tgWsExe = null;
 
-                // Скачиваем TgWsProxy
                 onLog("Получаю информацию о последней версии TgWsProxy...");
                 var tgWsInfo = await GetLatestReleaseInfoAsync(TgWsProxyRepo);
                 if (tgWsInfo == null)
                 {
-                    // Проверяем, есть ли старый TgWsProxy
                     var existingTgWsProxy = FindFile(mainInstallDir, "TgWsProxy.exe");
                     if (!string.IsNullOrEmpty(existingTgWsProxy))
                     {
@@ -292,7 +272,7 @@ public static class AutoDownloadService
 
                     onLog($"✅ Найдена версия TgWsProxy: {tgWsInfo.Version}");
                     onLog("Скачиваю TgWsProxy...");
-                    
+
                     tgWsExe = await DownloadFileAsync(
                         tgWsInfo.DownloadUrl,
                         Path.Combine(mainInstallDir, "TgWsProxy.exe"),
@@ -300,7 +280,6 @@ public static class AutoDownloadService
 
                     if (tgWsExe == null)
                     {
-                        // Проверяем, есть ли старый TgWsProxy
                         var existingTgWsProxy = FindFile(mainInstallDir, "TgWsProxy.exe");
                         if (!string.IsNullOrEmpty(existingTgWsProxy))
                         {
@@ -322,14 +301,12 @@ public static class AutoDownloadService
                     }
                 }
 
-                // Сохраняем пути в настройках
                 onLog("Сохраняю настройки в приложении...");
                 var settings = SettingsService.Load();
                 settings.ZapretPath = serviceBat;
                 settings.TgWsProxyPath = tgWsExe;
                 SettingsService.Save(settings);
-                
-                // Сохраняем версии в файлы для последующей проверки
+
                 try
                 {
                     if (zapretInfo != null && !string.IsNullOrEmpty(serviceBat))
@@ -342,7 +319,7 @@ public static class AutoDownloadService
                             onLog($"✓ Сохранена версия Zapret: {zapretInfo.Version}");
                         }
                     }
-                    
+
                     if (tgWsInfo != null && !string.IsNullOrEmpty(tgWsExe))
                     {
                         var tgWsDir = Path.GetDirectoryName(tgWsExe);
@@ -358,19 +335,16 @@ public static class AutoDownloadService
                 {
                     onLog($"⚠️ Не удалось сохранить версии: {ex.Message}");
                 }
-                
-                // ═══ ШАГ 3: ПЕРЕЗАПУСК ПРОЦЕССОВ ═══
+
                 onLog("");
                 onLog("Проверяю необходимость перезапуска процессов...");
-                
-                // Zapret НЕ перезапускаем автоматически - пользователь сам запустит через service.bat
+
                 if (zapretWasRunning)
                 {
                     onLog("ℹ️ Zapret был остановлен для обновления");
                     onLog("Вы можете запустить его через панель сервисов или service.bat");
                 }
-                
-                // Перезапускаем TgWsProxy если он был запущен
+
                 if (tgWsProxyWasRunning && !string.IsNullOrEmpty(tgWsExe))
                 {
                     onLog("Перезапускаю TgWsProxy...");
@@ -389,12 +363,12 @@ public static class AutoDownloadService
                         onLog("Вы можете запустить его вручную через панель сервисов");
                     }
                 }
-                
+
                 if (!zapretWasRunning && !tgWsProxyWasRunning)
                 {
                     onLog("ℹ️ Процессы не были запущены, перезапуск не требуется");
                 }
-                
+
                 onProgress(1.0);
 
                 onLog("");
@@ -404,7 +378,6 @@ public static class AutoDownloadService
             }
             finally
             {
-                // Очищаем временную папку если она создана
                 if (Directory.Exists(tempInstallDir))
                 {
                     try { Directory.Delete(tempInstallDir, true); }
@@ -428,8 +401,7 @@ public static class AutoDownloadService
             return false;
         }
     }
-    
-    // Метод для перемещения содержимого из одной папки в другую
+
     private static void CopyDirectory(string source, string destination)
     {
         Directory.CreateDirectory(destination);
@@ -444,44 +416,34 @@ public static class AutoDownloadService
 
     private static void MoveDirectoryContents(string sourceDir, string targetDir)
     {
-        // Создаем целевую папку если не существует
         Directory.CreateDirectory(targetDir);
-        
-        // Перемещаем все файлы из исходной в целевую папку
+
         foreach (var filePath in Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories))
         {
             var relativePath = Path.GetRelativePath(sourceDir, filePath);
             var targetFilePath = Path.Combine(targetDir, relativePath);
-            
-            // Создаем подкаталог если нужно
+
             var targetDirPath = Path.GetDirectoryName(targetFilePath);
             if (!string.IsNullOrEmpty(targetDirPath))
             {
                 Directory.CreateDirectory(targetDirPath);
             }
-            
+
             try
             {
-                // Копируем файл (перезаписываем если существует)
-                // Используем более безопасное копирование для защищенных файлов
                 File.Copy(filePath, targetFilePath, true);
             }
             catch
             {
-                // Если не удалось скопировать - игнорируем (это могут быть защищенные системные файлы)
-                // Они могут быть не важны для работы Zapret
             }
         }
     }
-    
-    // Метод для проверки успешности установки
+
     private static bool IsInstallationSuccessful(string targetDir)
     {
-        // Проверяем наличие ключевых файлов
         var serviceBat = FindFile(targetDir, "service.bat");
         var tgwsProxy = FindFile(targetDir, "TgWsProxy.exe");
-        
-        // Успешно, если найден хотя бы один из ключевых файлов
+
         return !string.IsNullOrEmpty(serviceBat) || !string.IsNullOrEmpty(tgwsProxy);
     }
 
@@ -491,64 +453,58 @@ public static class AutoDownloadService
         {
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
             http.DefaultRequestHeaders.UserAgent.ParseAdd("NetFix/1.0");
-            
+
             var json = await http.GetStringAsync($"https://api.github.com/repos/{repo}/releases/latest");
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
             var version = root.GetProperty("tag_name").GetString() ?? "unknown";
-            
-            // Ищем нужный файл в assets
+
             if (root.TryGetProperty("assets", out var assets))
             {
-                // Сначала ищем ZIP архивы для Zapret (они более совместимы)
                 if (repo.Contains("zapret"))
                 {
                     foreach (var asset in assets.EnumerateArray())
                     {
                         var name = asset.GetProperty("name").GetString()?.ToLower() ?? "";
                         var downloadUrl = asset.GetProperty("browser_download_url").GetString() ?? "";
-                        
+
                         if (name.Contains("zapret-discord-youtube") && name.EndsWith(".zip"))
                         {
                             return new ReleaseInfo { Version = version, DownloadUrl = downloadUrl };
                         }
                     }
-                    
-                    // Если ZIP нет, тогда ищем RAR
+
                     foreach (var asset in assets.EnumerateArray())
                     {
                         var name = asset.GetProperty("name").GetString()?.ToLower() ?? "";
                         var downloadUrl = asset.GetProperty("browser_download_url").GetString() ?? "";
-                        
+
                         if (name.Contains("zapret-discord-youtube") && name.EndsWith(".rar"))
                         {
                             return new ReleaseInfo { Version = version, DownloadUrl = downloadUrl };
                         }
                     }
                 }
-                
-                // Для TgWsProxy ищем специфичный exe-файл
+
                 if (repo.Contains("tg-ws-proxy"))
                 {
-                    // Сначала ищем TgWsProxy_windows.exe
                     foreach (var asset in assets.EnumerateArray())
                     {
                         var name = asset.GetProperty("name").GetString()?.ToLower() ?? "";
                         var downloadUrl = asset.GetProperty("browser_download_url").GetString() ?? "";
-                        
+
                         if (name.Contains("tgwsproxy") && name.Contains("windows") && name.EndsWith(".exe"))
                         {
                             return new ReleaseInfo { Version = version, DownloadUrl = downloadUrl };
                         }
                     }
-                    
-                    // Если не нашли специфичный файл, ищем любой TgWsProxy.exe
+
                     foreach (var asset in assets.EnumerateArray())
                     {
                         var name = asset.GetProperty("name").GetString()?.ToLower() ?? "";
                         var downloadUrl = asset.GetProperty("browser_download_url").GetString() ?? "";
-                        
+
                         if (name.Contains("tgwsproxy") && name.EndsWith(".exe"))
                         {
                             return new ReleaseInfo { Version = version, DownloadUrl = downloadUrl };
@@ -567,8 +523,8 @@ public static class AutoDownloadService
     }
 
     private static async Task<string?> DownloadFileAsync(
-        string url, 
-        string destinationPath, 
+        string url,
+        string destinationPath,
         Action<double> onProgress)
     {
         try
@@ -612,14 +568,12 @@ public static class AutoDownloadService
         {
             await Task.Run(() =>
             {
-                // Проверяем расширение
                 if (archivePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
                 {
                     ZipFile.ExtractToDirectory(archivePath, destinationDir, overwriteFiles: true);
                 }
                 else
                 {
-                    // Для RAR архивов показываем ошибку с предложением скачать ZIP
                     throw new NotSupportedException(
                         "RAR архивы не поддерживаются автоматической установкой.\n" +
                         "Пожалуйста, скачайте ZIP версию Zapret с GitHub или установите вручную.");
@@ -628,19 +582,16 @@ public static class AutoDownloadService
         }
         catch (NotSupportedException)
         {
-            // Перебрасываем исключение как есть
             throw;
         }
         catch (Exception ex) when (ex.Message.Contains("Central Directory") || ex.Message.Contains("ZIP") || ex.Message.Contains("archive"))
         {
-            // Конкретная ошибка для RAR архивов
             throw new NotSupportedException(
                 "RAR архивы не поддерживаются автоматической установкой.\n" +
                 "Пожалуйста, скачайте ZIP версию Zapret с GitHub или установите вручную.");
         }
         catch (Exception ex)
         {
-            // Любая другая ошибка
             throw new Exception($"Ошибка распаковки архива: {ex.Message}");
         }
 

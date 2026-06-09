@@ -8,18 +8,15 @@
         AllowsTransparency="True"
         Background="Transparent"
         ResizeMode="NoResize">
-
     <Border Background="#1e1e1e" CornerRadius="12" BorderBrush="#2e2e2e" BorderThickness="1">
         <Grid Margin="28,28,28,16" RenderTransformOrigin="0.508,0.685">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>   <!-- заголовок -->
-                <RowDefinition Height="*"/>      <!-- текст -->
-                <RowDefinition Height="Auto"/>   <!-- TON -->
-                <RowDefinition Height="Auto"/>   <!-- СБП -->
-                <RowDefinition Height="Auto"/>   <!-- Закрыть -->
+                <RowDefinition Height="Auto"/>   
+                <RowDefinition Height="*"/>      
+                <RowDefinition Height="Auto"/>   
+                <RowDefinition Height="Auto"/>   
+                <RowDefinition Height="Auto"/>   
             </Grid.RowDefinitions>
-
-            <!-- Заголовок -->
             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
                 <Path Width="18" Height="18" Stretch="Uniform" Margin="0,0,10,0"
                       VerticalAlignment="Center" Fill="#e05c5c"
@@ -27,15 +24,11 @@
                 <TextBlock Text="Поддержать разработку" FontSize="16" FontWeight="SemiBold"
                            Foreground="#f0f0f0" VerticalAlignment="Center"/>
             </StackPanel>
-
-            <!-- Текст -->
             <TextBlock Grid.Row="1" TextWrapping="Wrap" FontSize="12" Foreground="#888888"
                        LineHeight="20" Margin="0,0,0,24">
                 <Run Foreground="#aaaaaa">Все пожертвования идут напрямую российскому разработчику из города Пермь.</Run>
                 <Run>Авторизация и оплата происходят на официальном и безопасном сайте Т-Банка. Даже если у вас банк другого плательщика, вы всё равно сможете совершить перевод через СБП.</Run>
             </TextBlock>
-
-            <!-- Кнопка TON -->
             <Button Grid.Row="2" x:Name="TonBtn" Height="52" Margin="0,16,0,10"
                     Background="#0088CC" BorderThickness="0" Cursor="Hand" Click="TonBtn_Click">
                 <Button.Style>
@@ -65,8 +58,6 @@
                     </Style>
                 </Button.Style>
             </Button>
-
-            <!-- Кнопка СБП -->
             <Button Grid.Row="3" x:Name="SbpBtn" Height="52" Margin="0,0,0,16"
                     Background="#FF6B00" BorderThickness="0" Cursor="Hand" Click="SbpBtn_Click">
                 <Button.Style>
@@ -108,8 +99,6 @@
                     </Style>
                 </Button.Style>
             </Button>
-
-            <!-- Кнопка Закрыть -->
             <Button Grid.Row="4" x:Name="CloseBtn" Content="Закрыть"
                     Width="100" Height="34" HorizontalAlignment="Right"
                     Background="Transparent" Foreground="#666666"
@@ -137,7 +126,6 @@
                     </Style>
                 </Button.Style>
             </Button>
-
         </Grid>
     </Border>
 </Window>

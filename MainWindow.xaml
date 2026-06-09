@@ -7,15 +7,12 @@
         Background="Transparent"
         ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen">
-
     <WindowChrome.WindowChrome>
         <WindowChrome ResizeBorderThickness="5" CaptionHeight="0"
                       CornerRadius="0" GlassFrameThickness="0"
                       UseAeroCaptionButtons="False"/>
     </WindowChrome.WindowChrome>
-
     <Window.Resources>
-        <!-- ═══ BRUSHES ═══ -->
         <SolidColorBrush x:Key="BgBrush"      Color="#161616"/>
         <SolidColorBrush x:Key="Bg2Brush"     Color="#1e1e1e"/>
         <SolidColorBrush x:Key="Bg3Brush"     Color="#252525"/>
@@ -32,72 +29,26 @@
         <SolidColorBrush x:Key="CardBorderBrush" Color="#2a2a2d"/>
         <SolidColorBrush x:Key="CardHoverBgBrush" Color="#1c1c20"/>
         <SolidColorBrush x:Key="CardHoverBorderBrush" Color="#3a3a3d"/>
-
-        <!-- ═══ VECTOR ICONS ═══ -->
-        <!-- Power Icon (векторная, совместима с Windows 10) -->
         <PathGeometry x:Key="PowerIcon">M7.5,7.638 A7,7 0 1,0 16.5,7.638 M12,4 L12,11</PathGeometry>
-        
-        <!-- Lightning/Bolt Icon -->
         <PathGeometry x:Key="BoltIcon">M13,2 L3,14 L10,14 L9,22 L19,10 L12,10 Z</PathGeometry>
-        
-        <!-- Search/Magnifier Icon -->
         <PathGeometry x:Key="SearchIcon">M10,10 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 M14,14 L20,20</PathGeometry>
-        
-        <!-- Coffee/Cup Icon -->
         <PathGeometry x:Key="CoffeeIcon">M4,8 L4,14 A4,4 0 0,0 12,14 L12,8 Z M4,8 L12,8 M16,10 A2,2 0 0,1 16,14</PathGeometry>
-        
-        <!-- Close/X Icon -->
         <PathGeometry x:Key="CloseIcon">M6,6 L18,18 M18,6 L6,18</PathGeometry>
-        
-        <!-- Play Icon -->
         <PathGeometry x:Key="PlayIcon">M8,5 L8,19 L19,12 Z</PathGeometry>
-        
-        <!-- Settings/Gear Icon -->
         <PathGeometry x:Key="SettingsIcon">M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z</PathGeometry>
-        
-        <!-- Arrow Left Icon -->
         <PathGeometry x:Key="ArrowLeftIcon">M19,12 L5,12 M12,19 L5,12 L12,5</PathGeometry>
-        
-        <!-- Arrow Up Right Icon -->
         <PathGeometry x:Key="ArrowUpRightIcon">M7,17 L17,7 M17,17 L17,7 L7,7</PathGeometry>
-        
-        <!-- Export Icon (arrow from box pointing out) -->
         <PathGeometry x:Key="ExportIcon">M17,3 L21,3 L21,7 M11,13 L21,3 M19,13.89 L19,20 Q19,21 18,21 L4,21 Q3,21 3,20 L3,6 Q3,5 4,5 L10.11,5</PathGeometry>
-        
-        <!-- Star Icon (mods) -->
         <PathGeometry x:Key="StarIcon">M16,2.7 L20,13 L30,13 L21.8,19.1 L24.7,29 L16,23.3 L7.3,29 L10.2,19.1 L2,13 L12,13 Z M14,16 L14,18 M18,16 L18,18</PathGeometry>
-        
-        <!-- Import Icon (arrow into box) -->
         <PathGeometry x:Key="ImportIcon">M13,9 L13,13 L9,13 M3,3 L13,13 M13.89,5 L20,5 Q21,5 21,6 L21,20 Q21,21 20,21 L6,21 Q5,21 5,20 L5,13.89</PathGeometry>
-        
-        <!-- Telegram Icon (Simple paper plane) -->
         <PathGeometry x:Key="TelegramIcon">M2,21 L23,12 L2,3 L2,10 L17,12 L2,14 Z</PathGeometry>
-        
-        <!-- Discord Icon (Simple chat bubbles) -->
         <PathGeometry x:Key="DiscordIcon">M20,2 L4,2 A2,2 0 0,0 2,4 L2,22 L6,18 L20,18 A2,2 0 0,0 22,16 L22,4 A2,2 0 0,0 20,2 M8,11 A1.5,1.5 0 1,1 8,8 A1.5,1.5 0 1,1 8,11 M16,11 A1.5,1.5 0 1,1 16,8 A1.5,1.5 0 1,1 16,11</PathGeometry>
-        
-        <!-- Message/Chat Icon -->
         <PathGeometry x:Key="MessageIcon">M4,4 L20,4 A2,2 0 0,1 22,6 L22,16 A2,2 0 0,1 20,18 L8,18 L4,22 Z</PathGeometry>
-        
-        <!-- Mail Icon -->
         <PathGeometry x:Key="MailIcon">M3 8L8.44992 11.6333C9.73295 12.4886 10.3745 12.9163 11.0678 13.0825C11.6806 13.2293 12.3194 13.2293 12.9322 13.0825C13.6255 12.9163 14.2671 12.4886 15.5501 11.6333L21 8M6.2 19H17.8C18.9201 19 19.4802 19 19.908 18.782C20.2843 18.5903 20.5903 18.2843 20.782 17.908C21 17.4802 21 16.9201 21 15.8V8.2C21 7.0799 21 6.51984 20.782 6.09202C20.5903 5.71569 20.2843 5.40973 19.908 5.21799C19.4802 5 18.9201 5 17.8 5H6.2C5.0799 5 4.51984 5 4.09202 5.21799C3.71569 5.40973 3.40973 5.71569 3.21799 6.09202C3 6.51984 3 7.07989 3 8.2V15.8C3 16.9201 3 17.4802 3.21799 17.908C3.40973 18.2843 3.71569 18.5903 4.09202 18.782C4.51984 19 5.07989 19 6.2 19Z</PathGeometry>
-        
-        <!-- Refresh/Reload Icon (Redo/Retry) -->
         <PathGeometry x:Key="RefreshIcon">M21,11c-0.6,0-1,0.4-1,1c0,2.9-1.5,5.5-4,6.9c-3.8,2.2-8.7,0.9-10.9-2.9C2.9,12.2,4.2,7.3,8,5.1c3.3-1.9,7.3-1.2,9.8,1.4h-2.4c-0.6,0-1,0.4-1,1s0.4,1,1,1h4.5c0.6,0,1-0.4,1-1V3c0-0.6-0.4-1-1-1s-1,0.4-1,1v1.8C17,3,14.6,2,12,2C6.5,2,2,6.5,2,12s4.5,10,10,10c5.5,0,10-4.5,10-10C22,11.4,21.6,11,21,11z</PathGeometry>
-        
-        <!-- Checkmark Icon -->
         <PathGeometry x:Key="CheckmarkIcon">M4.63 15.638a1.028 1.028 0 0 1-.79-.37L.36 11.09a1.03 1.03 0 1 1 1.58-1.316l2.535 3.043L9.958 3.32a1.029 1.029 0 0 1 1.783 1.03L5.52 15.122a1.03 1.03 0 0 1-.803.511.89.89 0 0 1-.088.004z</PathGeometry>
-        
-        <!-- Plug Icon -->
-
-        
-        <!-- External Link Icon -->
         <PathGeometry x:Key="ExternalLinkIcon">M392.857,292.354h-18.274c-2.669,0-4.859,0.855-6.563,2.573c-1.718,1.708-2.573,3.897-2.573,6.563v91.361 c0,12.563-4.47,23.315-13.415,32.262c-8.945,8.945-19.701,13.414-32.264,13.414H82.224c-12.562,0-23.317-4.469-32.264-13.414 c-8.945-8.946-13.417-19.698-13.417-32.262V155.31c0-12.562,4.471-23.313,13.417-32.259c8.947-8.947,19.702-13.418,32.264-13.418 h200.994c2.669,0,4.859-0.859,6.57-2.57c1.711-1.713,2.566-3.9,2.566-6.567V82.221c0-2.662-0.855-4.853-2.566-6.563 c-1.711-1.713-3.901-2.568-6.57-2.568H82.224c-22.648,0-42.016,8.042-58.102,24.125C8.042,113.297,0,132.665,0,155.313v237.542 c0,22.647,8.042,42.018,24.123,58.095c16.086,16.084,35.454,24.13,58.102,24.13h237.543c22.647,0,42.017-8.046,58.101-24.13 c16.085-16.077,24.127-35.447,24.127-58.095v-91.358c0-2.669-0.856-4.859-2.574-6.57 C397.709,293.209,395.519,292.354,392.857,292.354z M506.199,41.971c-3.617-3.617-7.905-5.424-12.85-5.424H347.171c-4.948,0-9.233,1.807-12.847,5.424 c-3.617,3.615-5.428,7.898-5.428,12.847s1.811,9.233,5.428,12.85l50.247,50.248L198.424,304.067 c-1.906,1.903-2.856,4.093-2.856,6.563c0,2.479,0.953,4.668,2.856,6.571l32.548,32.544c1.903,1.903,4.093,2.852,6.567,2.852 s4.665-0.948,6.567-2.852l186.148-186.148l50.251,50.248c3.614,3.617,7.898,5.426,12.847,5.426s9.233-1.809,12.851-5.426 c3.617-3.616,5.424-7.898,5.424-12.847V54.818C511.626,49.866,509.813,45.586,506.199,41.971z</PathGeometry>
-        
-        <!-- Like/Thumbs Up Icon -->
         <PathGeometry x:Key="LikeIcon">M8,11.47A18.74,18.74,0,0,0,10.69,8.9a18.74,18.74,0,0,0,1.76-2.42A6.42,6.42,0,0,0,13,5.41l1.74-4.57a4.45,4.45,0,0,1,2.83,2A4,4,0,0,1,18,4.77a2.67,2.67,0,0,1-.09.55L16.72,9.05h5.22a2,2,0,0,1,2,1.85,19.32,19.32,0,0,1-.32,5.44,33.83,33.83,0,0,1-1.23,4.34,3.78,3.78,0,0,1-3.58,2.49,25.54,25.54,0,0,1-6.28-.66A45.85,45.85,0,0,1,8,21.26V11.47Z M5,9H1a1,1,0,0,0-1,1V22a1,1,0,0,0,1,1H5a1,1,0,0,0,1-1V10A1,1,0,0,0,5,9ZM3,21a1,1,0,1,1,1-1A1,1,0,0,1,3,21Z</PathGeometry>
-
-        <!-- ═══ FLAT BUTTON ═══ -->
         <Style x:Key="FlatBtn" TargetType="Button">
             <Setter Property="Background"   Value="Transparent"/>
             <Setter Property="BorderBrush"  Value="Transparent"/>
@@ -121,8 +72,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- ═══ FLAT BUTTON CENTERED ═══ -->
         <Style x:Key="FlatBtnCentered" TargetType="Button" BasedOn="{StaticResource FlatBtn}">
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -147,8 +96,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- ═══ ACCENT BUTTON ═══ -->
         <Style x:Key="AccentBtn" TargetType="Button">
             <Setter Property="Background"   Value="#3b82f6"/>
             <Setter Property="Foreground"   Value="White"/>
@@ -177,8 +124,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- ═══ GREEN ACCENT BUTTON ═══ -->
         <Style x:Key="GreenAccentBtn" TargetType="Button">
             <Setter Property="Background"   Value="#22c55e"/>
             <Setter Property="Foreground"   Value="White"/>
@@ -207,8 +152,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- ═══ OUTLINE BUTTON ═══ -->
         <Style x:Key="OutlineBtn" TargetType="Button" BasedOn="{StaticResource FlatBtn}">
             <Setter Property="Template">
                 <Setter.Value>
@@ -227,8 +170,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- ═══ BACK BUTTON ═══ -->
         <Style x:Key="BackBtn" TargetType="Button" BasedOn="{StaticResource FlatBtn}">
             <Setter Property="Background" Value="#1e1e1e"/>
             <Setter Property="BorderBrush" Value="#333333"/>
@@ -256,8 +197,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- ═══ BIG MAIN BUTTON ═══ -->
         <Style x:Key="BigBtn" TargetType="Button">
             <Setter Property="Background"      Value="#161625"/>
             <Setter Property="Foreground"      Value="White"/>
@@ -272,11 +211,9 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Grid>
-                            <!-- Тёмный ореол, строго в границах 170x170 -->
                             <Border x:Name="outerRing"
                                     CornerRadius="85"
                                     Background="#0a0a18"/>
-                            <!-- Основной круг кнопки -->
                             <Border x:Name="bd"
                                     CornerRadius="80"
                                     Margin="10"
@@ -324,8 +261,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- ═══ TOGGLE SWITCH (CheckBox) ═══ -->
         <Style x:Key="Toggle" TargetType="CheckBox">
             <Setter Property="Foreground"   Value="#f0f0f0"/>
             <Setter Property="FontFamily"   Value="Segoe UI"/>
@@ -373,8 +308,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- ═══ PROGRESS BAR ═══ -->
         <Style TargetType="ProgressBar">
             <Setter Property="Height"           Value="4"/>
             <Setter Property="Background"       Value="#2e2e2e"/>
@@ -420,8 +353,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- ═══ INPUT TEXTBOX ═══ -->
         <Style x:Key="InputBox" TargetType="TextBox">
             <Setter Property="Background"       Value="#252525"/>
             <Setter Property="Foreground"       Value="#f0f0f0"/>
@@ -445,8 +376,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- ═══ LOG BOX ═══ -->
         <Style x:Key="LogBox" TargetType="RichTextBox">
             <Setter Property="Background"       Value="#1e1e1e"/>
             <Setter Property="Foreground"       Value="#cccccc"/>
@@ -471,8 +400,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- ═══ CLOSE BUTTON ═══ -->
         <Style x:Key="CloseBtn" TargetType="Button" BasedOn="{StaticResource FlatBtn}">
             <Setter Property="Template">
                 <Setter.Value>
@@ -495,12 +422,9 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- ═══ SCROLLBAR (minimal) ═══ -->
         <Style TargetType="ScrollBar">
             <Setter Property="MinWidth" Value="0"/>
             <Setter Property="Width" Value="10"/>
-            <!-- Даем невидимую зону для удобного клика мышкой -->
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -511,7 +435,6 @@
                                     <Thumb>
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
-                                                <!-- Добавлены отступы сверху и снизу (Margin="0,4,2,4"), чтобы края не обрезались и были закругленными -->
                                                 <Border Background="#333333" CornerRadius="5" Width="5" HorizontalAlignment="Right" Margin="0,4,2,4"/>
                                             </ControlTemplate>
                                         </Thumb.Template>
@@ -529,8 +452,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- ═══ VOLUME SLIDER ═══ -->
         <ControlTemplate x:Key="SliderDecreaseBtn" TargetType="RepeatButton">
             <Border Height="3" CornerRadius="1.5,0,0,1.5" VerticalAlignment="Center">
                 <Border.Background>
@@ -578,8 +499,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- ═══ КОНТЕКСТНОЕ МЕНЮ СОРТИРОВКИ ═══ -->
         <ContextMenu x:Key="StatsSortContextMenu" HasDropShadow="False" UseLayoutRounding="True">
             <ContextMenu.Resources>
                 <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
@@ -700,22 +619,13 @@
             <MenuItem Header="По кол-ву нот (Больше → Меньше)" Tag="NotesDesc" Click="SortMenuItem_Click"/>
         </ContextMenu>
     </Window.Resources>
-
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- ROOT                                                                -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
     <Border Background="#161616" x:Name="RootBorder" CornerRadius="12" BorderBrush="#333333" BorderThickness="1">
             <Grid x:Name="MainGrid">
             <Grid.RowDefinitions>
                 <RowDefinition Height="54"/>
-                <!-- Header  -->
                 <RowDefinition Height="*"/>
-                <!-- Content -->
                 <RowDefinition Height="32"/>
-                <!-- Footer  -->
             </Grid.RowDefinitions>
-
-            <!-- ══════════════════ HEADER ══════════════════ -->
             <Border Grid.Row="0" Background="#1e1e1e" CornerRadius="11,11,0,0"
                     MouseLeftButtonDown="Header_Drag">
                 <Grid Margin="18,0,12,0">
@@ -724,38 +634,25 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-
-                    <!-- Logo + status -->
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="NetFix" FontFamily="Segoe UI" FontSize="18"
                                    FontWeight="Bold" Foreground="White"/>
                         <TextBlock Text="  by rupleide" FontFamily="Segoe UI" FontSize="11"
                                    Foreground="#888888" VerticalAlignment="Center" Margin="0,0,15,0"/>
-
-                        <!-- Net Status -->
                         <Ellipse x:Name="NetDot" Width="8" Height="8" Fill="#888888" VerticalAlignment="Center"/>
                         <TextBlock x:Name="NetLbl" Text="Сеть" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
                                    Foreground="#888888" VerticalAlignment="Center" Margin="5,0,15,0"/>
-
-                        <!-- VPN Status -->
                         <Ellipse x:Name="VpnDot" Width="8" Height="8" Fill="#888888" VerticalAlignment="Center"/>
                         <TextBlock Text="VPN" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
                                    Foreground="#888888" VerticalAlignment="Center" Margin="5,0,15,0"/>
-
-                        <!-- Zapret Status -->
                         <Ellipse x:Name="ZapretDot" Width="8" Height="8" Fill="#888888" VerticalAlignment="Center"/>
                         <TextBlock Text="Zapret" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
                                    Foreground="#888888" VerticalAlignment="Center" Margin="5,0,15,0"/>
-
-                        <!-- TgWsProxy Status -->
                         <Ellipse x:Name="TgWsDot" Width="8" Height="8" Fill="#888888" VerticalAlignment="Center"/>
                         <TextBlock Text="TgWsProxy" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
                                    Foreground="#888888" VerticalAlignment="Center" Margin="5,0,0,0"/>
                     </StackPanel>
-
-                    <!-- Nav + window controls -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-
                         <Button x:Name="ServicesBtn"
         Style="{StaticResource FlatBtn}"
         Foreground="#888888"
@@ -772,25 +669,21 @@
                                 <TextBlock Text="Сервисы" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-
 <Button x:Name="ModsNavBtn" Content="Моды"
         Style="{StaticResource FlatBtn}" Foreground="#888888"
         Padding="12,6" Margin="0,0,10,0"
         WindowChrome.IsHitTestVisibleInChrome="True"
         Click="ModsNavBtn_Click"/>
-
 <Button x:Name="FaqNavBtn" Content="FAQ"
         Style="{StaticResource FlatBtn}" Foreground="#888888"
         Padding="12,6" Margin="0,0,10,0"
         WindowChrome.IsHitTestVisibleInChrome="True"
         Click="FaqNavBtn_Click"/>
-
 <Button x:Name="DiagNavBtn" Content="Диагностика"
         Style="{StaticResource FlatBtn}" Foreground="#888888"
         Padding="12,6" Margin="0,0,10,0"
         WindowChrome.IsHitTestVisibleInChrome="True"
         Click="DiagNavBtn_Click"/>
-
                         <Button x:Name="GameNavBtn"
         Style="{StaticResource FlatBtn}"
         Foreground="#888888"
@@ -799,7 +692,6 @@
         Click="GameNavBtn_Click">
                             <TextBlock Text="Игра" VerticalAlignment="Center"/>
                         </Button>
-
                         <Button x:Name="SettingsBtn" Style="{StaticResource FlatBtn}"
                                 Width="36" Padding="0"
                                 WindowChrome.IsHitTestVisibleInChrome="True"
@@ -812,8 +704,6 @@
                                       IsHitTestVisible="False"/>
                             </Grid>
                         </Button>
-
-                        <!-- Window controls -->
                         <Button Style="{StaticResource FlatBtnCentered}"
                                 Width="34" Height="18.62" MinWidth="34" MinHeight="18.62" Padding="0,0,0,1" FontSize="14"
                                 WindowChrome.IsHitTestVisibleInChrome="True"
@@ -827,28 +717,20 @@
                             <Path Data="{StaticResource CloseIcon}" 
                                   Stroke="#888888"
                                   StrokeThickness="2"
-                                  
                                   Width="12" Height="12"
                                   Stretch="Uniform"/>
                         </Button>
                     </StackPanel>
                 </Grid>
             </Border>
-
-            <!-- ══════════════════ CONTENT ══════════════════ -->
             <Grid Grid.Row="1" x:Name="ContentGrid">
-
-                <!-- ── MAIN PAGE ── -->
                 <Grid x:Name="MainPageContainer" ClipToBounds="True">
-                    <!-- Main Page Content -->
                     <ScrollViewer x:Name="MainPage" VerticalScrollBarVisibility="Auto">
                         <Grid>
-                            <!-- Aurora Background Effect — скроллится вместе с контентом -->
                             <Grid IsHitTestVisible="False" ClipToBounds="True" 
                                   Panel.ZIndex="-1"
                                   VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
                                   RenderOptions.EdgeMode="Aliased">
-                                <!-- Layer 1: Blue (Central Glow) -->
                                 <Rectangle x:Name="AuroraRect1" Opacity="1.0">
                                     <Rectangle.Fill>
                                         <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
@@ -866,8 +748,6 @@
                                         </RadialGradientBrush>
                                     </Rectangle.Fill>
                                 </Rectangle>
-                                
-                                <!-- Layer 2: Purple (Left Top Corner) -->
                                 <Rectangle x:Name="AuroraRect2" Opacity="1.0">
                                     <Rectangle.Fill>
                                         <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
@@ -884,8 +764,6 @@
                                         </RadialGradientBrush>
                                     </Rectangle.Fill>
                                 </Rectangle>
-                                
-                                <!-- Layer 3: Indigo (Right Bottom Corner) -->
                                 <Rectangle x:Name="AuroraRect3" Opacity="1.0">
                                     <Rectangle.Fill>
                                         <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
@@ -902,8 +780,6 @@
                                         </RadialGradientBrush>
                                     </Rectangle.Fill>
                                 </Rectangle>
-                                
-                                <!-- DITHER LAYER — борьба с бандингом, всегда последний в стеке -->
                                 <Rectangle IsHitTestVisible="False" Opacity="0.04"
                                            RenderOptions.BitmapScalingMode="NearestNeighbor">
                                     <Rectangle.Fill>
@@ -915,11 +791,7 @@
                                     </Rectangle.Fill>
                                 </Rectangle>
                             </Grid>
-                            
-                            <!-- Content Layer -->
                             <StackPanel Margin="32,24,32,24" Panel.ZIndex="1">
-
-                        <!-- Title -->
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,4">
                             <Path Data="{StaticResource BoltIcon}" 
                                   Fill="White"
@@ -938,18 +810,13 @@
                                    HorizontalAlignment="Center"
                                    TextAlignment="Center"
                                    Margin="0,0,0,24"/>
-
-                        <!-- Кнопка + статистика справа -->
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="200"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-
-                            <!-- Кнопка по центру -->
                             <Grid Grid.Column="1" Width="200" Height="200">
-                                <!-- Idle: статические кольца -->
                                 <Ellipse x:Name="IdleRingOuter" Width="188" Height="188"
                                          Stroke="#3b82f6" StrokeThickness="2.5" Fill="Transparent"
                                          IsHitTestVisible="False" Opacity="0.5"/>
@@ -957,8 +824,6 @@
                                          Stroke="#3b82f6" StrokeThickness="0.8"
                                          StrokeDashArray="6 8" Fill="Transparent"
                                          IsHitTestVisible="False" Opacity="0.2"/>
-
-                                <!-- Loading: пульсирующие гало -->
                                 <Ellipse x:Name="PulseRing1" Width="180" Height="180"
                                          Stroke="#5b8df5" StrokeThickness="6" Fill="Transparent"
                                          IsHitTestVisible="False" Visibility="Collapsed" Opacity="0.15"
@@ -975,8 +840,6 @@
                                         <ScaleTransform x:Name="PulseScale2" ScaleX="1" ScaleY="1"/>
                                     </Ellipse.RenderTransform>
                                 </Ellipse>
-
-                                <!-- Loading: спиннер 1 (синий, по часовой) -->
                                 <Ellipse x:Name="SpinArc" Width="188" Height="188"
                                          Stroke="#5b8df5" StrokeThickness="3"
                                          StrokeDashArray="200 430" StrokeDashCap="Round"
@@ -989,8 +852,6 @@
                                         </TransformGroup>
                                     </Ellipse.RenderTransform>
                                 </Ellipse>
-
-                                <!-- Loading: спиннер 2 (фиолетовый, против часовой) -->
                                 <Ellipse x:Name="SpinArc2" Width="174" Height="174"
                                          Stroke="#7c6af7" StrokeThickness="2"
                                          StrokeDashArray="80 550" StrokeDashCap="Round"
@@ -1003,8 +864,6 @@
                                         </TransformGroup>
                                     </Ellipse.RenderTransform>
                                 </Ellipse>
-
-                                <!-- Success: заполняющаяся дуга -->
                                 <Ellipse x:Name="SuccessArc" Width="188" Height="188"
                                          Stroke="#22c55e" StrokeThickness="3" StrokeDashCap="Round"
                                          Fill="Transparent" RenderTransformOrigin="0.5,0.5"
@@ -1013,14 +872,10 @@
                                         <RotateTransform Angle="-90"/>
                                     </Ellipse.RenderTransform>
                                 </Ellipse>
-
-                                <!-- Error: красное пунктирное кольцо -->
                                 <Ellipse x:Name="ErrorRing" Width="188" Height="188"
                                          Stroke="#ef4444" StrokeThickness="2.5"
                                          StrokeDashArray="12 8" Fill="Transparent"
                                          IsHitTestVisible="False" Visibility="Collapsed" Opacity="0.7"/>
-
-                                <!-- Success: галочка -->
                                 <Border x:Name="SuccessCheck" 
                                         Background="#22c55e" CornerRadius="12"
                                         Width="24" Height="24" IsHitTestVisible="False"
@@ -1037,34 +892,25 @@
                                           HorizontalAlignment="Center" 
                                           VerticalAlignment="Center"/>
                                 </Border>
-
-                                <!-- Совместимость со старым кодом -->
                                 <Border x:Name="GlowOuter" Visibility="Collapsed"/>
                                 <Border x:Name="GlowMid"   Visibility="Collapsed"/>
                                 <Border x:Name="GlowInner" Visibility="Collapsed"/>
-
-                                <!-- КНОПКА В САМОМ КОНЦЕ - всегда поверх всех анимаций -->
                                 <Button x:Name="FixBtn"
                                         Style="{StaticResource BigBtn}"
                                         Panel.ZIndex="999"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
                                         Click="FixBtn_Click"/>
                             </Grid>
-
-                            <!-- Статистика справа -->
                             <StackPanel Grid.Column="2"
                                         VerticalAlignment="Center"
                                         Margin="0,0,20,0"
                                         HorizontalAlignment="Right"
                                         Opacity="0.9">
-
-                                <!-- Download -->
                                 <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="32"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-
                                     <Viewbox Grid.Column="0" Width="26" Height="26"
                                              HorizontalAlignment="Center"
                                              VerticalAlignment="Center">
@@ -1075,7 +921,6 @@
                                                   StrokeLineJoin="Round"/>
                                         </Canvas>
                                     </Viewbox>
-
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Text="Входящий" FontSize="11"
                                                    Foreground="#555555" FontFamily="Segoe UI"/>
@@ -1089,14 +934,11 @@
                                         </StackPanel>
                                     </StackPanel>
                                 </Grid>
-
-                                <!-- Upload -->
                                 <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="32"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-
                                     <Viewbox Grid.Column="0" Width="26" Height="26"
                                              HorizontalAlignment="Center"
                                              VerticalAlignment="Center">
@@ -1107,7 +949,6 @@
                                                   StrokeLineJoin="Round"/>
                                         </Canvas>
                                     </Viewbox>
-
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Text="Исходящий" FontSize="11"
                                                    Foreground="#555555" FontFamily="Segoe UI"/>
@@ -1121,15 +962,12 @@
                                         </StackPanel>
                                     </StackPanel>
                                 </Grid>
-
-                                <!-- Ping -->
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="32"/>
                                         <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>  <!-- кнопка -->
+                                        <ColumnDefinition Width="Auto"/>  
                                     </Grid.ColumnDefinitions>
-
                                     <Viewbox Grid.Column="0" Width="18" Height="18"
                                              HorizontalAlignment="Center"
                                              VerticalAlignment="Center">
@@ -1151,7 +989,6 @@
                                                         c56.544,8.145,100.174,56.777,100.174,115.536V459.661z"/>
                                         </Canvas>
                                     </Viewbox>
-
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Text="Пинг" FontSize="11"
                                                    Foreground="#555555" FontFamily="Segoe UI"/>
@@ -1164,8 +1001,6 @@
                                                        VerticalAlignment="Center" Margin="4,0,0,0"/>
                                         </StackPanel>
                                     </StackPanel>
-
-                                    <!-- Кнопка повтора -->
                                     <Button x:Name="RescanBtn"
                                             Grid.Column="2"
                                             VerticalAlignment="Center"
@@ -1179,7 +1014,6 @@
                                             ToolTipService.InitialShowDelay="0"
                                             ToolTipService.ShowDuration="10000"
                                             ToolTipService.BetweenShowDelay="0">
-
                                         <Button.Style>
                                             <Style TargetType="Button">
                                                 <Setter Property="Opacity" Value="0.3"/>
@@ -1200,7 +1034,6 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </Button.Style>
-
                                         <Button.ToolTip>
                                             <ToolTip Background="Transparent"
                                                      BorderThickness="0"
@@ -1236,7 +1069,6 @@
                                                 </Border>
                                             </ToolTip>
                                         </Button.ToolTip>
-
                                         <Viewbox Width="15" Height="15">
                                             <Canvas Width="24" Height="24">
                                                 <Path Data="M21,11c-0.6,0-1,0.4-1,1c0,2.9-1.5,5.5-4,6.9c-3.8,2.2-8.7,0.9-10.9-2.9C2.9,12.2,4.2,7.3,8,5.1c3.3-1.9,7.3-1.2,9.8,1.4h-2.4c-0.6,0-1,0.4-1,1s0.4,1,1,1h4.5c0.6,0,1-0.4,1-1V3c0-0.6-0.4-1-1-1s-1,0.4-1,1v1.8C17,3,14.6,2,12,2C6.5,2,2,6.5,2,12s4.5,10,10,10c5.5,0,10-4.5,10-10C22,11.4,21.6,11,21,11z"
@@ -1245,19 +1077,12 @@
                                         </Viewbox>
                                     </Button>
                                 </Grid>
-
                             </StackPanel>
                         </Grid>
-
-                        <!-- Progress -->
                         <ProgressBar x:Name="SetupProg" Value="0" Maximum="100" Margin="0,16,0,0"/>
                         <TextBlock x:Name="SetupProgLbl" Text="" FontSize="12"
                                    Foreground="#888888" Margin="0,5,0,0"/>
-
-                        <!-- Separator -->
                         <Border Height="1" Background="#333333" Margin="0,24,0,0"/>
-
-                        <!-- Log header -->
                         <Grid Margin="0,16,0,0">
                             <TextBlock Text="Лог" FontFamily="Segoe UI" FontSize="13"
                                        FontWeight="Bold" Foreground="#888888" VerticalAlignment="Center"/>
@@ -1272,8 +1097,6 @@
                                         Click="ClearLog_Click"/>
                             </StackPanel>
                         </Grid>
-
-                        <!-- Log box -->
                         <RichTextBox x:Name="LogBox" Style="{StaticResource LogBox}"
                                      Height="270" Margin="0,8,0,16">
                             <FlowDocument PagePadding="0"/>
@@ -1282,25 +1105,18 @@
                         </Grid>
                 </ScrollViewer>
                 </Grid>
-
-                <!-- ── FAQ PAGE ── -->
-                <!-- ── FAQ PAGE ── -->
-                <!-- ── GAME PAGE ── -->
                 <Grid x:Name="GamePage" Visibility="Collapsed">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-
                     <Grid Grid.Row="0" Margin="32,20,32,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-
-                        <!-- Левая часть: Назад + заголовок -->
                         <StackPanel Grid.Column="0" Orientation="Horizontal">
                             <Button x:Name="GameBackBtn" Style="{StaticResource BackBtn}"
                                     WindowChrome.IsHitTestVisibleInChrome="True"
@@ -1320,8 +1136,6 @@
                                        TextTrimming="CharacterEllipsis"
                                        MaxWidth="300"/>
                         </StackPanel>
-
-                        <!-- Правая часть: громкость -->
                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
                             <Path Data="M404,427 L370,400 C444,319 444,196 370,115 L403,88 C490,185 490,331 404,427 Z M319,156 L286,183 C326,225 326,291 286,333 L319,360 C372,302 372,214 319,156 Z M234,85 L123,172 L43,172 L43,343 L124,343 L234,428 Z M85,215 L138,215 L181,173 L181,342 L138,300 L85,300 Z"
                                   Fill="#666666"
@@ -1337,8 +1151,6 @@
                                        Foreground="#888" VerticalAlignment="Center"
                                        Width="32" TextAlignment="Right"/>
                         </StackPanel>
-
-                        <!-- Центр: Счёт/Комбо/Точность (видны только во время игры) -->
                         <StackPanel Grid.Column="1" x:Name="GameHUDPanel"
                                     Orientation="Horizontal" HorizontalAlignment="Center"
                                     Visibility="Collapsed">
@@ -1368,12 +1180,8 @@
                             </StackPanel>
                         </StackPanel>
                     </Grid>
-
                     <Border Grid.Row="1" Height="1" Background="#333333" Margin="32,14,32,0"/>
-
-                    <!-- ═══ GAME PAGE AURORA (общий фон для всей страницы игры) ═══ -->
                     <Grid Grid.Row="2" IsHitTestVisible="False" Panel.ZIndex="-1">
-                        <!-- Layer 1: нижнее индиго свечение -->
                         <Rectangle x:Name="GameAurora1" Opacity="0.5">
                             <Rectangle.Fill>
                                 <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
@@ -1402,7 +1210,6 @@
                                 </RadialGradientBrush>
                             </Rectangle.Fill>
                         </Rectangle>
-                        <!-- Layer 2: верхний фиолетовый -->
                         <Rectangle x:Name="GameAurora2" Opacity="0.4">
                             <Rectangle.Fill>
                                 <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
@@ -1431,7 +1238,6 @@
                                 </RadialGradientBrush>
                             </Rectangle.Fill>
                         </Rectangle>
-                        <!-- Layer 3: правый нижний индиго -->
                         <Rectangle x:Name="GameAurora3" Opacity="0.3">
                             <Rectangle.Fill>
                                 <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
@@ -1460,7 +1266,6 @@
                                 </RadialGradientBrush>
                             </Rectangle.Fill>
                         </Rectangle>
-                        <!-- noise усиленный -->
                         <Rectangle IsHitTestVisible="False" Opacity="0.07"
                                    RenderOptions.BitmapScalingMode="NearestNeighbor">
                             <Rectangle.Fill>
@@ -1470,7 +1275,6 @@
                             </Rectangle.Fill>
                         </Rectangle>
                     </Grid>
-
                     <Grid Grid.Row="2" x:Name="GameContent">
                         <Grid x:Name="GameMenuView">
                             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
@@ -1480,7 +1284,6 @@
                                 <TextBlock Text="Играй под бит пока идёт сканирование" FontFamily="Segoe UI"
                                            FontSize="13" Foreground="#888888" HorizontalAlignment="Center"
                                            Margin="0,0,0,32"/>
-
                                 <Border x:Name="PlayMenuBorder" CornerRadius="10" Width="320" Margin="0,0,0,12">
                                     <Border.Background>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
@@ -1517,7 +1320,6 @@
                                         </StackPanel>
                                     </Border>
                                 </Border>
-
                                 <Border x:Name="GameStatsMenuBtn" CornerRadius="12" Cursor="Hand"
                                         Width="320" Height="68" Margin="0,0,0,12"
                                         MouseLeftButtonUp="GameStatsMenuBtn_Click"
@@ -1547,7 +1349,6 @@
                                         </Grid>
                                     </Border>
                                 </Border>
-
                                 <Border x:Name="EditorMenuBtn" CornerRadius="12" Cursor="Hand"
                                         Width="320" Height="68" Margin="0,0,0,12"
                                         MouseLeftButtonUp="EditorMenuBtn_Click"
@@ -1576,7 +1377,6 @@
                                         </Grid>
                                     </Border>
                                 </Border>
-
                                 <Border x:Name="GameSettingsMenuBtn" CornerRadius="12" Cursor="Hand"
                                         Width="320" Height="68" Margin="0,0,0,12"
                                         MouseLeftButtonUp="GameSettingsMenuBtn_Click"
@@ -1608,8 +1408,6 @@
                                 </Border>
                             </StackPanel>
                         </Grid>
-
-            <!-- ═══ СПИСОК ТРЕКОВ (GameStatsView) ═══ -->
             <ScrollViewer x:Name="GameStatsView" Visibility="Collapsed" Focusable="True"
                           KeyDown="GameStatsView_KeyDown"
                           VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
@@ -1622,8 +1420,6 @@
                         <TextBlock Text="Выбери трек для детального анализа" FontFamily="Segoe UI"
                                    FontSize="13" Foreground="#666666" HorizontalAlignment="Center"/>
                     </StackPanel>
-
-                    <!-- ═══ ПОИСК И СОРТИРОВКА ═══ -->
                     <Border Background="#1a1a1a" CornerRadius="6" Padding="6,2"
                             Margin="0,0,0,8" BorderBrush="#2a2a2a" BorderThickness="1">
                         <Grid>
@@ -1654,9 +1450,7 @@
                             </Button>
                         </Grid>
                     </Border>
-
                     <StackPanel x:Name="StatsListPanel" Margin="0,0,0,24"/>
-
                     <StackPanel x:Name="StatsEmptyState" VerticalAlignment="Center"
                                 HorizontalAlignment="Center" Visibility="Collapsed">
                         <Path Data="M12,2 A10,10 0 1 1 11.999,2 Z M12,8 L12,12 M12,15 L12,16"
@@ -1667,8 +1461,6 @@
                     </StackPanel>
                 </StackPanel>
             </ScrollViewer>
-
-            <!-- ═══ ДЕТАЛЬНАЯ СТАТИСТИКА (GameStatsDetailView) ═══ -->
             <ScrollViewer x:Name="GameStatsDetailView" Visibility="Collapsed" Focusable="True"
                           KeyDown="GameStatsDetailView_KeyDown"
                           VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
@@ -1680,7 +1472,6 @@
                             <TextBlock x:Name="StatsDetailTitle" FontFamily="Segoe UI" FontSize="22"
                                        FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"
                                        TextTrimming="CharacterEllipsis" Margin="0,0,0,6"/>
-
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                 <Border Background="#2a2a2a" CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
                                     <TextBlock x:Name="StatsDetailPlays" FontSize="11" Foreground="#aaa"/>
@@ -1689,18 +1480,14 @@
                             </StackPanel>
                         </StackPanel>
                     </Border>
-
                     <StackPanel x:Name="StatsDetailPanel" Margin="0,0,0,24"/>
                 </StackPanel>
             </ScrollViewer>
-
-            <!-- Выбор сложности .osz -->
             <Grid x:Name="OszDifficultyView" Visibility="Collapsed">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-
                 <StackPanel Grid.Row="0" HorizontalAlignment="Center" MinWidth="320" Margin="0,24,0,16">
                     <TextBlock Text="Выбор сложности" FontFamily="Segoe UI" FontSize="22"
                                FontWeight="SemiBold" Foreground="White"
@@ -1709,13 +1496,11 @@
                                FontFamily="Segoe UI" FontSize="13" Foreground="#888888"
                                HorizontalAlignment="Center"/>
                 </StackPanel>
-
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                     <StackPanel x:Name="OszDifficultyPanel"
                                 HorizontalAlignment="Center" MinWidth="320" Margin="0,0,0,24"/>
                 </ScrollViewer>
             </Grid>
-
             <Grid x:Name="GameSettingsView" Visibility="Collapsed" Focusable="True" KeyDown="GameSettingsView_KeyDown">
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MinWidth="320">
                     <TextBlock Text="Настройки управления" FontFamily="Segoe UI" FontSize="22"
@@ -1724,8 +1509,6 @@
                     <TextBlock Text="Нажми на клавишу и затем нажми новую кнопку" FontFamily="Segoe UI"
                                FontSize="13" Foreground="#888888" HorizontalAlignment="Center"
                                Margin="0,0,0,32"/>
-
-                    <!-- Лейн 0 — красный -->
                     <Border CornerRadius="10" Background="#1e1e1e" BorderBrush="#333" BorderThickness="1"
                             Padding="20,14" Margin="0,0,0,8">
                         <Grid>
@@ -1745,8 +1528,6 @@
                             </Border>
                         </Grid>
                     </Border>
-
-                    <!-- Лейн 1 — жёлтый -->
                     <Border CornerRadius="10" Background="#1e1e1e" BorderBrush="#333" BorderThickness="1"
                             Padding="20,14" Margin="0,0,0,8">
                         <Grid>
@@ -1766,8 +1547,6 @@
                             </Border>
                         </Grid>
                     </Border>
-
-                    <!-- Лейн 2 — зелёный -->
                     <Border CornerRadius="10" Background="#1e1e1e" BorderBrush="#333" BorderThickness="1"
                             Padding="20,14" Margin="0,0,0,8">
                         <Grid>
@@ -1787,8 +1566,6 @@
                             </Border>
                         </Grid>
                     </Border>
-
-                    <!-- Лейн 3 — синий -->
                     <Border CornerRadius="10" Background="#1e1e1e" BorderBrush="#333" BorderThickness="1"
                             Padding="20,14" Margin="0,0,0,8">
                         <Grid>
@@ -1808,8 +1585,6 @@
                             </Border>
                         </Grid>
                     </Border>
-
-                    <!-- Комбо-эффект -->
                     <Border CornerRadius="10" Background="#1e1e1e" BorderBrush="#333" BorderThickness="1"
                             Padding="20,14" Margin="0,0,0,24">
                         <CheckBox x:Name="ComboEffectCB" Style="{StaticResource Toggle}"
@@ -1817,27 +1592,21 @@
                                   Checked="ComboEffectCB_Checked"
                                   Unchecked="ComboEffectCB_Unchecked"/>
                     </Border>
-
                     <Button Style="{StaticResource OutlineBtn}" HorizontalAlignment="Stretch"
                             Padding="12,10" Content="Сбросить по умолчанию"
                             WindowChrome.IsHitTestVisibleInChrome="True"
                             Click="ResetKeysBtn_Click"/>
                 </StackPanel>
             </Grid>
-
                         <Grid x:Name="GameTrackSelectView" Visibility="Collapsed">
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
                                 <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center" Margin="40">
-
-                                    <!-- Заголовок -->
                                     <TextBlock Text="Выбор трека" FontFamily="Segoe UI" FontSize="22"
                                                FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"
                                                Margin="0,0,0,6"/>
                                     <TextBlock Text="Выбери встроенный трек NetFix или свой уровень" FontFamily="Segoe UI"
                                                FontSize="13" Foreground="#888888" TextAlignment="Center"
                                                TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,0,0,12"/>
-
-                                    <!-- Предупреждение о здоровье -->
                                     <Border Background="#1a1a1a" CornerRadius="8" Padding="12,10" Margin="0,0,0,24" MaxWidth="600">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
@@ -1856,26 +1625,20 @@
                                             </TextBlock>
                                         </Grid>
                                     </Border>
-
                                     <Grid MaxWidth="800">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="20"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-
-                                        <!-- Левая колонка -->
                                         <StackPanel Grid.Column="0">
                                             <TextBlock Text="ТРЕКИ NETFIX" FontFamily="Segoe UI" FontSize="11"
                                                        Foreground="#666666" FontWeight="Bold" Margin="0,0,0,10"/>
                                             <StackPanel x:Name="BuiltInTracksList"/>
                                         </StackPanel>
-
-                                        <!-- Правая колонка -->
                                         <StackPanel Grid.Column="2">
                                             <TextBlock Text="ПОЛЬЗОВАТЕЛЬСКИЕ ТРЕКИ" FontFamily="Segoe UI" FontSize="11"
                                                        Foreground="#666666" FontWeight="Bold" Margin="0,0,0,10"/>
-
                                             <Button x:Name="ImportLevelBtn" Style="{StaticResource OutlineBtn}"
                                                      Padding="14,12" Margin="0,0,0,6"
                                                      Click="ImportLevel_Click" Cursor="Hand">
@@ -1889,7 +1652,6 @@
                                                                 VerticalAlignment="Center"/>
                                                  </StackPanel>
                                              </Button>
-
                                                 <Button x:Name="OsuModeBtn"
                                                         Padding="14,12" Margin="0,0,0,12"
                                                         Click="OsuModeBtn_Click" Cursor="Hand"
@@ -1899,7 +1661,6 @@
                                                        <ControlTemplate TargetType="Button">
                                                            <Grid>
                                                                <Border x:Name="GlowBorder" CornerRadius="6" Opacity="0.5"/>
-
                                                                 <Border x:Name="Face" CornerRadius="5"
                                                                         Margin="1.5" Background="#1a1a1a"
                                                                         BorderBrush="#333333" BorderThickness="1"
@@ -1907,7 +1668,6 @@
                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                                </Border>
                                                            </Grid>
-
                                                            <ControlTemplate.Triggers>
                                                                <Trigger Property="IsMouseOver" Value="True">
                                                                    <Setter TargetName="GlowBorder" Property="Opacity" Value="1"/>
@@ -1919,7 +1679,6 @@
                                                            </ControlTemplate.Triggers>
                                                        </ControlTemplate>
                                                    </Button.Template>
-
                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                          <Viewbox Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center">
                                                             <Canvas Width="24" Height="24">
@@ -1932,7 +1691,6 @@
                                                                   VerticalAlignment="Center"/>
                                                    </StackPanel>
                                                 </Button>
-
                                               <Border Background="#1a1a1a" CornerRadius="8" Padding="14,10" Margin="0,0,0,12"
                                                      BorderBrush="#2a2a3a" BorderThickness="1">
                                                  <StackPanel>
@@ -1979,8 +1737,6 @@
                                                             </TextBlock>
                                                         </Grid>
                                                      </Border>
-
-                                                        <!-- FAQ: Нет звука -->
                                                          <StackPanel Margin="0,4,0,0">
                                                             <TextBlock HorizontalAlignment="Center">
                                                                 <Hyperlink x:Name="AudioFaqToggleBtn"
@@ -2018,8 +1774,6 @@
                                                        </StackPanel>
                                                   </StackPanel>
                                               </Border>
-
-                                              <!-- ═══ ПОИСК ═══ -->
                                             <Border Background="#1a1a1a" CornerRadius="6" Padding="6,2" Margin="0,0,0,8"
                                                     BorderBrush="#2a2a2a" BorderThickness="1">
                                                 <Grid>
@@ -2050,7 +1804,6 @@
                                                     </Button>
                                                 </Grid>
                                             </Border>
-
                                             <Border x:Name="UserLevelsEmpty" Background="#1a1a1a" CornerRadius="8"
                                                     Padding="16" BorderBrush="#333333" BorderThickness="1">
                                                 <TextBlock Text="Нет сохранённых уровней" FontFamily="Segoe UI"
@@ -2102,35 +1855,25 @@
                                             </ItemsControl>
                                         </StackPanel>
                                     </Grid>
-
                                 </StackPanel>
                             </ScrollViewer>
                         </Grid>
-
-                        <!-- Osu! режим -->
                         <Grid x:Name="OsuModeView" Visibility="Collapsed">
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
                                 <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center" Margin="40">
-
-                                    <!-- Заголовок -->
                                     <TextBlock Text="Osu! режим" FontFamily="Segoe UI" FontSize="22"
                                                FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"
                                                Margin="0,0,0,6"/>
                                     <TextBlock Text="Играй карты osu!mania в NetFix" FontFamily="Segoe UI"
                                                FontSize="13" Foreground="#888888" TextAlignment="Center"
                                                HorizontalAlignment="Center" Margin="0,0,0,20"/>
-
                                     <Grid MaxWidth="800">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="20"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-
-                                        <!-- Левая колонка: Osu! Mode Info -->
                                         <StackPanel Grid.Column="0">
-
-                                            <!-- 1. Предупреждение об эпилепсии -->
                                             <Border Background="Transparent" CornerRadius="8" Padding="12" Margin="0,0,0,10"
                                                     BorderBrush="#f59e0b" BorderThickness="1" Opacity="0.9">
                                                 <Grid>
@@ -2148,8 +1891,6 @@
                                                     </TextBlock>
                                                 </Grid>
                                             </Border>
-
-                                            <!-- 2. Совместимость -->
                                             <Border Background="Transparent" CornerRadius="8" Padding="14" Margin="0,0,0,10"
                                                     BorderBrush="#2a2a2a" BorderThickness="1">
                                                 <StackPanel>
@@ -2160,13 +1901,11 @@
                                                         <TextBlock Text="СОВМЕСТИМОСТЬ КАРТ" FontFamily="Segoe UI" FontSize="11"
                                                                    Foreground="#3b82f6" FontWeight="Bold" VerticalAlignment="Center"/>
                                                     </StackPanel>
-
                                                     <TextBlock FontFamily="Segoe UI" FontSize="11.5" Foreground="#ccc" TextWrapping="Wrap" LineHeight="18">
                                                         <Run Text="NetFix работает только с режимом "/>
                                                         <Run Text="osu!mania (4K)" Foreground="#e84d8a" FontWeight="SemiBold"/>
                                                         <Run Text=". Другие режимы не поддерживаются."/>
                                                     </TextBlock>
-
                                                     <Border Background="#222" CornerRadius="6" Padding="10,8" Margin="0,10,0,0">
                                                         <StackPanel>
                                                             <TextBlock FontSize="11" LineHeight="18" TextWrapping="Wrap">
@@ -2179,7 +1918,6 @@
                                                             </TextBlock>
                                                         </StackPanel>
                                                     </Border>
-
                                                     <TextBlock Margin="0,10,0,0" FontSize="11">
                                                         <Run Text="Найти карты: " Foreground="#888"/>
                                                         <Hyperlink NavigateUri="https://osu.ppy.sh/beatmapsets?m=3&amp;s=any"
@@ -2190,8 +1928,6 @@
                                                     </TextBlock>
                                                 </StackPanel>
                                             </Border>
-
-                                            <!-- 3. FFmpeg Конвертация -->
                                             <Border x:Name="FfmpegBlock" Background="Transparent" CornerRadius="8" Padding="14"
                                                     BorderBrush="#2a2a3a" BorderThickness="1">
                                                 <StackPanel>
@@ -2202,15 +1938,12 @@
                                                         <TextBlock Text="АУДИО-КОНВЕРТАЦИЯ" FontFamily="Segoe UI" FontSize="11"
                                                                    Foreground="#a855f7" FontWeight="Bold" VerticalAlignment="Center"/>
                                                     </StackPanel>
-
                                                     <TextBlock FontFamily="Segoe UI" FontSize="11.5" Foreground="#aaa"
                                                                TextWrapping="Wrap" Margin="0,0,0,12" LineHeight="18">
                                                         <Run Text="Для воспроизведения треков требуется "/>
                                                         <Run Text="ffmpeg" FontWeight="SemiBold" Foreground="#eee"/>
                                                         <Run Text=". Обычно он скачивается автоматически."/>
                                                     </TextBlock>
-
-                                                    <!-- Статус: Установлен -->
                                                     <Border x:Name="FfmpegOkBadge" Background="#052e16" CornerRadius="6"
                                                             Padding="10,8" BorderBrush="#14532d" BorderThickness="1"
                                                             Visibility="Collapsed">
@@ -2221,8 +1954,6 @@
                                                                        FontFamily="Segoe UI" FontSize="11.5" Foreground="#4ade80" FontWeight="SemiBold"/>
                                                         </StackPanel>
                                                     </Border>
-
-                                                    <!-- Кнопка автозагрузки -->
                                                     <Button x:Name="DownloadFfmpegBtn" Style="{StaticResource OutlineBtn}"
                                                             HorizontalAlignment="Stretch" Padding="12,10"
                                                             WindowChrome.IsHitTestVisibleInChrome="True"
@@ -2236,8 +1967,6 @@
                                                                        Foreground="#a855f7" FontWeight="SemiBold"/>
                                                         </StackPanel>
                                                     </Button>
-
-                                                    <!-- Ручная установка (Fallback) -->
                                                     <StackPanel Margin="0,8,0,0">
                                                         <TextBlock HorizontalAlignment="Center">
                                                             <Hyperlink x:Name="ManualFfmpegLink"
@@ -2246,8 +1975,6 @@
                                                                 Не скачивается? Установить вручную
                                                             </Hyperlink>
                                                         </TextBlock>
-
-                                                        <!-- Раскрывающаяся инструкция (по умолчанию скрыта) -->
 <Border x:Name="ManualInstallPanel" Background="Transparent" CornerRadius="6"
                                                                         Padding="12" Margin="0,8,0,0" BorderBrush="#333" BorderThickness="1"
                                                                         Visibility="Collapsed">
@@ -2269,7 +1996,6 @@
                                                                     <LineBreak/>
                                                                     <Run Text="3. Перезапустите приложение или нажмите проверку ниже."/>
                                                                 </TextBlock>
-
                                                                 <Button Content="Проверить наличие файла"
                                                                         Style="{StaticResource OutlineBtn}"
                                                                         Padding="8,6" Margin="0,10,0,0"
@@ -2281,12 +2007,9 @@
                                                 </StackPanel>
                                             </Border>
                                         </StackPanel>
-
-                                        <!-- Правая колонка -->
                                         <StackPanel Grid.Column="2">
                                             <TextBlock Text="OSU! ТРЕКИ" FontFamily="Segoe UI" FontSize="11"
                                                        Foreground="#666666" FontWeight="Bold" Margin="0,0,0,10"/>
-
                                             <Button x:Name="ImportOszBtn" Style="{StaticResource OutlineBtn}"
                                                     Padding="14,12" Margin="0,0,0,12"
                                                     Click="ImportOszBtn_Click" Cursor="Hand">
@@ -2302,8 +2025,6 @@
                                                                VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
-
-                                            <!-- ═══ ПОИСК OSU ═══ -->
                                             <Border Background="#1a1a1a" CornerRadius="6" Padding="6,2" Margin="0,0,0,8"
                                                     BorderBrush="#2a2a2a" BorderThickness="1">
                                                 <Grid>
@@ -2311,7 +2032,6 @@
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
-
                                                     <Grid Grid.Column="0">
                                                         <Path Data="M11,19 A8,8 0 1 1 11,3 A8,8 0 1 1 11,19 Z M21,21 L16.65,16.65"
                                                               Stroke="#555" StrokeThickness="2" Width="12" Height="12"
@@ -2325,7 +2045,6 @@
                                                         <TextBlock x:Name="OsuSearchPlaceholder" Text="Поиск osu! треков..." IsHitTestVisible="False"
                                                                    Foreground="#555" FontSize="11.5" Margin="28,0,0,0" VerticalAlignment="Center"/>
                                                     </Grid>
-
                                                     <Button x:Name="OsuSortMenuBtn" Grid.Column="1" Style="{StaticResource FlatBtn}"
                                                             Padding="4" MinWidth="38" MinHeight="38" Click="SortMenuBtn_Click"
                                                             Tag="{StaticResource SortContextMenu}" ToolTip="Сортировка">
@@ -2336,14 +2055,12 @@
                                                     </Button>
                                                 </Grid>
                                             </Border>
-
                                             <Border x:Name="OsuLevelsEmpty" Background="#1a1a1a" CornerRadius="8"
                                                     Padding="16" BorderBrush="#333333" BorderThickness="1">
                                                 <TextBlock Text="Нет импортированных osu! треков"
                                                            FontFamily="Segoe UI" FontSize="12"
                                                            Foreground="#555555" HorizontalAlignment="Center"/>
                                             </Border>
-
                                             <ItemsControl x:Name="OsuLevelsList" Visibility="Collapsed">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
@@ -2410,7 +2127,6 @@
                                 </StackPanel>
                             </ScrollViewer>
                         </Grid>
-
                         <Grid x:Name="GamePlayView" Visibility="Collapsed" Background="Transparent">
                             <Grid x:Name="GameField" Margin="0,0,0,52">
                                 <Grid.ColumnDefinitions>
@@ -2418,13 +2134,10 @@
                                     <ColumnDefinition Width="400"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-
                                 <Canvas Grid.Column="1" x:Name="GameCanvas" ClipToBounds="True"
                                         Background="Transparent">
-                                    <!-- Все элементы создаются динамически в коде -->
                                 </Canvas>
                             </Grid>
-
                             <Border VerticalAlignment="Bottom" Background="#0d0d15"
                                     BorderBrush="#1a1a2a" BorderThickness="0,1,0,0" Padding="0,10">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
@@ -2442,30 +2155,25 @@
                                     </Border>
                                 </StackPanel>
                             </Border>
-
                             <Border x:Name="CountdownOverlay" Visibility="Collapsed"
                                     Background="#CC000000">
                                 <TextBlock x:Name="CountdownText" Text="3"
                                            FontFamily="Segoe UI" FontSize="80" FontWeight="Thin"
                                            Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-
                             <TextBlock x:Name="JudgeText" Text="" FontFamily="Segoe UI" FontSize="18"
                                        FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"
                                        Margin="0,40,0,0" Opacity="0"/>
                         </Grid>
-
                         <Grid x:Name="GameEditorView" Visibility="Collapsed">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-
                             <StackPanel Grid.Row="0" Margin="32,20,32,12">
                                 <TextBlock Text="Создать уровень" FontFamily="Segoe UI" FontSize="18"
                                            FontWeight="Bold" Foreground="White"/>
                             </StackPanel>
-
                             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="32,0,32,24">
                                 <StackPanel MaxWidth="480">
                                     <TextBlock Text="Аудио файл (MP3)" FontFamily="Segoe UI" FontSize="12"
@@ -2482,12 +2190,10 @@
                                                 WindowChrome.IsHitTestVisibleInChrome="True"
                                                 Click="EditorBrowseTrack_Click"/>
                                     </Grid>
-
                                     <TextBlock Text="Название трека" FontFamily="Segoe UI" FontSize="12"
                                                Foreground="#888" Margin="0,0,0,6"/>
                                     <TextBox x:Name="EditorTrackTitle" Style="{StaticResource InputBox}"
                                              Height="32" Padding="8,0" Margin="0,0,0,16"/>
-
                                     <TextBlock FontFamily="Segoe UI" FontSize="12" Foreground="#888888" Margin="0,0,0,6">
                                         <Run Text="Скорость игры (BPM) — "/>
                                         <Run Text="140 медленно, "/>
@@ -2506,7 +2212,6 @@
                                             </Hyperlink>
                                         </TextBlock>
                                     </StackPanel>
-
                                     <Border x:Name="EditorStatusBox" Background="#1a1a1a" CornerRadius="8"
                                             Padding="16" Margin="0,0,0,20" Visibility="Collapsed">
                                         <StackPanel>
@@ -2516,8 +2221,6 @@
                                                          Height="2" Maximum="3" Value="0" Visibility="Collapsed"/>
                                         </StackPanel>
                                     </Border>
-
-                                    <!-- Визуальный блок записи -->
                                     <Border x:Name="EditorRecordingBox" Background="#0f0a15" CornerRadius="8"
                                             Padding="20" Margin="0,0,0,20" Visibility="Collapsed"
                                             BorderBrush="#6366f1" BorderThickness="1.5">
@@ -2528,7 +2231,6 @@
                                             <TextBlock x:Name="EditorNoteCount" Text="0 нот записано" FontFamily="Segoe UI"
                                                        FontSize="13" Foreground="#888" HorizontalAlignment="Center"
                                                        Margin="0,0,0,16"/>
-                                            <!-- Клавиши -->
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                                 <Border x:Name="EditorKeyA" Background="#1a0a10" CornerRadius="6"
                                                         Padding="12,8" Margin="4,0" BorderBrush="#2a1020" BorderThickness="1.5">
@@ -2549,8 +2251,6 @@
                                             </StackPanel>
                                         </StackPanel>
                                     </Border>
-
-                                    <!-- Описание редактора -->
                                     <Border Background="#1a1a1a" CornerRadius="8" Padding="14" Margin="0,0,0,16">
                                         <StackPanel>
                                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
@@ -2578,7 +2278,6 @@
                                             </TextBlock>
                                         </StackPanel>
                                     </Border>
-
                                     <Button x:Name="EditorStartBtn" Style="{StaticResource AccentBtn}"
                                             Padding="16,12" HorizontalAlignment="Stretch"
                                             WindowChrome.IsHitTestVisibleInChrome="True"
@@ -2589,7 +2288,6 @@
                                             <TextBlock Text="Начать запись" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Button>
-
                                     <Button x:Name="EditorStopBtn" Style="{StaticResource OutlineBtn}"
                                             Padding="16,12" HorizontalAlignment="Stretch" Margin="0,8,0,0"
                                             Visibility="Collapsed"
@@ -2597,7 +2295,6 @@
                                             Click="EditorStopBtn_Click">
                                         <TextBlock Text="Завершить запись" VerticalAlignment="Center"/>
                                     </Button>
-
                                     <Border x:Name="EditorResultBox" Margin="0,20,0,0"
                                             Background="#0a1a0a" CornerRadius="8" Padding="16"
                                             BorderBrush="#1a3a1a" BorderThickness="1" Visibility="Collapsed">
@@ -2625,14 +2322,12 @@
                         </Grid>
                     </Grid>
                 </Grid>
-
                 <Grid x:Name="FaqPage" Visibility="Collapsed">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-
                     <Grid Grid.Row="0" Margin="32,20,32,0">
                         <StackPanel Orientation="Horizontal">
                             <Button x:Name="FaqBackBtn" Style="{StaticResource BackBtn}"
@@ -2642,7 +2337,6 @@
                                     <Path Data="{StaticResource ArrowLeftIcon}" 
                                           Stroke="#888888"
                                           StrokeThickness="2"
-                                          
                                           Width="14" Height="14"
                                           Stretch="Uniform"
                                           Margin="0,0,6,0"
@@ -2655,23 +2349,17 @@
                                        VerticalAlignment="Center" Margin="16,0,0,0"/>
                         </StackPanel>
                     </Grid>
-
                     <Border Grid.Row="1" Height="1" Background="#333333" Margin="32,14,32,0"/>
-
                     <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="32,14,32,0">
                         <StackPanel x:Name="FaqContainer" Margin="0,0,0,20"/>
                     </ScrollViewer>
                 </Grid>
-
-                <!-- ── SOLUTION PAGE ── -->
                 <Grid x:Name="SolutionPage" Visibility="Collapsed">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-
-                    <!-- Title bar -->
                     <Grid Grid.Row="0" Margin="32,20,32,0">
                         <StackPanel Orientation="Horizontal">
                             <Button Style="{StaticResource BackBtn}"
@@ -2681,7 +2369,6 @@
                                     <Path Data="{StaticResource ArrowLeftIcon}" 
                                           Stroke="#888888"
                                           StrokeThickness="2"
-                                          
                                           Width="14" Height="14"
                                           Stretch="Uniform"
                                           Margin="0,0,6,0"
@@ -2694,12 +2381,9 @@
                                        VerticalAlignment="Center" Margin="16,0,0,0"/>
                         </StackPanel>
                     </Grid>
-
                     <Border Grid.Row="1" Height="1" Background="#333333" Margin="32,14,32,0"/>
-
                     <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="32,14,32,0">
                         <StackPanel Margin="0,0,0,32">
-                            <!-- Auto -->
                             <TextBlock Text="Автоматическое решение" FontFamily="Segoe UI" FontSize="15"
                                        FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
                             <Button x:Name="SolutionAutoFixBtn"
@@ -2716,13 +2400,9 @@
                                     <TextBlock Text="Исправить в один клик" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
-
                             <Border Height="1" Background="#333333" Margin="0,0,0,24"/>
-
-                            <!-- Manual -->
                             <TextBlock Text="Ручное решение" FontFamily="Segoe UI" FontSize="15"
                                        FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
-                            
                             <Border Background="#1e1e1e" BorderBrush="#3b82f6" BorderThickness="2,0,0,0"
                                     CornerRadius="6" Padding="16" Margin="0,0,0,0">
                                 <TextBlock x:Name="SolutionManualText" Text="..."
@@ -2732,8 +2412,6 @@
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>
-
-                <!-- ── DIAGNOSTICS PAGE ── -->
                 <Grid x:Name="DiagPage" Visibility="Collapsed">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -2741,8 +2419,6 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-
-                    <!-- Title bar -->
                     <Grid Grid.Row="0" Margin="32,20,32,0">
                         <StackPanel Orientation="Horizontal">
                             <Button Style="{StaticResource BackBtn}"
@@ -2752,7 +2428,6 @@
                                     <Path Data="{StaticResource ArrowLeftIcon}" 
                                           Stroke="#888888"
                                           StrokeThickness="2"
-                                          
                                           Width="14" Height="14"
                                           Stretch="Uniform"
                                           Margin="0,0,6,0"
@@ -2765,8 +2440,6 @@
                                        VerticalAlignment="Center" Margin="16,0,0,0"/>
                         </StackPanel>
                     </Grid>
-
-                    <!-- Run button + progress -->
                     <StackPanel Grid.Row="1" Margin="32,14,32,0">
                         <Button x:Name="DiagRunBtn"
                                 Style="{StaticResource AccentBtn}" HorizontalAlignment="Left"
@@ -2776,7 +2449,6 @@
                                 <Path Data="{StaticResource SearchIcon}" 
                                       Stroke="White"
                                       StrokeThickness="2"
-                                      
                                       Width="16" Height="16"
                                       Stretch="Uniform"
                                       Margin="0,0,8,0"
@@ -2788,19 +2460,13 @@
                         <TextBlock x:Name="DiagProgLbl" Text="" FontSize="12"
                                    Foreground="#888888" Margin="0,5,0,0"/>
                     </StackPanel>
-
                     <Border Grid.Row="2" Height="1" Background="#333333" Margin="32,14,32,0"/>
-
-                    <!-- Results -->
                     <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" Margin="32,14,32,0">
                         <StackPanel x:Name="DiagResults"/>
                     </ScrollViewer>
                 </Grid>
-
-           <!-- ── MODS PAGE ── -->
            <Grid x:Name="ModsPage" Visibility="Collapsed">
                <Grid.Resources>
-                   <!-- ═══ STYLES ═══ -->
                    <Style x:Key="TabRadio" TargetType="RadioButton">
                        <Setter Property="FontFamily" Value="Segoe UI"/>
                        <Setter Property="FontSize" Value="13"/>
@@ -2835,7 +2501,6 @@
                            </Setter.Value>
                        </Setter>
                    </Style>
-
                    <Style x:Key="ArrowBtn" TargetType="Button">
                        <Setter Property="Background" Value="#1c1c1e"/>
                        <Setter Property="BorderBrush" Value="#333333"/>
@@ -2873,7 +2538,6 @@
                             </Setter.Value>
                         </Setter>
                     </Style>
-
                      <Style x:Key="HoverActionBtn" TargetType="Button">
                         <Setter Property="Background" Value="#1c1c1e"/>
                         <Setter Property="BorderBrush" Value="#22666666"/>
@@ -2908,8 +2572,6 @@
                             </Setter.Value>
                         </Setter>
                     </Style>
-
-                     <!-- ═══ ICONS ═══ -->
                     <PathGeometry x:Key="PlusIcon">M12,4 L12,20 M4,12 L20,12</PathGeometry>
                     <PathGeometry x:Key="ImportIcon">M4,16 L4,18 C4,19.1 4.9,20 6,20 L18,20 C19.1,20 20,19.1 20,18 L20,16 M12,4 L12,15 M8,11 L12,15 L16,11</PathGeometry>
                     <PathGeometry x:Key="ExportIcon">M4,16 L4,18 C4,19.1 4.9,20 6,20 L18,20 C19.1,20 20,19.1 20,18 L20,16 M12,15 L12,4 M8,8 L12,4 L16,8</PathGeometry>
@@ -2922,14 +2584,11 @@
                      <PathGeometry x:Key="CloseIconMods">M6,6 L18,18 M18,6 L6,18</PathGeometry>
                      <PathGeometry x:Key="FileAddIcon">M14,2 L6,2 C4.9,2 4,2.9 4,4 L4,20 C4,21.1 4.9,22 6,22 L18,22 C19.1,22 20,21.1 20,20 L20,8 L14,2 Z M14,2 L14,8 L20,8 M12,12 L12,18 M9,15 L15,15</PathGeometry>
                     <PathGeometry x:Key="FolderOpenIcon">M2,6 L2,20 C2,21.1 2.9,22 4,22 L20,22 C21.1,22 22,21.1 22,20 L22,8 C22,6.9 21.1,6 20,6 L12,6 L10,4 L4,4 C2.9,4 2,4.9 2,6 Z</PathGeometry>
-                    <!-- ═══ END ICONS ═══ -->
-
                      <DataTemplate x:Key="ModCardTpl">
                         <Border MinHeight="90" Margin="0,2" CornerRadius="10"
                                 Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" 
                                 BorderThickness="1">
                             <Grid SizeChanged="OnModCardSizeChanged">
-                                <!-- Aurora glow — левый нижний, цвет как у полоски -->
                                 <Rectangle x:Name="BottomGlow" HorizontalAlignment="Left" VerticalAlignment="Bottom"
                                            Width="120" Height="90" Opacity="0.25"
                                            RenderOptions.EdgeMode="Aliased">
@@ -2942,7 +2601,6 @@
                                         </RadialGradientBrush>
                                     </Rectangle.Fill>
                                 </Rectangle>
-                                <!-- Aurora glow — правый верхний, цвет как у полоски -->
                                 <Rectangle x:Name="TopGlow" HorizontalAlignment="Right" VerticalAlignment="Top"
                                            Width="120" Height="90" Opacity="0.15"
                                            RenderOptions.EdgeMode="Aliased">
@@ -2955,7 +2613,6 @@
                                         </RadialGradientBrush>
                                     </Rectangle.Fill>
                                 </Rectangle>
-                                <!-- Noise — антибандинг -->
                                 <Rectangle IsHitTestVisible="False" Opacity="0.04"
                                            RenderOptions.BitmapScalingMode="NearestNeighbor">
                                     <Rectangle.Fill>
@@ -2998,7 +2655,6 @@
                                  </Grid>
                                  <Border x:Name="editOverlay" Background="#aa111113" CornerRadius="10"
                                          Visibility="Collapsed" IsHitTestVisible="False" Opacity="0"/>
-                                 <!-- ═══ Hover actions ═══ -->
                                  <StackPanel x:Name="hoverActions" Orientation="Horizontal"
                                              HorizontalAlignment="Center" VerticalAlignment="Center"
                                              Visibility="Collapsed" IsHitTestVisible="True"
@@ -3091,7 +2747,6 @@
                             </DataTrigger>
                         </DataTemplate.Triggers>
                      </DataTemplate>
-
                     <DataTemplate x:Key="MyModCardTpl">
                         <Border Width="160" Height="170" CornerRadius="14"
                                 Background="#1a1a1e" BorderBrush="#2a2a2e" BorderThickness="1"
@@ -3135,7 +2790,6 @@
                             </Grid>
                         </Border>
                     </DataTemplate>
-
                     <Style x:Key="ModListBox" TargetType="ListBox">
                         <Setter Property="Background" Value="#30111113"/>
                        <Setter Property="BorderBrush" Value="#22222a"/>
@@ -3182,8 +2836,6 @@
                            </Setter.Value>
                        </Setter>
                    </Style>
-
-                    <!-- Drop highlight style for drag & drop -->
                     <Style x:Key="DropHighlightList" TargetType="ListBox" BasedOn="{StaticResource ModListBox}">
                         <Setter Property="Template">
                             <Setter.Value>
@@ -3211,7 +2863,6 @@
                             </Setter.Value>
                         </Setter>
                     </Style>
-
                     <Style TargetType="ScrollBar">
                        <Setter Property="MinWidth" Value="0"/>
                        <Setter Property="Width" Value="8"/>
@@ -3243,14 +2894,11 @@
                        </Setter>
                    </Style>
                 </Grid.Resources>
-
                 <Grid.RowDefinitions>
                    <RowDefinition Height="Auto"/>
                    <RowDefinition Height="Auto"/>
                    <RowDefinition Height="*"/>
                </Grid.RowDefinitions>
-
-                <!-- Page title + back -->
                  <Grid Grid.Row="0" Margin="32,20,32,0">
                      <Grid.ColumnDefinitions>
                          <ColumnDefinition Width="Auto"/>
@@ -3281,14 +2929,10 @@
                                 Foreground="#22c55e" VerticalAlignment="Center"
                                 Visibility="Collapsed"/>
                  </Grid>
-
                 <Border Grid.Row="1" Height="1" Background="#333333" Margin="32,14,32,0"/>
-
-                <!-- Aurora background — идентично игровой вкладке -->
                 <Grid Grid.Row="2" IsHitTestVisible="False" Panel.ZIndex="-1"
                       VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
                       ClipToBounds="True" RenderOptions.EdgeMode="Aliased">
-                    <!-- Layer 1: нижнее индиго свечение -->
                     <Rectangle x:Name="ModsAurora1" Opacity="0.5">
                         <Rectangle.Fill>
                             <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
@@ -3317,7 +2961,6 @@
                             </RadialGradientBrush>
                         </Rectangle.Fill>
                     </Rectangle>
-                    <!-- Layer 2: верхний фиолетовый -->
                     <Rectangle x:Name="ModsAurora2" Opacity="0.4">
                         <Rectangle.Fill>
                             <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
@@ -3346,7 +2989,6 @@
                             </RadialGradientBrush>
                         </Rectangle.Fill>
                     </Rectangle>
-                    <!-- Layer 3: правый нижний индиго -->
                     <Rectangle x:Name="ModsAurora3" Opacity="0.3">
                         <Rectangle.Fill>
                             <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
@@ -3375,7 +3017,6 @@
                             </RadialGradientBrush>
                         </Rectangle.Fill>
                     </Rectangle>
-                    <!-- noise — антибандинг -->
                     <Rectangle IsHitTestVisible="False" Opacity="0.04"
                                RenderOptions.BitmapScalingMode="NearestNeighbor">
                         <Rectangle.Fill>
@@ -3385,16 +3026,10 @@
                         </Rectangle.Fill>
                     </Rectangle>
                 </Grid>
-
-                <!-- ═══ CONTENT AREA (Row 2) — 5 sub-screens ═══ -->
                 <Grid Grid.Row="2" x:Name="ModsContentArea" Margin="32,20,32,20">
-
-                   <!-- ─── MODS HOME SCREEN (root: 4 FAQ-style cards) ─── -->
                    <Grid x:Name="ModsHomeScreen" Visibility="Visible">
                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,12,0">
                             <UniformGrid Columns="2" HorizontalAlignment="Left">
-                               
-                               <!-- Tile: .bat Стратегии -->
                                <Button x:Name="CardStrategies" Style="{StaticResource FlatBtn}" Padding="0"
                                        Width="180" Height="180"
                                        Click="ModsCardStrategies_Click" Margin="0,0,16,16">
@@ -3433,8 +3068,6 @@
                                        </Grid>
                                    </Border>
                                </Button>
-
-                               <!-- Tile: Листы доменов -->
                                <Button Style="{StaticResource FlatBtn}" Padding="0"
                                        Width="180" Height="180"
                                        Click="ModsCardLists_Click" Margin="0,0,16,16">
@@ -3473,8 +3106,6 @@
                                        </Grid>
                                    </Border>
                                </Button>
-
-                               <!-- Tile: Ваши моды -->
                                <Button Style="{StaticResource FlatBtn}" Padding="0"
                                        Width="180" Height="180"
                                        Click="ModsCardMyMods_Click" Margin="0,0,16,16">
@@ -3513,8 +3144,6 @@
                                        </Grid>
                                    </Border>
                                </Button>
-
-                               <!-- Tile: Редактор -->
                                <Button Style="{StaticResource FlatBtn}" Padding="0"
                                        Width="180" Height="180"
                                        Click="ModsCardEditor_Click" Margin="0,0,16,16">
@@ -3553,25 +3182,20 @@
                                        </Grid>
                                    </Border>
                                </Button>
-
                             </UniformGrid>
                        </ScrollViewer>
                    </Grid>
-
-                    <!-- ─── STRATEGIES SCREEN (.bat drag & drop) ─── -->
                     <Grid x:Name="ModsStrategiesScreen" Visibility="Collapsed">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                          <Grid Grid.Row="0">
-
                             <Grid.ColumnDefinitions>
                                <ColumnDefinition Width="*"/>
                                <ColumnDefinition Width="70"/>
                                <ColumnDefinition Width="*"/>
                            </Grid.ColumnDefinitions>
-
                            <Grid Grid.Column="0">
                                <Grid.RowDefinitions>
                                    <RowDefinition Height="Auto"/>
@@ -3595,7 +3219,6 @@
                                          PreviewMouseMove="ListBox_PreviewMouseMove"
                                          Drop="AvailableList_Drop" DragEnter="ListBox_DragEnter"/>
                            </Grid>
-
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center">
                                 <Button x:Name="MoveRightBtn" Style="{StaticResource ArrowBtn}"
                                         IsEnabled="False" Click="MoveRightBtn_Click" ToolTip="Активировать">
@@ -3608,7 +3231,6 @@
                                           StrokeThickness="2" Width="16" Height="16" Stretch="Uniform"/>
                                 </Button>
                             </StackPanel>
-
                            <Grid Grid.Column="2">
                                <Grid.RowDefinitions>
                                    <RowDefinition Height="Auto"/>
@@ -3656,8 +3278,6 @@
                                </ListBox>
                            </Grid>
                        </Grid>
-
-                         <!-- Bottom bar -->
                           <Border Grid.Row="1"
                                  BorderBrush="#22222a" BorderThickness="0,0,0,0"
                                  Padding="0,0" Margin="0,15,0,0">
@@ -3698,21 +3318,17 @@
                              </Grid>
                          </Border>
                      </Grid>
-
-                    <!-- ─── LISTS SCREEN (lists drag & drop + footer) ─── -->
                     <Grid x:Name="ModsListsScreen" Visibility="Collapsed">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-
                         <Grid Grid.Row="0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="70"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-
                             <Grid Grid.Column="0">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -3736,7 +3352,6 @@
                                            PreviewMouseMove="ListBox_PreviewMouseMove"
                                            Drop="ListsAvailableList_Drop" DragEnter="ListBox_DragEnter"/>
                             </Grid>
-
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center">
                                 <Button x:Name="ListsMoveRightBtn" Style="{StaticResource ArrowBtn}"
                                         IsEnabled="False" Click="ListsMoveRightBtn_Click" ToolTip="Активировать">
@@ -3749,7 +3364,6 @@
                                           StrokeThickness="2" Width="16" Height="16" Stretch="Uniform"/>
                                 </Button>
                             </StackPanel>
-
                             <Grid Grid.Column="2">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -3797,8 +3411,6 @@
                                 </ListBox>
                             </Grid>
                         </Grid>
-
-                        <!-- Bottom bar for lists -->
                          <Border Grid.Row="1"
                                  BorderBrush="#22222a" BorderThickness="0,0,0,0"
                                  Padding="0,0" Margin="0,15,0,0">
@@ -3839,14 +3451,11 @@
                            </Grid>
                        </Border>
                    </Grid>
-
-                   <!-- ─── MY MODS SCREEN ─── -->
                    <Grid x:Name="ModsMyModsScreen" Visibility="Collapsed">
                        <Grid.RowDefinitions>
                            <RowDefinition Height="Auto"/>
                            <RowDefinition Height="*"/>
                        </Grid.RowDefinitions>
-
                        <Grid Grid.Row="0" Margin="0,0,0,16">
                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                <TextBlock Text="Ваши моды" FontSize="16"
@@ -3857,10 +3466,8 @@
                                </Border>
                            </StackPanel>
                        </Grid>
-
                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,12,0">
                            <Grid>
-                               <!-- Grid of mod cards (2 columns, square) -->
                                 <ItemsControl x:Name="MyModsGrid" Margin="0,0,0,20"
                                               Visibility="Visible"
                                               ItemTemplate="{StaticResource MyModCardTpl}">
@@ -3870,8 +3477,6 @@
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
                                 </ItemsControl>
-
-                               <!-- Empty placeholder (overlaid when no mods) -->
                                <Grid x:Name="MyModsEmpty" Visibility="Collapsed"
                                      HorizontalAlignment="Center" VerticalAlignment="Center"
                                      IsHitTestVisible="False">
@@ -3890,16 +3495,12 @@
                            </Grid>
                        </ScrollViewer>
                    </Grid>
-
-                   <!-- ─── EDITOR SCREEN ─── -->
                    <Grid x:Name="ModsEditorScreen" Visibility="Collapsed">
                        <Grid.RowDefinitions>
                            <RowDefinition Height="Auto"/>
                            <RowDefinition Height="*"/>
                            <RowDefinition Height="Auto"/>
                        </Grid.RowDefinitions>
-
-                       <!-- Tab bar -->
                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
                            <RadioButton x:Name="ModsEditorTabLists" Content="Листы"
                                         Style="{StaticResource TabRadio}" GroupName="ModsEditorTabs"
@@ -3908,21 +3509,17 @@
                                         Style="{StaticResource TabRadio}" GroupName="ModsEditorTabs"
                                         Margin="6,0,0,0" Checked="ModsEditorTab_Checked"/>
                        </StackPanel>
-
-                        <!-- Two-column editor -->
                         <Grid Grid.Row="1">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="220"/>
                                 <ColumnDefinition Width="8"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-
                             <Grid Grid.Column="0">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-
                                 <Grid Grid.Row="0" Margin="0,0,0,6">
                                     <TextBlock Text="Файлы" FontFamily="Segoe UI" FontSize="11"
                                                FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"/>
@@ -3933,7 +3530,6 @@
                                               StrokeThickness="1.8" Width="14" Height="14" Stretch="Uniform"/>
                                     </Button>
                                 </Grid>
-
                             <ListBox x:Name="ModsEditorFileList" Grid.Row="1"
                                     Background="#1a1a1e" BorderBrush="#2a2a2e" BorderThickness="1"
                                     SelectionChanged="ModsEditorFileList_SelectionChanged">
@@ -3966,9 +3562,7 @@
                                 </ListBox.ItemContainerStyle>
                             </ListBox>
                             </Grid>
-
                             <Border Grid.Column="1" Width="1" Background="#2a2a2e" HorizontalAlignment="Center"/>
-
                            <TextBox x:Name="ModsEditorTextBox" Grid.Column="2"
                                     Background="#141416" Foreground="#e0e0e0"
                                     BorderBrush="#2a2a2e" BorderThickness="1"
@@ -3978,8 +3572,6 @@
                                     HorizontalScrollBarVisibility="Auto"
                                     TextWrapping="NoWrap" Padding="14,12"/>
                        </Grid>
-
-                       <!-- Save / Reset buttons -->
                        <StackPanel Grid.Row="2" Orientation="Horizontal"
                                    HorizontalAlignment="Right" Margin="0,14,0,0">
                            <Button x:Name="ModsEditorResetBtn" Content="Сбросить"
@@ -3990,12 +3582,9 @@
                                    Click="ModsEditorSaveBtn_Click"/>
                        </StackPanel>
                    </Grid>
-
                </Grid>
            </Grid>
             </Grid>
-
-            <!-- ══════════════════ FOOTER ══════════════════ -->
             <Border Grid.Row="2" Background="#1e1e1e" CornerRadius="0,0,11,11">
                 <Grid Margin="18,0,12,0">
                     <Button HorizontalAlignment="Right"
@@ -4007,7 +3596,6 @@
                             <Path Data="{StaticResource CoffeeIcon}" 
                                   Stroke="#888888"
                                   StrokeThickness="1.5"
-                                  
                                   Width="12" Height="12"
                                   Stretch="Uniform"
                                   Margin="0,0,6,0"
@@ -4017,23 +3605,16 @@
                     </Button>
                 </Grid>
             </Border>
-
-            <!-- ══════════════════ SETTINGS OVERLAY ══════════════════ -->
             <Grid Grid.Row="0" Grid.RowSpan="3" x:Name="SettingsLayer"
                   Visibility="Collapsed" Panel.ZIndex="10">
-                <!-- Backdrop -->
                 <Rectangle x:Name="SettingsBackdrop" Fill="Black" Opacity="0"
                            MouseLeftButtonDown="SettingsBackdrop_Click"/>
-
-                <!-- Slide-in panel -->
                 <Border x:Name="SettingsPanel" Width="370" HorizontalAlignment="Right"
                         Background="#1e1e1e" CornerRadius="0,12,12,0" BorderBrush="#333333" BorderThickness="1,0,0,0">
                     <Border.RenderTransform>
                         <TranslateTransform x:Name="SettingsTrans" X="370"/>
                     </Border.RenderTransform>
-
                     <DockPanel>
-                        <!-- Settings header -->
                         <Border DockPanel.Dock="Top" Height="54" BorderBrush="#333333" BorderThickness="0,0,0,1">
                             <Grid Margin="20,0">
                                 <TextBlock Text="Настройки" FontFamily="Segoe UI" FontSize="15"
@@ -4045,21 +3626,15 @@
                                     <Path Data="{StaticResource CloseIcon}" 
                                           Stroke="#888888"
                                           StrokeThickness="2"
-                                          
                                           Width="12" Height="12"
                                           Stretch="Uniform"/>
                                 </Button>
                             </Grid>
                         </Border>
-
-                        <!-- Settings body -->
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="20,16,20,24">
-
                                 <TextBlock Text="ПУТИ К ФАЙЛАМ" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,10"/>
-
-                                <!-- Zapret -->
                                 <TextBlock Text="Zapret (winws.exe / service.bat)" FontSize="12"
                                            Foreground="#f0f0f0" Margin="0,0,0,4"/>
                                 <Grid Margin="0,0,0,14">
@@ -4077,8 +3652,6 @@
                                             WindowChrome.IsHitTestVisibleInChrome="True"
                                             Click="BrowseZapret_Click"/>
                                 </Grid>
-
-                                <!-- tg-ws-proxy -->
                                 <TextBlock Text="tg-ws-proxy (.exe)" FontSize="12"
                                            Foreground="#f0f0f0" Margin="0,0,0,4"/>
                                 <Grid Margin="0,0,0,20">
@@ -4096,11 +3669,9 @@
                                             WindowChrome.IsHitTestVisibleInChrome="True"
                                             Click="BrowseTgWs_Click"/>
                                 </Grid>
-
                                 <Border Height="1" Background="#333333" Margin="0,0,0,16"/>
                                 <TextBlock Text="АВТОЗАПУСК" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
-
                                 <CheckBox x:Name="AutoTgWsCB" Style="{StaticResource Toggle}"
                                           Content="tg-ws-proxy в автозапуск Windows" Margin="0,0,0,10"
                                           Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
@@ -4110,19 +3681,15 @@
                                 <CheckBox x:Name="StartMinimizedCB" Style="{StaticResource Toggle}"
                                           Content="NetFix в трей при запуске" Margin="0,0,0,20"
                                           Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
-
                                 <Border Height="1" Background="#333333" Margin="0,0,0,16"/>
                                 <TextBlock Text="TgWsProxy" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
-
                                 <CheckBox x:Name="TgWsCheckUpdatesCB" Style="{StaticResource Toggle}"
                                           Content="Уведомление об уведомлениях TgWsProxy" Margin="0,0,0,20"
                                           Checked="TgWsSetting_Checked" Unchecked="TgWsSetting_Unchecked"/>
-
                                 <Border Height="1" Background="#333333" Margin="0,0,0,16"/>
                                 <TextBlock Text="РЕЖИМ КНОПКИ «ПОЧИНИТЬ ИНТЕРНЕТ»" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,10"/>
-
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,20">
                                     <Border x:Name="FixModeFastCard" Width="155" Height="90"
                                             CornerRadius="10" Background="#1a1a1a"
@@ -4144,7 +3711,6 @@
                                                        Foreground="#888888" HorizontalAlignment="Center"/>
                                         </StackPanel>
                                     </Border>
-
                                     <Border x:Name="FixModeFullCard" Width="155" Height="90"
                                             CornerRadius="10" Background="#1a1a1a"
                                             BorderBrush="#333333" BorderThickness="1.5"
@@ -4165,16 +3731,13 @@
                                         </StackPanel>
                                     </Border>
                                 </StackPanel>
-
                                 <TextBlock Text="Если вы пользуетесь приложением чтобы быстро запускать Zapret и TgWsProxy, а не сканировать сеть каждый раз - ставьте Быстрый режим."
                                            FontSize="10.5" Foreground="#f0f0f0" TextWrapping="Wrap"
                                            Margin="0,0,0,10" HorizontalAlignment="Center"
                                            TextAlignment="Center" MaxWidth="420"/>
-
                                 <Border Height="1" Background="#333333" Margin="0,0,0,16"/>
                                 <TextBlock Text="ПРОЧЕЕ" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
-
                                 <CheckBox x:Name="DiscordRpcCB" Style="{StaticResource Toggle}"
                                           Content="Интеграция с Discord" Margin="0,0,0,10"
                                           Checked="DiscordRpcCB_Checked"
@@ -4188,16 +3751,13 @@
                                 <CheckBox x:Name="ShowServiceReminderCB" Style="{StaticResource Toggle}"
                                           Content="Напоминать про сервисы при проверке" Margin="0,0,0,20"
                                           Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
-
                                 <Button Content="Проверить обновления" Style="{StaticResource OutlineBtn}"
                                         HorizontalAlignment="Stretch" Padding="12,8" Margin="0,0,0,20"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
                                         Click="CheckUpdateBtn_Click"/>
-
                                 <Border Height="1" Background="#333333" Margin="0,4,0,16"/>
                                 <TextBlock Text="TELEGRAM-КАНАЛ ПРОЕКТА" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,10"/>
-                                
                                 <Border Background="#1a2e1a" BorderBrush="#22c55e" BorderThickness="2,0,0,0"
                                         CornerRadius="8" Padding="14" Margin="0,0,0,16">
                                     <StackPanel>
@@ -4220,13 +3780,11 @@
                                         </Button>
                                     </StackPanel>
                                 </Border>
-
                                 <Border Height="1" Background="#333333" Margin="0,4"/>
                                 <TextBlock Text="БУДУЩЕЕ ПРОЕКТА И ПОДДЕРЖКА" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,10"/>
                                 <TextBlock Text="Нравится, как всё работает? Ты можешь поддержать разработку! В планах, реализовать такое же приложение на телефон с полным функционалом, потому что на мобилках сейчас такая же беда с интернетом.&#x0a;Если хочешь помочь финансово, жми на кнопку ниже. А если ты шаришь в коде и хочешь вписаться в разработку напрямую, пиши мне в личку, обсудим."
                                            Foreground="#f0f0f0" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
-
                                 <Button Style="{StaticResource AccentBtn}" HorizontalAlignment="Stretch" Padding="12,8" Margin="0,0,0,6"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
                                         Click="DonateBtn_Click">
@@ -4234,7 +3792,6 @@
                                         <Path Data="{StaticResource CoffeeIcon}" 
                                               Stroke="White"
                                               StrokeThickness="2"
-                                              
                                               Width="14" Height="14"
                                               Stretch="Uniform"
                                               Margin="0,0,8,0"
@@ -4249,7 +3806,6 @@
                                         <Path Data="{StaticResource MailIcon}" 
                                               Stroke="#f0f0f0"
                                               StrokeThickness="2"
-                                              
                                               Width="14" Height="14"
                                               Stretch="Uniform"
                                               Margin="0,0,8,0"
@@ -4257,7 +3813,6 @@
                                         <TextBlock Text="Написать в телеграм" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
-
                                 <Border Height="1" Background="#333333" Margin="0,20"/>
                                 <TextBlock Text="О ПРИЛОЖЕНИИ" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
@@ -4270,11 +3825,9 @@
                                 <TextBlock TextWrapping="Wrap" FontFamily="Segoe UI" FontSize="12"
                                            Foreground="#f0f0f0" Margin="0,0,0,0"
                                            Text="Цель NetFix, сделать настройку простой и понятной для любого пользователя."/>
-
                                 <Border Height="1" Background="#333333" Margin="0,20"/>
                                 <TextBlock Text="ССЫЛКИ" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,10"/>
-
                                 <Button HorizontalAlignment="Left"
                                         Style="{StaticResource FlatBtn}" Foreground="#3b82f6"
                                         FontSize="12" Padding="0,4"
@@ -4284,7 +3837,6 @@
                                         <Path Data="{StaticResource ArrowUpRightIcon}" 
                                               Stroke="#3b82f6"
                                               StrokeThickness="2"
-                                              
                                               Width="12" Height="12"
                                               Stretch="Uniform"
                                               Margin="0,0,6,0"
@@ -4301,7 +3853,6 @@
                                         <Path Data="{StaticResource ArrowUpRightIcon}" 
                                               Stroke="#3b82f6"
                                               StrokeThickness="2"
-                                              
                                               Width="12" Height="12"
                                               Stretch="Uniform"
                                               Margin="0,0,6,0"
@@ -4318,7 +3869,6 @@
                                         <Path Data="{StaticResource ArrowUpRightIcon}" 
                                               Stroke="#3b82f6"
                                               StrokeThickness="2"
-                                              
                                               Width="12" Height="12"
                                               Stretch="Uniform"
                                               Margin="0,0,6,0"
@@ -4335,7 +3885,6 @@
                                         <Path Data="{StaticResource ArrowUpRightIcon}" 
                                               Stroke="#3b82f6"
                                               StrokeThickness="2"
-                                              
                                               Width="12" Height="12"
                                               Stretch="Uniform"
                                               Margin="0,0,6,0"
@@ -4343,11 +3892,9 @@
                                         <TextBlock Text="Telegram-канал @NetFixRuBi" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
-
                                 <Border Height="1" Background="#333333" Margin="0,16"/>
                                 <TextBlock Text="РЕЗЕРВНОЕ КОПИРОВАНИЕ" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
-                                
                                 <Button Style="{StaticResource OutlineBtn}" HorizontalAlignment="Stretch"
                                         Padding="12,8" Margin="0,0,0,6"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
@@ -4362,7 +3909,6 @@
                                         <TextBlock Text="Экспортировать результаты тестов" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
-                                
                                 <Button Style="{StaticResource OutlineBtn}" HorizontalAlignment="Stretch"
                                         Padding="12,8" Margin="0,0,0,16"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
@@ -4383,7 +3929,6 @@
                                         <TextBlock Text="Импортировать результаты тестов" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
-                                
                                 <Border Height="1" Background="#333333" Margin="0,0,0,16"/>
                                 <TextBlock Text="СБРОС" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
@@ -4411,8 +3956,6 @@
                     </DockPanel>
                 </Border>
             </Grid>
-
-            <!-- ══════════════════ ZAPRET WIZARD OVERLAY ══════════════════ -->
             <Grid Grid.Row="0" Grid.RowSpan="3" x:Name="WizardLayer"
                   Visibility="Collapsed" Panel.ZIndex="15">
                 <Rectangle x:Name="WizardBackdrop" Fill="Black" Opacity="0.6"/>
@@ -4434,7 +3977,6 @@
                                     <Path Data="{StaticResource CloseIcon}" 
                                           Stroke="#888888"
                                           StrokeThickness="2"
-                                          
                                           Width="12" Height="12"
                                           Stretch="Uniform"/>
                                 </Button>
@@ -4442,7 +3984,6 @@
                         </Border>
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel x:Name="WizardContent" Margin="20,20,20,24">
-                                <!-- Прогресс-бар для применения конфига -->
                                 <ProgressBar x:Name="WizardApplyProgress"
                                              Height="3"
                                              Margin="0,0,0,8"
@@ -4456,20 +3997,15 @@
                     </DockPanel>
                 </Border>
             </Grid>
-
-            <!-- ══════════════════ ONBOARDING OVERLAY ══════════════════ -->
             <Border Grid.Row="0" Grid.RowSpan="3" x:Name="OnboardLayer"
                   Visibility="Collapsed" Background="#161616" CornerRadius="12" ClipToBounds="True" Panel.ZIndex="20">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
-                    <!-- Content injected from code-behind -->
                     <ContentControl x:Name="OnboardContent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                 </Grid>
             </Border>
-
-            <!-- ══════════════════ SERVICES PANEL ══════════════════ -->
             <Grid Grid.Row="0" Grid.RowSpan="3" x:Name="ServicesLayer"
                   Visibility="Collapsed" Panel.ZIndex="14">
                 <Rectangle Fill="Black" Opacity="0.4"
@@ -4482,8 +4018,6 @@
                         <TranslateTransform x:Name="ServicesTrans" X="300"/>
                     </Border.RenderTransform>
                     <DockPanel>
-
-                        <!-- Заголовок -->
                         <Border DockPanel.Dock="Top" Height="54"
                                 BorderBrush="#333333" BorderThickness="0,0,0,1">
                             <Grid Margin="20,0">
@@ -4500,17 +4034,12 @@
                                     <Path Data="{StaticResource CloseIcon}" 
                                           Stroke="#888888"
                                           StrokeThickness="2"
-                                          
                                           Width="12" Height="12"
                                           Stretch="Uniform"/>
                                 </Button>
                             </Grid>
                         </Border>
-
-                        <!-- Контент -->
                         <StackPanel Margin="20,20,20,24">
-
-                            <!-- Zapret -->
                             <Border Background="#252525" CornerRadius="12"
                                     BorderBrush="#333333" BorderThickness="1"
                                     Padding="16,14" Margin="0,0,0,10">
@@ -4560,8 +4089,6 @@
                                             </StackPanel>
                                         </Button>
                                     </Grid>
-                                    
-                                    <!-- Прогресс-бар для переключения Zapret -->
                                     <ProgressBar x:Name="ZapretToggleProgress"
                                                  Height="3"
                                                  Margin="0,8,0,0"
@@ -4572,8 +4099,6 @@
                                                  BorderThickness="0"/>
                                 </StackPanel>
                             </Border>
-
-                            <!-- tg-ws-proxy -->
                             <Border Background="#252525" CornerRadius="12"
                                     BorderBrush="#333333" BorderThickness="1"
                                     Padding="16,14" Margin="0,0,0,10">
@@ -4623,8 +4148,6 @@
                                             </StackPanel>
                                         </Button>
                                     </Grid>
-                                    
-                                    <!-- Прогресс-бар для переключения TgWsProxy -->
                                     <ProgressBar x:Name="TgWsToggleProgress"
                                                  Height="3"
                                                  Margin="0,8,0,0"
@@ -4635,21 +4158,15 @@
                                                  BorderThickness="0"/>
                                 </StackPanel>
                             </Border>
-
-                            <!-- Zapret Config Buttons -->
                             <TextBlock Text="Настройка Zapret" 
                                        FontFamily="Segoe UI" FontSize="12"
                                        FontWeight="SemiBold" Foreground="#888888" 
                                        Margin="0,16,0,8"/>
-                            
-                            <!-- Selected Config Display -->
                             <TextBlock x:Name="SelectedConfigText"
                                        FontFamily="Segoe UI" FontSize="14"
                                        FontWeight="SemiBold" Foreground="#f0f0f0" 
                                        Margin="0,0,0,12"
                                        TextWrapping="Wrap"/>
-                            
-                            <!-- Select Config Button (теперь первая, с акцентным стилем) -->
                             <Button x:Name="SelectConfigBtn"
                                     Style="{StaticResource AccentBtn}"
                                     Padding="14,12"
@@ -4669,8 +4186,6 @@
                                                Foreground="White" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
-                            
-                            <!-- Test Configs Button (теперь вторая, с outline стилем) -->
                             <Button x:Name="TestConfigsBtn"
                                     Style="{StaticResource OutlineBtn}"
                                     Padding="14,12"
@@ -4691,8 +4206,6 @@
                                                Foreground="#888888" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
-
-                            <!-- Активный конфиг -->
                             <TextBlock x:Name="ActiveConfigText" 
                                        Margin="0,12,0,0"
                                        FontSize="12"
@@ -4700,13 +4213,8 @@
                                 <Run Text="Включен конфиг: " Foreground="#888888"/>
                                 <Run x:Name="ActiveConfigName" Text="" Foreground="#22c55e"/>
                             </TextBlock>
-
-                            <!-- Divider -->
                             <Border Height="1" Background="#2a2a2a" Margin="0,20,0,16"/>
-
-                            <!-- Version Status Section -->
                             <StackPanel x:Name="VersionStatusSection">
-                                <!-- Status Header -->
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                                     <Path x:Name="VersionStatusIcon"
                                           Width="18" Height="18"
@@ -4718,8 +4226,6 @@
                                                FontWeight="SemiBold"
                                                VerticalAlignment="Center"/>
                                 </StackPanel>
-
-                                <!-- Zapret Version -->
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                     <TextBlock Text="Zapret: " 
                                                FontFamily="Segoe UI" FontSize="13"
@@ -4739,8 +4245,6 @@
                                               Visibility="Collapsed"/>
                                     </StackPanel>
                                 </StackPanel>
-
-                                <!-- TgWsProxy Version -->
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
                                     <TextBlock Text="TgWsProxy: " 
                                                FontFamily="Segoe UI" FontSize="13"
@@ -4761,8 +4265,6 @@
                                     </StackPanel>
                                 </StackPanel>
                             </StackPanel>
-
-                            <!-- Update Components Button -->
                             <Button x:Name="UpdateComponentsBtn"
                                     Style="{StaticResource OutlineBtn}"
                                     Padding="14,12"
@@ -4782,7 +4284,6 @@
                                                Foreground="#888888" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
-
                         </StackPanel>
                     </DockPanel>
                 </Border>

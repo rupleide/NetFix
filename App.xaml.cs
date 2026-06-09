@@ -1,7 +1,6 @@
 using System.Windows;
 using System.Threading;
 
-// Алиас для разрешения конфликта имен
 using Application = System.Windows.Application;
 
 namespace NetFix;

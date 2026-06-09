@@ -18,10 +18,8 @@ public static class ModActivator
         {
             var listPath = Path.Combine(ZapretDir, ListGeneralFile);
 
-            // Backup original
             BackupOriginal(listPath);
 
-            // Merge all active list mods
             var mergedDomains = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var mod in activeLists.Where(m => m.Type == ModType.List && m.IsActive))
@@ -37,7 +35,6 @@ public static class ModActivator
                 }
             }
 
-            // Write merged list
             if (mergedDomains.Count > 0)
             {
                 File.WriteAllLines(listPath, mergedDomains.OrderBy(d => d));
@@ -79,7 +76,6 @@ public static class ModActivator
         var fileName = Path.GetFileName(filePath);
         var backupPath = Path.Combine(ModScanner.BackupRoot, fileName);
 
-        // Only backup if not already backed up
         if (!File.Exists(backupPath))
             File.Copy(filePath, backupPath, overwrite: false);
     }

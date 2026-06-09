@@ -9,10 +9,9 @@ namespace NetFix.Services;
 
 public class UpdateService
 {
-    private const string GitHubRepo = "rupleide/NetFix"; // замени на твой репозиторий
+    private const string GitHubRepo = "rupleide/NetFix";
     private const string ApiUrl = $"https://api.github.com/repos/{GitHubRepo}/releases/latest";
 
-    // Проверяет есть ли новая версия. Возвращает (есть ли обновление, новая версия, url установщика, ошибка)
     public static async Task<(bool hasUpdate, string newVersion, string downloadUrl, string error)> CheckAsync()
     {
         try
@@ -30,7 +29,6 @@ using var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
             string latestTag = doc.RootElement.GetProperty("tag_name").GetString() ?? "";
             string latestVersion = latestTag.TrimStart('v');
 
-            // Ищем setup.exe в assets
             string downloadUrl = "";
             foreach (var asset in doc.RootElement.GetProperty("assets").EnumerateArray())
             {
@@ -42,7 +40,6 @@ using var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
                 }
             }
 
-            // Текущая версия из Assembly
             string currentVersion = System.Reflection.Assembly
                 .GetExecutingAssembly()
                 .GetName()
@@ -57,7 +54,6 @@ using var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
         }
     }
 
-    // Скачивает и запускает установщик
     public static async Task DownloadAndInstallAsync(string downloadUrl, Action<int>? onProgress = null)
     {
         string tempPath = Path.Combine(Path.GetTempPath(), "NetFix_Setup.exe");

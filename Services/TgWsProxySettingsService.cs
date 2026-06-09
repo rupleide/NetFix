@@ -48,7 +48,6 @@ public static class TgWsProxySettingsService
                 else
                     el.WriteTo(writer);
             }
-            // Если поля не было — добавляем
             if (!doc.RootElement.TryGetProperty("check_updates", out _))
                 writer.WriteBoolean("check_updates", value);
 

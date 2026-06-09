@@ -11,7 +11,6 @@ namespace NetFix.Services;
 
 public static class DiagnosticsEngine
 {
-    // ── Constants ────────────────────────────────────────────────────────────
 
     private static readonly (int dcId, string ip)[] TelegramDcs =
     [
@@ -44,7 +43,6 @@ public static class DiagnosticsEngine
         ["tgwsproxy"]  = ["tg-ws-proxy", "tgwsproxy", "tg_ws_proxy", "flowseal"],
     };
 
-    // ── Low-level helpers ────────────────────────────────────────────────────
 
     public static async Task<(bool ok, double latencyMs, string error)> TcpConnectAsync(
         string ip, int port, double timeoutSec = 3.0)
@@ -101,7 +99,6 @@ public static class DiagnosticsEngine
             catch { return []; }
         }
 
-        // Manual UDP DNS query
         try
         {
             var txId = (ushort)Random.Shared.Next(0, 65536);
@@ -189,14 +186,13 @@ public static class DiagnosticsEngine
             }
             catch (SocketException e) when (e.SocketErrorCode == SocketError.ConnectionReset)
             {
-                return true; // ICMP unreachable = host alive
+                return true;
             }
             catch { return false; }
         }
         catch { return false; }
     }
 
-    // ── Internet check ───────────────────────────────────────────────────────
 
     public static async Task<bool> CheckInternetAsync()
     {
@@ -213,7 +209,6 @@ public static class DiagnosticsEngine
         return false;
     }
 
-    // ── App status ───────────────────────────────────────────────────────────
 
     public static AppStatus CheckAppStatus()
     {
@@ -238,7 +233,6 @@ public static class DiagnosticsEngine
         return status;
     }
 
-    // ── Network checks ───────────────────────────────────────────────────────
 
     public static async Task<List<DcResult>> CheckTelegramDcsAsync(Action<double>? progress = null)
     {
@@ -378,7 +372,6 @@ public static class DiagnosticsEngine
         return results;
     }
 
-    // ── Classification ───────────────────────────────────────────────────────
 
     public static List<BlockType> ClassifyBlocks(DiagReport r)
     {
@@ -528,7 +521,6 @@ public static class DiagnosticsEngine
         return ("🟢", "Discord работает нормально", "Все нужные порты доступны.", "green");
     }
 
-    // ── Full run ─────────────────────────────────────────────────────────────
 
     public static async Task<DiagReport> RunFullDiagnosticsAsync(
         Action<double, string>? progress = null)

@@ -21,9 +21,9 @@ public class ServiceTestResult
     public string Tls12Status { get; set; } = "";
     public string Tls13Status { get; set; } = "";
     public int Ping { get; set; }
-    
-    public bool IsSuccess => 
-        HttpStatus == "OK" && 
+
+    public bool IsSuccess =>
+        HttpStatus == "OK" &&
         (Tls12Status == "OK" || Tls13Status == "OK");
 }
 

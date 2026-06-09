@@ -26,7 +26,7 @@ public partial class ZapretConfigWindow : Window
     private Process? _testProcess = null;
     private DateTime _testStartTime;
     private int _totalConfigs = 0;
-    
+
     public bool ConfigWasApplied { get; private set; } = false;
 
     public ZapretConfigWindow(string zapretPath, bool testMode)
@@ -36,8 +36,7 @@ public partial class ZapretConfigWindow : Window
         _testMode = testMode;
         Loaded += OnLoaded;
         Closing += OnClosing;
-        
-        // Добавить эффект при наведении для PrimaryBtn
+
         PrimaryBtn.MouseEnter += (s, e) =>
         {
             PrimaryBtn.Background = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x2d));
@@ -61,7 +60,6 @@ public partial class ZapretConfigWindow : Window
             LogTextBox.Document.Blocks.Add(paragraph);
         }
 
-        // Проверяем, является ли это заголовком
         bool isHeader = text.Contains("[HEADER]");
         if (isHeader)
         {
@@ -71,19 +69,18 @@ public partial class ZapretConfigWindow : Window
         var run = new Run(text + "\n")
         {
             Foreground = new SolidColorBrush(color),
-            FontSize = isHeader ? 16 : 12,  // Ещё крупнее для заголовков (было 14)
-            FontWeight = isHeader ? FontWeights.ExtraBold : FontWeights.Normal  // ExtraBold вместо Bold
+            FontSize = isHeader ? 16 : 12,
+            FontWeight = isHeader ? FontWeights.ExtraBold : FontWeights.Normal
         };
         paragraph.Inlines.Add(run);
-        
+
         LogScrollViewer.ScrollToEnd();
     }
 
     private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
-        // Остановить тестирование при закрытии окна
         _isTesting = false;
-        
+
         if (_testProcess != null && !_testProcess.HasExited)
         {
             try
@@ -93,9 +90,7 @@ public partial class ZapretConfigWindow : Window
             }
             catch { }
         }
-        
-        // Убить все winws.exe и powershell.exe процессы ТОЛЬКО если это режим тестирования
-        // В режиме выбора конфига НЕ трогаем запущенные процессы
+
         if (_testMode)
         {
             try
@@ -110,8 +105,7 @@ public partial class ZapretConfigWindow : Window
                     }
                     catch { }
                 }
-                
-                // Также убить любые PowerShell процессы, запущенные от нашего процесса
+
                 var powerShellProcs = Process.GetProcessesByName("powershell");
                 foreach (var proc in powerShellProcs)
                 {
@@ -131,24 +125,21 @@ public partial class ZapretConfigWindow : Window
     {
         try
         {
-            // Убить основной процесс
             var process = Process.GetProcessById(pid);
             process.Kill(true);
-            process.WaitForExit(2000); // Ждем 2 секунды
+            process.WaitForExit(2000);
         }
         catch (ArgumentException)
         {
-            // Процесс уже завершён
         }
         catch (Exception)
         {
-            // В случае ошибки используем команду taskkill для полного уничтожения
             try
             {
                 var psi = new ProcessStartInfo
                 {
                     FileName = "taskkill",
-                    Arguments = $"/F /PID {pid} /T", // /T - убить дерево процессов
+                    Arguments = $"/F /PID {pid} /T",
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     WindowStyle = ProcessWindowStyle.Hidden
@@ -162,19 +153,17 @@ public partial class ZapretConfigWindow : Window
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
-        // Загрузить кэш
         _cache = ZapretConfigService.LoadCache();
 
         if (_testMode)
         {
-            // Режим тестирования - показать сообщение о подтверждении в текущем окне
             StatusPanel.Visibility = Visibility.Visible;
             ProgressBarContainer.Visibility = Visibility.Collapsed;
-            
+
             StatusIcon.Visibility = Visibility.Visible;
             StatusIcon.Data = (Geometry)FindResource("WarningIcon");
             StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08));
-            
+
             StatusText.Text = "Перед запуском - важная вещь!\n\n" +
                              "Приложение может само протестировать все конфиги и запомнить лучшие. " +
                              "Займёт минут 10, зато потом не придётся вручную перебирать их когда что-то перестаёт работать.\n\n" +
@@ -185,22 +174,19 @@ public partial class ZapretConfigWindow : Window
                              "Именно поэтому важно иметь несколько проверенных конфигов под рукой, " +
                              "если один перестал работать правильно, переключились на другой и всё.\n\n" +
                              "Пройдите тест один раз, и приложение само разберётся что к чему. Запускаем?";
-            
+
             SecondaryBtn.Content = "Да, начать";
             PrimaryBtn.Content = "Нет, выйти";
             PrimaryBtn.Visibility = Visibility.Visible;
         }
         else
         {
-            // Режим выбора конфига
             if (_cache == null || !_cache.HasAnyConfigs)
             {
-                // Нет кэша - показать предупреждение
                 ShowWarningNoCache();
             }
             else
             {
-                // Показать список конфигов
                 StopIndeterminateAnimation();
                 ShowConfigList();
             }
@@ -213,15 +199,15 @@ public partial class ZapretConfigWindow : Window
         StopIndeterminateAnimation();
         StatusPanel.Visibility = Visibility.Visible;
         ProgressBarContainer.Visibility = Visibility.Collapsed;
-        
+
         StatusIcon.Visibility = Visibility.Visible;
         StatusIcon.Data = (Geometry)FindResource("WarningIcon");
         StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08));
-        
+
         StatusText.Text = "ОБЯЗАТЕЛЬНО ПРОЙДИТЕ полный тест конфигов!\n\n" +
                          "Это поможет вам в будущем и сэкономит кучу времени! " +
                          "Приложение найдёт все рабочие конфиги и выберет лучший для вашей сети.";
-        
+
         SecondaryBtn.Content = "Закрыть";
         PrimaryBtn.Content = "Пройти тест";
         PrimaryBtn.Visibility = Visibility.Visible;
@@ -234,9 +220,8 @@ public partial class ZapretConfigWindow : Window
         SecondaryBtn.Style = (Style)FindResource("OutlineBtn");
         PrimaryBtn.Visibility = Visibility.Collapsed;
 
-        // Остановить и удалить сервис Zapret если установлен
         StatusText.Text = "Подготовка к тестированию...";
-        
+
         var st = DiagnosticsEngine.CheckAppStatus();
         if (st.ZapretRunning)
         {
@@ -249,11 +234,10 @@ public partial class ZapretConfigWindow : Window
             await Task.Delay(1000);
         }
 
-        // Удалить сервис Zapret если установлен
         try
         {
             StatusText.Text = "Удаление сервиса Zapret...";
-            
+
             var psi = new ProcessStartInfo
             {
                 FileName = "sc.exe",
@@ -262,13 +246,12 @@ public partial class ZapretConfigWindow : Window
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
-            
+
             using var checkProcess = Process.Start(psi);
             if (checkProcess != null)
             {
                 await checkProcess.WaitForExitAsync();
-                
-                // Если сервис существует (код возврата 0), удалить его
+
                 if (checkProcess.ExitCode == 0)
                 {
                     var stopPsi = new ProcessStartInfo
@@ -281,9 +264,9 @@ public partial class ZapretConfigWindow : Window
                     using var stopProcess = Process.Start(stopPsi);
                     if (stopProcess != null)
                         await stopProcess.WaitForExitAsync();
-                    
+
                     await Task.Delay(500);
-                    
+
                     var deletePsi = new ProcessStartInfo
                     {
                         FileName = "sc.exe",
@@ -294,14 +277,13 @@ public partial class ZapretConfigWindow : Window
                     using var deleteProcess = Process.Start(deletePsi);
                     if (deleteProcess != null)
                         await deleteProcess.WaitForExitAsync();
-                    
+
                     await Task.Delay(500);
                 }
             }
         }
         catch
         {
-            // Игнорируем ошибки удаления сервиса
         }
 
         try
@@ -310,10 +292,9 @@ public partial class ZapretConfigWindow : Window
                              "💡 Советуем вам подождать 10 минуток на полное сканирование.\n" +
                              "В дальнейшем это сэкономит вам кучу времени и нервов!\n\n" +
                              "Приложение найдёт все идеальные конфиги (12/12 тестов) и выберет лучший.";
-            
+
             await Task.Delay(3000);
-            
-            // Показать прогресс-бар, лог и скрыть StatusPanel
+
             StatusPanel.Visibility = Visibility.Collapsed;
             ProgressBarContainer.Visibility = Visibility.Visible;
             ProgressText.Visibility = Visibility.Visible;
@@ -321,55 +302,49 @@ public partial class ZapretConfigWindow : Window
             ProgressText.Text = "Тестирование конфигов: 0%";
             TimeRemainingText.Text = "Осталось: ~10 мин";
             LogContainer.Visibility = Visibility.Visible;
-            
-            // Запомнить время начала
+
             _testStartTime = DateTime.Now;
-            
-            // Очистить лог и добавить начальное сообщение
+
             LogTextBox.Document.Blocks.Clear();
             AppendColoredLog("💡 Советуем вам подождать 10 минуток на полное сканирование.", Color.FromRgb(0xf0, 0xf0, 0xf0));
             AppendColoredLog("В дальнейшем это сэкономит вам кучу времени и нервов!\n", Color.FromRgb(0xf0, 0xf0, 0xf0));
             AppendColoredLog("Запуск тестирования...\n", Color.FromRgb(0x88, 0x88, 0x88));
-            
+
             var (configs, testProcess) = await ZapretConfigService.TestAllConfigsAsync(
                 _zapretPath,
-                status => Dispatcher.Invoke(() => 
+                status => Dispatcher.Invoke(() =>
                 {
-                    // Добавляем в лог с цветом в зависимости от содержимого
                     Color logColor;
                     if (status.Contains("❌") || status.Contains("НЕ РАБОТАЕТ") || status.Contains("НЕРАБОЧИЙ"))
-                        logColor = Color.FromRgb(0xef, 0x44, 0x44); // Красный
+                        logColor = Color.FromRgb(0xef, 0x44, 0x44);
                     else if (status.Contains("✅") || status.Contains("РАБОТАЕТ") || status.Contains("РАБОЧИЙ"))
-                        logColor = Color.FromRgb(0x22, 0xc5, 0x5e); // Зелёный
+                        logColor = Color.FromRgb(0x22, 0xc5, 0x5e);
                     else if (status.Contains("🔄") || status.Contains("Тестирую"))
-                        logColor = Color.FromRgb(0x3b, 0x82, 0xf6); // Синий
+                        logColor = Color.FromRgb(0x3b, 0x82, 0xf6);
                     else if (status.Contains("⚠️") || status.Contains("ЧАСТИЧНО"))
-                        logColor = Color.FromRgb(0xea, 0xb3, 0x08); // Жёлтый
+                        logColor = Color.FromRgb(0xea, 0xb3, 0x08);
                     else
-                        logColor = Color.FromRgb(0xf0, 0xf0, 0xf0); // Белый по умолчанию
-                    
+                        logColor = Color.FromRgb(0xf0, 0xf0, 0xf0);
+
                     AppendColoredLog(status, logColor);
                 }),
-                (current, total) => Dispatcher.Invoke(() => 
+                (current, total) => Dispatcher.Invoke(() =>
                 {
-                    // Сохранить общее количество конфигов
                     if (_totalConfigs == 0)
                         _totalConfigs = total;
-                    
-                    // Обновляем прогресс-бар
+
                     var percentage = (current * 100 / total);
                     var progressWidth = (ProgressBarContainer.ActualWidth * current / total);
                     ProgressBar.Width = progressWidth;
                     ProgressText.Text = $"Тестирование конфигов: {current}/{total} ({percentage}%)";
-                    
-                    // Рассчитать оставшееся время
+
                     if (current > 0)
                     {
                         var elapsed = DateTime.Now - _testStartTime;
                         var avgTimePerConfig = elapsed.TotalSeconds / current;
                         var remainingConfigs = total - current;
                         var estimatedSecondsRemaining = avgTimePerConfig * remainingConfigs;
-                        
+
                         if (estimatedSecondsRemaining < 60)
                             TimeRemainingText.Text = $"Осталось: ~{(int)estimatedSecondsRemaining} сек";
                         else
@@ -377,17 +352,16 @@ public partial class ZapretConfigWindow : Window
                     }
                 })
             );
-            
+
             _testProcess = testProcess;
 
-            if (!_isTesting) return; // Отменено
+            if (!_isTesting) return;
 
             var idealConfigs = configs.Where(c => c.IsValid).OrderBy(c => c.AveragePing).ToList();
             var partialConfigs = configs.Where(c => c.IsPartiallyUsable).OrderByDescending(c => c.SuccessCount).ThenBy(c => c.AveragePing).ToList();
 
             if (idealConfigs.Count > 0)
             {
-                // Сохранить результаты
                 _cache = new ZapretConfigCache
                 {
                     LastTested = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ"),
@@ -397,7 +371,6 @@ public partial class ZapretConfigWindow : Window
                 };
                 ZapretConfigService.SaveCache(_cache);
 
-                // Скрыть прогресс-бар и лог, показать поздравление
                 ProgressBarContainer.Visibility = Visibility.Collapsed;
                 ProgressText.Visibility = Visibility.Collapsed;
                 TimeRemainingText.Visibility = Visibility.Collapsed;
@@ -407,17 +380,15 @@ public partial class ZapretConfigWindow : Window
                 StatusIcon.Visibility = Visibility.Visible;
                 StatusIcon.Data = (Geometry)FindResource("CheckmarkIcon");
                 StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
-                
-                var topConfigs = string.Join("\n", idealConfigs.Take(5).Select((c, i) => 
+
+                var topConfigs = string.Join("\n", idealConfigs.Take(5).Select((c, i) =>
                     $"{i + 1}. {c.Name} (пинг: {c.AveragePing} мс, тестов: {c.SuccessCount}/12)"));
-                
+
                 StatusText.Text = $"🎉 Поздравляю с полным тестированием!\n\n" +
                                  $"Найдено {idealConfigs.Count} идеальных конфигов.\n" +
                                  $"Все они прошли 12/12 тестов без ошибок!\n\n" +
                                  $"Ваш топ конфигов на следующие разы:\n\n{topConfigs}";
 
-                // Оставить экран поздравления, не скрывать автоматически
-                // Пользователь сам нажмет на кнопку чтобы перейти к выбору конфигов
                 SecondaryBtn.Content = "Выбрать конфиг";
                 SecondaryBtn.Style = (Style)FindResource("AccentBtn");
                 PrimaryBtn.Visibility = Visibility.Visible;
@@ -460,7 +431,6 @@ public partial class ZapretConfigWindow : Window
             }
             else
             {
-                // Скрыть прогресс-бар и лог, показать ошибку
                 ProgressBarContainer.Visibility = Visibility.Collapsed;
                 ProgressText.Visibility = Visibility.Collapsed;
                 TimeRemainingText.Visibility = Visibility.Collapsed;
@@ -472,7 +442,7 @@ public partial class ZapretConfigWindow : Window
                 StatusIcon.Visibility = Visibility.Visible;
                 StatusIcon.Data = (Geometry)FindResource("WarningIcon");
                 StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
-                
+
                 SecondaryBtn.Content = "Закрыть";
                 SecondaryBtn.Style = (Style)FindResource("AccentBtn");
                 PrimaryBtn.Content = "Повторить тест";
@@ -481,7 +451,6 @@ public partial class ZapretConfigWindow : Window
         }
         catch (Exception ex)
         {
-            // Скрыть прогресс-бар и лог, показать ошибку
             ProgressBarContainer.Visibility = Visibility.Collapsed;
             ProgressText.Visibility = Visibility.Collapsed;
             TimeRemainingText.Visibility = Visibility.Collapsed;
@@ -492,7 +461,7 @@ public partial class ZapretConfigWindow : Window
             StatusIcon.Visibility = Visibility.Visible;
             StatusIcon.Data = (Geometry)FindResource("WarningIcon");
             StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
-            
+
             SecondaryBtn.Content = "Закрыть";
             SecondaryBtn.Style = (Style)FindResource("AccentBtn");
             PrimaryBtn.Content = "Повторить тест";
@@ -508,12 +477,12 @@ public partial class ZapretConfigWindow : Window
         {
             LogContainer.Visibility = Visibility.Collapsed;
             ConfigListScroll.Visibility = Visibility.Visible;
-            
+
             SecondaryBtn.Content = "Применить";
-            
+
             PrimaryBtn.Content = "Проверить конфиг";
             PrimaryBtn.Visibility = Visibility.Visible;
-            
+
             PrimaryBtn.Click -= PrimaryBtn_Click;
             PrimaryBtn.Click += PrimaryBtn_Click;
             return;
@@ -525,43 +494,36 @@ public partial class ZapretConfigWindow : Window
         }
         else if (SecondaryBtn.Content?.ToString() == "Применить")
         {
-            // Применить выбранный конфиг и ВСЕГДА запустить сервис
             if (_cache != null && !string.IsNullOrEmpty(_cache.CurrentConfig))
             {
                 Console.WriteLine($"[ZapretConfigWindow] Applying config: {_cache.CurrentConfig}");
                 Console.WriteLine($"[ZapretConfigWindow] Zapret path: {_zapretPath}");
-                
-                // Показать прогресс-бар
+
                 ApplyConfigProgress.Visibility = Visibility.Visible;
-                
+
                 SecondaryBtn.IsEnabled = false;
                 PrimaryBtn.IsEnabled = false;
                 var originalContent = SecondaryBtn.Content;
                 SecondaryBtn.Content = "Применение...";
 
-                // Применяем конфиг (ApplyConfigAsync автоматически останавливает старый сервис если запущен и запускает новый)
                 bool success = await ZapretConfigService.ApplyConfigAsync(_zapretPath, _cache.CurrentConfig);
-                
+
                 Console.WriteLine($"[ZapretConfigWindow] ApplyConfigAsync result: {success}");
 
                 SecondaryBtn.IsEnabled = true;
                 PrimaryBtn.IsEnabled = true;
                 SecondaryBtn.Content = originalContent;
-                
-                // Скрыть прогресс-бар
+
                 ApplyConfigProgress.Visibility = Visibility.Collapsed;
 
                 if (success)
                 {
-                    // Успешно применили конфиг и запустили сервис
                     ConfigWasApplied = true;
-                    // Подождем немного чтобы сервис успел запуститься
                     await Task.Delay(1000);
                     Close();
                 }
                 else
                 {
-                    // Показать ошибку
                     StatusPanel.Visibility = Visibility.Visible;
                     ConfigListScroll.Visibility = Visibility.Collapsed;
                     StatusIcon.Visibility = Visibility.Visible;
@@ -582,8 +544,7 @@ public partial class ZapretConfigWindow : Window
         else
         {
             _isTesting = false;
-            
-            // Убить процесс тестирования
+
             if (_testProcess != null && !_testProcess.HasExited)
             {
                 try
@@ -593,8 +554,7 @@ public partial class ZapretConfigWindow : Window
                 }
                 catch { }
             }
-            
-            // Убить все winws.exe и powershell.exe процессы
+
             try
             {
                 var processes = Process.GetProcessesByName("winws");
@@ -607,8 +567,7 @@ public partial class ZapretConfigWindow : Window
                     }
                     catch { }
                 }
-                
-                // Также убить любые PowerShell процессы
+
                 var powerShellProcs = Process.GetProcessesByName("powershell");
                 foreach (var proc in powerShellProcs)
                 {
@@ -621,7 +580,7 @@ public partial class ZapretConfigWindow : Window
                 }
             }
             catch { }
-            
+
             Close();
         }
     }
@@ -640,21 +599,18 @@ public partial class ZapretConfigWindow : Window
             return;
         }
 
-        // Если показан список конфигов и есть выбранный конфиг - тестировать только его
         if (ConfigListScroll.Visibility == Visibility.Visible && _cache != null && !string.IsNullOrEmpty(_cache.CurrentConfig))
         {
             await TestCurrentConfigAsync();
         }
         else
         {
-            // Если на экране поздравления, перейти к списку конфигов
             if (StatusPanel.Visibility == Visibility.Visible && PrimaryBtn.Content.ToString() == "Выбрать конфиг")
             {
                 ShowConfigList();
             }
             else
             {
-                // Запустить полное тестирование
                 await StartTestingAsync();
             }
         }
@@ -664,40 +620,37 @@ public partial class ZapretConfigWindow : Window
     {
         if (_cache == null || string.IsNullOrEmpty(_cache.CurrentConfig)) return;
 
-        // Скрыть список конфигов и показать лог
         ConfigListScroll.Visibility = Visibility.Collapsed;
         StatusPanel.Visibility = Visibility.Collapsed;
         ProgressBarContainer.Visibility = Visibility.Collapsed;
         LogContainer.Visibility = Visibility.Visible;
-        
+
         PrimaryBtn.Visibility = Visibility.Collapsed;
         SecondaryBtn.Content = "Отмена";
         SecondaryBtn.Style = (Style)FindResource("OutlineBtn");
 
-        // Очистить лог
         LogTextBox.Document.Blocks.Clear();
         AppendColoredLog($"🔄 Тестирую конфиг: {_cache.CurrentConfig}\n", Color.FromRgb(0x3b, 0x82, 0xf6));
 
         var (isWorking, message) = await ZapretConfigService.TestSingleConfigAsync(
             _zapretPath,
             _cache.CurrentConfig,
-            status => Dispatcher.Invoke(() => 
+            status => Dispatcher.Invoke(() =>
             {
                 Color logColor;
                 if (status.Contains("✅") || status.Contains("работает") || status.Contains("доступен"))
-                    logColor = Color.FromRgb(0x22, 0xc5, 0x5e); // Зелёный
+                    logColor = Color.FromRgb(0x22, 0xc5, 0x5e);
                 else if (status.Contains("❌") || status.Contains("не работает") || status.Contains("недоступен"))
-                    logColor = Color.FromRgb(0xef, 0x44, 0x44); // Красный
+                    logColor = Color.FromRgb(0xef, 0x44, 0x44);
                 else if (status.Contains("🔄") || status.Contains("Тестирую"))
-                    logColor = Color.FromRgb(0x3b, 0x82, 0xf6); // Синий
+                    logColor = Color.FromRgb(0x3b, 0x82, 0xf6);
                 else
-                    logColor = Color.FromRgb(0xf0, 0xf0, 0xf0); // Белый
-                
+                    logColor = Color.FromRgb(0xf0, 0xf0, 0xf0);
+
                 AppendColoredLog(status, logColor);
             })
         );
 
-        // Показать результат
         if (isWorking)
         {
             AppendColoredLog($"\n✅ {message}", Color.FromRgb(0x22, 0xc5, 0x5e));
@@ -706,8 +659,7 @@ public partial class ZapretConfigWindow : Window
         {
             AppendColoredLog($"\n❌ {message}", Color.FromRgb(0xef, 0x44, 0x44));
         }
-        
-        // Оставить лог открытым, показать кнопку для возврата к списку
+
         PrimaryBtn.Visibility = Visibility.Visible;
         PrimaryBtn.Content = "Закрыть";
         PrimaryBtn.Click -= PrimaryBtn_Click;
@@ -732,13 +684,12 @@ public partial class ZapretConfigWindow : Window
         var selectableConfigs = _cache.GetSelectableConfigs();
         var usingPartialConfigs = _cache.ValidConfigs.Count == 0 && _cache.PartialConfigs.Count > 0;
 
-        // Активный конфиг (сначала)
         var currentLabel = new StackPanel
         {
             Orientation = System.Windows.Controls.Orientation.Horizontal,
             Margin = new Thickness(0, 0, 0, 16)
         };
-        
+
         var activeText = new TextBlock
         {
             Text = "Активный конфиг: ",
@@ -746,7 +697,7 @@ public partial class ZapretConfigWindow : Window
             Foreground = Brushes.White,
             FontWeight = FontWeights.Bold
         };
-        
+
         var configNameText = new TextBlock
         {
             Text = _cache.CurrentConfig,
@@ -756,7 +707,7 @@ public partial class ZapretConfigWindow : Window
                 : Color.FromRgb(0x22, 0xc5, 0x5e)),
             FontWeight = FontWeights.Bold
         };
-        
+
         currentLabel.Children.Add(activeText);
         currentLabel.Children.Add(configNameText);
         ConfigListPanel.Children.Add(currentLabel);
@@ -781,7 +732,6 @@ public partial class ZapretConfigWindow : Window
             });
         }
 
-        // Заголовок (потом)
         var headerGrid = new Grid { Margin = new Thickness(0, 0, 0, 4) };
         headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -816,7 +766,6 @@ public partial class ZapretConfigWindow : Window
         headerGrid.Children.Add(badge);
         ConfigListPanel.Children.Add(headerGrid);
 
-        // Список конфигов
         foreach (var config in selectableConfigs)
         {
             var isCurrent = config.Name == _cache.CurrentConfig;
@@ -882,7 +831,6 @@ public partial class ZapretConfigWindow : Window
             left.Children.Add(nameRow);
             left.Children.Add(infoText);
 
-            // Стрелка справа
             var arrow = new TextBlock
             {
                 Text = isCurrent ? "✓" : "→",
@@ -900,7 +848,6 @@ public partial class ZapretConfigWindow : Window
 
             border.Child = grid;
 
-            // Одинарный клик - выбрать конфиг
             border.MouseLeftButtonDown += (s, e) =>
             {
                 if (e.ClickCount == 1)
@@ -910,21 +857,18 @@ public partial class ZapretConfigWindow : Window
                     ShowConfigList();
                 }
             };
-            
-            // Двойной клик - применить конфиг
+
             border.MouseLeftButtonDown += async (s, e) =>
             {
                 if (e.ClickCount == 2)
                 {
                     _cache.CurrentConfig = config.Name;
                     ZapretConfigService.SaveCache(_cache);
-                    
-                    // Применить конфиг (вызвать тот же код что и кнопка "Применить")
+
                     SecondaryBtn_Click(s, e);
                 }
             };
 
-            // Hover эффект
             border.MouseEnter += (s, e) =>
             {
                 if (!isCurrent)
@@ -948,7 +892,7 @@ public partial class ZapretConfigWindow : Window
     {
         ProgressBarContainer.Visibility = Visibility.Collapsed;
     }
-    
+
     private void HideButton_Click(object sender, RoutedEventArgs e)
     {
         WindowState = WindowState.Minimized;
