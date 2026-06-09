@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Color = System.Windows.Media.Color;
 
 namespace NetFix.Models;
@@ -11,11 +12,13 @@ public record ModEntry(
     string Description,
     ModType Type,
     string FolderPath,
-    string? RequiredBuild
+    string? RequiredBuild,
+    string? SourceFileName = null
 )
 {
     public bool IsActive { get; set; } = false;
     public int SortOrder { get; set; } = 0;
+    [JsonIgnore] public bool HasSourceFileName => !string.IsNullOrEmpty(SourceFileName);
 
     public Color AccentColor => GetAccentColor(Name);
 
@@ -47,5 +50,6 @@ public record ModMeta(
     string Version,
     string Description,
     string Type,
-    string RequiredBuild
+    string RequiredBuild,
+    string? SourceFileName = null
 );

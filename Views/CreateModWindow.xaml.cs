@@ -18,6 +18,7 @@ public partial class CreateModWindow : Window
 
     private readonly ModType _modType;
     private string? _selectedBatPath;
+    private string? _selectedListFilePath;
 
     public CreateModWindow(ModType modType)
     {
@@ -113,6 +114,23 @@ public partial class CreateModWindow : Window
         }
     }
 
+    private void SelectListFile_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Filter = "Text files (*.txt)|*.txt",
+            Title = "Выберите файл списка",
+            InitialDirectory = @"C:\Zapret\lists",
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            _selectedListFilePath = dialog.FileName;
+            ListFilePathDisplay.Text = Path.GetFileName(dialog.FileName);
+            ListFilePathDisplay.Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc));
+        }
+    }
+
     private void CreateBtn_Click(object sender, RoutedEventArgs e)
     {
         if (string.IsNullOrWhiteSpace(NameBox.Text))
@@ -132,6 +150,12 @@ public partial class CreateModWindow : Window
         if (_modType == ModType.Strategy && string.IsNullOrEmpty(_selectedBatPath))
         {
             ShowValidationHint("Выберите .bat файл стратегии");
+            return;
+        }
+
+        if (_modType == ModType.List && string.IsNullOrEmpty(_selectedListFilePath))
+        {
+            ShowValidationHint("Выберите файл списка");
             return;
         }
 
@@ -167,6 +191,7 @@ public partial class CreateModWindow : Window
             description,
             _modType,
             _selectedBatPath,
+            _selectedListFilePath,
             listContent,
             activeStrategy,
             activeLists

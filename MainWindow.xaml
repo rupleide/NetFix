@@ -2641,10 +2641,22 @@
                                                 </TextBlock>
                                             </Border>
                                             <Border CornerRadius="4" Background="#1a1a1e" Padding="6,2">
-                                                <TextBlock FontFamily="Segoe UI" FontSize="10" Foreground="{StaticResource DimTextBrush}">
-                                                    <Run Text="v"/>
-                                                    <Run Text="{Binding Version}"/>
-                                                </TextBlock>
+                                                <TextBlock FontFamily="Segoe UI" FontSize="10" Foreground="{StaticResource DimTextBrush}"
+                                                           Text="{Binding Version}"/>
+                                            </Border>
+                                            <Border CornerRadius="4" Background="#16161a" Padding="6,2" Margin="6,0,0,0">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding HasSourceFileName}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock FontFamily="Consolas" FontSize="9" Foreground="#6b7280"
+                                                           Text="{Binding SourceFileName}"/>
                                             </Border>
                                         </StackPanel>
                                         <Border Height="1" Background="#2a2a2d" Margin="0,6,0,4"/>
@@ -2772,6 +2784,19 @@
                                         </Border>
                                         <Border CornerRadius="4" Background="#1a1a1e" Padding="6,2">
                                             <TextBlock Text="{Binding Version}" FontSize="10" Foreground="#555558"/>
+                                        </Border>
+                                        <Border CornerRadius="4" Background="#141418" Padding="6,2" Margin="6,0,0,0">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasSourceFileName}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding SourceFileName}" FontSize="9" FontFamily="Consolas" Foreground="#6b7280"/>
                                         </Border>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal">
@@ -3441,9 +3466,7 @@
                                      </Button>
                                  </StackPanel>
                                 <TextBlock Grid.Column="1" x:Name="ListsStatusText" Text=""
-                                           FontFamily="Segoe UI" FontSize="12" Foreground="#888888"
-                                           VerticalAlignment="Center" HorizontalAlignment="Center"
-                                           TextTrimming="CharacterEllipsis"/>
+                                           Visibility="Collapsed"/>
                                 <Button Grid.Column="2" x:Name="ListsApplyBtn" Style="{StaticResource AccentBtn}"
                                         Width="Auto" MinWidth="130" Height="36" Click="ListsApplyBtn_Click">
                                     <TextBlock Text="Применить" VerticalAlignment="Center" FontWeight="SemiBold"/>

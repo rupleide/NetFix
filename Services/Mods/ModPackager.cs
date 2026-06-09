@@ -29,7 +29,8 @@ public static class ModPackager
             Version: mod.Version,
             Description: mod.Description,
             Type: mod.Type.ToString().ToLowerInvariant(),
-            RequiredBuild: mod.RequiredBuild ?? ""
+            RequiredBuild: mod.RequiredBuild ?? "",
+            SourceFileName: mod.SourceFileName
         );
 
         var metaJson = JsonSerializer.Serialize(meta, JsonOpts);
@@ -138,7 +139,8 @@ public static class ModPackager
             Description: meta.Description,
             Type: modType,
             FolderPath: modDir,
-            RequiredBuild: string.IsNullOrEmpty(meta.RequiredBuild) ? null : meta.RequiredBuild
+            RequiredBuild: string.IsNullOrEmpty(meta.RequiredBuild) ? null : meta.RequiredBuild,
+            SourceFileName: meta.SourceFileName
         )
         {
             IsActive = activeNames.Contains(dirName),
@@ -149,7 +151,7 @@ public static class ModPackager
 
     public static ModEntry CreateNewMod(
         string name, string author, string version, string description, ModType type,
-        string? batSourcePath, string? listContent,
+        string? batSourcePath, string? listSourcePath, string? listContent,
         List<string> activeStrategyMods, List<string> activeListMods)
     {
         var dirName = SanitizeFileName(name);
@@ -163,13 +165,21 @@ public static class ModPackager
         var modDir = Path.Combine(targetDir, dirName);
         Directory.CreateDirectory(modDir);
 
+        var sourceFileName = type switch
+        {
+            ModType.Strategy when batSourcePath is not null => Path.GetFileName(batSourcePath),
+            ModType.List when listSourcePath is not null => Path.GetFileName(listSourcePath),
+            _ => null,
+        };
+
         var meta = new ModMeta(
             Name: name,
             Author: author,
             Version: version,
             Description: description,
             Type: type.ToString().ToLowerInvariant(),
-            RequiredBuild: ""
+            RequiredBuild: "",
+            SourceFileName: sourceFileName
         );
 
         var metaJson = JsonSerializer.Serialize(meta, JsonOpts);
@@ -178,8 +188,22 @@ public static class ModPackager
         if (type == ModType.Strategy && batSourcePath is not null && File.Exists(batSourcePath))
             File.Copy(batSourcePath, Path.Combine(modDir, "strategy.bat"), overwrite: true);
 
-        if (type == ModType.List && listContent is not null)
-            File.WriteAllText(Path.Combine(modDir, "list.txt"), listContent);
+        if (type == ModType.List)
+        {
+            var listFile = Path.Combine(modDir, "list.txt");
+
+            if (listSourcePath is not null && File.Exists(listSourcePath))
+            {
+                File.Copy(listSourcePath, listFile, overwrite: true);
+
+                if (!string.IsNullOrEmpty(listContent))
+                    File.AppendAllText(listFile, "\n" + listContent);
+            }
+            else if (!string.IsNullOrEmpty(listContent))
+            {
+                File.WriteAllText(listFile, listContent);
+            }
+        }
 
         var activeNames = type == ModType.Strategy ? activeStrategyMods : activeListMods;
 
@@ -190,7 +214,8 @@ public static class ModPackager
             Description: description,
             Type: type,
             FolderPath: modDir,
-            RequiredBuild: null
+            RequiredBuild: null,
+            SourceFileName: sourceFileName
         )
         {
             IsActive = activeNames.Contains(dirName),

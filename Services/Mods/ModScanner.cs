@@ -73,11 +73,12 @@ public static class ModScanner
                 var entry = new ModEntry(
                     Name: meta.Name,
                     Author: meta.Author,
-                    Version: meta.Version,
+                    Version: meta.Version ?? "",
                     Description: meta.Description,
                     Type: modType,
                     FolderPath: modDir,
-                    RequiredBuild: string.IsNullOrEmpty(meta.RequiredBuild) ? null : meta.RequiredBuild
+                    RequiredBuild: string.IsNullOrEmpty(meta.RequiredBuild) ? null : meta.RequiredBuild,
+                    SourceFileName: meta.SourceFileName
                 )
                 {
                     IsActive = activeNames.Contains(dirName),
