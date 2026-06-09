@@ -48,6 +48,8 @@ using Size         = System.Windows.Size;
 using Path         = System.IO.Path;
 using DragEventArgs = System.Windows.DragEventArgs;
 using DragDropEffects = System.Windows.DragDropEffects;
+using MouseEventArgs = System.Windows.Input.MouseEventArgs;
+using Point = System.Windows.Point;
 
 namespace NetFix;
 
@@ -110,6 +112,31 @@ public partial class MainWindow : Window
     private bool _checkInProgress = false;
     private bool _autoFixRunning = false;
     private Views.ZapretConfigWindow? _configWindow = null;
+
+    // ── Плавный скролл модов ─────────────────────────────────────────────────
+    private static ScrollViewer? FindScrollViewer(DependencyObject parent)
+    {
+        if (parent is ScrollViewer sv) return sv;
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var result = FindScrollViewer(VisualTreeHelper.GetChild(parent, i));
+            if (result is not null) return result;
+        }
+        return null;
+    }
+
+    private void SubscribeSmoothScroll(ListBox listBox)
+    {
+        listBox.PreviewMouseWheel += (_, e) =>
+        {
+            var sv = FindScrollViewer(listBox);
+            if (sv is null) return;
+            e.Handled = true;
+
+            double delta = e.Delta > 0 ? -40 : 40;
+            sv.ScrollToVerticalOffset(sv.VerticalOffset + delta);
+        };
+    }
 
     // ── Игра: состояние ──────────────────────────────────────────────────────
     private DispatcherTimer? _gameTimer;
@@ -212,6 +239,9 @@ public partial class MainWindow : Window
     private bool _modsLoaded;
     private ModEntry? _dragMod;
     private bool _dragFromActive;
+    private Point _dragStartPoint;
+    private bool _isDragPending;
+    private ModEntry? _pendingToggleMod;
     private DragAdorner? _currentDragAdorner;
 
     // ── Network Monitor ──────────────────────────────────────────────────────
@@ -375,6 +405,12 @@ public partial class MainWindow : Window
         // Обработчик кликов по ссылкам в логе
         LogBox.PreviewMouseLeftButtonDown += LogBox_PreviewMouseLeftButtonDown;
         LogBox.PreviewMouseMove += LogBox_PreviewMouseMove;
+
+        // Плавный скролл списков модов
+        SubscribeSmoothScroll(AvailableList);
+        SubscribeSmoothScroll(ActiveList);
+        SubscribeSmoothScroll(ListsAvailableList);
+        SubscribeSmoothScroll(ListsActiveList);
 
         if (_settings.StartMinimizedToTray)
         {
@@ -893,8 +929,9 @@ public partial class MainWindow : Window
             _modsLoaded = true;
             ModScanner.EnsureDirectories();
             RefreshMods();
-            UpdateModsStatus();
-        }
+        UpdateModsStatus();
+        ResetArrows();
+    }
     }
 
     private void ShowModsSubScreen(Grid screen, string title)
@@ -961,6 +998,7 @@ public partial class MainWindow : Window
 
     private void RefreshModsLists()
     {
+        Debug.WriteLine($"[RefreshModsLists] isStrategyTab={_isStrategyTab}");
         var activeNames = _isStrategyTab
             ? (_settings.ActiveStrategyMods ?? [])
             : (_settings.ActiveListMods ?? []);
@@ -974,11 +1012,11 @@ public partial class MainWindow : Window
             .Where(m => (_isStrategyTab ? m.Type == ModType.Strategy : m.Type == ModType.List) && !m.IsActive)
             .ToList();
 
-        AvailableList.ItemsSource = null;
         AvailableList.ItemsSource = availableMods;
-
-        ActiveList.ItemsSource = null;
         ActiveList.ItemsSource = activeMods;
+        Debug.WriteLine($"[RefreshModsLists] setting SelectedItem=null on both lists. Avail={availableMods.Count}, Active={activeMods.Count}");
+        AvailableList.SelectedItem = null;
+        ActiveList.SelectedItem = null;
 
         var hasActive = activeMods.Count > 0;
         ModsApplyBtn.IsEnabled = hasActive;
@@ -1005,28 +1043,73 @@ public partial class MainWindow : Window
         }
     }
 
+    private void ResetArrows()
+    {
+        MoveRightBtn.IsEnabled = false;
+        MoveLeftBtn.IsEnabled = false;
+        if (MoveRightBtn.Content is System.Windows.Shapes.Path rp)
+            rp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+        if (MoveLeftBtn.Content is System.Windows.Shapes.Path lp)
+            lp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+    }
+
     private void ModsEditorTab_Checked(object sender, RoutedEventArgs e) => LoadEditorFileLists();
 
     private void MoveRightBtn_Click(object sender, RoutedEventArgs e)
     {
-        if (AvailableList.SelectedItem is ModEntry mod)
-            ToggleModActive(mod, true);
+        Debug.WriteLine($"[MoveRightBtn] Clicked, pendingToggleMod={_pendingToggleMod?.Name}");
+        if (_pendingToggleMod is not ModEntry mod)
+        {
+            Debug.WriteLine("[MoveRightBtn] return: _pendingToggleMod is null");
+            return;
+        }
+
+        MoveRightBtn.IsEnabled = false;
+        MoveLeftBtn.IsEnabled = false;
+        if (MoveRightBtn.Content is System.Windows.Shapes.Path rp)
+            rp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+        if (MoveLeftBtn.Content is System.Windows.Shapes.Path lp)
+            lp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+
+        _pendingToggleMod = null;
+        Debug.WriteLine($"[MoveRightBtn] calling ToggleModActive({mod.Name}, true)");
+        ToggleModActive(mod, true);
     }
 
     private void MoveLeftBtn_Click(object sender, RoutedEventArgs e)
     {
-        if (ActiveList.SelectedItem is ModEntry mod)
-            ToggleModActive(mod, false);
+        Debug.WriteLine($"[MoveLeftBtn] Clicked, pendingToggleMod={_pendingToggleMod?.Name}");
+        if (_pendingToggleMod is not ModEntry mod)
+        {
+            Debug.WriteLine("[MoveLeftBtn] return: _pendingToggleMod is null");
+            return;
+        }
+
+        MoveRightBtn.IsEnabled = false;
+        MoveLeftBtn.IsEnabled = false;
+        if (MoveRightBtn.Content is System.Windows.Shapes.Path rp)
+            rp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+        if (MoveLeftBtn.Content is System.Windows.Shapes.Path lp)
+            lp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+
+        _pendingToggleMod = null;
+        Debug.WriteLine($"[MoveLeftBtn] calling ToggleModActive({mod.Name}, false)");
+        ToggleModActive(mod, false);
     }
 
     private void CardToggleActive_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button btn && btn.Tag is ModEntry mod)
+        {
+            Debug.WriteLine($"[CardToggleActive] {mod.Name}, activating={!mod.IsActive}");
             ToggleModActive(mod, !mod.IsActive);
+        }
     }
 
     private void ToggleModActive(ModEntry mod, bool activate)
     {
+        Debug.WriteLine($"[ToggleModActive] entering: mod={mod.Name}, activate={activate}, isStrategyTab={_isStrategyTab}");
+
         mod.IsActive = activate;
 
         var list = _isStrategyTab ? _settings.ActiveStrategyMods : _settings.ActiveListMods;
@@ -1035,14 +1118,21 @@ public partial class MainWindow : Window
         if (activate)
         {
             if (!list.Contains(dirName))
+            {
                 list.Add(dirName);
+                Debug.WriteLine($"[ToggleModActive] added {dirName}");
+            }
+            else
+                Debug.WriteLine($"[ToggleModActive] already in list, skipped: {dirName}");
         }
         else
         {
-            list.Remove(dirName);
+            var removed = list.Remove(dirName);
+            Debug.WriteLine($"[ToggleModActive] removed {dirName}: {removed}");
         }
 
         SaveModsSettings();
+        Debug.WriteLine("[ToggleModActive] calling RefreshModsLists");
         RefreshModsLists();
     }
 
@@ -1055,7 +1145,28 @@ public partial class MainWindow : Window
             {
                 _dragMod = mod;
                 _dragFromActive = listBox == ActiveList;
+                _dragStartPoint = e.GetPosition(null);
+                _isDragPending = true;
+                Debug.WriteLine($"[MouseDown] {mod.Name}, fromActive={_dragFromActive}, pending=true");
+            }
+            else
+                Debug.WriteLine("[MouseDown] no ModEntry found");
+        }
+    }
 
+    private void ListBox_PreviewMouseMove(object sender, MouseEventArgs e)
+    {
+        if (!_isDragPending || e.LeftButton != MouseButtonState.Pressed) return;
+
+        var pos = e.GetPosition(null);
+        var diff = _dragStartPoint - pos;
+
+        if (Math.Abs(diff.X) > 4 || Math.Abs(diff.Y) > 4)
+        {
+            _isDragPending = false;
+            if (_dragMod != null && sender is ListBox listBox)
+            {
+                Debug.WriteLine($"[MouseMove] starting drag for {_dragMod.Name}");
                 DragDrop.DoDragDrop(listBox, _dragMod, DragDropEffects.Move);
             }
         }
@@ -1069,6 +1180,7 @@ public partial class MainWindow : Window
 
     private void AvailableList_Drop(object sender, DragEventArgs e)
     {
+        Debug.WriteLine($"[Drop -> Available] dragMod={_dragMod?.Name}, dragFromActive={_dragFromActive}");
         if (_dragMod is null) return;
         if (_dragFromActive)
             ToggleModActive(_dragMod, false);
@@ -1078,6 +1190,7 @@ public partial class MainWindow : Window
 
     private void ActiveList_Drop(object sender, DragEventArgs e)
     {
+        Debug.WriteLine($"[Drop -> Active] dragMod={_dragMod?.Name}, dragFromActive={_dragFromActive}");
         if (_dragMod is null) return;
         if (!_dragFromActive)
             ToggleModActive(_dragMod, true);
@@ -1096,7 +1209,10 @@ public partial class MainWindow : Window
     private static ListBoxItem? FindListBoxItem(DependencyObject? element)
     {
         while (element is not null and not ListBoxItem)
-            element = VisualTreeHelper.GetParent(element);
+        {
+            try { element = VisualTreeHelper.GetParent(element); }
+            catch { break; }
+        }
         return element as ListBoxItem;
     }
 
@@ -1182,12 +1298,41 @@ public partial class MainWindow : Window
         UpdateModsStatus();
     }
 
-    private void AnyList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void RefreshMods_Click(object sender, RoutedEventArgs e) => RefreshMods();
+
+    private void AvailableList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        DeleteModBtn.IsEnabled = AvailableList.SelectedItem is not null || ActiveList.SelectedItem is not null;
+        _isDragPending = false;
+        _pendingToggleMod = e.AddedItems.Count > 0 ? e.AddedItems[0] as ModEntry : null;
+        Debug.WriteLine($"[Avail_SelectionChanged] pending={_pendingToggleMod?.Name}");
+
+        if (_pendingToggleMod is null) return;
+
+        ActiveList.SelectedItem = null;
+        MoveRightBtn.IsEnabled = true;
+        MoveLeftBtn.IsEnabled = false;
+        if (MoveRightBtn.Content is System.Windows.Shapes.Path rp)
+            rp.Stroke = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+        if (MoveLeftBtn.Content is System.Windows.Shapes.Path lp)
+            lp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
     }
 
-    private void RefreshMods_Click(object sender, RoutedEventArgs e) => RefreshMods();
+    private void ActiveList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        _isDragPending = false;
+        _pendingToggleMod = e.AddedItems.Count > 0 ? e.AddedItems[0] as ModEntry : null;
+        Debug.WriteLine($"[Active_SelectionChanged] pending={_pendingToggleMod?.Name}");
+
+        if (_pendingToggleMod is null) return;
+
+        AvailableList.SelectedItem = null;
+        MoveRightBtn.IsEnabled = false;
+        MoveLeftBtn.IsEnabled = true;
+        if (MoveRightBtn.Content is System.Windows.Shapes.Path rp)
+            rp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+        if (MoveLeftBtn.Content is System.Windows.Shapes.Path lp)
+            lp.Stroke = new SolidColorBrush(Color.FromRgb(0x50, 0x90, 0xd0));
+    }
 
     private async void ExportSingleMod_Click(object sender, RoutedEventArgs e)
     {
@@ -1236,26 +1381,6 @@ public partial class MainWindow : Window
 
             ModsEditorFileList.SelectedItem = dialog.FileName;
         }
-    }
-
-    private void DeleteBtn_Click(object sender, RoutedEventArgs e)
-    {
-        var selected = AvailableList.SelectedItem as ModEntry;
-        if (selected is null)
-            selected = ActiveList.SelectedItem as ModEntry;
-        if (selected is null) return;
-
-        try
-        {
-            if (Directory.Exists(selected.FolderPath))
-                Directory.Delete(selected.FolderPath, true);
-        }
-        catch { }
-
-        _allMods.Remove(selected);
-        SaveModsSettings();
-        RefreshModsLists();
-        ShowModsSuccess($"Мод '{selected.Name}' удалён");
     }
 
     private void DeleteModCard_Click(object sender, RoutedEventArgs e)
@@ -1438,21 +1563,64 @@ public partial class MainWindow : Window
         catch { }
     }
 
+    private void ResetListsArrows()
+    {
+        ListsMoveRightBtn.IsEnabled = false;
+        ListsMoveLeftBtn.IsEnabled = false;
+        if (ListsMoveRightBtn.Content is System.Windows.Shapes.Path rp)
+            rp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+        if (ListsMoveLeftBtn.Content is System.Windows.Shapes.Path lp)
+            lp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+    }
+
     // ── Lists Screen Handlers ─────────────────────────────────────────────────
     private void ListsMoveRightBtn_Click(object sender, RoutedEventArgs e)
     {
-        if (ListsAvailableList.SelectedItem is ModEntry mod)
-            ListsToggleModActive(mod, true);
+        Debug.WriteLine($"[ListsMoveRightBtn] Clicked, pendingToggleMod={_pendingToggleMod?.Name}");
+        if (_pendingToggleMod is not ModEntry mod)
+        {
+            Debug.WriteLine("[ListsMoveRightBtn] return: _pendingToggleMod is null");
+            return;
+        }
+
+        ListsMoveRightBtn.IsEnabled = false;
+        ListsMoveLeftBtn.IsEnabled = false;
+        if (ListsMoveRightBtn.Content is System.Windows.Shapes.Path rp)
+            rp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+        if (ListsMoveLeftBtn.Content is System.Windows.Shapes.Path lp)
+            lp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+
+        _pendingToggleMod = null;
+        Debug.WriteLine($"[ListsMoveRightBtn] calling ListsToggleModActive({mod.Name}, true)");
+        ListsToggleModActive(mod, true);
     }
 
     private void ListsMoveLeftBtn_Click(object sender, RoutedEventArgs e)
     {
-        if (ListsActiveList.SelectedItem is ModEntry mod)
-            ListsToggleModActive(mod, false);
+        Debug.WriteLine($"[ListsMoveLeftBtn] Clicked, pendingToggleMod={_pendingToggleMod?.Name}");
+        if (_pendingToggleMod is not ModEntry mod)
+        {
+            Debug.WriteLine("[ListsMoveLeftBtn] return: _pendingToggleMod is null");
+            return;
+        }
+
+        ListsMoveRightBtn.IsEnabled = false;
+        ListsMoveLeftBtn.IsEnabled = false;
+        if (ListsMoveRightBtn.Content is System.Windows.Shapes.Path rp)
+            rp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+        if (ListsMoveLeftBtn.Content is System.Windows.Shapes.Path lp)
+            lp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+
+        _pendingToggleMod = null;
+        Debug.WriteLine($"[ListsMoveLeftBtn] calling ListsToggleModActive({mod.Name}, false)");
+        ListsToggleModActive(mod, false);
     }
+
 
     private void ListsToggleModActive(ModEntry mod, bool activate)
     {
+        Debug.WriteLine($"[ListsToggleModActive] entering: mod={mod.Name}, activate={activate}");
+
         mod.IsActive = activate;
         var list = _settings.ActiveListMods;
         var dirName = ModScanner.GetModDirName(mod);
@@ -1460,20 +1628,56 @@ public partial class MainWindow : Window
         if (activate)
         {
             if (!list.Contains(dirName))
+            {
                 list.Add(dirName);
+                Debug.WriteLine($"[ListsToggleModActive] added {dirName}");
+            }
+            else
+                Debug.WriteLine($"[ListsToggleModActive] already in list, skipped: {dirName}");
         }
         else
         {
-            list.Remove(dirName);
+            var removed = list.Remove(dirName);
+            Debug.WriteLine($"[ListsToggleModActive] removed {dirName}: {removed}");
         }
 
         SaveModsSettings();
+        Debug.WriteLine("[ListsToggleModActive] calling RefreshListsInfo");
         RefreshListsInfo();
     }
 
-    private void ListsList_SelectionChanged(object s, SelectionChangedEventArgs e)
+    private void ListsAvailableList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        ListsDeleteBtn.IsEnabled = ListsAvailableList.SelectedItem is not null || ListsActiveList.SelectedItem is not null;
+        _isDragPending = false;
+        _pendingToggleMod = e.AddedItems.Count > 0 ? e.AddedItems[0] as ModEntry : null;
+        Debug.WriteLine($"[ListsAvail_SelectionChanged] pending={_pendingToggleMod?.Name}");
+
+        if (_pendingToggleMod is null) return;
+
+        ListsActiveList.SelectedItem = null;
+        ListsMoveRightBtn.IsEnabled = true;
+        ListsMoveLeftBtn.IsEnabled = false;
+        if (ListsMoveRightBtn.Content is System.Windows.Shapes.Path rp)
+            rp.Stroke = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+        if (ListsMoveLeftBtn.Content is System.Windows.Shapes.Path lp)
+            lp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+    }
+
+    private void ListsActiveList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        _isDragPending = false;
+        _pendingToggleMod = e.AddedItems.Count > 0 ? e.AddedItems[0] as ModEntry : null;
+        Debug.WriteLine($"[ListsActive_SelectionChanged] pending={_pendingToggleMod?.Name}");
+
+        if (_pendingToggleMod is null) return;
+
+        ListsAvailableList.SelectedItem = null;
+        ListsMoveRightBtn.IsEnabled = false;
+        ListsMoveLeftBtn.IsEnabled = true;
+        if (ListsMoveRightBtn.Content is System.Windows.Shapes.Path rp)
+            rp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+        if (ListsMoveLeftBtn.Content is System.Windows.Shapes.Path lp)
+            lp.Stroke = new SolidColorBrush(Color.FromRgb(0x50, 0x90, 0xd0));
     }
 
     private void ListsListBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -1485,14 +1689,18 @@ public partial class MainWindow : Window
             {
                 _dragMod = mod;
                 _dragFromActive = listBox == ListsActiveList;
-
-                DragDrop.DoDragDrop(listBox, _dragMod, DragDropEffects.Move);
+                _dragStartPoint = e.GetPosition(null);
+                _isDragPending = true;
+                Debug.WriteLine($"[Lists_MouseDown] {mod.Name}, fromActive={_dragFromActive}, pending=true");
             }
+            else
+                Debug.WriteLine("[Lists_MouseDown] no ModEntry found");
         }
     }
 
     private void ListsAvailableList_Drop(object sender, DragEventArgs e)
     {
+        Debug.WriteLine($"[Drop -> ListsAvail] dragMod={_dragMod?.Name}, dragFromActive={_dragFromActive}");
         if (_dragMod is null) return;
         if (_dragFromActive)
             ListsToggleModActive(_dragMod, false);
@@ -1502,6 +1710,7 @@ public partial class MainWindow : Window
 
     private void ListsActiveList_Drop(object sender, DragEventArgs e)
     {
+        Debug.WriteLine($"[Drop -> ListsActive] dragMod={_dragMod?.Name}, dragFromActive={_dragFromActive}");
         if (_dragMod is null) return;
         if (!_dragFromActive)
             ListsToggleModActive(_dragMod, true);
@@ -1511,6 +1720,7 @@ public partial class MainWindow : Window
 
     private void RefreshListsInfo()
     {
+        Debug.WriteLine("[RefreshListsInfo] entering");
         var lists = _allMods.Where(m => m.Type == ModType.List).ToList();
         var activeNames = _settings.ActiveListMods ?? [];
 
@@ -1523,10 +1733,11 @@ public partial class MainWindow : Window
             .Where(m => !m.IsActive)
             .ToList();
 
-        ListsAvailableList.ItemsSource = null;
         ListsAvailableList.ItemsSource = availableMods;
-        ListsActiveList.ItemsSource = null;
         ListsActiveList.ItemsSource = activeMods;
+        Debug.WriteLine($"[RefreshListsInfo] setting SelectedItem=null on both lists. Avail={availableMods.Count}, Active={activeMods.Count}");
+        ListsAvailableList.SelectedItem = null;
+        ListsActiveList.SelectedItem = null;
 
         ListsAvailableCount.Text = availableMods.Count.ToString();
         ListsActiveCount.Text = activeMods.Count.ToString();
@@ -1534,6 +1745,7 @@ public partial class MainWindow : Window
         ListsStatusText.Text = $"Листов: {lists.Count} | Активных: {activeMods.Count}";
         ListsApplyBtn.IsEnabled = activeMods.Count > 0;
         ListsApplyBtn.Style = (Style)FindResource(activeMods.Count > 0 ? "AccentBtn" : "OutlineBtn");
+        ResetListsArrows();
     }
 
     private async void ListsCreateBtn_Click(object sender, RoutedEventArgs e)
@@ -1590,27 +1802,6 @@ public partial class MainWindow : Window
                 }
             }
         }
-    }
-
-    private void ListsDeleteBtn_Click(object sender, RoutedEventArgs e)
-    {
-        var selected = ListsAvailableList.SelectedItem as ModEntry;
-        if (selected is null)
-            selected = ListsActiveList.SelectedItem as ModEntry;
-        if (selected is null) return;
-
-        try
-        {
-            if (Directory.Exists(selected.FolderPath))
-                Directory.Delete(selected.FolderPath, true);
-        }
-        catch { }
-
-        _allMods.Remove(selected);
-        SaveModsSettings();
-        RefreshListsInfo();
-        ListsStatusText.Text = $"✅ Мод '{selected.Name}' удалён";
-        ListsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
     }
 
     private void ListsApplyBtn_Click(object sender, RoutedEventArgs e)
