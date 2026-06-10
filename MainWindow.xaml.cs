@@ -3455,6 +3455,7 @@ public partial class MainWindow : Window
             FaqNavBtn.IsEnabled = true;
             DiagNavBtn.IsEnabled = true;
             SettingsBtn.IsEnabled = true;
+            ModsNavBtn.IsEnabled = true;
 
             EditorMenuBtn.Visibility = Visibility.Visible;
             return;
@@ -6124,6 +6125,7 @@ public partial class MainWindow : Window
         FaqNavBtn.IsEnabled = false;
         DiagNavBtn.IsEnabled = false;
         SettingsBtn.IsEnabled = false;
+        ModsNavBtn.IsEnabled = false;
 
         LoadUserLevels();
         ShowGameView(GameTrackSelectView);
@@ -6133,6 +6135,7 @@ public partial class MainWindow : Window
         FaqNavBtn.IsEnabled = true;
         DiagNavBtn.IsEnabled = true;
         SettingsBtn.IsEnabled = true;
+        ModsNavBtn.IsEnabled = true;
     }
 
     private void PlayMenuBtn_MouseEnter(object s, System.Windows.Input.MouseEventArgs e)
@@ -6614,6 +6617,7 @@ public partial class MainWindow : Window
         FaqNavBtn.IsEnabled = false;
         DiagNavBtn.IsEnabled = false;
         SettingsBtn.IsEnabled = false;
+        ModsNavBtn.IsEnabled = false;
 
         var blurEffect = new System.Windows.Media.Effects.BlurEffect { Radius = 6 };
         MainPage.Effect = blurEffect;
@@ -6656,6 +6660,7 @@ public partial class MainWindow : Window
         FaqNavBtn.IsEnabled = true;
         DiagNavBtn.IsEnabled = true;
         SettingsBtn.IsEnabled = true;
+        ModsNavBtn.IsEnabled = true;
 
         MainPage.Effect = null;
         MainPage.Opacity = 1.0;
@@ -7023,6 +7028,7 @@ public partial class MainWindow : Window
         FaqNavBtn.IsEnabled = false;
         DiagNavBtn.IsEnabled = false;
         SettingsBtn.IsEnabled = false;
+        ModsNavBtn.IsEnabled = false;
 
         EditorMenuBtn.Visibility = Visibility.Collapsed;
 
@@ -7057,6 +7063,7 @@ public partial class MainWindow : Window
             FaqNavBtn.IsEnabled = false;
             DiagNavBtn.IsEnabled = false;
             SettingsBtn.IsEnabled = false;
+            ModsNavBtn.IsEnabled = false;
         }
 
         _currentFallSec = GetFallSecondsForBpm(bpm);
@@ -8408,6 +8415,7 @@ public partial class MainWindow : Window
             FaqNavBtn.IsEnabled = true;
             DiagNavBtn.IsEnabled = true;
             SettingsBtn.IsEnabled = true;
+            ModsNavBtn.IsEnabled = true;
         }
 
         GameHeaderTitle.Text = "Мини-игра";
