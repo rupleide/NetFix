@@ -124,6 +124,11 @@ public class AppSettings
     public bool StartMinimizedToTray { get; set; } = false;
     public List<string> ActiveStrategyMods { get; set; } = [];
     public List<string> ActiveListMods { get; set; } = [];
+    public bool RememberWindowSize { get; set; } = false;
+    public double WindowWidth { get; set; } = 880;
+    public double WindowHeight { get; set; } = 680;
+    public double WindowLeft { get; set; } = double.NaN;
+    public double WindowTop { get; set; } = double.NaN;
 }
 
 /// <summary>
