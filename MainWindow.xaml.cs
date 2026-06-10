@@ -10907,7 +10907,8 @@ public partial class MainWindow : Window
                             try
                             {
                                 var content = new ByteArrayContent(data, 0, size);
-                                await _speedHttp.PostAsync("https://httpbin.org/post", content, ulCancel.Token);
+                                var req = new HttpRequestMessage(HttpMethod.Post, "https://httpbin.org/post") { Content = content };
+                                using var resp = await _speedHttp.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ulCancel.Token);
                                 Interlocked.Add(ref totalUlBytes, size);
                             }
                             catch (OperationCanceledException) { break; }
