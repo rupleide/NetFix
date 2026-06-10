@@ -228,6 +228,7 @@ public partial class MainWindow : Window
     private bool _strategyDirty;
     private bool _listsDirty;
     private DispatcherTimer? _savePosTimer;
+    private bool _forceClose;
     private ModEntry? _dragMod;
     private bool _dragFromActive;
     private Point _dragStartPoint;
@@ -3276,10 +3277,31 @@ public partial class MainWindow : Window
 
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
     {
-        _discord.Dispose();
-        _trayIcon.Visible = false;
-        _trayIcon.Dispose();
-        base.OnClosing(e);
+        if (_forceClose)
+        {
+            _discord.Dispose();
+            _trayIcon.Visible = false;
+            _trayIcon.Dispose();
+            base.OnClosing(e);
+            return;
+        }
+
+        e.Cancel = true;
+        _auroraTimer?.Stop();
+        _monitorTimer?.Stop();
+        _netTimer?.Stop();
+        _pingTimer?.Stop();
+        RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
+        Hide();
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true, compacting: true);
+        GC.WaitForPendingFinalizers();
+        SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle, -1, -1);
+    }
+
+    public void ForceExit()
+    {
+        _forceClose = true;
+        System.Windows.Application.Current.Shutdown();
     }
 
     private void FadeIn()
