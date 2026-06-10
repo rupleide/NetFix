@@ -10834,10 +10834,15 @@ public partial class MainWindow : Window
                         HttpCompletionOption.ResponseHeadersRead,
                         dlCancel.Token);
                     using var stream = await resp.Content.ReadAsStreamAsync(dlCancel.Token);
-                    var buf = new byte[131072];
-                    int read;
-                    while ((read = await stream.ReadAsync(buf, dlCancel.Token)) > 0)
-                        Interlocked.Add(ref totalDlBytes, read);
+                    var pool = System.Buffers.ArrayPool<byte>.Shared;
+                    var buf = pool.Rent(131072);
+                    try
+                    {
+                        int read;
+                        while ((read = await stream.ReadAsync(buf, 0, 131072, dlCancel.Token)) > 0)
+                            Interlocked.Add(ref totalDlBytes, read);
+                    }
+                    finally { pool.Return(buf); }
                 }
                 catch (OperationCanceledException) { }
                 catch { }
