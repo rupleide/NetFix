@@ -2,130 +2,268 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Поддержать разработку"
-        Height="387" Width="420"
+        Height="420" Width="420"
         WindowStartupLocation="CenterOwner"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
         ResizeMode="NoResize">
-    <Border Background="#1e1e1e" CornerRadius="12" BorderBrush="#2e2e2e" BorderThickness="1">
-        <Grid Margin="28,28,28,16" RenderTransformOrigin="0.508,0.685">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>   
-                <RowDefinition Height="*"/>      
-                <RowDefinition Height="Auto"/>   
-                <RowDefinition Height="Auto"/>   
-                <RowDefinition Height="Auto"/>   
-            </Grid.RowDefinitions>
-            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
-                <Path Width="18" Height="18" Stretch="Uniform" Margin="0,0,10,0"
-                      VerticalAlignment="Center" Fill="#e05c5c"
-                      Data="M12,21 L10.55,19.7 C5.4,15.0 2,12.0 2,8.5 C2,5.4 4.42,3 7.5,3 C9.24,3 10.91,3.81 12,5.09 C13.09,3.81 14.76,3 16.5,3 C19.58,3 22,5.4 22,8.5 C22,12.0 18.6,15.0 13.45,19.7 Z"/>
-                <TextBlock Text="Поддержать разработку" FontSize="16" FontWeight="SemiBold"
-                           Foreground="#f0f0f0" VerticalAlignment="Center"/>
-            </StackPanel>
-            <TextBlock Grid.Row="1" TextWrapping="Wrap" FontSize="12" Foreground="#888888"
-                       LineHeight="20" Margin="0,0,0,24">
-                <Run Foreground="#aaaaaa">Все пожертвования идут напрямую российскому разработчику из города Пермь.</Run>
-                <Run>Авторизация и оплата происходят на официальном и безопасном сайте Т-Банка. Даже если у вас банк другого плательщика, вы всё равно сможете совершить перевод через СБП.</Run>
-            </TextBlock>
-            <Button Grid.Row="2" x:Name="TonBtn" Height="52" Margin="0,16,0,10"
-                    Background="#0088CC" BorderThickness="0" Cursor="Hand" Click="TonBtn_Click">
-                <Button.Style>
-                    <Style TargetType="Button">
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" CornerRadius="10">
-                                        <Border.Effect>
-                                            <DropShadowEffect Color="#0088CC" BlurRadius="12" ShadowDepth="0" Opacity="0.4"/>
-                                        </Border.Effect>
-                                        <StackPanel Orientation="Horizontal"
-                                                    HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <Path Width="20" Height="20" Stretch="Uniform" Fill="White" Margin="0,0,10,0"
-                                                  Data="m20.661 7.22l-7.846 12.494a1.06 1.06 0 0 1-1.794-.006L3.328 7.214A2.2 2.2 0 0 1 3 6.05a2.29 2.29 0 0 1 2.324-2.255h13.362C19.963 3.794 21 4.8 21 6.044c0 .413-.116.82-.339 1.175M5.218 6.8l5.723 8.826V5.912H5.816c-.592 0-.857.392-.598.89m7.84 8.826L18.783 6.8c.265-.497-.006-.89-.599-.89H13.06z"/>
-                                            <TextBlock Text="Донат через TON" FontSize="14" Foreground="White" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#0077BB"/>
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </Button.Style>
-            </Button>
-            <Button Grid.Row="3" x:Name="SbpBtn" Height="52" Margin="0,0,0,16"
-                    Background="#FF6B00" BorderThickness="0" Cursor="Hand" Click="SbpBtn_Click">
-                <Button.Style>
-                    <Style TargetType="Button">
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" CornerRadius="10">
-                                        <Border.Effect>
-                                            <DropShadowEffect Color="#FF6B00" BlurRadius="12" ShadowDepth="0" Opacity="0.4"/>
-                                        </Border.Effect>
-                                        <StackPanel Orientation="Horizontal"
-                                                    HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <Path Width="20" Height="20" Stretch="Uniform" Fill="White" Margin="0,0,10,0">
-                                                <Path.Data>
-                                                    <GeometryGroup>
-                                                        <PathGeometry Figures="M100.3,199.4l-52,30L0,313.1l196.9-113.7L100.3,199.4z"/>
-                                                        <PathGeometry Figures="M248.9,113.7l-52,30l-48.3,83.7l196.9-113.7L248.9,113.7z"/>
-                                                        <PathGeometry Figures="M196.9,83.7 148.6,0 148.6,171.5 148.6,227.4 148.6,398.9 196.9,315.2"/>
-                                                        <PathGeometry Figures="M148.6,0 196.9,83.7 248.9,113.7 345.5,113.7"/>
-                                                        <PathGeometry Figures="M148.6,171.5 148.6,398.9 196.9,315.2 196.9,255.2"/>
-                                                        <PathGeometry Figures="M248.9,285.2l-52,30l-48.3,83.7l196.9-113.7L248.9,285.2z"/>
-                                                        <PathGeometry Figures="M0,85.8 0,313.1 48.3,229.5 48.3,169.4"/>
-                                                        <PathGeometry Figures="M148.6,171.5 148.7,171.6 0,85.8 48.3,169.4 248.9,285.2 345.5,285.2"/>
-                                                    </GeometryGroup>
-                                                </Path.Data>
-                                            </Path>
-                                            <TextBlock Text="Донат через СБП" FontSize="14" Foreground="White" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#E05E00"/>
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </Button.Style>
-            </Button>
-            <Button Grid.Row="4" x:Name="CloseBtn" Content="Закрыть"
-                    Width="100" Height="34" HorizontalAlignment="Right"
-                    Background="Transparent" Foreground="#666666"
-                    BorderBrush="#333333" BorderThickness="1"
-                    Cursor="Hand" Click="CloseBtn_Click">
-                <Button.Style>
-                    <Style TargetType="Button">
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}"
-                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                            CornerRadius="8">
-                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#2a2a2a"/>
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </Button.Style>
-            </Button>
+    <Border Background="#1e1e1e" CornerRadius="14" BorderBrush="#2e2e2e" BorderThickness="1">
+        <Grid>
+            <Grid.Clip>
+                <RectangleGeometry RadiusX="14" RadiusY="14" Rect="0,0,420,420"/>
+            </Grid.Clip>
+            <Grid IsHitTestVisible="False" Panel.ZIndex="-1">
+                <Rectangle x:Name="Aurora1" Opacity="0.5">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                             Center="0.5,1.0" GradientOrigin="0.5,1.0"
+                                             RadiusX="0.55" RadiusY="0.45">
+                            <GradientStop Color="#506366f1" Offset="0.000"/>
+                            <GradientStop Color="#4D6366f1" Offset="0.053"/>
+                            <GradientStop Color="#476366f1" Offset="0.105"/>
+                            <GradientStop Color="#416366f1" Offset="0.158"/>
+                            <GradientStop Color="#3A6366f1" Offset="0.211"/>
+                            <GradientStop Color="#346366f1" Offset="0.263"/>
+                            <GradientStop Color="#2D6366f1" Offset="0.316"/>
+                            <GradientStop Color="#276366f1" Offset="0.368"/>
+                            <GradientStop Color="#216366f1" Offset="0.421"/>
+                            <GradientStop Color="#1B6366f1" Offset="0.474"/>
+                            <GradientStop Color="#166366f1" Offset="0.526"/>
+                            <GradientStop Color="#116366f1" Offset="0.579"/>
+                            <GradientStop Color="#0D6366f1" Offset="0.632"/>
+                            <GradientStop Color="#096366f1" Offset="0.684"/>
+                            <GradientStop Color="#066366f1" Offset="0.737"/>
+                            <GradientStop Color="#046366f1" Offset="0.789"/>
+                            <GradientStop Color="#026366f1" Offset="0.842"/>
+                            <GradientStop Color="#016366f1" Offset="0.895"/>
+                            <GradientStop Color="#006366f1" Offset="0.947"/>
+                            <GradientStop Color="#006366f1" Offset="1.000"/>
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle x:Name="Aurora2" Opacity="0.4">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                             Center="0.1,0.1" GradientOrigin="0.1,0.1"
+                                             RadiusX="0.35" RadiusY="0.30">
+                            <GradientStop Color="#308B5CF6" Offset="0.000"/>
+                            <GradientStop Color="#2E8B5CF6" Offset="0.053"/>
+                            <GradientStop Color="#298B5CF6" Offset="0.105"/>
+                            <GradientStop Color="#248B5CF6" Offset="0.158"/>
+                            <GradientStop Color="#1F8B5CF6" Offset="0.211"/>
+                            <GradientStop Color="#1A8B5CF6" Offset="0.263"/>
+                            <GradientStop Color="#168B5CF6" Offset="0.316"/>
+                            <GradientStop Color="#128B5CF6" Offset="0.368"/>
+                            <GradientStop Color="#0E8B5CF6" Offset="0.421"/>
+                            <GradientStop Color="#0B8B5CF6" Offset="0.474"/>
+                            <GradientStop Color="#088B5CF6" Offset="0.526"/>
+                            <GradientStop Color="#068B5CF6" Offset="0.579"/>
+                            <GradientStop Color="#048B5CF6" Offset="0.632"/>
+                            <GradientStop Color="#038B5CF6" Offset="0.684"/>
+                            <GradientStop Color="#028B5CF6" Offset="0.737"/>
+                            <GradientStop Color="#018B5CF6" Offset="0.789"/>
+                            <GradientStop Color="#018B5CF6" Offset="0.842"/>
+                            <GradientStop Color="#008B5CF6" Offset="0.895"/>
+                            <GradientStop Color="#008B5CF6" Offset="0.947"/>
+                            <GradientStop Color="#008B5CF6" Offset="1.000"/>
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle x:Name="Aurora3" Opacity="0.3">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                             Center="0.9,0.8" GradientOrigin="0.9,0.8"
+                                             RadiusX="0.30" RadiusY="0.25">
+                            <GradientStop Color="#284F46E5" Offset="0.000"/>
+                            <GradientStop Color="#264F46E5" Offset="0.053"/>
+                            <GradientStop Color="#234F46E5" Offset="0.105"/>
+                            <GradientStop Color="#1F4F46E5" Offset="0.158"/>
+                            <GradientStop Color="#1C4F46E5" Offset="0.211"/>
+                            <GradientStop Color="#184F46E5" Offset="0.263"/>
+                            <GradientStop Color="#154F46E5" Offset="0.316"/>
+                            <GradientStop Color="#124F46E5" Offset="0.368"/>
+                            <GradientStop Color="#0F4F46E5" Offset="0.421"/>
+                            <GradientStop Color="#0C4F46E5" Offset="0.474"/>
+                            <GradientStop Color="#094F46E5" Offset="0.526"/>
+                            <GradientStop Color="#074F46E5" Offset="0.579"/>
+                            <GradientStop Color="#054F46E5" Offset="0.632"/>
+                            <GradientStop Color="#044F46E5" Offset="0.684"/>
+                            <GradientStop Color="#034F46E5" Offset="0.737"/>
+                            <GradientStop Color="#024F46E5" Offset="0.789"/>
+                            <GradientStop Color="#014F46E5" Offset="0.842"/>
+                            <GradientStop Color="#014F46E5" Offset="0.895"/>
+                            <GradientStop Color="#004F46E5" Offset="0.947"/>
+                            <GradientStop Color="#004F46E5" Offset="1.000"/>
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle IsHitTestVisible="False" Opacity="0.03"
+                           RenderOptions.BitmapScalingMode="NearestNeighbor">
+                    <Rectangle.Fill>
+                        <ImageBrush ImageSource="pack://application:,,,/Assets/noise.png"
+                                    TileMode="Tile" ViewportUnits="Absolute"
+                                    Viewport="0,0,512,512" Stretch="None"/>
+                    </Rectangle.Fill>
+                </Rectangle>
+            </Grid>
+
+            <Grid Margin="28,28,28,20">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
+                    <Path Width="18" Height="18" Stretch="Uniform" Margin="0,0,10,0"
+                          VerticalAlignment="Center" Fill="#e05c5c"
+                          Data="M12,21 L10.55,19.7 C5.4,15.0 2,12.0 2,8.5 C2,5.4 4.42,3 7.5,3 C9.24,3 10.91,3.81 12,5.09 C13.09,3.81 14.76,3 16.5,3 C19.58,3 22,5.4 22,8.5 C22,12.0 18.6,15.0 13.45,19.7 Z"/>
+                    <TextBlock Text="Поддержать разработку" FontSize="16" FontWeight="SemiBold"
+                               Foreground="#f0f0f0" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <TextBlock Grid.Row="1" TextWrapping="Wrap" FontSize="13" Foreground="#f0f0f0"
+                           LineHeight="22" Margin="0,0,0,24">
+                    <Run>Все пожертвования идут напрямую российскому разработчику из города Пермь.</Run>
+                    <Run>Авторизация и оплата происходят на официальном и безопасном сайте Т-Банка. Даже если у вас банк другого плательщика, вы всё равно сможете совершить перевод через СБП.</Run>
+                </TextBlock>
+
+                <Button Grid.Row="2" x:Name="TonBtn" Height="52" Margin="0,8,0,10"
+                        Background="#0088CC" BorderThickness="0" Cursor="Hand" Click="TonBtn_Click">
+                    <Button.Resources>
+                        <Storyboard x:Key="HoverIn">
+                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0.8" Duration="0:0:0.12"/>
+                        </Storyboard>
+                        <Storyboard x:Key="HoverOut">
+                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1.0" Duration="0:0:0.12"/>
+                        </Storyboard>
+                    </Button.Resources>
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                            <Border.Effect>
+                                                <DropShadowEffect Color="#0088CC" BlurRadius="16" ShadowDepth="0" Opacity="0.3"/>
+                                            </Border.Effect>
+                                            <StackPanel Orientation="Horizontal"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Path Width="20" Height="20" Stretch="Uniform" Fill="White" Margin="0,0,10,0"
+                                                      Data="m20.661 7.22l-7.846 12.494a1.06 1.06 0 0 1-1.794-.006L3.328 7.214A2.2 2.2 0 0 1 3 6.05a2.29 2.29 0 0 1 2.324-2.255h13.362C19.963 3.794 21 4.8 21 6.044c0 .413-.116.82-.339 1.175M5.218 6.8l5.723 8.826V5.912H5.816c-.592 0-.857.392-.598.89m7.84 8.826L18.783 6.8c.265-.497-.006-.89-.599-.89H13.06z"/>
+                                                <TextBlock Text="Донат через TON" FontSize="14" Foreground="White" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#0077BB"/>
+                                            </Trigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Trigger.EnterActions>
+                                                    <BeginStoryboard Storyboard="{StaticResource HoverIn}"/>
+                                                </Trigger.EnterActions>
+                                                <Trigger.ExitActions>
+                                                    <BeginStoryboard Storyboard="{StaticResource HoverOut}"/>
+                                                </Trigger.ExitActions>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <Button Grid.Row="3" x:Name="SbpBtn" Height="52" Margin="0,0,0,16"
+                        Background="#FF6B00" BorderThickness="0" Cursor="Hand" Click="SbpBtn_Click">
+                    <Button.Resources>
+                        <Storyboard x:Key="HoverIn">
+                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0.8" Duration="0:0:0.12"/>
+                        </Storyboard>
+                        <Storyboard x:Key="HoverOut">
+                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1.0" Duration="0:0:0.12"/>
+                        </Storyboard>
+                    </Button.Resources>
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                            <Border.Effect>
+                                                <DropShadowEffect Color="#FF6B00" BlurRadius="16" ShadowDepth="0" Opacity="0.3"/>
+                                            </Border.Effect>
+                                            <StackPanel Orientation="Horizontal"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Path Width="20" Height="20" Stretch="Uniform" Fill="White" Margin="0,0,10,0">
+                                                    <Path.Data>
+                                                        <GeometryGroup>
+                                                            <PathGeometry Figures="M0 26.12l14.532 25.975v15.844L.017 93.863 0 26.12z"/>
+                                                            <PathGeometry Figures="M55.797 42.643l13.617-8.346 27.868-.026-41.485 25.414V42.643z"/>
+                                                            <PathGeometry Figures="M55.72 25.967l.077 34.39-14.566-8.95V0l14.49 25.967z"/>
+                                                            <PathGeometry Figures="M97.282 34.271l-27.869.026-13.693-8.33L41.231 0l56.05 34.271z"/>
+                                                            <PathGeometry Figures="M55.797 94.007V77.322l-14.566-8.78.008 51.458 14.558-25.993z"/>
+                                                            <PathGeometry Figures="M69.38 85.737L14.531 52.095 0 26.12l97.223 59.583-27.844.034z"/>
+                                                            <PathGeometry Figures="M41.24 120l14.556-25.993 13.583-8.27 27.843-.034L41.24 120z"/>
+                                                            <PathGeometry Figures="M.017 93.863l41.333-25.32-13.896-8.526-12.922 7.922L.017 93.863z"/>
+                                                        </GeometryGroup>
+                                                    </Path.Data>
+                                                </Path>
+                                                <TextBlock Text="Донат через СБП" FontSize="14" Foreground="White" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#E05E00"/>
+                                            </Trigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Trigger.EnterActions>
+                                                    <BeginStoryboard Storyboard="{StaticResource HoverIn}"/>
+                                                </Trigger.EnterActions>
+                                                <Trigger.ExitActions>
+                                                    <BeginStoryboard Storyboard="{StaticResource HoverOut}"/>
+                                                </Trigger.ExitActions>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <Button Grid.Row="4" x:Name="CloseBtn" Content="Закрыть"
+                        Width="100" Height="34" HorizontalAlignment="Right"
+                        Background="Transparent" Foreground="#888888"
+                        BorderBrush="#333333" BorderThickness="1"
+                        Cursor="Hand" Click="CloseBtn_Click">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                CornerRadius="8">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#252525"/>
+                                                <Setter Property="Foreground" Value="#cccccc"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </Grid>
         </Grid>
     </Border>
 </Window>

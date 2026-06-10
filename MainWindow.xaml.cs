@@ -4270,26 +4270,32 @@ public partial class MainWindow : Window
                 ZapretDot2.Fill = st.ZapretRunning ? greenBrush : grayBrush;
                 ZapretStatusLbl.Text = st.ZapretRunning ? "Запущен" : "Не запущен";
                 ZapretStatusLbl.Foreground = st.ZapretRunning ? greenBrush : grayBrush;
-                ZapretToggleBtn.Content = st.ZapretRunning
-                    ? "■  Закрыть"
-                    : CreateButtonContentWithIcon("PlayIcon", "Запустить", Brushes.White);
-                ZapretToggleBtn.Background = st.ZapretRunning
-                    ? new SolidColorBrush(Color.FromRgb(0x3d, 0x1a, 0x1a))
-                    : new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6));
-                ZapretToggleBtn.Foreground = st.ZapretRunning ? redBrush : Brushes.White;
+                if (st.ZapretRunning)
+                {
+                    ZapretToggleBtn.Style = (Style)FindResource("RedAccentBtn");
+                    ZapretToggleBtn.Content = "■  Закрыть";
+                }
+                else
+                {
+                    ZapretToggleBtn.Style = (Style)FindResource("AccentBtn");
+                    ZapretToggleBtn.Content = CreateButtonContentWithIcon("PlayIcon", "Запустить", Brushes.White);
+                }
 
                 UpdateActiveConfigDisplay(st.ZapretRunning);
 
                 TgWsDot2.Fill = st.TgWsProxyRunning ? greenBrush : grayBrush;
                 TgWsStatusLbl.Text = st.TgWsProxyRunning ? "Запущен" : "Не запущен";
                 TgWsStatusLbl.Foreground = st.TgWsProxyRunning ? greenBrush : grayBrush;
-                TgWsToggleBtn.Content = st.TgWsProxyRunning
-                    ? "■  Закрыть"
-                    : CreateButtonContentWithIcon("PlayIcon", "Запустить", Brushes.White);
-                TgWsToggleBtn.Background = st.TgWsProxyRunning
-                    ? new SolidColorBrush(Color.FromRgb(0x3d, 0x1a, 0x1a))
-                    : new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6));
-                TgWsToggleBtn.Foreground = st.TgWsProxyRunning ? redBrush : Brushes.White;
+                if (st.TgWsProxyRunning)
+                {
+                    TgWsToggleBtn.Style = (Style)FindResource("RedAccentBtn");
+                    TgWsToggleBtn.Content = "■  Закрыть";
+                }
+                else
+                {
+                    TgWsToggleBtn.Style = (Style)FindResource("AccentBtn");
+                    TgWsToggleBtn.Content = CreateButtonContentWithIcon("PlayIcon", "Запустить", Brushes.White);
+                }
 
                 if (netOk)
                 {
