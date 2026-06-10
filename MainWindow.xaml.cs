@@ -225,6 +225,8 @@ public partial class MainWindow : Window
     private List<ModEntry> _allMods = [];
     private bool _isStrategyTab = true;
     private bool _modsLoaded;
+    private bool _strategyDirty;
+    private bool _listsDirty;
     private ModEntry? _dragMod;
     private bool _dragFromActive;
     private Point _dragStartPoint;
@@ -848,12 +850,12 @@ public partial class MainWindow : Window
 
         if (!_modsLoaded)
         {
-            _modsLoaded = true;
             ModScanner.EnsureDirectories();
             RefreshMods();
-        UpdateModsStatus();
-        ResetArrows();
-    }
+            _modsLoaded = true;
+            UpdateModsStatus();
+            ResetArrows();
+        }
     }
 
     private void ShowModsSubScreen(Grid screen, string title)
@@ -963,8 +965,8 @@ public partial class MainWindow : Window
                 ? Color.FromRgb(0x22, 0xc5, 0x5e)
                 : Color.FromRgb(0x88, 0x88, 0x88));
 
-            ModsApplyBtn.IsEnabled = activeMods.Count > 0;
-            ModsApplyBtn.Style = (Style)FindResource(activeMods.Count > 0 ? "AccentBtn" : "OutlineBtn");
+            ModsApplyBtn.IsEnabled = _strategyDirty;
+            ModsApplyBtn.Style = (Style)FindResource(_strategyDirty ? "AccentBtn" : "OutlineBtn");
         }
         else
         {
@@ -980,8 +982,8 @@ public partial class MainWindow : Window
                 : Color.FromRgb(0x88, 0x88, 0x88));
 
             ListsStatusText.Text = $"Листов: {availableMods.Count + activeMods.Count} | Активных: {activeMods.Count}";
-            ListsApplyBtn.IsEnabled = activeMods.Count > 0;
-            ListsApplyBtn.Style = (Style)FindResource(activeMods.Count > 0 ? "AccentBtn" : "OutlineBtn");
+            ListsApplyBtn.IsEnabled = _listsDirty;
+            ListsApplyBtn.Style = (Style)FindResource(_listsDirty ? "AccentBtn" : "OutlineBtn");
             ResetListsArrows();
         }
 
@@ -1093,6 +1095,8 @@ public partial class MainWindow : Window
         }
 
         SaveModsSettings();
+        if (mod.Type == ModType.List) _listsDirty = true;
+        else _strategyDirty = true;
 
         if (mod.Type == ModType.Strategy && !string.IsNullOrEmpty(_settings.ZapretPath))
         {
@@ -1249,22 +1253,13 @@ public partial class MainWindow : Window
 
         if (dialog.ShowDialog() == true && dialog.CreatedEntry is not null)
         {
-            var created = dialog.CreatedEntry;
-            _allMods.Add(created);
+            _allMods.Add(dialog.CreatedEntry);
             SaveModsSettings();
-
-            // для листа — сразу активируем и применяем домены в целевой файл
-            if (created.Type == ModType.List)
+            if (dialog.CreatedEntry.IsActive)
             {
-                created.IsActive = true;
-                var dirName = ModScanner.GetModDirName(created);
-                if (!_settings.ActiveListMods.Contains(dirName))
-                    _settings.ActiveListMods.Add(dirName);
-                SaveModsSettings();
-                var allLists = _allMods.Where(m => m.Type == ModType.List).ToList();
-                ModActivator.ApplyListMods(allLists);
+                if (_isStrategyTab) _strategyDirty = true;
+                else _listsDirty = true;
             }
-
             RefreshModsLists();
             if (ModsMyModsScreen.Visibility == Visibility.Visible)
                 RefreshMyMods();
@@ -1280,6 +1275,7 @@ public partial class MainWindow : Window
         {
             _allMods.Add(dialog.CreatedEntry);
             SaveModsSettings();
+            if (dialog.CreatedEntry.IsActive) _strategyDirty = true;
             RefreshModsLists();
             RefreshMyMods();
         }
@@ -1319,6 +1315,11 @@ public partial class MainWindow : Window
             {
                 _allMods.Add(entry);
                 SaveModsSettings();
+                if (entry.IsActive)
+                {
+                    if (entry.Type == ModType.List) _listsDirty = true;
+                    else _strategyDirty = true;
+                }
                 RefreshModsLists();
                 if (ModsMyModsScreen.Visibility == Visibility.Visible)
                     RefreshMyMods();
@@ -1359,7 +1360,9 @@ public partial class MainWindow : Window
                 ShowModsSuccess("Порядок стратегий сохранён");
             }
 
-            UpdateModsStatus();
+            if (_isStrategyTab) _strategyDirty = false;
+            else _listsDirty = false;
+            RefreshModsLists();
         }, confirmText: "Применить", confirmIsDestructive: false);
     }
 
@@ -1372,6 +1375,7 @@ public partial class MainWindow : Window
 
             var allLists = _allMods.Where(m => m.Type == ModType.List).ToList();
             ModActivator.ApplyListMods(allLists);
+            _listsDirty = false;
         }, confirmText: "Применить", confirmIsDestructive: false);
     }
 
@@ -1510,6 +1514,27 @@ public partial class MainWindow : Window
             confirmed =>
             {
                 if (!confirmed) return;
+
+                // для листов — читаем домены ДО удаления папки
+                var removedDomains = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                string? targetPath = null;
+                if (mod.Type == ModType.List)
+                {
+                    var listFile = ModScanner.FindListFile(mod);
+                    if (listFile is not null && File.Exists(listFile))
+                    {
+                        foreach (var line in File.ReadAllLines(listFile))
+                        {
+                            var trimmed = line.Trim();
+                            if (trimmed.Length > 0 && !trimmed.StartsWith('#'))
+                                removedDomains.Add(trimmed);
+                        }
+                    }
+                    var name = mod.TargetFile;
+                    if (string.IsNullOrEmpty(name)) name = "list-general.txt";
+                    targetPath = Path.Combine(@"C:\Zapret", "lists", name);
+                }
+
                 try
                 {
                     if (Directory.Exists(mod.FolderPath))
@@ -1519,6 +1544,30 @@ public partial class MainWindow : Window
 
                 _allMods.Remove(mod);
                 SaveModsSettings();
+                if (mod.IsActive)
+                {
+                    if (mod.Type == ModType.List) _listsDirty = true;
+                    else _strategyDirty = true;
+                }
+
+                // удаляем домены удалённого мода из целевого файла
+                if (removedDomains.Count > 0 && targetPath is not null && File.Exists(targetPath))
+                {
+                    var lines = File.ReadAllLines(targetPath);
+                    var result = new List<string>();
+                    foreach (var line in lines)
+                    {
+                        var trimmed = line.Trim();
+                        if (trimmed.Length == 0 || trimmed.StartsWith('#') || !removedDomains.Contains(trimmed))
+                            result.Add(trimmed);
+                    }
+                    File.WriteAllLines(targetPath, result);
+                }
+
+                // применяем оставшиеся активные листы (перезапишут свои домены если их удалили)
+                var allLists = _allMods.Where(m => m.Type == ModType.List).ToList();
+                ModActivator.ApplyListMods(allLists);
+
                 RefreshModsLists();
                 RefreshMyMods();
                 ShowModsSuccess($"Мод '{mod.Name}' удалён");
@@ -2008,12 +2057,13 @@ public partial class MainWindow : Window
                 var activeLists = _settings.ActiveListMods ?? [];
                 var (entry, importError) = await ModPackager.ImportAsync(openDialog.FileName, activeStrategy, activeLists);
 
-                if (entry is not null)
-                {
-                    _allMods.Add(entry);
-                    SaveModsSettings();
-                    RefreshModsLists();
-                    ListsStatusText.Text = $"✅ Мод '{meta.Name}' импортирован";
+                    if (entry is not null)
+                    {
+                        _allMods.Add(entry);
+                        SaveModsSettings();
+                        if (entry.IsActive) _listsDirty = true;
+                        RefreshModsLists();
+                        ListsStatusText.Text = $"✅ Мод '{meta.Name}' импортирован";
                     ListsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
                 }
                 else
@@ -2045,6 +2095,8 @@ public partial class MainWindow : Window
                 ListsStatusText.Text = "✅ Списки доменов применены";
                 ListsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
             }
+            _listsDirty = false;
+            RefreshModsLists();
         }, confirmText: "Применить", confirmIsDestructive: false);
     }
 

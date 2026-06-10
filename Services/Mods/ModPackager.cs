@@ -133,8 +133,6 @@ public static class ModPackager
             return (null, $"Ошибка распаковки: {ex.Message}");
         }
 
-        var activeNames = modType == ModType.Strategy ? activeStrategyMods : activeListMods;
-
         var entry_ = new ModEntry(
             Name: meta.Name,
             Author: meta.Author,
@@ -147,7 +145,7 @@ public static class ModPackager
             TargetFile: meta.TargetFile
         )
         {
-            IsActive = activeNames.Contains(dirName),
+            IsActive = false,
         };
 
         return (entry_, null);
