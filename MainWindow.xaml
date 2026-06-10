@@ -2712,66 +2712,94 @@
                                      </Button>
                                  </StackPanel>
                               </Grid>
-                          </Border>
-                           <DataTemplate.Triggers>
-                               <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True">
-                                   <DataTrigger.EnterActions>
-                                       <BeginStoryboard>
-                                           <Storyboard>
-                                               <ObjectAnimationUsingKeyFrames Storyboard.TargetName="hoverActions"
-                                                                              Storyboard.TargetProperty="Visibility">
-                                                   <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
-                                               </ObjectAnimationUsingKeyFrames>
-                                               <ObjectAnimationUsingKeyFrames Storyboard.TargetName="editOverlay"
-                                                                              Storyboard.TargetProperty="Visibility">
-                                                   <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
-                                               </ObjectAnimationUsingKeyFrames>
-                                               <DoubleAnimation Storyboard.TargetName="hoverActions"
-                                                                Storyboard.TargetProperty="Opacity"
-                                                                Duration="0:0:0.2" From="0" To="1">
-                                                   <DoubleAnimation.EasingFunction>
-                                                       <QuadraticEase EasingMode="EaseOut"/>
-                                                   </DoubleAnimation.EasingFunction>
-                                               </DoubleAnimation>
-                                               <DoubleAnimation Storyboard.TargetName="editOverlay"
-                                                                Storyboard.TargetProperty="Opacity"
-                                                                Duration="0:0:0.2" From="0" To="1">
-                                                   <DoubleAnimation.EasingFunction>
-                                                       <QuadraticEase EasingMode="EaseOut"/>
-                                                   </DoubleAnimation.EasingFunction>
-                                               </DoubleAnimation>
-                                           </Storyboard>
-                                       </BeginStoryboard>
-                                   </DataTrigger.EnterActions>
-                                   <DataTrigger.ExitActions>
-                                       <BeginStoryboard>
-                                           <Storyboard>
-                                               <DoubleAnimation Storyboard.TargetName="hoverActions"
-                                                                Storyboard.TargetProperty="Opacity"
-                                                                Duration="0:0:0.15" From="1" To="0">
-                                                   <DoubleAnimation.EasingFunction>
-                                                       <QuadraticEase EasingMode="EaseOut"/>
-                                                   </DoubleAnimation.EasingFunction>
-                                               </DoubleAnimation>
-                                               <DoubleAnimation Storyboard.TargetName="editOverlay"
-                                                                Storyboard.TargetProperty="Opacity"
-                                                                Duration="0:0:0.15" From="1" To="0">
-                                                   <DoubleAnimation.EasingFunction>
-                                                       <QuadraticEase EasingMode="EaseOut"/>
-                                                   </DoubleAnimation.EasingFunction>
-                                               </DoubleAnimation>
-                                               <ObjectAnimationUsingKeyFrames Storyboard.TargetName="hoverActions"
-                                                                              Storyboard.TargetProperty="Visibility">
-                                                   <DiscreteObjectKeyFrame KeyTime="0:0:0.15" Value="{x:Static Visibility.Collapsed}"/>
-                                               </ObjectAnimationUsingKeyFrames>
-                                               <ObjectAnimationUsingKeyFrames Storyboard.TargetName="editOverlay"
-                                                                              Storyboard.TargetProperty="Visibility">
-                                                   <DiscreteObjectKeyFrame KeyTime="0:0:0.15" Value="{x:Static Visibility.Collapsed}"/>
-                                               </ObjectAnimationUsingKeyFrames>
-                                           </Storyboard>
-                                       </BeginStoryboard>
-                                   </DataTrigger.ExitActions>
-                                </DataTrigger>
+                           </Border>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True">
+                                    <DataTrigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="hoverActions"
+                                                                               Storyboard.TargetProperty="Visibility">
+                                                    <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="editOverlay"
+                                                                               Storyboard.TargetProperty="Visibility">
+                                                    <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="hoverActions"
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 Duration="0:0:0.2" From="0" To="1">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <QuadraticEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="editOverlay"
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 Duration="0:0:0.2" From="0" To="1">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <QuadraticEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="BottomGlow"
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 Duration="0:0:0.2" To="0.45">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <QuadraticEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="TopGlow"
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 Duration="0:0:0.2" To="0.30">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <QuadraticEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </DataTrigger.EnterActions>
+                                    <DataTrigger.ExitActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="hoverActions"
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 Duration="0:0:0.15" From="1" To="0">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <QuadraticEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="editOverlay"
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 Duration="0:0:0.15" From="1" To="0">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <QuadraticEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="BottomGlow"
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 Duration="0:0:0.15" To="0.25">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <QuadraticEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="TopGlow"
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 Duration="0:0:0.15" To="0.15">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <QuadraticEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="hoverActions"
+                                                                               Storyboard.TargetProperty="Visibility">
+                                                    <DiscreteObjectKeyFrame KeyTime="0:0:0.15" Value="{x:Static Visibility.Collapsed}"/>
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="editOverlay"
+                                                                               Storyboard.TargetProperty="Visibility">
+                                                    <DiscreteObjectKeyFrame KeyTime="0:0:0.15" Value="{x:Static Visibility.Collapsed}"/>
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </DataTrigger.ExitActions>
+                                 </DataTrigger>
                                  <DataTrigger Binding="{Binding IsActive}" Value="True">
                                  <Setter TargetName="StatusStrip" Property="Background" Value="#22c55e"/>
                                 <Setter TargetName="BottomGlow" Property="Fill">
@@ -2861,64 +2889,92 @@
                               <Border Height="120" VerticalAlignment="Top" Margin="6" CornerRadius="12"
                                       Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" 
                                       BorderThickness="1">
-                              <Border.Triggers>
-                                  <EventTrigger RoutedEvent="Mouse.MouseEnter">
-                                      <BeginStoryboard>
-                                          <Storyboard>
-                                              <ObjectAnimationUsingKeyFrames Storyboard.TargetName="hoverActions"
-                                                                             Storyboard.TargetProperty="Visibility">
-                                                  <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
-                                              </ObjectAnimationUsingKeyFrames>
-                                              <ObjectAnimationUsingKeyFrames Storyboard.TargetName="editOverlay"
-                                                                             Storyboard.TargetProperty="Visibility">
-                                                  <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
-                                              </ObjectAnimationUsingKeyFrames>
-                                              <DoubleAnimation Storyboard.TargetName="hoverActions"
-                                                               Storyboard.TargetProperty="Opacity"
-                                                               Duration="0:0:0.2" From="0" To="1">
-                                                  <DoubleAnimation.EasingFunction>
-                                                      <QuadraticEase EasingMode="EaseOut"/>
-                                                  </DoubleAnimation.EasingFunction>
-                                              </DoubleAnimation>
-                                              <DoubleAnimation Storyboard.TargetName="editOverlay"
-                                                               Storyboard.TargetProperty="Opacity"
-                                                               Duration="0:0:0.2" From="0" To="1">
-                                                  <DoubleAnimation.EasingFunction>
-                                                      <QuadraticEase EasingMode="EaseOut"/>
-                                                  </DoubleAnimation.EasingFunction>
-                                              </DoubleAnimation>
-                                          </Storyboard>
-                                      </BeginStoryboard>
-                                  </EventTrigger>
-                                  <EventTrigger RoutedEvent="Mouse.MouseLeave">
-                                      <BeginStoryboard>
-                                          <Storyboard>
-                                              <DoubleAnimation Storyboard.TargetName="hoverActions"
-                                                               Storyboard.TargetProperty="Opacity"
-                                                               Duration="0:0:0.15" From="1" To="0">
-                                                  <DoubleAnimation.EasingFunction>
-                                                      <QuadraticEase EasingMode="EaseOut"/>
-                                                  </DoubleAnimation.EasingFunction>
-                                              </DoubleAnimation>
-                                              <DoubleAnimation Storyboard.TargetName="editOverlay"
-                                                               Storyboard.TargetProperty="Opacity"
-                                                               Duration="0:0:0.15" From="1" To="0">
-                                                  <DoubleAnimation.EasingFunction>
-                                                      <QuadraticEase EasingMode="EaseOut"/>
-                                                  </DoubleAnimation.EasingFunction>
-                                              </DoubleAnimation>
-                                              <ObjectAnimationUsingKeyFrames Storyboard.TargetName="hoverActions"
-                                                                             Storyboard.TargetProperty="Visibility">
-                                                  <DiscreteObjectKeyFrame KeyTime="0:0:0.15" Value="{x:Static Visibility.Collapsed}"/>
-                                              </ObjectAnimationUsingKeyFrames>
-                                              <ObjectAnimationUsingKeyFrames Storyboard.TargetName="editOverlay"
-                                                                             Storyboard.TargetProperty="Visibility">
-                                                  <DiscreteObjectKeyFrame KeyTime="0:0:0.15" Value="{x:Static Visibility.Collapsed}"/>
-                                              </ObjectAnimationUsingKeyFrames>
-                                          </Storyboard>
-                                      </BeginStoryboard>
-                                  </EventTrigger>
-                              </Border.Triggers>
+                               <Border.Triggers>
+                                   <EventTrigger RoutedEvent="Mouse.MouseEnter">
+                                       <BeginStoryboard>
+                                           <Storyboard>
+                                               <ObjectAnimationUsingKeyFrames Storyboard.TargetName="hoverActions"
+                                                                              Storyboard.TargetProperty="Visibility">
+                                                   <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
+                                               </ObjectAnimationUsingKeyFrames>
+                                               <ObjectAnimationUsingKeyFrames Storyboard.TargetName="editOverlay"
+                                                                              Storyboard.TargetProperty="Visibility">
+                                                   <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
+                                               </ObjectAnimationUsingKeyFrames>
+                                               <DoubleAnimation Storyboard.TargetName="hoverActions"
+                                                                Storyboard.TargetProperty="Opacity"
+                                                                Duration="0:0:0.2" From="0" To="1">
+                                                   <DoubleAnimation.EasingFunction>
+                                                       <QuadraticEase EasingMode="EaseOut"/>
+                                                   </DoubleAnimation.EasingFunction>
+                                               </DoubleAnimation>
+                                               <DoubleAnimation Storyboard.TargetName="editOverlay"
+                                                                Storyboard.TargetProperty="Opacity"
+                                                                Duration="0:0:0.2" From="0" To="1">
+                                                   <DoubleAnimation.EasingFunction>
+                                                       <QuadraticEase EasingMode="EaseOut"/>
+                                                   </DoubleAnimation.EasingFunction>
+                                               </DoubleAnimation>
+                                               <DoubleAnimation Storyboard.TargetName="BottomGlow"
+                                                                Storyboard.TargetProperty="Opacity"
+                                                                Duration="0:0:0.2" To="0.45">
+                                                   <DoubleAnimation.EasingFunction>
+                                                       <QuadraticEase EasingMode="EaseOut"/>
+                                                   </DoubleAnimation.EasingFunction>
+                                               </DoubleAnimation>
+                                               <DoubleAnimation Storyboard.TargetName="TopGlow"
+                                                                Storyboard.TargetProperty="Opacity"
+                                                                Duration="0:0:0.2" To="0.30">
+                                                   <DoubleAnimation.EasingFunction>
+                                                       <QuadraticEase EasingMode="EaseOut"/>
+                                                   </DoubleAnimation.EasingFunction>
+                                               </DoubleAnimation>
+                                           </Storyboard>
+                                       </BeginStoryboard>
+                                   </EventTrigger>
+                                   <EventTrigger RoutedEvent="Mouse.MouseLeave">
+                                       <BeginStoryboard>
+                                           <Storyboard>
+                                               <DoubleAnimation Storyboard.TargetName="hoverActions"
+                                                                Storyboard.TargetProperty="Opacity"
+                                                                Duration="0:0:0.15" From="1" To="0">
+                                                   <DoubleAnimation.EasingFunction>
+                                                       <QuadraticEase EasingMode="EaseOut"/>
+                                                   </DoubleAnimation.EasingFunction>
+                                               </DoubleAnimation>
+                                               <DoubleAnimation Storyboard.TargetName="editOverlay"
+                                                                Storyboard.TargetProperty="Opacity"
+                                                                Duration="0:0:0.15" From="1" To="0">
+                                                   <DoubleAnimation.EasingFunction>
+                                                       <QuadraticEase EasingMode="EaseOut"/>
+                                                   </DoubleAnimation.EasingFunction>
+                                               </DoubleAnimation>
+                                               <DoubleAnimation Storyboard.TargetName="BottomGlow"
+                                                                Storyboard.TargetProperty="Opacity"
+                                                                Duration="0:0:0.15" To="0.25">
+                                                   <DoubleAnimation.EasingFunction>
+                                                       <QuadraticEase EasingMode="EaseOut"/>
+                                                   </DoubleAnimation.EasingFunction>
+                                               </DoubleAnimation>
+                                               <DoubleAnimation Storyboard.TargetName="TopGlow"
+                                                                Storyboard.TargetProperty="Opacity"
+                                                                Duration="0:0:0.15" To="0.15">
+                                                   <DoubleAnimation.EasingFunction>
+                                                       <QuadraticEase EasingMode="EaseOut"/>
+                                                   </DoubleAnimation.EasingFunction>
+                                               </DoubleAnimation>
+                                               <ObjectAnimationUsingKeyFrames Storyboard.TargetName="hoverActions"
+                                                                              Storyboard.TargetProperty="Visibility">
+                                                   <DiscreteObjectKeyFrame KeyTime="0:0:0.15" Value="{x:Static Visibility.Collapsed}"/>
+                                               </ObjectAnimationUsingKeyFrames>
+                                               <ObjectAnimationUsingKeyFrames Storyboard.TargetName="editOverlay"
+                                                                              Storyboard.TargetProperty="Visibility">
+                                                   <DiscreteObjectKeyFrame KeyTime="0:0:0.15" Value="{x:Static Visibility.Collapsed}"/>
+                                               </ObjectAnimationUsingKeyFrames>
+                                           </Storyboard>
+                                       </BeginStoryboard>
+                                   </EventTrigger>
+                               </Border.Triggers>
                                <Grid SizeChanged="OnModCardSizeChanged">
                                  <Rectangle x:Name="BottomGlow" HorizontalAlignment="Left" VerticalAlignment="Bottom"
                                             Width="160" Height="130" Opacity="0.25"
@@ -3362,37 +3418,37 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <Button Grid.Row="0" Grid.Column="0" Style="{StaticResource FlatBtn}" Padding="0"
-                                    Click="ModsCardStrategies_Click" Margin="0,0,8,8"
-                                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                                 <Grid>
-                                     <Border Background="{StaticResource CardBgBrush}" CornerRadius="16"
-                                        BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1">
-                                         <Grid>
-<Rectangle HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                                                       Width="120" Height="90" Opacity="0.25"
-                                                       RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
-                                                 <Rectangle.Fill>
-                                                     <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
-                                                                          Center="0.0,1.0" GradientOrigin="0.0,1.0"
-                                                                          RadiusX="0.6" RadiusY="0.5">
-                                                         <GradientStop Color="#3b82f6" Offset="0.0"/>
-                                                         <GradientStop Color="#00000000" Offset="1.0"/>
-                                                     </RadialGradientBrush>
-                                                 </Rectangle.Fill>
-                                             </Rectangle>
-<Rectangle HorizontalAlignment="Right" VerticalAlignment="Top"
-                                                       Width="120" Height="90" Opacity="0.15"
-                                                       RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
-                                                 <Rectangle.Fill>
-                                                     <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
-                                                                          Center="1.0,0.0" GradientOrigin="1.0,0.0"
-                                                                          RadiusX="0.6" RadiusY="0.5">
-                                                         <GradientStop Color="#3b82f6" Offset="0.0"/>
-                                                         <GradientStop Color="#00000000" Offset="1.0"/>
-                                                     </RadialGradientBrush>
-                                                 </Rectangle.Fill>
-                                             </Rectangle>
+                             <Button Grid.Row="0" Grid.Column="0" Style="{StaticResource FlatBtn}" Padding="0"
+                                     Click="ModsCardStrategies_Click" Margin="0,0,8,8"
+                                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                  <Grid>
+                                      <Border x:Name="StrategiesCard" Background="{StaticResource CardBgBrush}" CornerRadius="16"
+                                         BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1">
+                                          <Grid>
+<Rectangle x:Name="StrategiesBottomGlow" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                                        Width="120" Height="90" Opacity="0.25"
+                                                        RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
+                                                  <Rectangle.Fill>
+                                                      <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                                           Center="0.0,1.0" GradientOrigin="0.0,1.0"
+                                                                           RadiusX="0.6" RadiusY="0.5">
+                                                          <GradientStop Color="#3b82f6" Offset="0.0"/>
+                                                          <GradientStop Color="#00000000" Offset="1.0"/>
+                                                      </RadialGradientBrush>
+                                                  </Rectangle.Fill>
+                                              </Rectangle>
+<Rectangle x:Name="StrategiesTopGlow" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                        Width="120" Height="90" Opacity="0.15"
+                                                        RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
+                                                  <Rectangle.Fill>
+                                                      <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                                           Center="1.0,0.0" GradientOrigin="1.0,0.0"
+                                                                           RadiusX="0.6" RadiusY="0.5">
+                                                          <GradientStop Color="#3b82f6" Offset="0.0"/>
+                                                          <GradientStop Color="#00000000" Offset="1.0"/>
+                                                      </RadialGradientBrush>
+                                                  </Rectangle.Fill>
+                                              </Rectangle>
                                              <Rectangle IsHitTestVisible="False" Opacity="0.04"
                                                         RenderOptions.BitmapScalingMode="NearestNeighbor">
                                                  <Rectangle.Fill>
@@ -3428,43 +3484,69 @@
                                                                 Margin="0,3,0,0"/>
                                                  </StackPanel>
                                              </Grid>
-                                         </Grid>
-                                     </Border>
-                                     <Border CornerRadius="16" BorderBrush="#3b82f6" BorderThickness="0,3,0,0"
-                                             Background="Transparent" IsHitTestVisible="False"/>
-                                 </Grid>
-                            </Button>
-                            <Button Grid.Row="0" Grid.Column="1" Style="{StaticResource FlatBtn}" Padding="0"
-                                    Click="ModsCardLists_Click" Margin="8,0,0,8"
-                                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                                 <Grid>
-                                     <Border Background="{StaticResource CardBgBrush}" CornerRadius="16"
-                                        BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1">
-                                         <Grid>
-<Rectangle HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                                                       Width="120" Height="90" Opacity="0.25"
-                                                       RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
-                                                 <Rectangle.Fill>
-                                                     <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
-                                                                          Center="0.0,1.0" GradientOrigin="0.0,1.0"
-                                                                          RadiusX="0.6" RadiusY="0.5">
-                                                         <GradientStop Color="#22c55e" Offset="0.0"/>
-                                                         <GradientStop Color="#00000000" Offset="1.0"/>
-                                                     </RadialGradientBrush>
-                                                 </Rectangle.Fill>
-                                             </Rectangle>
-<Rectangle HorizontalAlignment="Right" VerticalAlignment="Top"
-                                                       Width="120" Height="90" Opacity="0.15"
-                                                       RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
-                                                 <Rectangle.Fill>
-                                                     <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
-                                                                          Center="1.0,0.0" GradientOrigin="1.0,0.0"
-                                                                          RadiusX="0.6" RadiusY="0.5">
-                                                         <GradientStop Color="#22c55e" Offset="0.0"/>
-                                                         <GradientStop Color="#00000000" Offset="1.0"/>
-                                                     </RadialGradientBrush>
-                                                 </Rectangle.Fill>
-                                             </Rectangle>
+                                          </Grid>
+                                      <Border.Triggers>
+                                          <EventTrigger RoutedEvent="Mouse.MouseEnter">
+                                              <BeginStoryboard>
+                                                  <Storyboard>
+                                                      <DoubleAnimation Storyboard.TargetName="StrategiesBottomGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.2" To="0.45">
+                                                          <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                      </DoubleAnimation>
+                                                      <DoubleAnimation Storyboard.TargetName="StrategiesTopGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.2" To="0.30">
+                                                          <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                      </DoubleAnimation>
+                                                  </Storyboard>
+                                              </BeginStoryboard>
+                                          </EventTrigger>
+                                          <EventTrigger RoutedEvent="Mouse.MouseLeave">
+                                              <BeginStoryboard>
+                                                  <Storyboard>
+                                                      <DoubleAnimation Storyboard.TargetName="StrategiesBottomGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.15" To="0.25">
+                                                          <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                      </DoubleAnimation>
+                                                      <DoubleAnimation Storyboard.TargetName="StrategiesTopGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.15" To="0.15">
+                                                          <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                      </DoubleAnimation>
+                                                  </Storyboard>
+                                              </BeginStoryboard>
+                                          </EventTrigger>
+                                      </Border.Triggers>
+                                      </Border>
+                                      <Border CornerRadius="16" BorderBrush="#3b82f6" BorderThickness="0,3,0,0"
+                                              Background="Transparent" IsHitTestVisible="False"/>
+                                  </Grid>
+                             </Button>
+                             <Button Grid.Row="0" Grid.Column="1" Style="{StaticResource FlatBtn}" Padding="0"
+                                     Click="ModsCardLists_Click" Margin="8,0,0,8"
+                                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                  <Grid>
+                                      <Border x:Name="ListsCard" Background="{StaticResource CardBgBrush}" CornerRadius="16"
+                                         BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1">
+                                          <Grid>
+<Rectangle x:Name="ListsBottomGlow" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                                        Width="120" Height="90" Opacity="0.25"
+                                                        RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
+                                                  <Rectangle.Fill>
+                                                      <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                                           Center="0.0,1.0" GradientOrigin="0.0,1.0"
+                                                                           RadiusX="0.6" RadiusY="0.5">
+                                                          <GradientStop Color="#22c55e" Offset="0.0"/>
+                                                          <GradientStop Color="#00000000" Offset="1.0"/>
+                                                      </RadialGradientBrush>
+                                                  </Rectangle.Fill>
+                                              </Rectangle>
+<Rectangle x:Name="ListsTopGlow" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                        Width="120" Height="90" Opacity="0.15"
+                                                        RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
+                                                  <Rectangle.Fill>
+                                                      <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                                           Center="1.0,0.0" GradientOrigin="1.0,0.0"
+                                                                           RadiusX="0.6" RadiusY="0.5">
+                                                          <GradientStop Color="#22c55e" Offset="0.0"/>
+                                                          <GradientStop Color="#00000000" Offset="1.0"/>
+                                                      </RadialGradientBrush>
+                                                  </Rectangle.Fill>
+                                              </Rectangle>
                                              <Rectangle IsHitTestVisible="False" Opacity="0.04"
                                                         RenderOptions.BitmapScalingMode="NearestNeighbor">
                                                  <Rectangle.Fill>
@@ -3500,156 +3582,234 @@
                                                                 Margin="0,3,0,0"/>
                                                  </StackPanel>
                                              </Grid>
-                                         </Grid>
-                                     </Border>
-                                     <Border CornerRadius="16" BorderBrush="#22c55e" BorderThickness="0,3,0,0"
-                                             Background="Transparent" IsHitTestVisible="False"/>
-                                 </Grid>
-                            </Button>
-                            <Button Grid.Row="1" Grid.Column="0" Style="{StaticResource FlatBtn}" Padding="0"
-                                    Click="ModsCardMyMods_Click" Margin="0,8,8,0"
-                                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                                 <Grid>
-                                     <Border Background="{StaticResource CardBgBrush}" CornerRadius="16"
-                                        BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1">
-                                         <Grid>
-<Rectangle HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                                                       Width="120" Height="90" Opacity="0.25"
-                                                       RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
-                                                 <Rectangle.Fill>
-                                                     <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
-                                                                          Center="0.0,1.0" GradientOrigin="0.0,1.0"
-                                                                          RadiusX="0.6" RadiusY="0.5">
-                                                         <GradientStop Color="#a855f7" Offset="0.0"/>
-                                                         <GradientStop Color="#00000000" Offset="1.0"/>
-                                                     </RadialGradientBrush>
-                                                 </Rectangle.Fill>
-                                             </Rectangle>
-<Rectangle HorizontalAlignment="Right" VerticalAlignment="Top"
-                                                       Width="120" Height="90" Opacity="0.15"
-                                                       RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
-                                                 <Rectangle.Fill>
-                                                     <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
-                                                                          Center="1.0,0.0" GradientOrigin="1.0,0.0"
-                                                                          RadiusX="0.6" RadiusY="0.5">
-                                                         <GradientStop Color="#a855f7" Offset="0.0"/>
-                                                         <GradientStop Color="#00000000" Offset="1.0"/>
-                                                     </RadialGradientBrush>
-                                                 </Rectangle.Fill>
-                                             </Rectangle>
-                                             <Rectangle IsHitTestVisible="False" Opacity="0.04"
-                                                        RenderOptions.BitmapScalingMode="NearestNeighbor">
-                                                 <Rectangle.Fill>
-                                                     <ImageBrush ImageSource="Assets/noise.png"
-                                                                 TileMode="Tile" ViewportUnits="Absolute"
-                                                                 Viewport="0,0,512,512" Stretch="None"/>
-                                                 </Rectangle.Fill>
-                                             </Rectangle>
-                                              <Grid Margin="12,10,10,10" VerticalAlignment="Center">
-                                                  <Grid.RowDefinitions>
-                                                      <RowDefinition Height="Auto"/>
-                                                      <RowDefinition Height="Auto"/>
-                                                  </Grid.RowDefinitions>
+                                          </Grid>
+                                      <Border.Triggers>
+                                          <EventTrigger RoutedEvent="Mouse.MouseEnter">
+                                              <BeginStoryboard>
+                                                  <Storyboard>
+                                                      <DoubleAnimation Storyboard.TargetName="ListsBottomGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.2" To="0.45">
+                                                          <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                      </DoubleAnimation>
+                                                      <DoubleAnimation Storyboard.TargetName="ListsTopGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.2" To="0.30">
+                                                          <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                      </DoubleAnimation>
+                                                  </Storyboard>
+                                              </BeginStoryboard>
+                                          </EventTrigger>
+                                          <EventTrigger RoutedEvent="Mouse.MouseLeave">
+                                              <BeginStoryboard>
+                                                  <Storyboard>
+                                                      <DoubleAnimation Storyboard.TargetName="ListsBottomGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.15" To="0.25">
+                                                          <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                      </DoubleAnimation>
+                                                      <DoubleAnimation Storyboard.TargetName="ListsTopGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.15" To="0.15">
+                                                          <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                      </DoubleAnimation>
+                                                  </Storyboard>
+                                              </BeginStoryboard>
+                                          </EventTrigger>
+                                      </Border.Triggers>
+                                      </Border>
+                                      <Border CornerRadius="16" BorderBrush="#22c55e" BorderThickness="0,3,0,0"
+                                              Background="Transparent" IsHitTestVisible="False"/>
+                                  </Grid>
+                             </Button>
+                             <Button Grid.Row="1" Grid.Column="0" Style="{StaticResource FlatBtn}" Padding="0"
+                                     Click="ModsCardMyMods_Click" Margin="0,8,8,0"
+                                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                  <Grid>
+                                      <Border x:Name="MyModsCard" Background="{StaticResource CardBgBrush}" CornerRadius="16"
+                                         BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1">
+                                          <Grid>
+<Rectangle x:Name="MyModsBottomGlow" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                                        Width="120" Height="90" Opacity="0.25"
+                                                        RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
+                                                  <Rectangle.Fill>
+                                                      <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                                           Center="0.0,1.0" GradientOrigin="0.0,1.0"
+                                                                           RadiusX="0.6" RadiusY="0.5">
+                                                          <GradientStop Color="#a855f7" Offset="0.0"/>
+                                                          <GradientStop Color="#00000000" Offset="1.0"/>
+                                                      </RadialGradientBrush>
+                                                  </Rectangle.Fill>
+                                              </Rectangle>
+<Rectangle x:Name="MyModsTopGlow" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                        Width="120" Height="90" Opacity="0.15"
+                                                        RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
+                                                  <Rectangle.Fill>
+                                                      <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                                           Center="1.0,0.0" GradientOrigin="1.0,0.0"
+                                                                           RadiusX="0.6" RadiusY="0.5">
+                                                          <GradientStop Color="#a855f7" Offset="0.0"/>
+                                                          <GradientStop Color="#00000000" Offset="1.0"/>
+                                                      </RadialGradientBrush>
+                                                  </Rectangle.Fill>
+                                              </Rectangle>
+                                              <Rectangle IsHitTestVisible="False" Opacity="0.04"
+                                                         RenderOptions.BitmapScalingMode="NearestNeighbor">
+                                                  <Rectangle.Fill>
+                                                      <ImageBrush ImageSource="Assets/noise.png"
+                                                                  TileMode="Tile" ViewportUnits="Absolute"
+                                                                  Viewport="0,0,512,512" Stretch="None"/>
+                                                  </Rectangle.Fill>
+                                              </Rectangle>
+                                               <Grid Margin="12,10,10,10" VerticalAlignment="Center">
+                                                   <Grid.RowDefinitions>
+                                                       <RowDefinition Height="Auto"/>
+                                                       <RowDefinition Height="Auto"/>
+                                                   </Grid.RowDefinitions>
 <Border Grid.Row="0" Width="72" Height="72" CornerRadius="18"
-                                                          HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                     <Border.Background>
-                                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                                             <GradientStop Color="#a855f7" Offset="0"/>
-                                                             <GradientStop Color="#9333ea" Offset="1"/>
-                                                         </LinearGradientBrush>
-                                                     </Border.Background>
-                                                     <Path Data="M2,6 L2,18 C2,19.1 2.9,20 4,20 L20,20 C21.1,20 22,19.1 22,18 L22,8 C22,6.9 21.1,6 20,6 L12,6 L10,4 L4,4 C2.9,4 2,4.9 2,6 Z"
-                                                           Stroke="White" StrokeThickness="1.8"
-                                                           Width="32" Height="32" Stretch="Uniform"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                 </Border>
-                                                                  <StackPanel Grid.Row="1" Margin="0,12,0,0">
-                                                     <TextBlock Text="Ваши моды" FontSize="15"
-                                                                FontWeight="SemiBold" Foreground="White"
-                                                                HorizontalAlignment="Center"/>
-                                                     <TextBlock Text="Установленные моды" FontSize="11.5"
-                                                                Foreground="#77777a" HorizontalAlignment="Center"
-                                                                Margin="0,3,0,0"/>
-                                                 </StackPanel>
-                                             </Grid>
-                                         </Grid>
-                                     </Border>
-                                     <Border CornerRadius="16" BorderBrush="#a855f7" BorderThickness="0,3,0,0"
-                                             Background="Transparent" IsHitTestVisible="False"/>
-                                 </Grid>
-                            </Button>
-                            <Button Grid.Row="1" Grid.Column="1" Style="{StaticResource FlatBtn}" Padding="0"
-                                    Click="ModsCardEditor_Click" Margin="8,8,0,0"
-                                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                                 <Grid>
-                                     <Border Background="{StaticResource CardBgBrush}" CornerRadius="16"
-                                        BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1">
-                                         <Grid>
-<Rectangle HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                                                       Width="120" Height="90" Opacity="0.25"
-                                                       RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
-                                                 <Rectangle.Fill>
-                                                     <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
-                                                                          Center="0.0,1.0" GradientOrigin="0.0,1.0"
-                                                                          RadiusX="0.6" RadiusY="0.5">
-                                                         <GradientStop Color="#f97316" Offset="0.0"/>
-                                                         <GradientStop Color="#00000000" Offset="1.0"/>
-                                                     </RadialGradientBrush>
-                                                 </Rectangle.Fill>
-                                             </Rectangle>
-<Rectangle HorizontalAlignment="Right" VerticalAlignment="Top"
-                                                       Width="120" Height="90" Opacity="0.15"
-                                                       RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
-                                                 <Rectangle.Fill>
-                                                     <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
-                                                                          Center="1.0,0.0" GradientOrigin="1.0,0.0"
-                                                                          RadiusX="0.6" RadiusY="0.5">
-                                                         <GradientStop Color="#f97316" Offset="0.0"/>
-                                                         <GradientStop Color="#00000000" Offset="1.0"/>
-                                                     </RadialGradientBrush>
-                                                 </Rectangle.Fill>
-                                             </Rectangle>
-                                             <Rectangle IsHitTestVisible="False" Opacity="0.04"
-                                                        RenderOptions.BitmapScalingMode="NearestNeighbor">
-                                                 <Rectangle.Fill>
-                                                     <ImageBrush ImageSource="Assets/noise.png"
-                                                                 TileMode="Tile" ViewportUnits="Absolute"
-                                                                 Viewport="0,0,512,512" Stretch="None"/>
-                                                 </Rectangle.Fill>
-                                             </Rectangle>
-                                              <Grid Margin="12,10,10,10" VerticalAlignment="Center">
-                                                  <Grid.RowDefinitions>
-                                                      <RowDefinition Height="Auto"/>
-                                                      <RowDefinition Height="Auto"/>
-                                                  </Grid.RowDefinitions>
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                      <Border.Background>
+                                                          <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                              <GradientStop Color="#a855f7" Offset="0"/>
+                                                              <GradientStop Color="#9333ea" Offset="1"/>
+                                                          </LinearGradientBrush>
+                                                      </Border.Background>
+                                                      <Path Data="M2,6 L2,18 C2,19.1 2.9,20 4,20 L20,20 C21.1,20 22,19.1 22,18 L22,8 C22,6.9 21.1,6 20,6 L12,6 L10,4 L4,4 C2.9,4 2,4.9 2,6 Z"
+                                                            Stroke="White" StrokeThickness="1.8"
+                                                            Width="32" Height="32" Stretch="Uniform"
+                                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                  </Border>
+                                                                   <StackPanel Grid.Row="1" Margin="0,12,0,0">
+                                                      <TextBlock Text="Ваши моды" FontSize="15"
+                                                                 FontWeight="SemiBold" Foreground="White"
+                                                                 HorizontalAlignment="Center"/>
+                                                      <TextBlock Text="Установленные моды" FontSize="11.5"
+                                                                 Foreground="#77777a" HorizontalAlignment="Center"
+                                                                 Margin="0,3,0,0"/>
+                                                  </StackPanel>
+                                              </Grid>
+                                          </Grid>
+                                      <Border.Triggers>
+                                          <EventTrigger RoutedEvent="Mouse.MouseEnter">
+                                              <BeginStoryboard>
+                                                  <Storyboard>
+                                                      <DoubleAnimation Storyboard.TargetName="MyModsBottomGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.2" To="0.45">
+                                                          <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                      </DoubleAnimation>
+                                                      <DoubleAnimation Storyboard.TargetName="MyModsTopGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.2" To="0.30">
+                                                          <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                      </DoubleAnimation>
+                                                  </Storyboard>
+                                              </BeginStoryboard>
+                                          </EventTrigger>
+                                          <EventTrigger RoutedEvent="Mouse.MouseLeave">
+                                              <BeginStoryboard>
+                                                  <Storyboard>
+                                                      <DoubleAnimation Storyboard.TargetName="MyModsBottomGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.15" To="0.25">
+                                                          <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                      </DoubleAnimation>
+                                                      <DoubleAnimation Storyboard.TargetName="MyModsTopGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.15" To="0.15">
+                                                          <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                      </DoubleAnimation>
+                                                  </Storyboard>
+                                              </BeginStoryboard>
+                                          </EventTrigger>
+                                      </Border.Triggers>
+                                      </Border>
+                                      <Border CornerRadius="16" BorderBrush="#a855f7" BorderThickness="0,3,0,0"
+                                              Background="Transparent" IsHitTestVisible="False"/>
+                                  </Grid>
+                             </Button>
+                             <Button Grid.Row="1" Grid.Column="1" Style="{StaticResource FlatBtn}" Padding="0"
+                                     Click="ModsCardEditor_Click" Margin="8,8,0,0"
+                                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                  <Grid>
+                                      <Border x:Name="EditorCard" Background="{StaticResource CardBgBrush}" CornerRadius="16"
+                                         BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1">
+                                          <Grid>
+<Rectangle x:Name="EditorBottomGlow" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                                        Width="120" Height="90" Opacity="0.25"
+                                                        RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
+                                                  <Rectangle.Fill>
+                                                      <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                                           Center="0.0,1.0" GradientOrigin="0.0,1.0"
+                                                                           RadiusX="0.6" RadiusY="0.5">
+                                                          <GradientStop Color="#f97316" Offset="0.0"/>
+                                                          <GradientStop Color="#00000000" Offset="1.0"/>
+                                                      </RadialGradientBrush>
+                                                  </Rectangle.Fill>
+                                              </Rectangle>
+<Rectangle x:Name="EditorTopGlow" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                        Width="120" Height="90" Opacity="0.15"
+                                                        RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
+                                                  <Rectangle.Fill>
+                                                      <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                                           Center="1.0,0.0" GradientOrigin="1.0,0.0"
+                                                                           RadiusX="0.6" RadiusY="0.5">
+                                                          <GradientStop Color="#f97316" Offset="0.0"/>
+                                                          <GradientStop Color="#00000000" Offset="1.0"/>
+                                                      </RadialGradientBrush>
+                                                  </Rectangle.Fill>
+                                              </Rectangle>
+                                              <Rectangle IsHitTestVisible="False" Opacity="0.04"
+                                                         RenderOptions.BitmapScalingMode="NearestNeighbor">
+                                                  <Rectangle.Fill>
+                                                      <ImageBrush ImageSource="Assets/noise.png"
+                                                                  TileMode="Tile" ViewportUnits="Absolute"
+                                                                  Viewport="0,0,512,512" Stretch="None"/>
+                                                  </Rectangle.Fill>
+                                              </Rectangle>
+                                               <Grid Margin="12,10,10,10" VerticalAlignment="Center">
+                                                   <Grid.RowDefinitions>
+                                                       <RowDefinition Height="Auto"/>
+                                                       <RowDefinition Height="Auto"/>
+                                                   </Grid.RowDefinitions>
 <Border Grid.Row="0" Width="72" Height="72" CornerRadius="18"
-                                                          HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                     <Border.Background>
-                                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                                             <GradientStop Color="#f97316" Offset="0"/>
-                                                             <GradientStop Color="#ea580c" Offset="1"/>
-                                                         </LinearGradientBrush>
-                                                     </Border.Background>
-                                                     <Path Data="M17,3 C17.3,2.7 17.7,2.5 18.2,2.5 C18.7,2.5 19.1,2.7 19.4,3 L21,4.6 C21.3,4.9 21.5,5.3 21.5,5.8 C21.5,6.3 21.3,6.7 21,7 L7.5,20.5 L2,22 L3.5,16.5 Z"
-                                                           Stroke="White" StrokeThickness="1.8"
-                                                           Width="32" Height="32" Stretch="Uniform"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                 </Border>
-                                                                  <StackPanel Grid.Row="1" Margin="0,12,0,0">
-                                                     <TextBlock Text="Редактор" FontSize="15"
-                                                                FontWeight="SemiBold" Foreground="White"
-                                                                HorizontalAlignment="Center"/>
-                                                     <TextBlock Text="Правка .bat и .txt" FontSize="11.5"
-                                                                Foreground="#77777a" HorizontalAlignment="Center"
-                                                                Margin="0,3,0,0"/>
-                                                 </StackPanel>
-                                             </Grid>
-                                         </Grid>
-                                     </Border>
-                                     <Border CornerRadius="16" BorderBrush="#f97316" BorderThickness="0,3,0,0"
-                                             Background="Transparent" IsHitTestVisible="False"/>
-                                 </Grid>
-                            </Button>
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                      <Border.Background>
+                                                          <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                              <GradientStop Color="#f97316" Offset="0"/>
+                                                              <GradientStop Color="#ea580c" Offset="1"/>
+                                                          </LinearGradientBrush>
+                                                      </Border.Background>
+                                                      <Path Data="M17,3 C17.3,2.7 17.7,2.5 18.2,2.5 C18.7,2.5 19.1,2.7 19.4,3 L21,4.6 C21.3,4.9 21.5,5.3 21.5,5.8 C21.5,6.3 21.3,6.7 21,7 L7.5,20.5 L2,22 L3.5,16.5 Z"
+                                                            Stroke="White" StrokeThickness="1.8"
+                                                            Width="32" Height="32" Stretch="Uniform"
+                                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                  </Border>
+                                                                   <StackPanel Grid.Row="1" Margin="0,12,0,0">
+                                                      <TextBlock Text="Редактор" FontSize="15"
+                                                                 FontWeight="SemiBold" Foreground="White"
+                                                                 HorizontalAlignment="Center"/>
+                                                      <TextBlock Text="Правка .bat и .txt" FontSize="11.5"
+                                                                 Foreground="#77777a" HorizontalAlignment="Center"
+                                                                 Margin="0,3,0,0"/>
+                                                  </StackPanel>
+                                              </Grid>
+                                          </Grid>
+                                      <Border.Triggers>
+                                          <EventTrigger RoutedEvent="Mouse.MouseEnter">
+                                              <BeginStoryboard>
+                                                  <Storyboard>
+                                                      <DoubleAnimation Storyboard.TargetName="EditorBottomGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.2" To="0.45">
+                                                          <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                      </DoubleAnimation>
+                                                      <DoubleAnimation Storyboard.TargetName="EditorTopGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.2" To="0.30">
+                                                          <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                      </DoubleAnimation>
+                                                  </Storyboard>
+                                              </BeginStoryboard>
+                                          </EventTrigger>
+                                          <EventTrigger RoutedEvent="Mouse.MouseLeave">
+                                              <BeginStoryboard>
+                                                  <Storyboard>
+                                                      <DoubleAnimation Storyboard.TargetName="EditorBottomGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.15" To="0.25">
+                                                          <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                      </DoubleAnimation>
+                                                      <DoubleAnimation Storyboard.TargetName="EditorTopGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.15" To="0.15">
+                                                          <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                      </DoubleAnimation>
+                                                  </Storyboard>
+                                              </BeginStoryboard>
+                                          </EventTrigger>
+                                      </Border.Triggers>
+                                      </Border>
+                                      <Border CornerRadius="16" BorderBrush="#f97316" BorderThickness="0,3,0,0"
+                                              Background="Transparent" IsHitTestVisible="False"/>
+                                  </Grid>
+                             </Button>
                         </Grid>
                     </Grid>
                      <Grid x:Name="ModsStrategiesScreen" Visibility="Collapsed">
