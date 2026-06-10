@@ -10790,6 +10790,7 @@ public partial class MainWindow : Window
 
     private async Task RunSpeedTestAsync()
     {
+        _speedTestDone = false;
         _dlSamples.Clear();
         _ulSamples.Clear();
 
@@ -10798,6 +10799,8 @@ public partial class MainWindow : Window
             DownloadLbl.Text = "—";
             UploadLbl.Text   = "—";
         });
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
 
         try
         {
@@ -10811,7 +10814,8 @@ public partial class MainWindow : Window
             {
                 while (!sampleCts.Token.IsCancellationRequested)
                 {
-                    await Task.Delay(1000, sampleCts.Token);
+                    try { await Task.Delay(1000, sampleCts.Token); }
+                    catch { break; }
                     long now = Interlocked.Read(ref totalDlBytes);
                     double instantMbps = (now - prevBytes) * 8.0 / 1_000_000.0;
                     prevBytes = now;
@@ -10850,9 +10854,13 @@ public partial class MainWindow : Window
 
             await Task.WhenAll(dlTasks);
             sampleCts.Cancel();
-            await sampleTask;
+            try { await sampleTask; } catch { }
 
-            _finalDownloadMbps = CalcFinalSpeed(_dlSamples);
+            sw.Stop();
+            double dlSec = sw.Elapsed.TotalSeconds;
+            _finalDownloadMbps = dlSec > 0
+                ? totalDlBytes * 8.0 / dlSec / 1_000_000.0
+                : CalcFinalSpeed(_dlSamples);
             Dispatcher.Invoke(() => DownloadLbl.Text = _finalDownloadMbps > 0
                 ? $"{_finalDownloadMbps:0.0}" : "—");
         }
@@ -10860,6 +10868,7 @@ public partial class MainWindow : Window
 
         try
         {
+            sw.Restart();
             long totalUlBytes = 0;
             var ulCancel = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
@@ -10869,7 +10878,8 @@ public partial class MainWindow : Window
             {
                 while (!ulSampleCts.Token.IsCancellationRequested)
                 {
-                    await Task.Delay(1000, ulSampleCts.Token);
+                    try { await Task.Delay(1000, ulSampleCts.Token); }
+                    catch { break; }
                     long now = Interlocked.Read(ref totalUlBytes);
                     double instantMbps = (now - prevUlBytes) * 8.0 / 1_000_000.0;
                     prevUlBytes = now;
@@ -10887,7 +10897,7 @@ public partial class MainWindow : Window
                 try
                 {
                     var pool = System.Buffers.ArrayPool<byte>.Shared;
-                    int size = 20 * 1024 * 1024;
+                    int size = 4 * 1024 * 1024;
                     var data = pool.Rent(size);
                     try
                     {
@@ -10911,9 +10921,13 @@ public partial class MainWindow : Window
 
             await Task.WhenAll(ulTasks);
             ulSampleCts.Cancel();
-            await ulSampleTask;
+            try { await ulSampleTask; } catch { }
 
-            _finalUploadMbps = CalcFinalSpeed(_ulSamples);
+            sw.Stop();
+            double ulSec = sw.Elapsed.TotalSeconds;
+            _finalUploadMbps = ulSec > 0
+                ? totalUlBytes * 8.0 / ulSec / 1_000_000.0
+                : CalcFinalSpeed(_ulSamples);
         }
         catch { }
 
@@ -10923,6 +10937,10 @@ public partial class MainWindow : Window
             DownloadLbl.Text = _finalDownloadMbps > 0 ? $"{_finalDownloadMbps:0.0}" : "—";
             UploadLbl.Text   = _finalUploadMbps > 0   ? $"{_finalUploadMbps:0.0}"   : "—";
         });
+
+        // Очистка: ArrayPool держит 4×4MB = 16MB, остальное пусть GC соберёт
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
     }
 
     private async void NetTimer_Tick(object? sender, EventArgs e)
