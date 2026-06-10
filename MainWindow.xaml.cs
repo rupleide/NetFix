@@ -537,9 +537,8 @@ public partial class MainWindow : Window
                 await Task.Run(() => ClickTrayIconByProcess("TgWsProxy"));
             }
         }
-        catch (Exception ex)
+        catch
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to activate TgWsProxy: {ex.Message}");
         }
     }
 
@@ -969,7 +968,6 @@ public partial class MainWindow : Window
 
     private void RefreshModsLists()
     {
-        Debug.WriteLine($"[RefreshModsLists] isStrategyTab={_isStrategyTab}");
         var activeNames = _isStrategyTab
             ? (_settings.ActiveStrategyMods ?? [])
             : (_settings.ActiveListMods ?? []);
@@ -1057,10 +1055,8 @@ public partial class MainWindow : Window
 
     private void MoveRightBtn_Click(object sender, RoutedEventArgs e)
     {
-        Debug.WriteLine($"[MoveRightBtn] Clicked, pendingToggleMod={_pendingToggleMod?.Name}");
         if (_pendingToggleMod is not ModEntry mod)
         {
-            Debug.WriteLine("[MoveRightBtn] return: _pendingToggleMod is null");
             return;
         }
 
@@ -1072,16 +1068,13 @@ public partial class MainWindow : Window
             lp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
 
         _pendingToggleMod = null;
-        Debug.WriteLine($"[MoveRightBtn] calling ToggleModActive({mod.Name}, true)");
         ToggleModActive(mod, true);
     }
 
     private void MoveLeftBtn_Click(object sender, RoutedEventArgs e)
     {
-        Debug.WriteLine($"[MoveLeftBtn] Clicked, pendingToggleMod={_pendingToggleMod?.Name}");
         if (_pendingToggleMod is not ModEntry mod)
         {
-            Debug.WriteLine("[MoveLeftBtn] return: _pendingToggleMod is null");
             return;
         }
 
@@ -1093,7 +1086,6 @@ public partial class MainWindow : Window
             lp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
 
         _pendingToggleMod = null;
-        Debug.WriteLine($"[MoveLeftBtn] calling ToggleModActive({mod.Name}, false)");
         ToggleModActive(mod, false);
     }
 
@@ -1101,7 +1093,6 @@ public partial class MainWindow : Window
     {
         if (sender is Button btn && btn.Tag is ModEntry mod)
         {
-            Debug.WriteLine($"[CardToggleActive] {mod.Name}, activating={!mod.IsActive}");
             ToggleModActive(mod, !mod.IsActive);
         }
     }
@@ -1207,10 +1198,9 @@ public partial class MainWindow : Window
                 _dragFromActive = listBox == ActiveList;
                 _dragStartPoint = e.GetPosition(null);
                 _isDragPending = true;
-                Debug.WriteLine($"[MouseDown] {mod.Name}, fromActive={_dragFromActive}, pending=true");
             }
             else
-                Debug.WriteLine("[MouseDown] no ModEntry found");
+            { /* bypassed */ }
         }
     }
 
@@ -1226,7 +1216,6 @@ public partial class MainWindow : Window
             _isDragPending = false;
             if (_dragMod != null && sender is ListBox listBox)
             {
-                Debug.WriteLine($"[MouseMove] starting drag for {_dragMod.Name}");
                 DragDrop.DoDragDrop(listBox, _dragMod, DragDropEffects.Move);
             }
         }
@@ -1240,7 +1229,6 @@ public partial class MainWindow : Window
 
     private void AvailableList_Drop(object sender, DragEventArgs e)
     {
-        Debug.WriteLine($"[Drop -> Available] dragMod={_dragMod?.Name}, dragFromActive={_dragFromActive}");
         if (_dragMod is null) return;
         if (_dragFromActive)
             ToggleModActive(_dragMod, false);
@@ -1250,7 +1238,6 @@ public partial class MainWindow : Window
 
     private void ActiveList_Drop(object sender, DragEventArgs e)
     {
-        Debug.WriteLine($"[Drop -> Active] dragMod={_dragMod?.Name}, dragFromActive={_dragFromActive}");
         if (_dragMod is null) return;
         if (!_dragFromActive)
             ToggleModActive(_dragMod, true);
@@ -1416,7 +1403,6 @@ public partial class MainWindow : Window
     {
         _isDragPending = false;
         _pendingToggleMod = e.AddedItems.Count > 0 ? e.AddedItems[0] as ModEntry : null;
-        Debug.WriteLine($"[Avail_SelectionChanged] pending={_pendingToggleMod?.Name}");
 
         if (_pendingToggleMod is null) return;
 
@@ -1433,7 +1419,6 @@ public partial class MainWindow : Window
     {
         _isDragPending = false;
         _pendingToggleMod = e.AddedItems.Count > 0 ? e.AddedItems[0] as ModEntry : null;
-        Debug.WriteLine($"[Active_SelectionChanged] pending={_pendingToggleMod?.Name}");
 
         if (_pendingToggleMod is null) return;
 
@@ -1944,10 +1929,8 @@ public partial class MainWindow : Window
 
     private void ListsMoveRightBtn_Click(object sender, RoutedEventArgs e)
     {
-        Debug.WriteLine($"[ListsMoveRightBtn] Clicked, pendingToggleMod={_pendingToggleMod?.Name}");
         if (_pendingToggleMod is not ModEntry mod)
         {
-            Debug.WriteLine("[ListsMoveRightBtn] return: _pendingToggleMod is null");
             return;
         }
 
@@ -1959,16 +1942,13 @@ public partial class MainWindow : Window
             lp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
 
         _pendingToggleMod = null;
-        Debug.WriteLine($"[ListsMoveRightBtn] calling ToggleModActive({mod.Name}, true)");
         ToggleModActive(mod, true);
     }
 
     private void ListsMoveLeftBtn_Click(object sender, RoutedEventArgs e)
     {
-        Debug.WriteLine($"[ListsMoveLeftBtn] Clicked, pendingToggleMod={_pendingToggleMod?.Name}");
         if (_pendingToggleMod is not ModEntry mod)
         {
-            Debug.WriteLine("[ListsMoveLeftBtn] return: _pendingToggleMod is null");
             return;
         }
 
@@ -1980,7 +1960,6 @@ public partial class MainWindow : Window
             lp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
 
         _pendingToggleMod = null;
-        Debug.WriteLine($"[ListsMoveLeftBtn] calling ToggleModActive({mod.Name}, false)");
         ToggleModActive(mod, false);
     }
 
@@ -1988,7 +1967,6 @@ public partial class MainWindow : Window
     {
         _isDragPending = false;
         _pendingToggleMod = e.AddedItems.Count > 0 ? e.AddedItems[0] as ModEntry : null;
-        Debug.WriteLine($"[ListsAvail_SelectionChanged] pending={_pendingToggleMod?.Name}");
 
         if (_pendingToggleMod is null) return;
 
@@ -2005,7 +1983,6 @@ public partial class MainWindow : Window
     {
         _isDragPending = false;
         _pendingToggleMod = e.AddedItems.Count > 0 ? e.AddedItems[0] as ModEntry : null;
-        Debug.WriteLine($"[ListsActive_SelectionChanged] pending={_pendingToggleMod?.Name}");
 
         if (_pendingToggleMod is null) return;
 
@@ -2029,16 +2006,14 @@ public partial class MainWindow : Window
                 _dragFromActive = listBox == ListsActiveList;
                 _dragStartPoint = e.GetPosition(null);
                 _isDragPending = true;
-                Debug.WriteLine($"[Lists_MouseDown] {mod.Name}, fromActive={_dragFromActive}, pending=true");
             }
             else
-                Debug.WriteLine("[Lists_MouseDown] no ModEntry found");
+            { /* bypassed */ }
         }
     }
 
     private void ListsAvailableList_Drop(object sender, DragEventArgs e)
     {
-        Debug.WriteLine($"[Drop -> ListsAvail] dragMod={_dragMod?.Name}, dragFromActive={_dragFromActive}");
         if (_dragMod is null) return;
         if (_dragFromActive)
             ToggleModActive(_dragMod, false);
@@ -2048,7 +2023,6 @@ public partial class MainWindow : Window
 
     private void ListsActiveList_Drop(object sender, DragEventArgs e)
     {
-        Debug.WriteLine($"[Drop -> ListsActive] dragMod={_dragMod?.Name}, dragFromActive={_dragFromActive}");
         if (_dragMod is null) return;
         if (!_dragFromActive)
             ToggleModActive(_dragMod, true);
@@ -6384,7 +6358,6 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Ошибка запуска трека: {ex.Message}");
             var bpm = map.Bpm > 0 ? map.Bpm : REFERENCE_BPM;
             GamePage.Visibility = Visibility.Visible;
             ShowGameView(GamePlayView);
@@ -6440,9 +6413,8 @@ public partial class MainWindow : Window
                     result.Add(map);
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"Ошибка загрузки трека {System.IO.Path.GetFileName(zipPath)}: {ex.Message}");
             }
         }
 
@@ -6937,7 +6909,6 @@ public partial class MainWindow : Window
                         }
                         catch (Exception ex)
                         {
-                            Debug.WriteLine($"Ошибка запуска трека: {ex.Message}");
                             var bpm = capturedMap.Bpm > 0 ? capturedMap.Bpm : REFERENCE_BPM;
                             StartGame(capturedMap.Notes, null, capturedMap.Title ?? "NetFix Track", bpm);
                         }
@@ -8527,8 +8498,6 @@ public partial class MainWindow : Window
 
     private void StartOszImport(string oszPath, bool isOsuMode = false)
     {
-        System.Diagnostics.Debug.WriteLine($"[OSZ] StartOszImport path='{oszPath}' isOsuMode={isOsuMode}");
-
         try
         {
             var difficulties = new List<(string Name, string FileName, int KeyCount)>();
@@ -8730,7 +8699,6 @@ public partial class MainWindow : Window
                 if (audioExt == ".ogg")
                 {
                     var ffmpegPath = Path.Combine(AppContext.BaseDirectory, "ffmpeg.exe");
-                    System.Diagnostics.Debug.WriteLine($"[FFmpeg] looking at: '{ffmpegPath}' exists={File.Exists(ffmpegPath)}");
                     if (!File.Exists(ffmpegPath))
                     {
                         Directory.Delete(tempDir, true);
@@ -8831,10 +8799,6 @@ public partial class MainWindow : Window
 
     private void FinishLevelImport(NoteMap map, string tempDir, bool isOsuMode = false)
     {
-        System.Diagnostics.Debug.WriteLine($"[OSZ] FinishLevelImport called title='{map.Title}' tempDir='{tempDir}' isOsuMode={isOsuMode}");
-        System.Diagnostics.Debug.WriteLine($"[OSZ] tempDirExists={Directory.Exists(tempDir)}");
-        System.Diagnostics.Debug.WriteLine($"[OSZ] notes.json in tempDir exists={File.Exists(Path.Combine(tempDir, "notes.json"))}");
-
         var baseDir = isOsuMode ? OsuLevelsDir : LevelsDir;
         var targetDir = Path.Combine(baseDir, map.Title!);
         if (Directory.Exists(targetDir))

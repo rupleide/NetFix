@@ -102,8 +102,6 @@ public class ZapretConfigService
 
             var line = e.Data;
 
-            System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] {line}");
-
             var configMatch = ConfigRegex.Match(line);
             if (configMatch.Success)
             {
@@ -136,8 +134,6 @@ public class ZapretConfigService
                         onProgress?.Invoke("");
                     }
 
-                    System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Config: {currentConfig.Name}, Valid: {currentConfig.IsValid}, Success: {successCount}/{totalCount}, Errors: {currentConfig.ErrorCount}");
-
                     testedConfigs++;
                     onConfigTested?.Invoke(testedConfigs, totalConfigs);
                 }
@@ -166,8 +162,6 @@ public class ZapretConfigService
                 var tls13Status = testMatch.Groups[4].Value;
                 var pingStr = testMatch.Groups[5].Value;
                 var ping = string.IsNullOrEmpty(pingStr) ? 0 : int.Parse(pingStr);
-
-                System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Parsed: {serviceName}, Ping: {ping}ms (raw: '{pingStr}')");
 
                 var testResult = new ServiceTestResult
                 {
@@ -200,7 +194,6 @@ public class ZapretConfigService
                 if (currentConfig.Tests.Count > 0)
                     currentConfig.AveragePing = (int)currentConfig.Tests.Values.Average(t => t.Ping);
 
-                System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Average ping for {currentConfig.Name}: {currentConfig.AveragePing}ms");
                 return;
             }
 
@@ -210,8 +203,6 @@ public class ZapretConfigService
                 var serviceName = pingOnlyMatch.Groups[1].Value;
                 var pingStr = pingOnlyMatch.Groups[2].Value;
                 var ping = string.IsNullOrEmpty(pingStr) ? 0 : int.Parse(pingStr);
-
-                System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Parsed Ping-only: {serviceName}, Ping: {ping}ms");
 
                 var testResult = new ServiceTestResult
                 {
@@ -229,8 +220,6 @@ public class ZapretConfigService
 
                 if (currentConfig.Tests.Count > 0)
                     currentConfig.AveragePing = (int)currentConfig.Tests.Values.Average(t => t.Ping);
-
-                System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Average ping for {currentConfig.Name}: {currentConfig.AveragePing}ms");
             }
         };
 
@@ -257,14 +246,10 @@ public class ZapretConfigService
             currentConfig.IsValid = currentConfig.ErrorCount == 0 && currentConfig.SuccessCount == totalCountEnd && totalCountEnd > 0;
             if (currentConfig.IsValid || currentConfig.IsPartiallyUsable)
                 configs.Add(currentConfig);
-
-            System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Last config: {currentConfig.Name}, Valid: {currentConfig.IsValid}, Success: {currentConfig.SuccessCount}/12, Errors: {currentConfig.ErrorCount}");
         }
 
-        System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Total configs found: {configs.Count}");
         foreach (var cfg in configs)
         {
-            System.Diagnostics.Debug.WriteLine($"[ZAPRET TEST] Config: {cfg.Name}, Ping: {cfg.AveragePing}, Success: {cfg.SuccessCount}/12");
         }
 
         configs = configs
@@ -325,14 +310,10 @@ public class ZapretConfigService
 
             var line = e.Data;
 
-            System.Diagnostics.Debug.WriteLine($"[TEST OUTPUT] {line}");
-
             var configMatch = ConfigRegex.Match(line);
             if (configMatch.Success)
             {
                 var configNameFromTest = configMatch.Groups[3].Value;
-
-                System.Diagnostics.Debug.WriteLine($"[CONFIG MATCH] Found: {configNameFromTest}, Looking for: {configName}");
 
                 if (configNameFromTest == configName)
                 {
@@ -349,7 +330,6 @@ public class ZapretConfigService
                 else if (foundTargetConfig)
                 {
                     configTestComplete = true;
-                    System.Diagnostics.Debug.WriteLine($"[CONFIG COMPLETE] Test complete for {configName}");
                 }
 
                 return;
@@ -443,12 +423,8 @@ public class ZapretConfigService
 
             int configIndex = configFiles.IndexOf(configName) + 1;
 
-            System.Diagnostics.Debug.WriteLine($"[CONFIG SEARCH] Looking for: {configName}");
-            System.Diagnostics.Debug.WriteLine($"[CONFIG SEARCH] Found at index: {configIndex - 1}, sending: {configIndex}");
-            System.Diagnostics.Debug.WriteLine($"[CONFIG LIST] Total configs: {configFiles.Count}");
             for (int i = 0; i < configFiles.Count; i++)
             {
-                System.Diagnostics.Debug.WriteLine($"[CONFIG LIST] [{i + 1}] {configFiles[i]}");
             }
 
             if (configIndex > 0)
