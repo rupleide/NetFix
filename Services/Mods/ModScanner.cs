@@ -70,6 +70,10 @@ public static class ModScanner
                     _ => type,
                 };
 
+                var targetFile = meta.TargetFile;
+                if (string.IsNullOrEmpty(targetFile) && modType == ModType.List)
+                    targetFile = "list-general.txt";
+
                 var entry = new ModEntry(
                     Name: meta.Name,
                     Author: meta.Author,
@@ -78,7 +82,8 @@ public static class ModScanner
                     Type: modType,
                     FolderPath: modDir,
                     RequiredBuild: string.IsNullOrEmpty(meta.RequiredBuild) ? null : meta.RequiredBuild,
-                    SourceFileName: meta.SourceFileName
+                    SourceFileName: meta.SourceFileName,
+                    TargetFile: targetFile
                 )
                 {
                     IsActive = activeNames.Contains(dirName),

@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using NetFix.Models;
 
 namespace NetFix.Services.Mods;
@@ -6,42 +7,91 @@ namespace NetFix.Services.Mods;
 public static class ModActivator
 {
     private const string ZapretDir = @"C:\Zapret";
-    private const string ListGeneralFile = "list-general.txt";
 
     /// <summary>
-    /// Merges active list mods into list-general.txt with backup.
+    /// Applies list mods to their target files.
+    /// Pass ALL list mods (active + inactive). Active mods' domains are added;
+    /// inactive mods' domains are removed from the file (if they were previously applied).
+    /// No backup needed — the current file state is the source of truth.
     /// Returns (success, errorMessage).
     /// </summary>
-    public static (bool Success, string? Error) ApplyListMods(List<ModEntry> activeLists)
+    public static (bool Success, string? Error) ApplyListMods(List<ModEntry> allListMods)
     {
         try
         {
-            var listPath = Path.Combine(ZapretDir, ListGeneralFile);
+            System.Diagnostics.Debug.WriteLine($"[ApplyListMods] total mods passed: {allListMods.Count}");
+            foreach (var m in allListMods)
+                System.Diagnostics.Debug.WriteLine($"[ApplyListMods] mod={m.Name} isActive={m.IsActive} targetFile={m.TargetFile} folder={m.FolderPath}");
 
-            BackupOriginal(listPath);
+            var byTarget = allListMods
+                .Where(m => m.Type == ModType.List)
+                .GroupBy(m => ResolveTargetFile(m.TargetFile))
+                .ToList();
 
-            var mergedDomains = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            System.Diagnostics.Debug.WriteLine($"[ApplyListMods] groups by target: {byTarget.Count}");
 
-            foreach (var mod in activeLists.Where(m => m.Type == ModType.List && m.IsActive))
+            if (byTarget.Count == 0)
+                return (true, null);
+
+            foreach (var group in byTarget)
             {
-                var listFile = ModScanner.FindListFile(mod);
-                if (listFile is null) continue;
+                var targetPath = group.Key;
+                System.Diagnostics.Debug.WriteLine($"[ApplyListMods] group targetPath={targetPath}");
+                if (targetPath is null) continue;
 
-                foreach (var line in File.ReadAllLines(listFile))
+                // собираем домены всех листов (активных и нет)
+                var allModDomains = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+                foreach (var mod in group)
+                {
+                    var dirName = ModScanner.GetModDirName(mod);
+                    var listFile = ModScanner.FindListFile(mod);
+                    System.Diagnostics.Debug.WriteLine($"[ApplyListMods] mod={mod.Name} dirName={dirName} listFile={listFile} fileExists={listFile != null && File.Exists(listFile)}");
+                    if (listFile != null && File.Exists(listFile))
+                        System.Diagnostics.Debug.WriteLine($"[ApplyListMods] list.txt raw: '{File.ReadAllText(listFile)}'");
+
+                    var domains = ReadModDomains(mod);
+                    System.Diagnostics.Debug.WriteLine($"[ApplyListMods] domains read: {domains.Count} values=[{string.Join(",", domains)}]");
+                    if (domains.Count > 0)
+                        allModDomains[dirName] = domains;
+                }
+
+                var allDomainSet = new HashSet<string>(
+                    allModDomains.Values.SelectMany(d => d),
+                    StringComparer.OrdinalIgnoreCase);
+
+                // читаем текущий файл
+                var currentLines = File.Exists(targetPath)
+                    ? File.ReadAllLines(targetPath)
+                    : [];
+
+                // собираем результат: всё из файла КРОМЕ строк совпадающих с ЛЮБЫМ модом
+                var result = new List<string>();
+                foreach (var line in currentLines)
                 {
                     var trimmed = line.Trim();
-                    if (trimmed.Length > 0 && !trimmed.StartsWith('#'))
-                        mergedDomains.Add(trimmed);
+                    if (trimmed.Length > 0 && !trimmed.StartsWith('#') && !allDomainSet.Contains(trimmed))
+                        result.Add(trimmed);
                 }
-            }
 
-            if (mergedDomains.Count > 0)
-            {
-                File.WriteAllLines(listPath, mergedDomains.OrderBy(d => d));
-            }
-            else if (File.Exists(listPath))
-            {
-                File.WriteAllText(listPath, "");
+                // добавляем домены только АКТИВНЫХ модов
+                foreach (var mod in group.Where(m => m.IsActive))
+                {
+                    var dirName = ModScanner.GetModDirName(mod);
+                    System.Diagnostics.Debug.WriteLine($"[ApplyListMods] active mod dirName={dirName} hasEntry={allModDomains.ContainsKey(dirName)}");
+                    if (allModDomains.TryGetValue(dirName, out var domains))
+                    {
+                        foreach (var d in domains.OrderBy(d => d))
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[ApplyListMods] adding domain: {d}");
+                            result.Add(d);
+                        }
+                    }
+                }
+
+                System.Diagnostics.Debug.WriteLine($"[ApplyListMods] writing {result.Count} lines to {targetPath}");
+                System.Diagnostics.Debug.WriteLine($"[ApplyListMods] result content:\n{string.Join("\n", result)}");
+                File.WriteAllLines(targetPath, result);
+                System.Diagnostics.Debug.WriteLine($"[ApplyListMods] write complete. File exists={File.Exists(targetPath)}");
             }
 
             return (true, null);
@@ -53,43 +103,33 @@ public static class ModActivator
     }
 
     /// <summary>
-    /// Restore list-general.txt from backup.
+    /// Reads a mod's list.txt and returns unique non-empty, non-comment lines.
+    /// Returns empty set if mod has no list file.
     /// </summary>
-    public static (bool Success, string? Error) RestoreListBackup()
+    private static HashSet<string> ReadModDomains(ModEntry mod)
     {
-        try
+        var listFile = ModScanner.FindListFile(mod);
+        if (listFile is null)
+            return [];
+
+        var domains = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var line in File.ReadAllLines(listFile))
         {
-            var listPath = Path.Combine(ZapretDir, ListGeneralFile);
-            return RestoreFromBackup(listPath);
+            var trimmed = line.Trim();
+            if (trimmed.Length > 0 && !trimmed.StartsWith('#'))
+                domains.Add(trimmed);
         }
-        catch (Exception ex)
-        {
-            return (false, $"Ошибка восстановления: {ex.Message}");
-        }
+
+        return domains;
     }
 
-    private static void BackupOriginal(string filePath)
+    private static string? ResolveTargetFile(string? targetFile)
     {
-        if (!File.Exists(filePath))
-            return;
+        var name = targetFile;
+        if (string.IsNullOrEmpty(name))
+            name = "list-general.txt";
 
-        var fileName = Path.GetFileName(filePath);
-        var backupPath = Path.Combine(ModScanner.BackupRoot, fileName);
-
-        if (!File.Exists(backupPath))
-            File.Copy(filePath, backupPath, overwrite: false);
-    }
-
-    private static (bool Success, string? Error) RestoreFromBackup(string filePath)
-    {
-        var fileName = Path.GetFileName(filePath);
-        var backupPath = Path.Combine(ModScanner.BackupRoot, fileName);
-
-        if (!File.Exists(backupPath))
-            return (false, "Резервная копия не найдена");
-
-        File.Copy(backupPath, filePath, overwrite: true);
-        return (true, null);
+        return Path.Combine(ZapretDir, "lists", name);
     }
 
     /// <summary>

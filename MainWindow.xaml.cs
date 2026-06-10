@@ -917,6 +917,21 @@ public partial class MainWindow : Window
         var activeLists = _settings.ActiveListMods ?? [];
         _allMods = ModScanner.ScanAll(activeStrategy, activeLists);
         RefreshModsLists();
+        SyncActiveStrategyMods();
+    }
+
+    private void SyncActiveStrategyMods()
+    {
+        if (string.IsNullOrEmpty(_settings.ZapretPath)) return;
+
+        ZapretConfigService.RemoveAllModConfigs();
+
+        foreach (var mod in _allMods.Where(m => m.Type == ModType.Strategy && m.IsActive))
+        {
+            var dirName = ModScanner.GetModDirName(mod);
+            ZapretConfigService.InstallModBat(_settings.ZapretPath, mod.FolderPath, dirName);
+            ZapretConfigService.InjectModConfig(_settings.ZapretPath, mod.Name, dirName);
+        }
     }
 
     private void RefreshModsLists()
@@ -1093,6 +1108,13 @@ public partial class MainWindow : Window
             }
         }
 
+        // при активации/деактивации листа — сразу применяем все листы
+        if (mod.Type == ModType.List)
+        {
+            var allLists = _allMods.Where(m => m.Type == ModType.List).ToList();
+            ModActivator.ApplyListMods(allLists);
+        }
+
         if (ModsMyModsScreen.Visibility == Visibility.Visible)
             RefreshMyMods();
         else
@@ -1227,8 +1249,22 @@ public partial class MainWindow : Window
 
         if (dialog.ShowDialog() == true && dialog.CreatedEntry is not null)
         {
-            _allMods.Add(dialog.CreatedEntry);
+            var created = dialog.CreatedEntry;
+            _allMods.Add(created);
             SaveModsSettings();
+
+            // для листа — сразу активируем и применяем домены в целевой файл
+            if (created.Type == ModType.List)
+            {
+                created.IsActive = true;
+                var dirName = ModScanner.GetModDirName(created);
+                if (!_settings.ActiveListMods.Contains(dirName))
+                    _settings.ActiveListMods.Add(dirName);
+                SaveModsSettings();
+                var allLists = _allMods.Where(m => m.Type == ModType.List).ToList();
+                ModActivator.ApplyListMods(allLists);
+            }
+
             RefreshModsLists();
             if (ModsMyModsScreen.Visibility == Visibility.Visible)
                 RefreshMyMods();
@@ -1310,11 +1346,9 @@ public partial class MainWindow : Window
 
             if (!_isStrategyTab)
             {
-                var activeLists = _allMods
-                    .Where(m => m.Type == ModType.List && m.IsActive)
-                    .ToList();
+                var allLists = _allMods.Where(m => m.Type == ModType.List).ToList();
 
-                var (success, error) = ModActivator.ApplyListMods(activeLists);
+                var (success, error) = ModActivator.ApplyListMods(allLists);
                 if (!success)
                     ShowModsError(error ?? "Ошибка применения");
                 else
@@ -1336,12 +1370,8 @@ public partial class MainWindow : Window
         {
             if (!ok) return;
 
-            var activeLists = _allMods
-                .Where(m => m.Type == ModType.List && m.IsActive)
-                .ToList();
-
-            if (activeLists.Count > 0)
-                ModActivator.ApplyListMods(activeLists);
+            var allLists = _allMods.Where(m => m.Type == ModType.List).ToList();
+            ModActivator.ApplyListMods(allLists);
         }, confirmText: "Применить", confirmIsDestructive: false);
     }
 
@@ -1741,27 +1771,19 @@ public partial class MainWindow : Window
                     var editedMod = _allMods.FirstOrDefault(m =>
                         _modsEditorFilePath.StartsWith(m.FolderPath, StringComparison.OrdinalIgnoreCase));
 
-                    if (editedMod is not null && editedMod.IsActive)
+                    if (editedMod is not null && editedMod.Type == ModType.List)
                     {
-                        if (editedMod.Type == ModType.Strategy && !string.IsNullOrEmpty(_settings.ZapretPath))
-                        {
-                            var dirName = ModScanner.GetModDirName(editedMod);
-                            ZapretConfigService.InstallModBat(_settings.ZapretPath, editedMod.FolderPath, dirName);
-                            ZapretConfigService.InjectModConfig(_settings.ZapretPath, editedMod.Name, dirName);
-                        }
-                        else if (editedMod.Type == ModType.List)
-                        {
-                            var activeLists = _allMods.Where(m => m.Type == ModType.List && m.IsActive).ToList();
-                            var (success, error) = ModActivator.ApplyListMods(activeLists);
-                            if (!success)
-                                ModsStatusText.Text = $"⚠️ Сохранено, но ошибка применения: {error}";
-                        }
+                        var allLists = _allMods.Where(m => m.Type == ModType.List).ToList();
+                        var (success, error) = ModActivator.ApplyListMods(allLists);
+                        if (!success)
+                            ModsStatusText.Text = $"⚠️ Сохранено, но ошибка применения: {error}";
                     }
 
                     // пересканировать моды с диска и обновить UI
                     var strategyNames = _settings.ActiveStrategyMods ?? [];
                     var listNames = _settings.ActiveListMods ?? [];
                     _allMods = ModScanner.ScanAll(strategyNames, listNames);
+                    SyncActiveStrategyMods();
                     RefreshModsLists();
                     if (ModsMyModsScreen.Visibility == Visibility.Visible)
                         RefreshMyMods();
@@ -2011,11 +2033,8 @@ public partial class MainWindow : Window
         {
             if (!ok) return;
 
-            var activeLists = _allMods
-                .Where(m => m.Type == ModType.List && m.IsActive)
-                .ToList();
-
-            var (success, error) = ModActivator.ApplyListMods(activeLists);
+            var allLists = _allMods.Where(m => m.Type == ModType.List).ToList();
+            var (success, error) = ModActivator.ApplyListMods(allLists);
             if (!success)
             {
                 ListsStatusText.Text = $"❌ {error ?? "Ошибка применения"}";

@@ -930,16 +930,29 @@ public class ZapretConfigService
 
         cache.ValidConfigs ??= [];
         cache.PartialConfigs ??= [];
-        cache.ValidConfigs.RemoveAll(c => c.IsFromMod);
-        cache.PartialConfigs.RemoveAll(c => c.IsFromMod);
+
+        var batName = GetModBatName(modFolderName);
+        cache.ValidConfigs.RemoveAll(c => c.Name == batName);
+        cache.PartialConfigs.RemoveAll(c => c.Name == batName);
 
         cache.ValidConfigs.Insert(0, new ZapretConfig
         {
-            Name = GetModBatName(modFolderName),
+            Name = batName,
             IsValid = true,
             IsFromMod = true,
             ModName = modName
         });
+
+        SaveCache(cache);
+    }
+
+    public static void RemoveAllModConfigs()
+    {
+        var cache = LoadCache();
+        if (cache is null) return;
+
+        cache.ValidConfigs?.RemoveAll(c => c.IsFromMod);
+        cache.PartialConfigs?.RemoveAll(c => c.IsFromMod);
 
         SaveCache(cache);
     }
@@ -950,8 +963,8 @@ public class ZapretConfigService
         if (cache is null) return;
 
         var batName = GetModBatName(modFolderName);
-        cache.ValidConfigs?.RemoveAll(c => c.IsFromMod);
-        cache.PartialConfigs?.RemoveAll(c => c.IsFromMod);
+        cache.ValidConfigs?.RemoveAll(c => c.Name == batName);
+        cache.PartialConfigs?.RemoveAll(c => c.Name == batName);
 
         if (cache.CurrentConfig == batName)
             cache.CurrentConfig = null;

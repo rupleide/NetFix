@@ -32,7 +32,8 @@ public static class ModPackager
             Description: mod.Description,
             Type: mod.Type.ToString().ToLowerInvariant(),
             RequiredBuild: mod.RequiredBuild ?? "",
-            SourceFileName: mod.SourceFileName
+            SourceFileName: mod.SourceFileName,
+            TargetFile: mod.TargetFile
         );
 
         var metaJson = JsonSerializer.Serialize(meta, JsonOpts);
@@ -142,7 +143,8 @@ public static class ModPackager
             Type: modType,
             FolderPath: modDir,
             RequiredBuild: string.IsNullOrEmpty(meta.RequiredBuild) ? null : meta.RequiredBuild,
-            SourceFileName: meta.SourceFileName
+            SourceFileName: meta.SourceFileName,
+            TargetFile: meta.TargetFile
         )
         {
             IsActive = activeNames.Contains(dirName),
@@ -154,7 +156,8 @@ public static class ModPackager
     public static ModEntry CreateNewMod(
         string name, string author, string version, string description, ModType type,
         string? batSourcePath, string? listSourcePath, string? listContent,
-        List<string> activeStrategyMods, List<string> activeListMods)
+        List<string> activeStrategyMods, List<string> activeListMods,
+        string? targetFile = null)
     {
         var dirName = SanitizeFileName(name);
         var targetDir = type switch
@@ -181,7 +184,8 @@ public static class ModPackager
             Description: description,
             Type: type.ToString().ToLowerInvariant(),
             RequiredBuild: "",
-            SourceFileName: sourceFileName
+            SourceFileName: sourceFileName,
+            TargetFile: targetFile
         );
 
         var metaJson = JsonSerializer.Serialize(meta, JsonOpts);
@@ -190,21 +194,12 @@ public static class ModPackager
         if (type == ModType.Strategy && batSourcePath is not null && File.Exists(batSourcePath))
             File.Copy(batSourcePath, Path.Combine(modDir, "strategy.bat"), overwrite: true);
 
-        if (type == ModType.List)
+        // list.txt хранит ТОЛЬКО домены пользователя из текстового поля
+        // выбранный файл нужен только для определения target (куда добавлять)
+        if (type == ModType.List && !string.IsNullOrEmpty(listContent))
         {
             var listFile = Path.Combine(modDir, "list.txt");
-
-            if (listSourcePath is not null && File.Exists(listSourcePath))
-            {
-                File.Copy(listSourcePath, listFile, overwrite: true);
-
-                if (!string.IsNullOrEmpty(listContent))
-                    File.AppendAllText(listFile, "\n" + listContent);
-            }
-            else if (!string.IsNullOrEmpty(listContent))
-            {
-                File.WriteAllText(listFile, listContent);
-            }
+            File.WriteAllText(listFile, listContent);
         }
 
         var activeNames = type == ModType.Strategy ? activeStrategyMods : activeListMods;
@@ -217,7 +212,8 @@ public static class ModPackager
             Type: type,
             FolderPath: modDir,
             RequiredBuild: null,
-            SourceFileName: sourceFileName
+            SourceFileName: sourceFileName,
+            TargetFile: targetFile
         )
         {
             IsActive = activeNames.Contains(dirName),

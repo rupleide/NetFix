@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Linq;
+using NetFix.Services.Mods;
 
 namespace NetFix.Services;
 
