@@ -5150,6 +5150,18 @@ public partial class MainWindow : Window
                 PlaySuccessRing();
 
                 UpdateActiveApps();
+
+                if ((_settings.ActiveStrategyMods is { Count: > 0 }) || (_settings.ActiveListMods is { Count: > 0 }))
+                {
+                    AppendLog("Переустанавливаю активные моды...", "info");
+                    RefreshMods();
+
+                    var listMods = _allMods.Where(m => m.Type == ModType.List).ToList();
+                    if (listMods.Count > 0)
+                        ModActivator.ApplyListMods(listMods);
+
+                    AppendLog("✓ Моды применены к обновлённым компонентам", "ok");
+                }
             }
             else
             {
