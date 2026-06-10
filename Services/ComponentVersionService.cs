@@ -78,7 +78,7 @@ public static class ComponentVersionService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Ошибка проверки версий: {ex.Message}");
+            // ignore
             return (false, "Не удалось проверить версии");
         }
     }

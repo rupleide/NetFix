@@ -496,9 +496,6 @@ public partial class ZapretConfigWindow : Window
         {
             if (_cache != null && !string.IsNullOrEmpty(_cache.CurrentConfig))
             {
-                Console.WriteLine($"[ZapretConfigWindow] Applying config: {_cache.CurrentConfig}");
-                Console.WriteLine($"[ZapretConfigWindow] Zapret path: {_zapretPath}");
-
                 ApplyConfigProgress.Visibility = Visibility.Visible;
 
                 SecondaryBtn.IsEnabled = false;
@@ -507,8 +504,6 @@ public partial class ZapretConfigWindow : Window
                 SecondaryBtn.Content = "Применение...";
 
                 bool success = await ZapretConfigService.ApplyConfigAsync(_zapretPath, _cache.CurrentConfig);
-
-                Console.WriteLine($"[ZapretConfigWindow] ApplyConfigAsync result: {success}");
 
                 SecondaryBtn.IsEnabled = true;
                 PrimaryBtn.IsEnabled = true;

@@ -548,68 +548,46 @@ public class ZapretConfigService
     {
         try
         {
-            Console.WriteLine($"[ApplyConfig] Starting with zapretPath: {zapretPath}, configName: {configName}");
-
             var zapretDir = Path.GetDirectoryName(zapretPath);
             if (string.IsNullOrEmpty(zapretDir))
             {
-                Console.WriteLine("[ApplyConfig] ERROR: zapretDir is null or empty");
                 return false;
             }
-            Console.WriteLine($"[ApplyConfig] zapretDir: {zapretDir}");
 
             var configPath = Path.Combine(zapretDir, configName);
             if (!File.Exists(configPath))
             {
-                Console.WriteLine($"[ApplyConfig] ERROR: Config file not found: {configPath}");
                 return false;
             }
-            Console.WriteLine($"[ApplyConfig] configPath: {configPath}");
 
             var binPath = Path.Combine(zapretDir, "bin");
             var winwsExe = Path.Combine(binPath, "winws.exe");
             if (!File.Exists(winwsExe))
             {
-                Console.WriteLine($"[ApplyConfig] ERROR: winws.exe not found: {winwsExe}");
                 return false;
             }
-            Console.WriteLine($"[ApplyConfig] winwsExe: {winwsExe}");
 
-            Console.WriteLine("[ApplyConfig] Parsing config args...");
             var args = await ParseConfigArgsAsync(configPath, zapretDir, binPath);
             if (string.IsNullOrEmpty(args))
             {
-                Console.WriteLine("[ApplyConfig] ERROR: Failed to parse args or args are empty");
                 return false;
             }
-            Console.WriteLine($"[ApplyConfig] Parsed args: {args}");
 
-            Console.WriteLine("[ApplyConfig] Stopping and removing old service...");
             await StopAndRemoveServiceAsync("zapret");
 
-            Console.WriteLine("[ApplyConfig] Enabling TCP timestamps...");
             EnableTcpTimestamps();
 
-            Console.WriteLine("[ApplyConfig] Creating service...");
             var success = await CreateServiceAsync("zapret", winwsExe, args, configName);
 
             if (success)
             {
-                Console.WriteLine("[ApplyConfig] Service created successfully, starting...");
                 await StartServiceAsync("zapret");
-                Console.WriteLine("[ApplyConfig] Service started successfully");
-            }
-            else
-            {
-                Console.WriteLine("[ApplyConfig] ERROR: Failed to create service");
             }
 
             return success;
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"[ApplyConfig] EXCEPTION: {ex.Message}");
-            Console.WriteLine($"[ApplyConfig] StackTrace: {ex.StackTrace}");
             return false;
         }
     }
@@ -618,9 +596,7 @@ public class ZapretConfigService
     {
         try
         {
-            Console.WriteLine($"[ParseConfigArgs] Reading file: {configPath}");
             var lines = await File.ReadAllLinesAsync(configPath);
-            Console.WriteLine($"[ParseConfigArgs] Read {lines.Length} lines");
 
             var listsPath = Path.Combine(zapretDir, "lists");
             var fullText = "";
@@ -632,7 +608,6 @@ public class ZapretConfigService
 
                 if (trimmed.Contains("winws.exe"))
                 {
-                    Console.WriteLine($"[ParseConfigArgs] Found winws.exe in line: {trimmed}");
                     capture = true;
                     var idx = trimmed.IndexOf("winws.exe");
                     if (idx >= 0)
@@ -661,12 +636,10 @@ public class ZapretConfigService
 
             fullText = System.Text.RegularExpressions.Regex.Replace(fullText, @"\s+", " ").Trim();
 
-            Console.WriteLine($"[ParseConfigArgs] Final args: {fullText}");
             return fullText;
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"[ParseConfigArgs] EXCEPTION: {ex.Message}");
             return "";
         }
     }
@@ -784,10 +757,6 @@ public class ZapretConfigService
     {
         try
         {
-            Console.WriteLine($"[CreateService] Creating service '{serviceName}'");
-            Console.WriteLine($"[CreateService] exePath: {exePath}");
-            Console.WriteLine($"[CreateService] args: {args}");
-
             var binPathValue = $"\"{exePath}\" {args}";
 
             var createPsi = new ProcessStartInfo
@@ -800,8 +769,6 @@ public class ZapretConfigService
                 RedirectStandardError = true
             };
 
-            Console.WriteLine($"[CreateService] Command: sc {createPsi.Arguments}");
-
             using (var createProc = Process.Start(createPsi))
             {
                 if (createProc != null)
@@ -810,15 +777,10 @@ public class ZapretConfigService
                     var error = await createProc.StandardError.ReadToEndAsync();
                     await createProc.WaitForExitAsync();
 
-                    Console.WriteLine($"[CreateService] Exit code: {createProc.ExitCode}");
-                    if (!string.IsNullOrEmpty(output)) Console.WriteLine($"[CreateService] Output: {output}");
-                    if (!string.IsNullOrEmpty(error)) Console.WriteLine($"[CreateService] Error: {error}");
-
                     if (createProc.ExitCode != 0) return false;
                 }
             }
 
-            Console.WriteLine("[CreateService] Setting description...");
             var descPsi = new ProcessStartInfo
             {
                 FileName = "sc",
@@ -837,7 +799,6 @@ public class ZapretConfigService
                 }
             }
 
-            Console.WriteLine("[CreateService] Saving config name to registry...");
             var regPsi = new ProcessStartInfo
             {
                 FileName = "reg",
@@ -856,12 +817,10 @@ public class ZapretConfigService
                 }
             }
 
-            Console.WriteLine("[CreateService] Service created successfully");
             return true;
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"[CreateService] EXCEPTION: {ex.Message}");
             return false;
         }
     }
@@ -870,8 +829,6 @@ public class ZapretConfigService
     {
         try
         {
-            Console.WriteLine($"[StartService] Starting service '{serviceName}'...");
-
             var startPsi = new ProcessStartInfo
             {
                 FileName = "sc",
@@ -888,16 +845,9 @@ public class ZapretConfigService
                 var output = await startProc.StandardOutput.ReadToEndAsync();
                 var error = await startProc.StandardError.ReadToEndAsync();
                 await startProc.WaitForExitAsync();
-
-                Console.WriteLine($"[StartService] Exit code: {startProc.ExitCode}");
-                if (!string.IsNullOrEmpty(output)) Console.WriteLine($"[StartService] Output: {output}");
-                if (!string.IsNullOrEmpty(error)) Console.WriteLine($"[StartService] Error: {error}");
             }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[StartService] EXCEPTION: {ex.Message}");
-        }
+        catch { }
     }
 
     public static string GetModBatName(string modFolderName)

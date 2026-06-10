@@ -518,7 +518,7 @@ public static class AutoDownloadService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Ошибка получения информации о релизе: {ex.Message}");
+            // ignore
             return null;
         }
     }

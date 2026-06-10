@@ -658,14 +658,11 @@ public partial class MainWindow : Window
 
     private async void ZapretToggle_Click(object s, RoutedEventArgs e)
     {
-        Console.WriteLine("[MainWindow] ZapretToggle_Click called");
-
         ZapretToggleProgress.Visibility = Visibility.Visible;
 
         try
         {
             var st = DiagnosticsEngine.CheckAppStatus();
-            Console.WriteLine($"[MainWindow] ZapretRunning: {st.ZapretRunning}");
 
             if (st.ZapretRunning)
             {
@@ -811,8 +808,6 @@ public partial class MainWindow : Window
 
     private async void SelectConfigBtn_Click(object s, RoutedEventArgs e)
     {
-        Console.WriteLine("[MainWindow] SelectConfigBtn_Click started");
-
         if (string.IsNullOrEmpty(_settings.ZapretPath) || !File.Exists(_settings.ZapretPath))
             return;
 
@@ -834,28 +829,23 @@ public partial class MainWindow : Window
             return;
         }
 
-        Console.WriteLine("[MainWindow] Opening config window");
         ShowConfigWindow(testMode: false, onClosed: async (w) =>
         {
-            Console.WriteLine("[MainWindow] Config window closed");
             UpdateSelectedConfigDisplay();
 
             if (w.ConfigWasApplied)
             {
-                Console.WriteLine("[MainWindow] Config was applied, checking if service needs to be started");
                 var status = DiagnosticsEngine.CheckAppStatus();
                 if (!status.ZapretRunning)
                 {
-                    Console.WriteLine("[MainWindow] Zapret not running, starting service");
                     ZapretToggle_Click(this, new RoutedEventArgs());
                 }
                 else
                 {
-                    Console.WriteLine("[MainWindow] Zapret already running, skipping start");
+
                 }
             }
 
-            Console.WriteLine("[MainWindow] SelectConfigBtn_Click finished");
         });
     }
 
@@ -2528,8 +2518,6 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Ошибка обновления статуса версий: {ex.Message}");
-
             VersionStatusIcon.Data = Geometry.Parse("M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z");
             VersionStatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
             VersionStatusTitle.Text = "Не удалось проверить";
@@ -2767,13 +2755,10 @@ public partial class MainWindow : Window
                             if (!string.IsNullOrEmpty(latestVersion))
                             {
                                 File.WriteAllText(versionFile, latestVersion);
-                                Console.WriteLine($"[InitVersionFiles] Создан файл версии Zapret: {latestVersion}");
+
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"[InitVersionFiles] Не удалось создать файл версии Zapret: {ex.Message}");
-                        }
+                        catch { }
                     }
                 }
             }
@@ -2811,21 +2796,15 @@ public partial class MainWindow : Window
                             if (!string.IsNullOrEmpty(version))
                             {
                                 File.WriteAllText(versionFile, version);
-                                Console.WriteLine($"[InitVersionFiles] Создан файл версии TgWsProxy: {version}");
+
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"[InitVersionFiles] Не удалось создать файл версии TgWsProxy: {ex.Message}");
-                        }
+                        catch { }
                     }
                 }
             }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[InitVersionFiles] Общая ошибка: {ex.Message}");
-        }
+        catch { }
     }
 
     /// <summary>
@@ -2835,8 +2814,6 @@ public partial class MainWindow : Window
     {
         StopLongCheckTimer();
 
-        Console.WriteLine("[LongCheckTimer] Создаем таймер на 10 секунд");
-
         _longCheckTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromSeconds(10)
@@ -2844,22 +2821,19 @@ public partial class MainWindow : Window
 
         _longCheckTimer.Tick += (s, e) =>
         {
-            Console.WriteLine($"[LongCheckTimer] Таймер сработал! _checkInProgress={_checkInProgress}, ShowLongCheckDialog={_settings.ShowLongCheckDialog}");
             StopLongCheckTimer();
 
             if (_checkInProgress && _settings.ShowLongCheckDialog)
             {
-                Console.WriteLine("[LongCheckTimer] Показываем диалог");
                 ShowLongCheckDialog();
             }
             else
             {
-                Console.WriteLine("[LongCheckTimer] Диалог не показан");
+
             }
         };
 
         _longCheckTimer.Start();
-        Console.WriteLine("[LongCheckTimer] Таймер запущен");
     }
 
     /// <summary>
@@ -2869,7 +2843,6 @@ public partial class MainWindow : Window
     {
         if (_longCheckTimer != null)
         {
-            Console.WriteLine("[LongCheckTimer] Останавливаем таймер");
             _longCheckTimer.Stop();
             _longCheckTimer = null;
         }
@@ -3336,6 +3309,7 @@ public partial class MainWindow : Window
         if (_forceClose)
         {
             _discord.Dispose();
+            _ping.Dispose();
             _trayIcon.Visible = false;
             _trayIcon.Dispose();
             base.OnClosing(e);
@@ -4832,20 +4806,15 @@ public partial class MainWindow : Window
 
         _checkInProgress = true;
         StartLongCheckTimer();
-        Console.WriteLine("[FixBtn] Таймер запущен, _checkInProgress = true");
-
         var (needsUpdate, reason) = await ComponentVersionService.CheckIfUpdateNeededAsync(_settings);
 
         if (needsUpdate)
         {
-            Console.WriteLine($"[FixBtn] Обнаружена необходимость обновления: {reason}");
             StopLongCheckTimer();
             _checkInProgress = false;
             await RunAutoInstallAsync();
             return;
         }
-
-        Console.WriteLine("[FixBtn] Компоненты актуальны, запускаем стандартную логику");
 
         if (_settings.Mode == FixMode.Fast)
         {
@@ -4875,12 +4844,10 @@ public partial class MainWindow : Window
     {
         if (_autoFixRunning)
         {
-            Console.WriteLine("[RunAutoFix] Уже запущен, пропускаем");
             return;
         }
 
         _autoFixRunning = true;
-        Console.WriteLine("[RunAutoFix] Начинаем выполнение");
 
         FixBtn.IsEnabled = false;
         SetupProg.Value = 0;
@@ -4956,7 +4923,6 @@ public partial class MainWindow : Window
                 _checkInProgress = false;
 
                 _autoFixRunning = false;
-                Console.WriteLine("[RunAutoFix] Завершено");
 
                 if (success) {
                     SetupProg.Value = 100;
@@ -10853,6 +10819,11 @@ public partial class MainWindow : Window
         Task.Run(async () => await UpdatePingAsync());
     }
 
+    private static readonly HttpClient _speedHttp = new()
+    {
+        Timeout = TimeSpan.FromSeconds(16)
+    };
+
     private async Task RunSpeedTestAsync()
     {
         _dlSamples.Clear();
@@ -10868,32 +10839,33 @@ public partial class MainWindow : Window
         {
             var urls = Enumerable.Repeat("https://speedtest.selectel.ru/100MB", 4).ToArray();
             long totalDlBytes = 0;
-            var dlSw = System.Diagnostics.Stopwatch.StartNew();
             var dlCancel = new CancellationTokenSource(TimeSpan.FromSeconds(14));
 
+            var sampleCts = new CancellationTokenSource();
             long prevBytes = 0;
-            var sampleTimer = new System.Timers.Timer(1000);
-            sampleTimer.Elapsed += (s, e) =>
+            var sampleTask = Task.Run(async () =>
             {
-                long now = Interlocked.Read(ref totalDlBytes);
-                double instantMbps = (now - prevBytes) * 8.0 / 1_000_000.0;
-                prevBytes = now;
-                if (instantMbps > 0.1)
+                while (!sampleCts.Token.IsCancellationRequested)
                 {
-                    lock (_dlSamples) _dlSamples.Add(instantMbps);
-                    double speed = CalcFinalSpeed(_dlSamples);
-                    Dispatcher.Invoke(() => DownloadLbl.Text = $"{speed:0.0}");
+                    await Task.Delay(1000, sampleCts.Token);
+                    long now = Interlocked.Read(ref totalDlBytes);
+                    double instantMbps = (now - prevBytes) * 8.0 / 1_000_000.0;
+                    prevBytes = now;
+                    if (instantMbps > 0.1)
+                    {
+                        lock (_dlSamples) _dlSamples.Add(instantMbps);
+                        double speed = CalcFinalSpeed(_dlSamples);
+                        Dispatcher.Invoke(() => DownloadLbl.Text = $"{speed:0.0}");
+                    }
                 }
-            };
-            sampleTimer.Start();
+            });
 
             var dlTasks = urls.Select(async url =>
             {
                 try
                 {
-                    using var c = new HttpClient { Timeout = TimeSpan.FromSeconds(16) };
-                    c.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
-                    using var resp = await c.GetAsync(
+                    _speedHttp.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
+                    using var resp = await _speedHttp.GetAsync(
                         url + "?nocache=" + Guid.NewGuid(),
                         HttpCompletionOption.ResponseHeadersRead,
                         dlCancel.Token);
@@ -10904,71 +10876,77 @@ public partial class MainWindow : Window
                         Interlocked.Add(ref totalDlBytes, read);
                 }
                 catch (OperationCanceledException) { }
-                catch (Exception ex) { Console.WriteLine($"[DL] {ex.Message}"); }
+                catch { }
             }).ToArray();
 
             await Task.WhenAll(dlTasks);
-            sampleTimer.Stop();
-            sampleTimer.Dispose();
+            sampleCts.Cancel();
+            await sampleTask;
 
             _finalDownloadMbps = CalcFinalSpeed(_dlSamples);
             Dispatcher.Invoke(() => DownloadLbl.Text = _finalDownloadMbps > 0
                 ? $"{_finalDownloadMbps:0.0}" : "—");
         }
-        catch (Exception ex) { Console.WriteLine($"[DL FATAL] {ex.Message}"); }
+        catch { }
 
         try
         {
             long totalUlBytes = 0;
-            var ulSw = System.Diagnostics.Stopwatch.StartNew();
             var ulCancel = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
+            var ulSampleCts = new CancellationTokenSource();
             long prevUlBytes = 0;
-            var ulSampleTimer = new System.Timers.Timer(1000);
-            ulSampleTimer.Elapsed += (s, e) =>
+            var ulSampleTask = Task.Run(async () =>
             {
-                long now = Interlocked.Read(ref totalUlBytes);
-                double instantMbps = (now - prevUlBytes) * 8.0 / 1_000_000.0;
-                prevUlBytes = now;
-                if (instantMbps > 0.1)
+                while (!ulSampleCts.Token.IsCancellationRequested)
                 {
-                    lock (_ulSamples) _ulSamples.Add(instantMbps);
-                    double speed = CalcFinalSpeed(_ulSamples);
-                    Dispatcher.Invoke(() => UploadLbl.Text = $"{speed:0.0}");
+                    await Task.Delay(1000, ulSampleCts.Token);
+                    long now = Interlocked.Read(ref totalUlBytes);
+                    double instantMbps = (now - prevUlBytes) * 8.0 / 1_000_000.0;
+                    prevUlBytes = now;
+                    if (instantMbps > 0.1)
+                    {
+                        lock (_ulSamples) _ulSamples.Add(instantMbps);
+                        double speed = CalcFinalSpeed(_ulSamples);
+                        Dispatcher.Invoke(() => UploadLbl.Text = $"{speed:0.0}");
+                    }
                 }
-            };
-            ulSampleTimer.Start();
+            });
 
             var ulTasks = Enumerable.Range(0, 4).Select(async _ =>
             {
                 try
                 {
-                    using var c = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-                    c.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
-                    var data = new byte[20 * 1024 * 1024];
-                    Random.Shared.NextBytes(data);
-                    while (!ulCancel.Token.IsCancellationRequested)
+                    var pool = System.Buffers.ArrayPool<byte>.Shared;
+                    int size = 20 * 1024 * 1024;
+                    var data = pool.Rent(size);
+                    try
                     {
-                        try
+                        Random.Shared.NextBytes(data);
+                        while (!ulCancel.Token.IsCancellationRequested)
                         {
-                            var content = new ByteArrayContent(data);
-                            await c.PostAsync("https://httpbin.org/post", content, ulCancel.Token);
-                            Interlocked.Add(ref totalUlBytes, data.Length);
+                            try
+                            {
+                                var content = new ByteArrayContent(data, 0, size);
+                                await _speedHttp.PostAsync("https://httpbin.org/post", content, ulCancel.Token);
+                                Interlocked.Add(ref totalUlBytes, size);
+                            }
+                            catch (OperationCanceledException) { break; }
+                            catch { break; }
                         }
-                        catch (OperationCanceledException) { break; }
-                        catch { break; }
                     }
+                    finally { pool.Return(data); }
                 }
                 catch { }
             }).ToArray();
 
             await Task.WhenAll(ulTasks);
-            ulSampleTimer.Stop();
-            ulSampleTimer.Dispose();
+            ulSampleCts.Cancel();
+            await ulSampleTask;
 
             _finalUploadMbps = CalcFinalSpeed(_ulSamples);
         }
-        catch (Exception ex) { Console.WriteLine($"[UL FATAL] {ex.Message}"); }
+        catch { }
 
         _speedTestDone = true;
         Dispatcher.Invoke(() =>
@@ -10981,16 +10959,11 @@ public partial class MainWindow : Window
     private async void NetTimer_Tick(object? sender, EventArgs e)
     {
         var (rx, tx) = await Task.Run(GetNetworkBytes);
-        double dlNow = Math.Max(0, rx - _lastBytesReceived);
-        double ulNow = Math.Max(0, tx - _lastBytesSent);
         _lastBytesReceived = rx;
         _lastBytesSent = tx;
 
         if (_speedTestDone)
-        {
-            DownloadLbl.Text = $"{_finalDownloadMbps:0.0}";
-            UploadLbl.Text   = $"{_finalUploadMbps:0.0}";
-        }
+            _netTimer.Stop();
     }
 
     private static (long rx, long tx) GetNetworkBytes()
@@ -11018,11 +10991,12 @@ public partial class MainWindow : Window
         return mbps >= 1 ? $"{mbps:0.0} Мбит/с" : $"{mbps * 1000:0} Кбит/с";
     }
 
+    private readonly System.Net.NetworkInformation.Ping _ping = new();
+
     private async Task UpdatePingAsync()
     {
         try
         {
-            using var ping = new System.Net.NetworkInformation.Ping();
             long total = 0;
             int count = 0;
 
@@ -11030,8 +11004,7 @@ public partial class MainWindow : Window
             {
                 try
                 {
-                    var reply = await ping.SendPingAsync("1.1.1.1", 2000);
-                    Console.WriteLine($"[Ping] attempt {i}: {reply.Status} {reply.RoundtripTime}ms");
+                    var reply = await _ping.SendPingAsync("1.1.1.1", 2000);
                     if (reply.Status == IPStatus.Success)
                     {
                         total += reply.RoundtripTime;
@@ -11039,7 +11012,7 @@ public partial class MainWindow : Window
                     }
                     await Task.Delay(200);
                 }
-                catch (Exception ex) { Console.WriteLine($"[Ping] error: {ex.Message}"); }
+                catch { }
             }
 
             Dispatcher.Invoke(() =>
@@ -11062,7 +11035,7 @@ public partial class MainWindow : Window
                     : Color.FromRgb(0xf5, 0x9e, 0x0b));
             });
         }
-        catch (Exception ex) { Console.WriteLine($"[Ping] FATAL: {ex.Message}"); }
+        catch { }
     }
 
     private static double CalcFinalSpeed(List<double> samples)
