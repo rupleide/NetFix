@@ -230,6 +230,9 @@ public partial class TrayPopup : Window
             (Application.Current.MainWindow as MainWindow)?.ShowFromTray());
     }
 
-    private void ExitBtn_Click(object s, MouseButtonEventArgs e) =>
-        Application.Current.Shutdown();
+    private void ExitBtn_Click(object s, MouseButtonEventArgs e)
+    {
+        Close();
+        (Application.Current.MainWindow as MainWindow)?.ForceExit();
+    }
 }
