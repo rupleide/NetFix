@@ -19,16 +19,10 @@ public static class ModActivator
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine($"[ApplyListMods] total mods passed: {allListMods.Count}");
-            foreach (var m in allListMods)
-                System.Diagnostics.Debug.WriteLine($"[ApplyListMods] mod={m.Name} isActive={m.IsActive} targetFile={m.TargetFile} folder={m.FolderPath}");
-
             var byTarget = allListMods
                 .Where(m => m.Type == ModType.List)
                 .GroupBy(m => ResolveTargetFile(m.TargetFile))
                 .ToList();
-
-            System.Diagnostics.Debug.WriteLine($"[ApplyListMods] groups by target: {byTarget.Count}");
 
             if (byTarget.Count == 0)
                 return (true, null);
@@ -36,7 +30,6 @@ public static class ModActivator
             foreach (var group in byTarget)
             {
                 var targetPath = group.Key;
-                System.Diagnostics.Debug.WriteLine($"[ApplyListMods] group targetPath={targetPath}");
                 if (targetPath is null) continue;
 
                 // собираем домены всех листов (активных и нет)
@@ -45,12 +38,10 @@ public static class ModActivator
                 {
                     var dirName = ModScanner.GetModDirName(mod);
                     var listFile = ModScanner.FindListFile(mod);
-                    System.Diagnostics.Debug.WriteLine($"[ApplyListMods] mod={mod.Name} dirName={dirName} listFile={listFile} fileExists={listFile != null && File.Exists(listFile)}");
                     if (listFile != null && File.Exists(listFile))
-                        System.Diagnostics.Debug.WriteLine($"[ApplyListMods] list.txt raw: '{File.ReadAllText(listFile)}'");
+                    { /* bypassed */ }
 
                     var domains = ReadModDomains(mod);
-                    System.Diagnostics.Debug.WriteLine($"[ApplyListMods] domains read: {domains.Count} values=[{string.Join(",", domains)}]");
                     if (domains.Count > 0)
                         allModDomains[dirName] = domains;
                 }
@@ -77,21 +68,16 @@ public static class ModActivator
                 foreach (var mod in group.Where(m => m.IsActive))
                 {
                     var dirName = ModScanner.GetModDirName(mod);
-                    System.Diagnostics.Debug.WriteLine($"[ApplyListMods] active mod dirName={dirName} hasEntry={allModDomains.ContainsKey(dirName)}");
                     if (allModDomains.TryGetValue(dirName, out var domains))
                     {
                         foreach (var d in domains.OrderBy(d => d))
                         {
-                            System.Diagnostics.Debug.WriteLine($"[ApplyListMods] adding domain: {d}");
                             result.Add(d);
                         }
                     }
                 }
 
-                System.Diagnostics.Debug.WriteLine($"[ApplyListMods] writing {result.Count} lines to {targetPath}");
-                System.Diagnostics.Debug.WriteLine($"[ApplyListMods] result content:\n{string.Join("\n", result)}");
                 File.WriteAllLines(targetPath, result);
-                System.Diagnostics.Debug.WriteLine($"[ApplyListMods] write complete. File exists={File.Exists(targetPath)}");
             }
 
             return (true, null);
