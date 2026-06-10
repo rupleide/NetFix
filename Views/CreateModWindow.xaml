@@ -347,7 +347,7 @@
                                 CornerRadius="8"
                                 Padding="12"
                                 Margin="0,0,0,4">
-        <Grid SizeChanged="CreateWindowGrid_SizeChanged">
+        <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
