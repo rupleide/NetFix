@@ -1079,6 +1079,20 @@ public partial class MainWindow : Window
 
         SaveModsSettings();
 
+        if (mod.Type == ModType.Strategy && !string.IsNullOrEmpty(_settings.ZapretPath))
+        {
+            if (activate)
+            {
+                ZapretConfigService.InstallModBat(_settings.ZapretPath, mod.FolderPath, dirName);
+                ZapretConfigService.InjectModConfig(_settings.ZapretPath, mod.Name, dirName);
+            }
+            else
+            {
+                ZapretConfigService.UninstallModBat(_settings.ZapretPath, dirName);
+                ZapretConfigService.RemoveModConfig(_settings.ZapretPath, dirName);
+            }
+        }
+
         if (ModsMyModsScreen.Visibility == Visibility.Visible)
             RefreshMyMods();
         else
@@ -1098,7 +1112,6 @@ public partial class MainWindow : Window
 
     private void MyModsScrollViewer_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        RecalcMyModsColumns();
     }
 
     private void RecalcMyModsColumns()
@@ -1724,7 +1737,36 @@ public partial class MainWindow : Window
                 try
                 {
                     File.WriteAllText(_modsEditorFilePath, _editorTextBox.Text, Encoding.UTF8);
-                    ModsStatusText.Text = $"✅ Сохранено: {System.IO.Path.GetFileName(_modsEditorFilePath)}";
+
+                    var editedMod = _allMods.FirstOrDefault(m =>
+                        _modsEditorFilePath.StartsWith(m.FolderPath, StringComparison.OrdinalIgnoreCase));
+
+                    if (editedMod is not null && editedMod.IsActive)
+                    {
+                        if (editedMod.Type == ModType.Strategy && !string.IsNullOrEmpty(_settings.ZapretPath))
+                        {
+                            var dirName = ModScanner.GetModDirName(editedMod);
+                            ZapretConfigService.InstallModBat(_settings.ZapretPath, editedMod.FolderPath, dirName);
+                            ZapretConfigService.InjectModConfig(_settings.ZapretPath, editedMod.Name, dirName);
+                        }
+                        else if (editedMod.Type == ModType.List)
+                        {
+                            var activeLists = _allMods.Where(m => m.Type == ModType.List && m.IsActive).ToList();
+                            var (success, error) = ModActivator.ApplyListMods(activeLists);
+                            if (!success)
+                                ModsStatusText.Text = $"⚠️ Сохранено, но ошибка применения: {error}";
+                        }
+                    }
+
+                    // пересканировать моды с диска и обновить UI
+                    var strategyNames = _settings.ActiveStrategyMods ?? [];
+                    var listNames = _settings.ActiveListMods ?? [];
+                    _allMods = ModScanner.ScanAll(strategyNames, listNames);
+                    RefreshModsLists();
+                    if (ModsMyModsScreen.Visibility == Visibility.Visible)
+                        RefreshMyMods();
+
+                    ModsStatusText.Text = $"✅ Сохранено и применено: {System.IO.Path.GetFileName(_modsEditorFilePath)}";
                     ModsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
                 }
                 catch (Exception ex)

@@ -899,6 +899,65 @@ public class ZapretConfigService
             Console.WriteLine($"[StartService] EXCEPTION: {ex.Message}");
         }
     }
+
+    public static string GetModBatName(string modFolderName)
+        => $"mod_{modFolderName}.bat";
+
+    public static void InstallModBat(string zapretServicePath, string modFolderPath, string modFolderName)
+    {
+        var zapretDir = Path.GetDirectoryName(zapretServicePath) ?? @"C:\Zapret";
+        var src = Path.Combine(modFolderPath, "strategy.bat");
+        var dst = Path.Combine(zapretDir, GetModBatName(modFolderName));
+        if (File.Exists(src))
+            File.Copy(src, dst, overwrite: true);
+    }
+
+    public static void UninstallModBat(string zapretServicePath, string modFolderName)
+    {
+        var zapretDir = Path.GetDirectoryName(zapretServicePath) ?? @"C:\Zapret";
+        var dst = Path.Combine(zapretDir, GetModBatName(modFolderName));
+        if (File.Exists(dst))
+            File.Delete(dst);
+    }
+
+    public static void InjectModConfig(string zapretServicePath, string modName, string modFolderName)
+    {
+        var cache = LoadCache() ?? new ZapretConfigCache
+        {
+            ValidConfigs = [],
+            PartialConfigs = [],
+        };
+
+        cache.ValidConfigs ??= [];
+        cache.PartialConfigs ??= [];
+        cache.ValidConfigs.RemoveAll(c => c.IsFromMod);
+        cache.PartialConfigs.RemoveAll(c => c.IsFromMod);
+
+        cache.ValidConfigs.Insert(0, new ZapretConfig
+        {
+            Name = GetModBatName(modFolderName),
+            IsValid = true,
+            IsFromMod = true,
+            ModName = modName
+        });
+
+        SaveCache(cache);
+    }
+
+    public static void RemoveModConfig(string zapretServicePath, string modFolderName)
+    {
+        var cache = LoadCache();
+        if (cache is null) return;
+
+        var batName = GetModBatName(modFolderName);
+        cache.ValidConfigs?.RemoveAll(c => c.IsFromMod);
+        cache.PartialConfigs?.RemoveAll(c => c.IsFromMod);
+
+        if (cache.CurrentConfig == batName)
+            cache.CurrentConfig = null;
+
+        SaveCache(cache);
+    }
 }
 
 public class NaturalStringComparer : IComparer<string>
