@@ -19,7 +19,7 @@ public class DiscordRpcService : IDisposable
         if (!_enabled) return;
         _client = new DiscordRpcClient(APP_ID);
         _client.Logger = new ConsoleLogger { Level = LogLevel.Warning };
-        _client.OnReady += (sender, e) => Console.WriteLine($"[Discord] Connected: {e.User.Username}");
+        _client.OnReady += (sender, e) => { };
         _client.Initialize();
         SetMainMenu();
     }
@@ -69,7 +69,6 @@ public class DiscordRpcService : IDisposable
         if (!_enabled) return;
         if (IsPriorityMode && !priority)
         {
-            Console.WriteLine($"[Discord] Skipped non-priority update: {details}");
             return;
         }
 
