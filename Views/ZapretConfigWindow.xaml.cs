@@ -524,12 +524,33 @@ public partial class ZapretConfigWindow : Window
                 }
                 else
                 {
+                    bool isModConfig = _cache is not null && (
+                        _cache.ValidConfigs?.Any(c => c.Name == _cache.CurrentConfig && c.IsFromMod) == true ||
+                        _cache.PartialConfigs?.Any(c => c.Name == _cache.CurrentConfig && c.IsFromMod) == true);
+
                     StatusPanel.Visibility = Visibility.Visible;
                     ConfigListScroll.Visibility = Visibility.Collapsed;
                     StatusIcon.Visibility = Visibility.Visible;
                     StatusIcon.Data = (Geometry)FindResource("WarningIcon");
                     StatusIcon.Fill = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
-                    StatusText.Text = "Не удалось применить конфиг. Проверьте:\n1. Запущено ли приложение от администратора\n2. Правильно ли указан путь к Zapret\n3. Логи в консоли для деталей";
+
+                    if (isModConfig)
+                    {
+                        StatusText.Text = "Не удалось применить конфиг.\n\n" +
+                                         "Скорее всего в вашем моде ошибка, либо он вообще не подходит для стратегии. " +
+                                         "Проверьте:\n" +
+                                         "1. Запущено ли приложение от администратора\n" +
+                                         "2. Корректность strategy.bat в редакторе\n" +
+                                         "3. Логи в консоли для деталей";
+                    }
+                    else
+                    {
+                        StatusText.Text = "Не удалось применить конфиг. Проверьте:\n" +
+                                         "1. Запущено ли приложение от администратора\n" +
+                                         "2. Правильно ли указан путь к Zapret\n" +
+                                         "3. Логи в консоли для деталей";
+                    }
+
                     SecondaryBtn.Content = "Закрыть";
                     PrimaryBtn.Visibility = Visibility.Collapsed;
                 }

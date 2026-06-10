@@ -13,7 +13,8 @@ public record ModEntry(
     ModType Type,
     string FolderPath,
     string? RequiredBuild,
-    string? SourceFileName = null
+    string? SourceFileName = null,
+    string? TargetFile = null
 )
 {
     public bool IsActive { get; set; } = false;
@@ -51,5 +52,6 @@ public record ModMeta(
     string Description,
     string Type,
     string RequiredBuild,
-    string? SourceFileName = null
+    string? SourceFileName = null,
+    string? TargetFile = null
 );

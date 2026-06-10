@@ -184,6 +184,11 @@ public partial class CreateModWindow : Window
                 listContent = DomainListImporter.ParseText(raw);
         }
 
+        // целевой файл — это файл выбранный в «Файл списка»
+        var targetFile = _modType == ModType.List && !string.IsNullOrEmpty(_selectedListFilePath)
+            ? Path.GetFileName(_selectedListFilePath)
+            : null;
+
         var entry = ModPackager.CreateNewMod(
             NameBox.Text.Trim(),
             AuthorBox.Text.Trim(),
@@ -194,7 +199,8 @@ public partial class CreateModWindow : Window
             _selectedListFilePath,
             listContent,
             activeStrategy,
-            activeLists
+            activeLists,
+            targetFile
         );
 
         CreatedEntry = entry;
