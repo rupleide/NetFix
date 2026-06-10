@@ -4280,6 +4280,7 @@ public partial class MainWindow : Window
         Task.Run(async () =>
         {
             bool ok = await DiagnosticsEngine.CheckInternetAsync();
+            if (_settings.ForceNetworkOk) ok = true;
             Dispatcher.Invoke(() =>
             {
                 if (ok)
@@ -4312,6 +4313,7 @@ public partial class MainWindow : Window
             var st = DiagnosticsEngine.CheckAppStatus();
             bool vpn = DetectVpn(out string _);
             bool netOk = await DiagnosticsEngine.CheckInternetAsync();
+            if (_settings.ForceNetworkOk) netOk = true;
 
             Dispatcher.Invoke(() =>
             {
@@ -5675,6 +5677,7 @@ public partial class MainWindow : Window
         if (VolumePercent != null)
             VolumePercent.Text = $"{(int)(_settings.GameVolume * 100)}%";
         RememberSizeCB.IsChecked = _settings.RememberWindowSize;
+        ForceNetOkCB.IsChecked = _settings.ForceNetworkOk;
         LoadKeyLabels();
     }
 
@@ -5689,6 +5692,7 @@ public partial class MainWindow : Window
         _settings.ShowGameOfferDialog  = ShowGameOfferCB.IsChecked == true;
         _settings.ShowLongCheckDialog  = ShowServiceReminderCB.IsChecked == true;
         _settings.RememberWindowSize = RememberSizeCB.IsChecked == true;
+        _settings.ForceNetworkOk = ForceNetOkCB.IsChecked == true;
         SettingsService.Save(_settings);
         SetAutostart(_settings.AutostartApp);
     }
