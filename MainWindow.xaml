@@ -2853,9 +2853,9 @@
                         </Border>
                      </DataTemplate>
                        <DataTemplate x:Key="MyModCardTplBig">
-                             <Border MinHeight="130" Margin="6" CornerRadius="12"
-                                     Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" 
-                                     BorderThickness="1">
+                              <Border Height="120" VerticalAlignment="Top" Margin="6" CornerRadius="12"
+                                      Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" 
+                                      BorderThickness="1">
                               <Border.Triggers>
                                   <EventTrigger RoutedEvent="Mouse.MouseEnter">
                                       <BeginStoryboard>
@@ -3929,13 +3929,13 @@
                           <Border Grid.Row="1" CornerRadius="8" Background="#30111113" BorderBrush="#22222a" BorderThickness="1"
                                            ClipToBounds="True">
                              <ScrollViewer VerticalScrollBarVisibility="Auto" SizeChanged="MyModsScrollViewer_SizeChanged">
-                                 <ItemsControl x:Name="MyModsList" ItemTemplate="{StaticResource MyModCardTplBig}">
-                                     <ItemsControl.ItemsPanel>
-                                         <ItemsPanelTemplate>
-                                             <UniformGrid Margin="6"/>
-                                         </ItemsPanelTemplate>
-                                     </ItemsControl.ItemsPanel>
-                                 </ItemsControl>
+                                  <ItemsControl x:Name="MyModsList" VerticalAlignment="Top" ItemTemplate="{StaticResource MyModCardTplBig}">
+                                      <ItemsControl.ItemsPanel>
+                                          <ItemsPanelTemplate>
+                                              <UniformGrid Columns="3" Margin="6"/>
+                                          </ItemsPanelTemplate>
+                                      </ItemsControl.ItemsPanel>
+                                  </ItemsControl>
                              </ScrollViewer>
                          </Border>
 

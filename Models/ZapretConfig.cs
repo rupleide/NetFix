@@ -12,6 +12,8 @@ public class ZapretConfig
     public int AveragePing { get; set; }
     public bool IsValid { get; set; }
     public bool IsPartiallyUsable => !IsValid && SuccessCount > 0;
+    public bool IsFromMod { get; set; } = false;
+    public string? ModName { get; set; } = null;
 }
 
 public class ServiceTestResult

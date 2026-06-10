@@ -792,6 +792,25 @@ public partial class ZapretConfigWindow : Window
             var left = new StackPanel();
 
             var nameRow = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal };
+
+            if (config.IsFromMod)
+            {
+                nameRow.Children.Add(new Border
+                {
+                    Background = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
+                    CornerRadius = new CornerRadius(4),
+                    Padding = new Thickness(4, 1, 4, 1),
+                    Margin = new Thickness(0, 0, 6, 0),
+                    Child = new TextBlock
+                    {
+                        Text = "МОД",
+                        Foreground = Brushes.Black,
+                        FontSize = 10,
+                        FontWeight = FontWeights.Bold
+                    }
+                });
+            }
+
             var nameText = new TextBlock
             {
                 Text = config.Name,
@@ -822,7 +841,9 @@ public partial class ZapretConfigWindow : Window
 
             var infoText = new TextBlock
             {
-                Text = $"Пинг: {config.AveragePing} мс  •  Тесты: {config.SuccessCount}/12" + (config.IsPartiallyUsable ? "  •  частично" : ""),
+                Text = config.IsFromMod
+                    ? config.ModName ?? "?"
+                    : $"Пинг: {config.AveragePing} мс  •  Тесты: {config.SuccessCount}/12" + (config.IsPartiallyUsable ? "  •  частично" : ""),
                 FontSize = 11,
                 Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58)),
                 Margin = new Thickness(0, 4, 0, 0)
