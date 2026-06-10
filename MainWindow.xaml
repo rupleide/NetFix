@@ -304,6 +304,11 @@
                                     </BeginStoryboard>
                                 </Trigger.ExitActions>
                             </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="track" Property="Background" Value="#2a2a2a"/>
+                                <Setter TargetName="thumb" Property="Fill" Value="#555555"/>
+                                <Setter Property="Foreground" Value="#555555"/>
+                            </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -4329,9 +4334,9 @@
                                 <CheckBox x:Name="AutoAppCB" Style="{StaticResource Toggle}"
                                           Content="NetFix в автозапуск Windows" Margin="0,0,0,10"
                                           Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
-                                <CheckBox x:Name="StartMinimizedCB" Style="{StaticResource Toggle}"
-                                          Content="NetFix в трей при запуске" Margin="0,0,0,20"
-                                          Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
+                                 <CheckBox x:Name="StartMinimizedCB" Style="{StaticResource Toggle}"
+                                           Content="NetFix в трей при запуске" Margin="0,0,0,10"
+                                           Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
                                 <Border Height="1" Background="#333333" Margin="0,0,0,16"/>
                                 <TextBlock Text="TgWsProxy" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
@@ -4400,8 +4405,31 @@
                                           Content="Предлагать поиграть при проверке" Margin="0,0,0,10"
                                           Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
                                 <CheckBox x:Name="ShowServiceReminderCB" Style="{StaticResource Toggle}"
-                                          Content="Напоминать про сервисы при проверке" Margin="0,0,0,20"
+                                          Content="Напоминать про сервисы при проверке" Margin="0,0,0,10"
                                           Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                                    <CheckBox x:Name="RememberSizeCB" Style="{StaticResource Toggle}"
+                                              Content="Запоминать размер окна"
+                                              Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
+                                    <Button x:Name="ResetWindowSizeBtn"
+                                            Width="28" Height="28" Padding="0" Margin="2,0,0,0"
+                                            Background="Transparent" BorderThickness="0"
+                                            Click="ResetWindowSizeBtn_Click" Foreground="#aaaaaa"
+                                            VerticalAlignment="Center" Cursor="Hand">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Grid Background="Transparent">
+                                                    <ContentPresenter Content="{TemplateBinding Content}"
+                                                                      HorizontalAlignment="Center"
+                                                                      VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                        <Path Width="14" Height="14" Stretch="Uniform"
+                                              Fill="#aaaaaa"
+                                              Data="M21,11c-0.6,0-1,0.4-1,1c0,2.9-1.5,5.5-4,6.9c-3.8,2.2-8.7,0.9-10.9-2.9C2.9,12.2,4.2,7.3,8,5.1c3.3-1.9,7.3-1.2,9.8,1.4h-2.4c-0.6,0-1,0.4-1,1s0.4,1,1,1h4.5c0.6,0,1-0.4,1-1V3c0-0.6-0.4-1-1-1s-1,0.4-1,1v1.8C17,3,14.6,2,12,2C6.5,2,2,6.5,2,12s4.5,10,10,10c5.5,0,10-4.5,10-10C22,11.4,21.6,11,21,11z"/>
+                                    </Button>
+                                </StackPanel>
                                 <Button Content="Проверить обновления" Style="{StaticResource OutlineBtn}"
                                         HorizontalAlignment="Stretch" Padding="12,8" Margin="0,0,0,20"
                                         WindowChrome.IsHitTestVisibleInChrome="True"

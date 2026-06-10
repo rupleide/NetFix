@@ -227,6 +227,7 @@ public partial class MainWindow : Window
     private bool _modsLoaded;
     private bool _strategyDirty;
     private bool _listsDirty;
+    private DispatcherTimer? _savePosTimer;
     private ModEntry? _dragMod;
     private bool _dragFromActive;
     private Point _dragStartPoint;
@@ -340,6 +341,33 @@ public partial class MainWindow : Window
         LoadSettingsToPanel();
         _settingsLoaded = true;
 
+        AutoAppCB.Checked += (_, _) =>
+        {
+            StartMinimizedCB.IsEnabled = true;
+        };
+        AutoAppCB.Unchecked += (_, _) =>
+        {
+            StartMinimizedCB.IsEnabled = false;
+            StartMinimizedCB.IsChecked = false;
+        };
+
+        if (_settings.RememberWindowSize)
+        {
+            if (!double.IsNaN(_settings.WindowWidth)) Width = _settings.WindowWidth;
+            if (!double.IsNaN(_settings.WindowHeight)) Height = _settings.WindowHeight;
+            if (!double.IsNaN(_settings.WindowLeft)) Left = _settings.WindowLeft;
+            if (!double.IsNaN(_settings.WindowTop)) Top = _settings.WindowTop;
+        }
+
+        _savePosTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        _savePosTimer.Tick += (_, _) =>
+        {
+            _savePosTimer.Stop();
+            SaveWindowPosition();
+        };
+        SizeChanged += (_, _) => { _savePosTimer?.Stop(); _savePosTimer?.Start(); };
+        LocationChanged += (_, _) => { _savePosTimer?.Stop(); _savePosTimer?.Start(); };
+
         if (!SettingsService.IsOnboarded)
             ShowOnboarding();
         else
@@ -379,7 +407,7 @@ public partial class MainWindow : Window
         SubscribeSmoothScroll(ListsAvailableList);
         SubscribeSmoothScroll(ListsActiveList);
 
-        if (_settings.StartMinimizedToTray)
+        if (_settings.StartMinimizedToTray && Environment.GetCommandLineArgs().Contains("--autostart"))
         {
             Opacity = 0;
             Show();
@@ -5535,6 +5563,7 @@ public partial class MainWindow : Window
         AutoTgWsCB.IsChecked    = _settings.AutostartTgWsProxy;
         AutoAppCB.IsChecked     = _settings.AutostartApp;
         StartMinimizedCB.IsChecked = _settings.StartMinimizedToTray;
+        StartMinimizedCB.IsEnabled = AutoAppCB.IsChecked == true;
         _settings.TgWsProxyCheckUpdates = TgWsProxySettingsService.GetCheckUpdates();
         TgWsCheckUpdatesCB.IsChecked    = _settings.TgWsProxyCheckUpdates;
         DiscordRpcCB.IsChecked      = _settings.DiscordRpcEnabled;
@@ -5549,6 +5578,7 @@ public partial class MainWindow : Window
         _previewPlayer.Volume = linear;
         if (VolumePercent != null)
             VolumePercent.Text = $"{(int)(_settings.GameVolume * 100)}%";
+        RememberSizeCB.IsChecked = _settings.RememberWindowSize;
         LoadKeyLabels();
     }
 
@@ -5562,8 +5592,37 @@ public partial class MainWindow : Window
         _settings.AutoUpdates      = AutoUpdatesCB.IsChecked == true;
         _settings.ShowGameOfferDialog  = ShowGameOfferCB.IsChecked == true;
         _settings.ShowLongCheckDialog  = ShowServiceReminderCB.IsChecked == true;
+        _settings.RememberWindowSize = RememberSizeCB.IsChecked == true;
         SettingsService.Save(_settings);
         SetAutostart(_settings.AutostartApp);
+    }
+
+    private void SaveWindowPosition()
+    {
+        if (!_settings.RememberWindowSize) return;
+        if (WindowState == WindowState.Normal)
+        {
+            _settings.WindowWidth = Width;
+            _settings.WindowHeight = Height;
+            _settings.WindowLeft = Left;
+            _settings.WindowTop = Top;
+            SettingsService.Save(_settings);
+        }
+    }
+
+    private void ResetWindowSizeBtn_Click(object sender, RoutedEventArgs e)
+    {
+        Width = 880;
+        Height = 680;
+        var screen = System.Windows.Forms.Screen.PrimaryScreen;
+        if (screen is not null)
+        {
+            var bounds = screen.WorkingArea;
+            Left = (bounds.Width - 880) / 2.0 + bounds.Left;
+            Top = (bounds.Height - 680) / 2.0 + bounds.Top;
+        }
+        if (_settings.RememberWindowSize)
+            SaveWindowPosition();
     }
 
     private void UpdateFixModeVisual(FixMode mode)
@@ -10602,32 +10661,17 @@ public partial class MainWindow : Window
     {
         try
         {
+            using var regKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
             if (enable)
             {
                 string path = Environment.ProcessPath;
-                string args = $"/Create /F /RL HIGHEST /SC ONLOGON /TN \"NetFix\" /TR \"\\\"{path}\\\"\"";
-                var proc = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = "schtasks",
-                    Arguments = args,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                });
-                proc?.WaitForExit();
+                regKey?.SetValue("NetFix", $"\"{path}\" --autostart");
             }
             else
             {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = "schtasks",
-                    Arguments = "/Delete /F /TN \"NetFix\"",
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                });
+                regKey?.DeleteValue("NetFix", false);
             }
-            using var regKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
-                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
-            regKey?.DeleteValue("NetFix", false);
         }
         catch (Exception ex)
         {
