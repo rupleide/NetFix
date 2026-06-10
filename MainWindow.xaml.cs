@@ -110,6 +110,7 @@ public partial class MainWindow : Window
     private DispatcherTimer? _longCheckTimer = null;
     private bool _checkInProgress = false;
     private bool _autoFixRunning = false;
+    private int _zapretToggleFails = 0;
     private Views.ZapretConfigWindow? _configWindow = null;
 
     private static ScrollViewer? FindScrollViewer(DependencyObject parent)
@@ -672,6 +673,7 @@ public partial class MainWindow : Window
                     try { p.Kill(); } catch { }
                 foreach (var p in Process.GetProcessesByName("winws.exe"))
                     try { p.Kill(); } catch { }
+                _zapretToggleFails = 0;
             }
             else
             {
@@ -688,11 +690,13 @@ public partial class MainWindow : Window
                                 "Конфиги Zapret не найдены",
                                 "Приложение не смогло обнаружить рабочие конфиги для Zapret.\n\n" +
                                 "Сначала пройдите полное сканирование, чтобы NetFix нашёл доступные конфиги и подготовил запуск сервиса.");
+                            _zapretToggleFails = 0;
                             return;
                         }
 
                         if (string.IsNullOrEmpty(cache.CurrentConfig))
                         {
+                            _zapretToggleFails = 0;
                             return;
                         }
 
@@ -707,6 +711,7 @@ public partial class MainWindow : Window
 
                         if (!success)
                         {
+                            TrackZapretStartFail();
                             return;
                         }
                     }
@@ -723,6 +728,13 @@ public partial class MainWindow : Window
 
             await Task.Delay(2000);
             UpdateActiveApps();
+
+            // если стартовали успешно — сброс счётчика
+            var afterSt = DiagnosticsEngine.CheckAppStatus();
+            if (afterSt.ZapretRunning)
+                _zapretToggleFails = 0;
+            else
+                TrackZapretStartFail();
         }
         finally
         {
@@ -2132,6 +2144,50 @@ public partial class MainWindow : Window
     private void UpdateComponentsBtn_Click(object s, RoutedEventArgs e)
     {
         ShowUpdateComponentsDialog();
+    }
+
+    private async void FixServiceBtn_Click(object s, RoutedEventArgs e)
+    {
+        var serviceBat = @"C:\Zapret\service.bat";
+        if (!File.Exists(serviceBat))
+        {
+            AppendLog("service.bat не найден в C:\\Zapret", "error");
+            return;
+        }
+
+        try
+        {
+            var proc = Process.Start(new ProcessStartInfo("cmd.exe", $"/c \"{serviceBat}\" admin")
+            {
+                UseShellExecute = false,
+                CreateNoWindow = false,
+                RedirectStandardInput = true
+            });
+
+            await Task.Delay(3000);
+
+            if (proc is { HasExited: false })
+                await proc.StandardInput.WriteLineAsync("0");
+
+            await Task.Delay(500);
+
+            ZapretToggleBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        }
+        catch (Exception ex)
+        {
+            AppendLog($"Ошибка: {ex.Message}", "error");
+        }
+    }
+
+    private void TrackZapretStartFail()
+    {
+        _zapretToggleFails++;
+        if (_zapretToggleFails >= 2)
+        {
+            _zapretToggleFails = 0;
+            AppendLog("2 неудачных попытки запуска — запускаю Исправить", "warn");
+            FixServiceBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        }
     }
 
     private void ShowUpdateComponentsDialog()
