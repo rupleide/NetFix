@@ -5142,8 +5142,8 @@
                                             </StackPanel>
                                         </StackPanel>
                                         <Button x:Name="ZapretToggleBtn" Grid.Column="2"
-                                                Style="{StaticResource AccentBtn}"
-                                                Padding="12,7" FontSize="12"
+                                                 Style="{StaticResource AccentBtn}"
+                                                 Padding="12,7" FontSize="12"
                                                 WindowChrome.IsHitTestVisibleInChrome="True"
                                                 Click="ZapretToggle_Click">
                                             <StackPanel Orientation="Horizontal">
@@ -5201,8 +5201,8 @@
                                             </StackPanel>
                                         </StackPanel>
                                         <Button x:Name="TgWsToggleBtn" Grid.Column="2"
-                                                Style="{StaticResource AccentBtn}"
-                                                Padding="12,7" FontSize="12"
+                                                 Style="{StaticResource AccentBtn}"
+                                                 Padding="12,7" FontSize="12"
                                                 WindowChrome.IsHitTestVisibleInChrome="True"
                                                 Click="TgWsToggle_Click">
                                             <StackPanel Orientation="Horizontal">
@@ -5235,11 +5235,11 @@
                                        FontWeight="SemiBold" Foreground="#f0f0f0" 
                                        Margin="0,0,0,12"
                                        TextWrapping="Wrap"/>
-                            <Button x:Name="SelectConfigBtn"
-                                    Style="{StaticResource AccentBtn}"
-                                    Padding="14,10"
-                                    Margin="0,0,0,6"
-                                    HorizontalContentAlignment="Left"
+                             <Button x:Name="SelectConfigBtn"
+                                     Style="{StaticResource AccentBtn}"
+                                     Padding="14,12"
+                                     Margin="0,0,0,6"
+                                     HorizontalContentAlignment="Left"
                                     WindowChrome.IsHitTestVisibleInChrome="True"
                                     Click="SelectConfigBtn_Click">
                                 <StackPanel Orientation="Horizontal">
@@ -5333,11 +5333,11 @@
                                     </StackPanel>
                                 </StackPanel>
                             </StackPanel>
-                            <Button x:Name="UpdateComponentsBtn"
-                                    Style="{StaticResource OutlineBtn}"
-                                    Padding="14,10"
-                                    Margin="0,12,0,0"
-                                    HorizontalContentAlignment="Left"
+                             <Button x:Name="UpdateComponentsBtn"
+                                     Style="{StaticResource OutlineBtn}"
+                                     Padding="14,12"
+                                     Margin="0,12,0,0"
+                                     HorizontalContentAlignment="Left"
                                     WindowChrome.IsHitTestVisibleInChrome="True"
                                     Click="UpdateComponentsBtn_Click">
                                 <StackPanel Orientation="Horizontal">
@@ -5357,10 +5357,10 @@
                                        Foreground="#888888"
                                        Margin="0,12,0,10"
                                        VerticalAlignment="Center"/>
-                            <Button x:Name="FixServiceBtn"
-                                    Style="{StaticResource OutlineBtn}"
-                                    Padding="14,10"
-                                    HorizontalContentAlignment="Left"
+                             <Button x:Name="FixServiceBtn"
+                                     Style="{StaticResource OutlineBtn}"
+                                     Padding="14,12"
+                                     HorizontalContentAlignment="Left"
                                     WindowChrome.IsHitTestVisibleInChrome="True"
                                     Click="FixServiceBtn_Click">
                                 <TextBlock Text="Исправить" 
