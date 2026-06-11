@@ -2350,12 +2350,12 @@
                                                 </Button>
                                             </StackPanel>
                                         </StackPanel>
-                                    </Border>
-                                </StackPanel>
-                            </ScrollViewer>
-                        </Grid>
-                    </Grid>
-                </Grid>
+                                     </Border>
+                                      </StackPanel>
+                                  </ScrollViewer>
+                              </Grid>
+                              </Grid>
+                 </Grid>
                 <Grid x:Name="FaqPage" Visibility="Collapsed">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -3213,7 +3213,16 @@
                            </Setter.Value>
                        </Setter>
                    </Style>
-                    <Style x:Key="DropHighlightList" TargetType="ListBox" BasedOn="{StaticResource ModListBox}">
+                    <Style x:Key="ModListBoxNoScroll" TargetType="ListBox" BasedOn="{StaticResource ModListBox}">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBox">
+                                    <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                     <Style x:Key="DropHighlightList" TargetType="ListBox" BasedOn="{StaticResource ModListBox}">
                         <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="ListBox">
@@ -3569,11 +3578,11 @@
                                               <TextBlock FontSize="11.5" Foreground="#f59e0b" FontWeight="SemiBold"
                                                          TextWrapping="Wrap" Margin="0,0,0,2"
                                                          Text="💡 Совет: Если после добавления доменов сайт всё равно не открывается, обязательно полностью перезапустите обход через service.bat (или вкладку Сервисы) и очистите кэш страницы в браузере комбинацией клавиш Ctrl + F5."/>
-                                          </StackPanel>
-                                      </ScrollViewer>
-                                  </Grid>
+                                      </StackPanel>
+                                  </ScrollViewer>
                               </Grid>
-                          </Border>
+                          </Grid>
+                           </Border>
                         <Grid Grid.Column="1" VerticalAlignment="Stretch">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*"/>
@@ -3988,29 +3997,47 @@
                                <ColumnDefinition Width="70"/>
                                <ColumnDefinition Width="*"/>
                            </Grid.ColumnDefinitions>
-                           <Grid Grid.Column="0">
-                               <Grid.RowDefinitions>
-                                   <RowDefinition Height="Auto"/>
-                                   <RowDefinition Height="*"/>
-                               </Grid.RowDefinitions>
-                               <Grid Grid.Row="0" Margin="0,0,0,10">
-                                   <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                       <TextBlock Text="ДОСТУПНЫЕ:" FontFamily="Segoe UI" FontSize="11"
-                                                  FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"
-                                                  />
-                                       <Border Background="#1e1e22" CornerRadius="6" Padding="8,3" Margin="10,0,0,0">
-                                           <TextBlock x:Name="AvailableCount" Text="0"
-                                                      FontFamily="Segoe UI" FontSize="11" Foreground="#888888"/>
-                                        </Border>
+                            <Grid Grid.Column="0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Grid Grid.Row="0" Margin="0,0,0,10">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="ДОСТУПНЫЕ:" FontFamily="Segoe UI" FontSize="11"
+                                                   FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"
+                                                   />
+                                        <Border Background="#1e1e22" CornerRadius="6" Padding="8,3" Margin="10,0,0,0">
+                                            <TextBlock x:Name="AvailableCount" Text="0"
+                                                       FontFamily="Segoe UI" FontSize="11" Foreground="#888888"/>
+                                         </Border>
                                     </StackPanel>
-                                </Grid>
-                                 <ListBox Grid.Row="1" x:Name="AvailableList"
-                                         Style="{StaticResource ModListBox}"
-                                         SelectionChanged="AvailableList_SelectionChanged"
-                                         PreviewMouseLeftButtonDown="ListBox_PreviewMouseLeftButtonDown"
-                                         PreviewMouseMove="ListBox_PreviewMouseMove"
-                                         Drop="AvailableList_Drop" DragEnter="ListBox_DragEnter"/>
-                           </Grid>
+                                 </Grid>
+                                 <Border Grid.Row="1" CornerRadius="12" BorderBrush="#22222a" BorderThickness="1"
+                                         Background="#30111113" SnapsToDevicePixels="True">
+                                     <ScrollViewer VerticalScrollBarVisibility="Hidden"
+                                                   HorizontalScrollBarVisibility="Disabled" Focusable="False" Padding="6">
+                                    <StackPanel>
+                                        <ListBox x:Name="AvailableList"
+                                                Style="{StaticResource ModListBoxNoScroll}"
+                                                BorderThickness="0" Background="Transparent"
+                                                AllowDrop="True"
+                                                SelectionChanged="AvailableList_SelectionChanged"
+                                                PreviewMouseLeftButtonDown="ListBox_PreviewMouseLeftButtonDown"
+                                                PreviewMouseMove="ListBox_PreviewMouseMove"
+                                                Drop="AvailableList_Drop" DragEnter="ListBox_DragEnter"/>
+                                         <TextBlock FontFamily="Segoe UI" FontSize="13" Foreground="#666669"
+                                                    TextWrapping="Wrap" HorizontalAlignment="Center" Margin="10,12,10,8">
+                                             <Run Text="Ещё больше .bat стратегий вы можете найти в Telegram-канале "/>
+                                              <Hyperlink Click="OpenTelegramChannel_Click" Foreground="#5b7d9e" TextDecorations="Underline">
+                                                  <Run Text="NetFix"/>
+                                              </Hyperlink>
+                                              <Run Text="- в комментариях пользователи делятся своими стратегиями."/>
+                                         </TextBlock>
+                                     </StackPanel>
+                                 </ScrollViewer>
+                             </Border>
+                         </Grid>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center">
                                 <Button x:Name="MoveRightBtn" Style="{StaticResource ArrowBtn}"
                                         IsEnabled="False" Click="MoveRightBtn_Click" ToolTip="Активировать">
@@ -4121,29 +4148,47 @@
                                 <ColumnDefinition Width="70"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <Grid Grid.Column="0">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                </Grid.RowDefinitions>
-                                <Grid Grid.Row="0" Margin="0,0,0,10">
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="ДОСТУПНЫЕ:" FontFamily="Segoe UI" FontSize="11"
-                                                   FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"
-                                                   />
-                                        <Border Background="#1e1e22" CornerRadius="6" Padding="8,3" Margin="10,0,0,0">
-                                            <TextBlock x:Name="ListsAvailableCount" Text="0"
-                                                       FontFamily="Segoe UI" FontSize="11" Foreground="#888888"/>
-                                        </Border>
-                                    </StackPanel>
-                                </Grid>
-                                  <ListBox Grid.Row="1" x:Name="ListsAvailableList"
-                                           Style="{StaticResource ModListBox}"
-                                           SelectionChanged="ListsAvailableList_SelectionChanged"
-                                           PreviewMouseLeftButtonDown="ListsListBox_PreviewMouseLeftButtonDown"
-                                           PreviewMouseMove="ListBox_PreviewMouseMove"
-                                           Drop="ListsAvailableList_Drop" DragEnter="ListBox_DragEnter"/>
-                            </Grid>
+                              <Grid Grid.Column="0">
+                                  <Grid.RowDefinitions>
+                                      <RowDefinition Height="Auto"/>
+                                      <RowDefinition Height="*"/>
+                                  </Grid.RowDefinitions>
+                                  <Grid Grid.Row="0" Margin="0,0,0,10">
+                                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                          <TextBlock Text="ДОСТУПНЫЕ:" FontFamily="Segoe UI" FontSize="11"
+                                                     FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"
+                                                     />
+                                          <Border Background="#1e1e22" CornerRadius="6" Padding="8,3" Margin="10,0,0,0">
+                                              <TextBlock x:Name="ListsAvailableCount" Text="0"
+                                                         FontFamily="Segoe UI" FontSize="11" Foreground="#888888"/>
+                                          </Border>
+                                      </StackPanel>
+                                  </Grid>
+                                  <Border Grid.Row="1" CornerRadius="12" BorderBrush="#22222a" BorderThickness="1"
+                                          Background="#30111113" SnapsToDevicePixels="True">
+                                      <ScrollViewer VerticalScrollBarVisibility="Hidden"
+                                                    HorizontalScrollBarVisibility="Disabled" Focusable="False" Padding="6">
+                                          <StackPanel>
+                                              <ListBox x:Name="ListsAvailableList"
+                                                       Style="{StaticResource ModListBoxNoScroll}"
+                                                       BorderThickness="0" Background="Transparent"
+                                                       AllowDrop="True"
+                                                       SelectionChanged="ListsAvailableList_SelectionChanged"
+                                                       PreviewMouseLeftButtonDown="ListsListBox_PreviewMouseLeftButtonDown"
+                                                       PreviewMouseMove="ListBox_PreviewMouseMove"
+                                                       Drop="ListsAvailableList_Drop" DragEnter="ListBox_DragEnter"/>
+                                               <TextBlock FontFamily="Segoe UI" FontSize="13" Foreground="#666669"
+                                                          TextWrapping="Wrap" HorizontalAlignment="Center" Margin="10,12,10,8">
+                                                  <Run Text="Ещё больше готовых списков доменов вы можете найти в Telegram-канале "/>
+                                                   <Hyperlink Click="OpenTelegramChannel_Click" Foreground="#5b7d9e" TextDecorations="Underline">
+                                                       <Run Text="NetFix"/>
+                                                   </Hyperlink>
+                                                   <Run Text="- в комментариях пользователи делятся своими наработками."/>
+                                              </TextBlock>
+                                          </StackPanel>
+                                      </ScrollViewer>
+                                  </Border>
+                              </Grid>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center">
                                 <Button x:Name="ListsMoveRightBtn" Style="{StaticResource ArrowBtn}"
                                         IsEnabled="False" Click="ListsMoveRightBtn_Click" ToolTip="Активировать">
@@ -4248,7 +4293,7 @@
                          </Grid.RowDefinitions>
                         <Grid Grid.Row="0" Margin="0,0,0,10">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="ВАШИ МОДЫ:" FontFamily="Segoe UI" FontSize="11"
+                                 <TextBlock Text="Включено:" FontFamily="Segoe UI" FontSize="11"
                                            FontWeight="Bold" Foreground="#666669" VerticalAlignment="Center"/>
                                 <Border Background="#1e1e22" CornerRadius="6" Padding="8,3" Margin="10,0,0,0">
                                     <TextBlock x:Name="MyModsCount" Text="0"
@@ -4256,18 +4301,29 @@
                                 </Border>
                             </StackPanel>
                         </Grid>
-                          <Border Grid.Row="1" CornerRadius="8" Background="#30111113" BorderBrush="#22222a" BorderThickness="1"
-                                           ClipToBounds="True">
-                             <ScrollViewer VerticalScrollBarVisibility="Auto" SizeChanged="MyModsScrollViewer_SizeChanged">
-                                  <ItemsControl x:Name="MyModsList" VerticalAlignment="Top" ItemTemplate="{StaticResource MyModCardTplBig}">
-                                      <ItemsControl.ItemsPanel>
-                                          <ItemsPanelTemplate>
-                                              <UniformGrid Columns="3" Margin="6"/>
-                                          </ItemsPanelTemplate>
-                                      </ItemsControl.ItemsPanel>
-                                  </ItemsControl>
-                             </ScrollViewer>
-                         </Border>
+                           <Border Grid.Row="1" CornerRadius="8" Background="#30111113" BorderBrush="#22222a" BorderThickness="1"
+                                            ClipToBounds="True">
+                              <Grid>
+                                  <ScrollViewer VerticalScrollBarVisibility="Auto" SizeChanged="MyModsScrollViewer_SizeChanged">
+                                       <ItemsControl x:Name="MyModsList" VerticalAlignment="Top" ItemTemplate="{StaticResource MyModCardTplBig}">
+                                           <ItemsControl.ItemsPanel>
+                                               <ItemsPanelTemplate>
+                                                   <UniformGrid Columns="3" Margin="6"/>
+                                               </ItemsPanelTemplate>
+                                           </ItemsControl.ItemsPanel>
+                                       </ItemsControl>
+                                  </ScrollViewer>
+                                   <TextBlock x:Name="MyModsEmptyState" Visibility="Collapsed"
+                                              FontFamily="Segoe UI" FontSize="13" Foreground="#666669"
+                                              TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20">
+                                        <Run Text="Не обнаружено ни одного мода. Добавьте мод или скачайте уже существующие в Telegram-канале "/>
+                                         <Hyperlink Click="OpenTelegramChannel_Click" Foreground="#5b7d9e" TextDecorations="Underline">
+                                             <Run Text="NetFix"/>
+                                         </Hyperlink>
+                                        <Run Text="."/>
+                                   </TextBlock>
+                              </Grid>
+                          </Border>
 
                      </Grid>
                         <Grid x:Name="ModsEditorScreen" Visibility="Collapsed" Margin="-32,-20,-32,-20">

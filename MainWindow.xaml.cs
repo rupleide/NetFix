@@ -1152,10 +1152,17 @@ public partial class MainWindow : Window
         var activeMods = _allMods.Where(m => m.IsActive).ToList();
         MyModsList.ItemsSource = null;
         MyModsList.ItemsSource = activeMods;
+        MyModsEmptyState.Visibility = activeMods.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         MyModsCount.Text = activeMods.Count.ToString();
         MyModsCount.Foreground = activeMods.Count > 0
             ? new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e))
             : new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+        ModsHeaderStatus.Text = activeMods.Count > 0
+            ? $"ВКЛЮЧЕНО: {activeMods.Count} модов"
+            : "Нет активных";
+        ModsHeaderStatus.Foreground = new SolidColorBrush(activeMods.Count > 0
+            ? Color.FromRgb(0x22, 0xc5, 0x5e)
+            : Color.FromRgb(0x88, 0x88, 0x88));
     }
 
     private void MyModsScrollViewer_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -6098,17 +6105,10 @@ public partial class MainWindow : Window
     {
         try {
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo {
-                FileName = "tg://resolve?domain=NetFixRuBi",
+                FileName = "https://t.me/NetFixRuBi",
                 UseShellExecute = true
             });
-        } catch {
-            try {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo {
-                    FileName = "https://t.me/NetFixRuBi",
-                    UseShellExecute = true
-                });
-            } catch { }
-        }
+        } catch { }
     }
 
     private void CheckUpdateBtn_Click(object sender, RoutedEventArgs e)
