@@ -192,8 +192,6 @@ public static class ModPackager
         if (type == ModType.Strategy && batSourcePath is not null && File.Exists(batSourcePath))
             File.Copy(batSourcePath, Path.Combine(modDir, "strategy.bat"), overwrite: true);
 
-        // list.txt хранит ТОЛЬКО домены пользователя из текстового поля
-        // выбранный файл нужен только для определения target (куда добавлять)
         if (type == ModType.List && !string.IsNullOrEmpty(listContent))
         {
             var listFile = Path.Combine(modDir, "list.txt");
