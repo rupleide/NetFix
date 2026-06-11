@@ -11,6 +11,7 @@
 [![Downloads](https://img.shields.io/github/downloads/rupleide/NetFix/total?style=flat-square&color=22c55e&label=скачиваний)](https://github.com/rupleide/NetFix/releases)
 [![VirusTotal](https://img.shields.io/badge/VirusTotal-0%2F72-brightgreen?style=flat-square&logo=virustotal)](https://www.virustotal.com/gui/file/8a5eb3a2ecf231285d2b577daf82750995c83524b17aac022d4395215fe6b983)
 [![Telegram](https://img.shields.io/badge/Telegram-канал-26A5E4?style=flat-square&logo=telegram)](https://t.me/NetFixRuBi)
+[![TON Donate](https://img.shields.io/badge/Донат-TON-0088CC?style=flat-square&logo=ton&logoColor=white)](https://app.tonkeeper.com/transfer/UQCx8X4z86Jej2hc8l_IVni8e0Q8uDHhC8_PJ2zymxngVc2Q)
 [![License](https://img.shields.io/badge/лицензия-GPL_3.0-blue?style=flat-square)](LICENSE)
 
 </div>
@@ -42,7 +43,7 @@
 ### 📋 Системные требования:
 *   **ОС:** Windows 10 / 11 (x64).
 *   **Права:** Запуск от имени **администратора** (необходимо для работы драйвера WinDivert).
-*   **Среда:** Наличие **[.NET Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)** (если вы скачали версию приложения, которая не является Self-contained).
+*   **Среда:** Наличие **[.NET Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)**
 
 ---
 
@@ -214,7 +215,7 @@
 
 ## 🛠 Для разработчиков
 
-Если хотите разобраться в коде или внести свой вклад - добро пожаловать.
+Если хотите разобраться в коде или внести свой вклад - добро пожаловать!
 
 Просто клонируйте репозиторий. Все файлы, которые компилируются в `.exe`, уже находятся в репозитории, за исключением встроенных треков ритм-игры.
 
@@ -222,9 +223,31 @@
 git clone https://github.com/rupleide/NetFix.git
 ```
 
-> [!IMPORTANT]
-> **Пожалуйста, не создавайте отдельные форки NetFix как самостоятельные проекты.**
-> Если есть идея или улучшение, предложите их через Pull Request или напишите мне лично. Я читаю каждое обращение, и если изменение стоящее - обязательно добавлю. Так проект останется единым, а ваш вклад увидят все пользователи.
+### 📋 Требования
+
+- **Среда:** [.NET Desktop Runtime 8.0](https://dotnet.microsoft.com/ru-ru/download/dotnet/thank-you/runtime-desktop-8.0.25-windows-x64-installer) (нужна именно версия `windowsdesktop-runtime-8.0.25-win-x64`)
+- **IDE:** Visual Studio (любая версия с поддержкой .NET 8 и WPF)
+
+### 🔨 Сборка
+
+1. Открыть `NetFix.sln`
+2. Нажать **Сборка → Собрать решение**
+
+**Всё. Никаких дополнительных шагов.**
+
+> [!NOTE]
+> Сторонние компоненты (Zapret, TgWsProxy) в репозитории отсутствуют - это намеренно. Пользователь устанавливает их сам через встроенную автоматическую или ручную установку, которая скачивает их напрямую с официальных репозиториев авторa:
+> - [Flowseal/zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube)
+> - [Flowseal/tg-ws-proxy](https://github.com/Flowseal/tg-ws-proxy)
+
+---
+
+> [!CAUTION]
+> ### 🚫 Пожалуйста, не создавайте отдельные форки NetFix
+>
+> Я вижу форки и понимаю интерес к проекту - это приятно. Но разрозненные версии вредят всем: пользователи путаются какой NetFix настоящий, обновления и фиксы до них не доходят, а доверие к проекту размывается.
+>
+> Если есть идея, улучшение или найденный баг, откройте Pull Request или напишите мне лично в Telegram. Я отвечу всем в обязательном порядке, и если изменение стоящее, добавлю его с указанием вашего авторства! Так ваш вклад увидят **все** пользователи NetFix, а не только те кто случайно наткнулся на форк.
 
 <div align="center">
 <br/>
