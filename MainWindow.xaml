@@ -3409,34 +3409,171 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                         <Border Grid.Column="0" VerticalAlignment="Stretch"
-                                 Background="#cc1a1a1e" CornerRadius="16" Padding="16"
-                                 BorderBrush="#2a2a30" BorderThickness="1"
-                                 Width="400" Margin="0,0,16,0">
-                             <Grid VerticalAlignment="Center">
-                                 <Grid.RowDefinitions>
-                                     <RowDefinition Height="*"/>
-                                     <RowDefinition Height="Auto"/>
-                                 </Grid.RowDefinitions>
-                                 <Border Grid.Row="0" Width="52" Height="52" CornerRadius="14"
-                                         HorizontalAlignment="Center" VerticalAlignment="Center"
-                                         Background="#2a2a30">
-                                     <Path Data="M12,2 L22,20 L2,20 Z M12,9 L12,14 M12,16 L12,18"
-                                           Stroke="#f59e0b" StrokeThickness="2" Width="24" Height="24"
-                                           Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                 </Border>
-                                                  <StackPanel Grid.Row="1" Margin="0,12,0,0">
-                                     <TextBlock Text="ВАЖНАЯ ИНФОРМАЦИЯ!" FontSize="11"
-                                                FontWeight="Bold" Foreground="#f59e0b"
-                                                HorizontalAlignment="Center" TextWrapping="Wrap"
-                                                TextAlignment="Center"/>
-                                     <TextBlock Text="Контент будет добавлен позже." FontSize="10"
-                                                Foreground="#77777a" HorizontalAlignment="Center"
-                                                TextWrapping="Wrap" TextAlignment="Center"
-                                                Margin="0,2,0,0"/>
-                                 </StackPanel>
-                             </Grid>
-                         </Border>
+                          <Border Grid.Column="0" VerticalAlignment="Stretch"
+                                  Background="{StaticResource CardBgBrush}" CornerRadius="16"
+                                  BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1"
+                                  Width="400" Margin="0,0,16,0">
+                              <Grid>
+                                  <Rectangle HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                             Width="140" Height="100" Opacity="0.25"
+                                             RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
+                                      <Rectangle.Fill>
+                                          <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                               Center="0.0,1.0" GradientOrigin="0.0,1.0"
+                                                               RadiusX="0.6" RadiusY="0.5">
+                                              <GradientStop Color="#f59e0b" Offset="0.0"/>
+                                              <GradientStop Color="#00000000" Offset="1.0"/>
+                                          </RadialGradientBrush>
+                                      </Rectangle.Fill>
+                                  </Rectangle>
+                                  <Rectangle HorizontalAlignment="Right" VerticalAlignment="Top"
+                                             Width="140" Height="100" Opacity="0.15"
+                                             RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
+                                      <Rectangle.Fill>
+                                          <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                               Center="1.0,0.0" GradientOrigin="1.0,0.0"
+                                                               RadiusX="0.6" RadiusY="0.5">
+                                              <GradientStop Color="#f59e0b" Offset="0.0"/>
+                                              <GradientStop Color="#00000000" Offset="1.0"/>
+                                          </RadialGradientBrush>
+                                      </Rectangle.Fill>
+                                  </Rectangle>
+                                  <Rectangle IsHitTestVisible="False" Opacity="0.04"
+                                             RenderOptions.BitmapScalingMode="NearestNeighbor">
+                                      <Rectangle.Fill>
+                                          <ImageBrush ImageSource="Assets/noise.png"
+                                                      TileMode="Tile" ViewportUnits="Absolute"
+                                                      Viewport="0,0,512,512" Stretch="None"/>
+                                      </Rectangle.Fill>
+                                  </Rectangle>
+                                  <Border CornerRadius="16" BorderBrush="#f59e0b" BorderThickness="0,3,0,0"
+                                          Background="Transparent" IsHitTestVisible="False"/>
+                                  <Grid Margin="16,14,16,14">
+                                      <Grid.RowDefinitions>
+                                          <RowDefinition Height="Auto"/>
+                                          <RowDefinition Height="*"/>
+                                      </Grid.RowDefinitions>
+                                       <StackPanel Grid.Row="0" Margin="0,0,0,10" HorizontalAlignment="Center">
+                                              <Path Data="M12,2 L22,20 L2,20 Z M12,9 L12,14 M12,16 L12,18"
+                                                    Stroke="#f59e0b" StrokeThickness="2" Width="20" Height="20"
+                                                    Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                           <TextBlock Text="ВАЖНАЯ ИНФОРМАЦИЯ!" FontSize="13"
+                                                     FontWeight="Bold" Foreground="#f59e0b"
+                                                     HorizontalAlignment="Center" TextWrapping="Wrap"
+                                                     TextAlignment="Center" Margin="0,8,0,0"/>
+                                      </StackPanel>
+                                      <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                          <StackPanel>
+                                              <TextBlock FontSize="12" Foreground="White" FontWeight="Bold"
+                                                         TextWrapping="Wrap" Margin="0,0,0,8"
+                                                         Text="🛠️ РУКОВОДСТВО ПО ВКЛАДКЕ МОДИФИКАЦИЙ"/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="0,0,0,12"
+                                                         Text="Добро пожаловать в раздел модификаций! Здесь вы можете гибко настраивать обход блокировок, добавлять свои скрипты для игр и управлять списками сайтов. Чтобы всё работало идеально и без лишних вопросов, внимательно изучите инструкцию ниже."/>
+                                              <TextBlock FontSize="11.5" Foreground="White" FontWeight="SemiBold"
+                                                         TextWrapping="Wrap" Margin="0,0,0,4"
+                                                         Text="🛡️ 1. БАТ-СТРАТЕГИИ (Обход для игр)"/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="0,0,0,8"
+                                                         Text="Этот раздел предназначен для добавления готовых батников (.bat), которые создают индивидуальные стратегии обхода (как в Запрете) под конкретные игры и сервисы (например: EA App, Battlefield, League of Legends, Claude и др.)."/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="0,0,0,4"
+                                                         Text="Как включить мод после добавления:"/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="12,0,0,2"
+                                                          Text="1. Добавьте мод в раздел активные и примените его."/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="12,0,0,2"
+                                                         Text="2. Перейдите во вкладку «Сервисы» ➔ нажмите «Выбрать конфиг»."/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="12,0,0,8"
+                                                         Text="3. Ваш активированный мод отобразится в самом верху списка с пометкой мод: [Название]."/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="0,0,0,4"
+                                                          Text="Проверка работы: Вы всегда можете протестировать добавленную стратегию через кнопку «Проверить конфиг» или сразу нажать «Применить», он будет работать точно так же, как и стандартные службы."/>
+                                              <TextBlock FontSize="11.5" Foreground="#f59e0b"
+                                                         TextWrapping="Wrap" Margin="0,0,0,8"
+                                                         Text="⚠️ Важное при создании: При нажатии кнопки «Создать» введите название (до 20 символов), автора, версию и описание (до 100 символов). Внимание: саму Battle-стратегию нужно создать на диске до открытия этого окна, чтобы её можно было выбрать из списка!"/>
+                                              <TextBlock FontSize="11.5" Foreground="White" FontWeight="SemiBold"
+                                                         TextWrapping="Wrap" Margin="0,0,0,4"
+                                                         Text="🌐 2. ЛИСТЫ ДОМЕНОВ (Разблокировка сайтов)"/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="0,0,0,4"
+                                                         Text="Списки доменов служат для точечной разблокировки сайтов и медиа-ресурсов (например, TikTok, X (Twitter), Claude или ультимативный «МОД ДЛЯ ВСЕГО» по базе iplist.opencck.org)."/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="0,0,0,4"
+                                                          Text="Куда сохранять: При создании мода в поле выбора файла лучше всего указывать list-general-user.txt, это универсальный стандартный лист для пользовательских обходов."/>
+                                              <TextBlock FontSize="11.5" Foreground="#22c55e" FontWeight="SemiBold"
+                                                         TextWrapping="Wrap" Margin="0,0,0,4"
+                                                         Text="🔥 Железная стабильность: Все ваши моды, находящиеся в колонке «Активные», автоматически сохраняются и применяются даже после обновления компонентов самого Запрета. Ничего не сбросится и не слетит!"/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="0,0,0,8"
+                                                         Text="Где брать новые домены: Если нужного сайта нет, вы можете найти домены через запрос к нейросети, посмотреть в панели разработчика браузера (F12 ➔ Network) или найти готовые подборки на GitHub."/>
+                                              <TextBlock FontSize="11.5" Foreground="White" FontWeight="SemiBold"
+                                                         TextWrapping="Wrap" Margin="0,0,0,4"
+                                                         Text="🔄 3. ИМПОРТ, ЭКСПОРТ И ОБМЕН МОДАМИ"/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="0,0,0,4"
+                                                         Text="Вы можете легко делиться своими наработками или устанавливать чужие конфиги. Импорт работает одинаково как для батников, так и для листов доменов."/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="0,0,0,4"
+                                                         Text="Как импортировать: Нажмите кнопку импорта и укажите файл мода (или архив с ним). Программа сама считает метаданные, покажет, что импортируется, и добавит мод в интерфейс."/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="0,0,0,8">
+                                                  <Run Text="Где найти рабочие моды: Все свежие конфиги и проверенные файлы можно найти в моём Telegram-канале "/>
+                                                  <Hyperlink NavigateUri="https://t.me/NetFixRuBi" RequestNavigate="Hyperlink_RequestNavigate"
+                                                             Foreground="#60a5fa" TextDecorations="None">
+                                                      <Run Text="NetFix"/>
+                                                  </Hyperlink>
+                                                  <Run Text=". Пользователи делятся своими рабочими модами, вы можете экспортировать свой мод и скинуть его туда!"/>
+                                              </TextBlock>
+                                              <TextBlock FontSize="11.5" Foreground="White" FontWeight="SemiBold"
+                                                         TextWrapping="Wrap" Margin="0,0,0,4"
+                                                         Text="🎛️ 4. УПРАВЛЕНИЕ И ГОРЯЧИЕ КНОПКИ"/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="0,0,0,4"
+                                                         Text="Drag-and-Drop: Перемещать моды между списками (из доступных в активные и наоборот) можно кнопками, а можно просто зажать мод мышкой и перетащить в нужное поле."/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="0,0,0,2"
+                                                         Text="Быстрые действия (при наведении на мод):"/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="12,0,0,2"
+                                                          Text="↕️ Переместить - изменить статус или порядок."/>
+                                                          <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                                     TextWrapping="Wrap" Margin="12,0,0,2"
+                                                                     Text="✏️ Редактировать - изменить название, описание или автора."/>
+                                                          <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                                     TextWrapping="Wrap" Margin="12,0,0,2"
+                                                                     Text="📦 Экспортировать - сохранить в файл, чтобы скинуть другу или в комменты ТГ."/>
+                                                          <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                                     TextWrapping="Wrap" Margin="12,0,0,8"
+                                                                     Text="❌ Удалить - полное удаление (требует подтверждения, случайно не нажмете)."/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="0,0,0,8"
+                                                         Text="Вкладка «Ваши моды» (Активные/Актуальные) также содержит 4 главные кнопки: Редактировать, Открыть расположение, Экспортировать и Удалить."/>
+                                              <TextBlock FontSize="11.5" Foreground="White" FontWeight="SemiBold"
+                                                         TextWrapping="Wrap" Margin="0,0,0,4"
+                                                         Text="📝 5. ВСТРОЕННЫЙ РЕДАКТОР СЛОВАРЕЙ"/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="0,0,0,4"
+                                                         Text="Для продвинутых пользователей добавлен полноценный редактор текстовых файлов. В нем отображаются все листы из папки программы."/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="0,0,0,2"
+                                                         Text="Удобство навигации: Сверху находится кнопка «Папка». Если выбрать любой файл и нажать на неё, программа откроет в проводнике Windows точное расположение именно этого файла, а не просто общую директорию."/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="0,0,0,2"
+                                                         Text="Масштабирование: Текст в редакторе можно приближать и отдалять с помощью зажатой клавиши Ctrl + колёсико мыши."/>
+                                              <TextBlock FontSize="11.5" Foreground="#cccccc"
+                                                         TextWrapping="Wrap" Margin="0,0,0,8"
+                                                         Text="Кастомизация JSON: В самом низу находится раздел конфигурации ваших модов. Чтобы изменить мод, достаточно отредактировать два поля: &quot;name&quot; (название) и &quot;description&quot; (описание). Остальные параметры трогать не обязательно. Все сохранения работают мгновенно."/>
+                                              <TextBlock FontSize="11.5" Foreground="#f59e0b" FontWeight="SemiBold"
+                                                         TextWrapping="Wrap" Margin="0,0,0,2"
+                                                         Text="💡 Совет: Если после добавления доменов сайт всё равно не открывается, обязательно полностью перезапустите обход через service.bat (или вкладку Сервисы) и очистите кэш страницы в браузере комбинацией клавиш Ctrl + F5."/>
+                                          </StackPanel>
+                                      </ScrollViewer>
+                                  </Grid>
+                              </Grid>
+                          </Border>
                         <Grid Grid.Column="1" VerticalAlignment="Stretch">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*"/>
