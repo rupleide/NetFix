@@ -10,10 +10,6 @@ public static class DomainListImporter
         Timeout = TimeSpan.FromSeconds(15),
     };
 
-    /// <summary>
-    /// Downloads a domain list from URL and creates a list mod.
-    /// Returns (domainListContent, error).
-    /// </summary>
     public static async Task<(string? Content, string? Error)> DownloadFromUrlAsync(string url)
     {
         try
@@ -48,9 +44,6 @@ public static class DomainListImporter
         }
     }
 
-    /// <summary>
-    /// Parses pasted text content into domain list.
-    /// </summary>
     public static string ParseText(string text)
     {
         var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
@@ -66,9 +59,6 @@ public static class DomainListImporter
         return string.Join("\n", domains);
     }
 
-    /// <summary>
-    /// Extracts a name suggestion from URL.
-    /// </summary>
     public static string NameFromUrl(string url)
     {
         try

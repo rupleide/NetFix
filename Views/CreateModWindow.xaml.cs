@@ -184,7 +184,6 @@ public partial class CreateModWindow : Window
                 listContent = DomainListImporter.ParseText(raw);
         }
 
-        // целевой файл — это файл выбранный в «Файл списка»
         var targetFile = _modType == ModType.List && !string.IsNullOrEmpty(_selectedListFilePath)
             ? Path.GetFileName(_selectedListFilePath)
             : null;

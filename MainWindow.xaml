@@ -4722,7 +4722,7 @@
                                 <TextBlock Text="TgWsProxy" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
                                 <CheckBox x:Name="TgWsCheckUpdatesCB" Style="{StaticResource Toggle}"
-                                          Content="Уведомление об уведомлениях TgWsProxy" Margin="0,0,0,20"
+                                          Content="Уведомления об обновлении TgWsProxy" Margin="0,0,0,20"
                                           Checked="TgWsSetting_Checked" Unchecked="TgWsSetting_Unchecked"/>
                                 <Border Height="1" Background="#333333" Margin="0,0,0,16"/>
                                 <TextBlock Text="РЕЖИМ КНОПКИ «ПОЧИНИТЬ ИНТЕРНЕТ»" FontFamily="Segoe UI" FontSize="11"

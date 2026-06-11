@@ -8,18 +8,11 @@ using NetFix.Models;
 
 namespace NetFix.Services;
 
-/// <summary>
-/// Сервис для проверки версий установленных компонентов и сравнения с актуальными версиями на GitHub
-/// </summary>
 public static class ComponentVersionService
 {
     private const string ZapretRepo = "Flowseal/zapret-discord-youtube";
     private const string TgWsProxyRepo = "Flowseal/tg-ws-proxy";
 
-    /// <summary>
-    /// Проверяет, требуется ли обновление компонентов
-    /// </summary>
-    /// <returns>True если требуется обновление, False если всё актуально</returns>
     public static async Task<(bool needsUpdate, string reason)> CheckIfUpdateNeededAsync(AppSettings settings)
     {
         try
@@ -78,14 +71,10 @@ public static class ComponentVersionService
         }
         catch (Exception ex)
         {
-            // ignore
             return (false, "Не удалось проверить версии");
         }
     }
 
-    /// <summary>
-    /// Получает версию установленного Zapret из файла service.bat
-    /// </summary>
     private static string? GetInstalledZapretVersion(string serviceBatPath)
     {
         try
@@ -120,9 +109,6 @@ public static class ComponentVersionService
         }
     }
 
-    /// <summary>
-    /// Получает версию установленного TgWsProxy из метаданных файла
-    /// </summary>
     private static string? GetInstalledTgWsProxyVersion(string exePath)
     {
         try
@@ -143,9 +129,6 @@ public static class ComponentVersionService
         }
     }
 
-    /// <summary>
-    /// Получает последнюю версию компонента с GitHub
-    /// </summary>
     private static async Task<string?> GetLatestGitHubVersionAsync(string repo)
     {
         try
@@ -166,10 +149,6 @@ public static class ComponentVersionService
         }
     }
 
-    /// <summary>
-    /// Сравнивает две версии и определяет, является ли первая новее второй
-    /// Поддерживает версии типа: 1.9.8b, 1.9.9, v1.6.5, 2024.01.15
-    /// </summary>
     private static bool IsNewerVersion(string version1, string version2)
     {
         try
@@ -203,10 +182,6 @@ public static class ComponentVersionService
         }
     }
 
-    /// <summary>
-    /// Разделяет версию на числовую часть и буквенный суффикс
-    /// Например: "1.9.8b" -> ("1.9.8", "b")
-    /// </summary>
     private static (string numericPart, string suffix) SplitVersionAndSuffix(string version)
     {
         int firstLetterIndex = -1;

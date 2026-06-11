@@ -50,9 +50,6 @@ public static class SettingsService
     }
 
 
-    /// <summary>
-    /// Экспортирует настройки в файл
-    /// </summary>
     public static bool ExportSettings(string filePath)
     {
         try
@@ -68,9 +65,6 @@ public static class SettingsService
         }
     }
 
-    /// <summary>
-    /// Импортирует настройки из файла
-    /// </summary>
     public static bool ImportSettings(string filePath)
     {
         try

@@ -518,7 +518,6 @@ public static class AutoDownloadService
         }
         catch (Exception ex)
         {
-            // ignore
             return null;
         }
     }

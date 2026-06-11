@@ -725,7 +725,6 @@ public partial class MainWindow : Window
             await Task.Delay(2000);
             UpdateActiveApps();
 
-            // если стартовали успешно — сброс счётчика
             var afterSt = DiagnosticsEngine.CheckAppStatus();
             if (afterSt.ZapretRunning)
                 _zapretToggleFails = 0;
@@ -1134,7 +1133,6 @@ public partial class MainWindow : Window
             }
         }
 
-        // при активации/деактивации листа — сразу применяем все листы
         if (mod.Type == ModType.List)
         {
             var allLists = _allMods.Where(m => m.Type == ModType.List).ToList();
@@ -1515,7 +1513,6 @@ public partial class MainWindow : Window
             await File.WriteAllTextAsync(dialog.FileName, "");
             LoadEditorFileLists();
 
-            // Найти созданный файл в списке
             for (int i = 0; i < ModsEditorFileList.Items.Count; i++)
             {
                 if (ModsEditorFileList.Items[i] is FileListItem fi && fi.FilePath == dialog.FileName)
@@ -1538,7 +1535,6 @@ public partial class MainWindow : Window
             {
                 if (!confirmed) return;
 
-                // для листов — читаем домены ДО удаления папки
                 var removedDomains = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 string? targetPath = null;
                 if (mod.Type == ModType.List)
@@ -1573,7 +1569,6 @@ public partial class MainWindow : Window
                     else _strategyDirty = true;
                 }
 
-                // удаляем домены удалённого мода из целевого файла
                 if (removedDomains.Count > 0 && targetPath is not null && File.Exists(targetPath))
                 {
                     var lines = File.ReadAllLines(targetPath);
@@ -1587,7 +1582,6 @@ public partial class MainWindow : Window
                     File.WriteAllLines(targetPath, result);
                 }
 
-                // применяем оставшиеся активные листы (перезапишут свои домены если их удалили)
                 var allLists = _allMods.Where(m => m.Type == ModType.List).ToList();
                 ModActivator.ApplyListMods(allLists);
 
@@ -1657,16 +1651,13 @@ public partial class MainWindow : Window
 
         if (folderPath is not null)
         {
-            // Режим — конкретная папка мода
             var items = new List<FileListItem>();
-            // Кнопка назад
             items.Add(new FileListItem("← Назад", null, false,
                 FontWeights.Normal, new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
                 new Thickness(12, 6, 12, 6), "Segoe UI", 12));
             AddFolderFiles(items, folderPath);
             foreach (var item in items)
                 _editorFileList.Items.Add(item);
-            // Выбрать первый не-заголовок, не назад
             for (int i = 0; i < items.Count; i++)
             {
                 if (items[i] is FileListItem fi && !fi.IsHeader && fi.FilePath is not null)
@@ -1675,14 +1666,12 @@ public partial class MainWindow : Window
             return;
         }
 
-        // Полный режим — C:\Zapret\lists + C:\Zapret + Mods
         AddFolderFiles(_editorFileList.Items, @"C:\Zapret\lists", "Листы:", "*.txt");
         AddFolderFiles(_editorFileList.Items, @"C:\Zapret", "Bat файлы:", "*.bat");
         AddModFolders(_editorFileList.Items);
 
         if (_editorFileList.Items.Count > 0)
         {
-            // Выбрать первый не-заголовок
             for (int i = 0; i < _editorFileList.Items.Count; i++)
             {
                 if (_editorFileList.Items[i] is FileListItem fi && !fi.IsHeader)
@@ -1731,7 +1720,6 @@ public partial class MainWindow : Window
     {
         if (!Directory.Exists(dir)) return;
 
-        // Режим конкретной папки — все файлы без заголовка
         if (header is null && pattern is null)
         {
             foreach (var f in Directory.GetFiles(dir).OrderBy(f => System.IO.Path.GetFileName(f)))
@@ -1790,7 +1778,6 @@ public partial class MainWindow : Window
             return;
         }
 
-        // ← Назад — вернуться в корень
         if (fi.Display == "← Назад")
         {
             LoadEditorFileLists();
@@ -1804,7 +1791,6 @@ public partial class MainWindow : Window
             return;
         }
 
-        // Если это папка мода — перейти в неё
         if (Directory.Exists(fi.FilePath))
         {
             LoadEditorFileLists(fi.FilePath);
@@ -1851,7 +1837,6 @@ public partial class MainWindow : Window
                             ModsStatusText.Text = $"⚠️ Сохранено, но ошибка применения: {error}";
                     }
 
-                    // пересканировать моды с диска и обновить UI
                     var strategyNames = _settings.ActiveStrategyMods ?? [];
                     var listNames = _settings.ActiveListMods ?? [];
                     _allMods = ModScanner.ScanAll(strategyNames, listNames);
@@ -2416,9 +2401,6 @@ public partial class MainWindow : Window
         }
     }
 
-    /// <summary>
-    /// Обновляет отображение статуса версий компонентов в панели сервисов
-    /// </summary>
     private async Task UpdateVersionStatusAsync()
     {
         try
@@ -2514,9 +2496,6 @@ public partial class MainWindow : Window
         }
     }
 
-    /// <summary>
-    /// Получает детальную информацию о версиях компонентов
-    /// </summary>
     private async Task<(bool allUpToDate, bool zapretNeedsUpdate, bool tgWsProxyNeedsUpdate,
                         string zapretCurrent, string zapretLatest, string tgWsProxyCurrent, string tgWsProxyLatest)>
         GetDetailedVersionInfoAsync()
@@ -2560,9 +2539,6 @@ public partial class MainWindow : Window
                 zapretCurrent, zapretLatest, tgWsProxyCurrent, tgWsProxyLatest);
     }
 
-    /// <summary>
-    /// Получает версию установленного Zapret из сохраненного файла
-    /// </summary>
     private string? GetInstalledZapretVersion(string serviceBatPath)
     {
         try
@@ -2612,9 +2588,6 @@ public partial class MainWindow : Window
         }
     }
 
-    /// <summary>
-    /// Получает версию установленного TgWsProxy из метаданных файла
-    /// </summary>
     private string? GetInstalledTgWsProxyVersion(string exePath)
     {
         try
@@ -2668,9 +2641,6 @@ public partial class MainWindow : Window
         }
     }
 
-    /// <summary>
-    /// Получает последнюю версию компонента с GitHub (tag_name из latest release)
-    /// </summary>
     private async Task<string?> GetLatestGitHubVersionAsync(string repo)
     {
         try
@@ -2691,9 +2661,6 @@ public partial class MainWindow : Window
         }
     }
 
-    /// <summary>
-    /// Сравнивает две версии
-    /// </summary>
     private bool IsNewerVersion(string version1, string version2)
     {
         try
@@ -2714,9 +2681,6 @@ public partial class MainWindow : Window
         }
     }
 
-    /// <summary>
-    /// Инициализирует файлы версий для уже установленных компонентов
-    /// </summary>
     private async void InitializeVersionFiles()
     {
         try
@@ -2788,9 +2752,6 @@ public partial class MainWindow : Window
         catch { }
     }
 
-    /// <summary>
-    /// Запускает таймер для показа диалога о долгой проверке
-    /// </summary>
     private void StartLongCheckTimer()
     {
         StopLongCheckTimer();
@@ -2817,9 +2778,6 @@ public partial class MainWindow : Window
         _longCheckTimer.Start();
     }
 
-    /// <summary>
-    /// Останавливает таймер долгой проверки
-    /// </summary>
     private void StopLongCheckTimer()
     {
         if (_longCheckTimer != null)
@@ -2829,9 +2787,6 @@ public partial class MainWindow : Window
         }
     }
 
-    /// <summary>
-    /// Показывает диалоговое окно о долгой проверке
-    /// </summary>
     private void ShowLongCheckDialog()
     {
         var overlay = new Border
@@ -5103,9 +5058,6 @@ public partial class MainWindow : Window
         FixBtn.IsEnabled = true;
     }
 
-    /// <summary>
-    /// Запускает автоматическую установку/обновление компонентов
-    /// </summary>
     private async Task RunAutoInstallAsync(bool preserveLists = false)
     {
         FixBtn.IsEnabled = false;
@@ -10947,7 +10899,6 @@ public partial class MainWindow : Window
             UploadLbl.Text   = _finalUploadMbps > 0   ? $"{_finalUploadMbps:0.0}"   : "—";
         });
 
-        // Очистка: ArrayPool держит 4×4MB = 16MB, остальное пусть GC соберёт
         GC.Collect();
         GC.WaitForPendingFinalizers();
     }
