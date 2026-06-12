@@ -113,6 +113,13 @@ public partial class MainWindow : Window
     private int _zapretToggleFails = 0;
     private Views.ZapretConfigWindow? _configWindow = null;
 
+    private bool _isConnected;
+    private DateTime _connectedSince;
+    private DispatcherTimer? _connectedTimer;
+    private bool _isInstalling = false;
+    private DispatcherTimer? _successRingTimer;
+    private SolidColorBrush? _successRingIconBrush;
+
     private static ScrollViewer? FindScrollViewer(DependencyObject parent)
     {
         if (parent is ScrollViewer sv) return sv;
@@ -378,6 +385,7 @@ public partial class MainWindow : Window
             _ = WriteStartupLogAsync();
             CheckInternetOnStart();
             StartActiveAppsMonitor();
+            CheckInitialServiceState();
 
             InitializeVersionFiles();
 
@@ -4281,6 +4289,19 @@ public partial class MainWindow : Window
 
                 if (!_isInGame && !_discord.IsScanning)
                     _discord.SetAllGood(st.ZapretRunning, st.TgWsProxyRunning);
+
+                bool allEnabledRunning =
+                    (!_settings.EnableZapret || st.ZapretRunning) &&
+                    (!_settings.EnableTgWsProxy || st.TgWsProxyRunning);
+                bool anyEnabled = _settings.EnableZapret || _settings.EnableTgWsProxy;
+
+                if (!allEnabledRunning && _isConnected
+                    && !_isInstalling && !_autoFixRunning && !_checkInProgress)
+                    SetFixBtnDisconnected();
+
+                if (allEnabledRunning && anyEnabled && !_isConnected
+                    && !_isInstalling && !_autoFixRunning && !_checkInProgress)
+                    SetConnectedFromStatus();
             });
         });
     }
@@ -4739,8 +4760,17 @@ public partial class MainWindow : Window
 
     private async void FixBtn_Click(object s, RoutedEventArgs e)
     {
+        if (_checkInProgress || _autoFixRunning || _isInstalling) return;
+
         ShowPlayWhileScanDialog();
 
+        if (!_settings.EnableZapret && !_settings.EnableTgWsProxy)
+        {
+            AppendLog("Оба компонента отключены в настройках. Включите хотя бы один.", "warn");
+            return;
+        }
+
+        FixBtn.IsEnabled = false;
         _checkInProgress = true;
         StartLongCheckTimer();
         var (needsUpdate, reason) = await ComponentVersionService.CheckIfUpdateNeededAsync(_settings);
@@ -4761,7 +4791,10 @@ public partial class MainWindow : Window
 
         var st = DiagnosticsEngine.CheckAppStatus();
 
-        if (!st.ZapretRunning && !string.IsNullOrWhiteSpace(_settings.ZapretPath) && File.Exists(_settings.ZapretPath))
+        if (_settings.EnableZapret
+            && !st.ZapretRunning
+            && !string.IsNullOrWhiteSpace(_settings.ZapretPath)
+            && File.Exists(_settings.ZapretPath))
         {
             StopLongCheckTimer();
             _checkInProgress = false;
@@ -4769,7 +4802,10 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (!st.TgWsProxyRunning && !string.IsNullOrWhiteSpace(_settings.TgWsProxyPath) && File.Exists(_settings.TgWsProxyPath))
+        if (_settings.EnableTgWsProxy
+            && !st.TgWsProxyRunning
+            && !string.IsNullOrWhiteSpace(_settings.TgWsProxyPath)
+            && File.Exists(_settings.TgWsProxyPath))
         {
             StartTgWsProxyWithActivation();
         }
@@ -4786,17 +4822,12 @@ public partial class MainWindow : Window
 
         _autoFixRunning = true;
 
-        FixBtn.IsEnabled = false;
-        SetupProg.Value = 0;
-        SetupProg.Foreground = new SolidColorBrush(Color.FromRgb(59, 130, 246));
-        SetupProgLbl.Text = "Подготовка...";
+        EnterWorkingState("Подготовка...");
         LogBox.Document.Blocks.Clear();
 
         string timeStr = DateTime.Now.ToString("HH:mm:ss");
         AppendLog($"СИСТЕМНАЯ ДИАГНОСТИКА [ ВРЕМЯ: {timeStr} ]", "system");
         AppendLog("spacer");
-
-        StartGlow();
 
         _discord.IsScanning = true;
         _discord.SetFixing();
@@ -4850,9 +4881,13 @@ public partial class MainWindow : Window
 
                 _discord.IsScanning = false;
 
-                if (success) _discord.SetAllGood(
-                    DiagnosticsEngine.CheckAppStatus().ZapretRunning,
-                    DiagnosticsEngine.CheckAppStatus().TgWsProxyRunning);
+                if (success)
+                {
+                    SetFixBtnConnected();
+                    _discord.SetAllGood(
+                        DiagnosticsEngine.CheckAppStatus().ZapretRunning,
+                        DiagnosticsEngine.CheckAppStatus().TgWsProxyRunning);
+                }
                 else _discord.SetProblems("Ошибка автонастройки");
                 FixBtn.IsEnabled = true;
 
@@ -4862,9 +4897,7 @@ public partial class MainWindow : Window
                 _autoFixRunning = false;
 
                 if (success) {
-                    SetupProg.Value = 100;
-                    SetupProg.Foreground = new SolidColorBrush(Color.FromRgb(34, 197, 94));
-                    SetupProgLbl.Text = "Готово";
+                    AnimateProgressBar(100, Color.FromRgb(34, 197, 94), "Готово", 0.5);
                     AppendLog("spacer");
                     AppendLog("Всё запущено и всё работает НОРМАЛЬНО!", "final");
                     AppendLog("Zapret включен. Discord и YouTube должны работать нормально.", "ok");
@@ -4872,7 +4905,7 @@ public partial class MainWindow : Window
                     AppendLog("Если что-то всё еще не грузит, перейдите во вкладку «Частые вопросы».", "info");
                     PlaySuccessRing();
                 } else {
-                    SetupProg.Foreground = new SolidColorBrush(Color.FromRgb(239, 68, 68));
+                    AnimateProgressBar(100, Color.FromRgb(239, 68, 68), "Ошибка", 0.5);
                     AppendLog("Произошла ошибка при автоматической настройке. Проверьте пути в настройках.", "error");
                     PlayErrorRing();
                 }
@@ -4885,25 +4918,23 @@ public partial class MainWindow : Window
         if (_autoFixRunning) return;
         _autoFixRunning = true;
 
-        FixBtn.IsEnabled = false;
-        SetupProg.Value = 0;
-        SetupProg.Foreground = new SolidColorBrush(Color.FromRgb(59, 130, 246));
-        SetupProgLbl.Text = "Быстрый запуск...";
+        EnterWorkingState("Быстрый запуск...");
         LogBox.Document.Blocks.Clear();
 
         string timeStr = DateTime.Now.ToString("HH:mm:ss");
         AppendLog($"БЫСТРЫЙ ЗАПУСК [ {timeStr} ]", "system");
         AppendLog("spacer");
 
-        StartGlow();
         _discord.IsScanning = true;
         _discord.SetFixing();
 
         var st = DiagnosticsEngine.CheckAppStatus();
-        bool zapretNeeded = !st.ZapretRunning
+        bool zapretNeeded = _settings.EnableZapret
+            && !st.ZapretRunning
             && !string.IsNullOrWhiteSpace(_settings.ZapretPath)
             && File.Exists(_settings.ZapretPath);
-        bool tgwsNeeded = !st.TgWsProxyRunning
+        bool tgwsNeeded = _settings.EnableTgWsProxy
+            && !st.TgWsProxyRunning
             && !string.IsNullOrWhiteSpace(_settings.TgWsProxyPath)
             && File.Exists(_settings.TgWsProxyPath);
 
@@ -4937,21 +4968,17 @@ public partial class MainWindow : Window
 
         if (!zapretNeeded && !tgwsNeeded)
         {
-            AppendLog("Zapret уже запущен", "ok");
-            AppendLog("tg-ws-proxy уже запущен", "ok");
+            if (_settings.EnableZapret) AppendLog("Zapret уже запущен", "ok");
+            if (_settings.EnableTgWsProxy) AppendLog("tg-ws-proxy уже запущен", "ok");
 
             AppendLog("spacer");
             AppendLog("Всё запущено и всё работает НОРМАЛЬНО!", "final");
-            AppendLog("Zapret включен. Discord и YouTube должны работать нормально.", "ok");
-            AppendLog("Прокси настроен. Telegram должен работать стабильно.", "ok");
-            AppendLog("Если что-то всё еще не грузит, перейдите во вкладку «Частые вопросы».", "info");
 
             StopGlow(true);
+            Dispatcher.Invoke(() => SetFixBtnConnected());
             _discord.IsScanning = false;
             _discord.SetAllGood(true, true);
-            SetupProg.Value = 100;
-            SetupProg.Foreground = new SolidColorBrush(Color.FromRgb(34, 197, 94));
-            SetupProgLbl.Text = "Всё уже работает";
+            AnimateProgressBar(100, Color.FromRgb(34, 197, 94), "Всё уже работает", 0.5);
             PlaySuccessRing();
             StopLongCheckTimer();
             _checkInProgress = false;
@@ -5027,27 +5054,27 @@ public partial class MainWindow : Window
         }
 
         await Task.Delay(300);
-        SetupProg.Value = 100;
-        SetupProgLbl.Text = "Готово";
+        AnimateProgressBar(100, Color.FromRgb(34, 197, 94), "Готово", 0.5);
 
         StopGlow(zapretOk || tgwsOk);
         _discord.IsScanning = false;
 
-        if (zapretOk && tgwsOk)
+        bool anySuccess = zapretOk && tgwsOk;
+        if (anySuccess)
         {
-            SetupProg.Foreground = new SolidColorBrush(Color.FromRgb(34, 197, 94));
+            Dispatcher.Invoke(() => SetFixBtnConnected());
             _discord.SetAllGood(true, true);
             AppendLog("spacer");
             AppendLog("Всё запущено и всё работает НОРМАЛЬНО!", "final");
-            AppendLog("Zapret включен. Discord и YouTube должны работать нормально.", "ok");
-            AppendLog("Прокси настроен. Telegram должен работать стабильно.", "ok");
+            if (zapretOk) AppendLog("Zapret включен. Discord и YouTube должны работать нормально.", "ok");
+            if (tgwsOk) AppendLog("Прокси настроен. Telegram должен работать стабильно.", "ok");
             AppendLog("Если что-то всё еще не грузит, перейдите во вкладку «Частые вопросы».", "info");
             PlaySuccessRing();
         }
         else
         {
             _discord.SetProblems("Ошибка запуска");
-            SetupProg.Foreground = new SolidColorBrush(Color.FromRgb(239, 68, 68));
+            AnimateProgressBar(100, Color.FromRgb(239, 68, 68), "Ошибка", 0.5);
             AppendLog("Не удалось запустить некоторые сервисы. Проверьте пути в настройках.", "error");
             PlayErrorRing();
         }
@@ -5060,17 +5087,13 @@ public partial class MainWindow : Window
 
     private async Task RunAutoInstallAsync(bool preserveLists = false)
     {
-        FixBtn.IsEnabled = false;
-        SetupProg.Value = 0;
-        SetupProg.Foreground = new SolidColorBrush(Color.FromRgb(59, 130, 246));
-        SetupProgLbl.Text = "Подготовка к установке...";
+        _isInstalling = true;
+        EnterWorkingState("Подготовка к установке...");
         LogBox.Document.Blocks.Clear();
 
         string timeStr = DateTime.Now.ToString("HH:mm:ss");
         AppendLog($"АВТОМАТИЧЕСКАЯ УСТАНОВКА КОМПОНЕНТОВ [ ВРЕМЯ: {timeStr} ]", "system");
         AppendLog("spacer");
-
-        StartGlow();
 
         AppendLog("Запуск автоматической установки компонентов...", "info");
         AppendLog("Это может занять несколько минут.", "info");
@@ -5090,6 +5113,7 @@ public partial class MainWindow : Window
         );
 
         Dispatcher.Invoke(() => {
+            _isInstalling = false;
             StopGlow(success);
             FixBtn.IsEnabled = true;
 
@@ -5098,9 +5122,7 @@ public partial class MainWindow : Window
                 _settings = SettingsService.Load();
                 LoadSettingsToPanel();
 
-                SetupProg.Value = 100;
-                SetupProg.Foreground = new SolidColorBrush(Color.FromRgb(34, 197, 94));
-                SetupProgLbl.Text = "Установка завершена";
+                AnimateProgressBar(100, Color.FromRgb(34, 197, 94), "Установка завершена", 0.5);
                 AppendLog("spacer");
                 AppendLog("✓ Компоненты успешно установлены/обновлены!", "final");
                 AppendLog("Теперь можно запустить сервисы через панель управления.", "ok");
@@ -5123,9 +5145,15 @@ public partial class MainWindow : Window
             }
             else
             {
-                SetupProg.Value = 0;
-                SetupProg.Foreground = new SolidColorBrush(Color.FromRgb(239, 68, 68));
-                SetupProgLbl.Text = "Ошибка установки";
+                _isConnected = false;
+                _connectedTimer?.Stop();
+                _connectedTimer = null;
+                var line1 = FixBtn.Template.FindName("BtnLine1", FixBtn) as TextBlock;
+                var line2 = FixBtn.Template.FindName("BtnLine2", FixBtn) as TextBlock;
+                if (line1 is not null) line1.Text = "Починить";
+                if (line2 is not null) line2.Text = "интернет";
+
+                AnimateProgressBar(100, Color.FromRgb(239, 68, 68), "Ошибка установки", 0.5);
                 AppendLog("spacer");
                 AppendLog("Произошла ошибка при установке компонентов.", "error");
                 AppendLog("Попробуйте установить компоненты вручную через настройки.", "error");
@@ -5139,51 +5167,28 @@ public partial class MainWindow : Window
 
     private void PlaySuccessRing()
     {
-        double circumference = 2 * Math.PI * 97;
-        SuccessArc.StrokeDashArray = new DoubleCollection { 0, circumference };
-        SuccessArc.Visibility = Visibility.Visible;
+        StopSuccessRing();
 
-        var icon = GetFixButtonIcon();
-        if (icon != null) {
-            var brush = new SolidColorBrush(Color.FromRgb(0x7c, 0x6a, 0xf7));
-            icon.Stroke = brush;
-            brush.BeginAnimation(SolidColorBrush.ColorProperty,
-                new ColorAnimation(
-                    Color.FromRgb(0x7c, 0x6a, 0xf7),
-                    Color.FromRgb(0x22, 0xc5, 0x5e),
-                    new Duration(TimeSpan.FromSeconds(1.8)))
-                { EasingFunction = new SineEase { EasingMode = EasingMode.EaseOut } });
-        }
-
-        var sw = System.Diagnostics.Stopwatch.StartNew();
-        var timer = new System.Windows.Threading.DispatcherTimer
-            { Interval = TimeSpan.FromMilliseconds(16) };
-        timer.Tick += (s, e) => {
-            double t = Math.Min(sw.Elapsed.TotalSeconds / 5, 1.0);
-            double ease = t == 0 ? 0 : 1 - Math.Pow(2, -10 * t);
-            SuccessArc.StrokeDashArray = new DoubleCollection { ease * circumference, circumference };
-            if (t >= 1.0) timer.Stop();
-        };
-        timer.Start();
+        HideAllRings();
+        AnimateSuccessArc(0.6);
+        AnimateIconColor(Color.FromRgb(0x22, 0xc5, 0x5e), 0.5);
     }
 
     private void StartGlow()
     {
         _splitTarget = 1;
         _colorTarget = 0;
+        _finalSuccess = true;
 
-        IdleRingOuter.Visibility = Visibility.Collapsed;
-        IdleRingInner.Visibility = Visibility.Collapsed;
-        ErrorRing.Visibility     = Visibility.Collapsed;
-        SuccessArc.Visibility    = Visibility.Collapsed;
-        SuccessCheck.Visibility  = Visibility.Collapsed;
+        HideAllRings();
 
-        SpinArc.Visibility = Visibility.Visible;
+        FadeElementIn(SpinArc, 0.3);
+        FadeElementIn(SpinArc2, 0.3);
+
         var spin1 = new DoubleAnimation(0, 360, new Duration(TimeSpan.FromSeconds(1.4)))
             { RepeatBehavior = RepeatBehavior.Forever };
         SpinOffset.BeginAnimation(RotateTransform.AngleProperty, spin1);
 
-        SpinArc2.Visibility = Visibility.Visible;
         var spin2 = new DoubleAnimation(0, 360, new Duration(TimeSpan.FromSeconds(1.9)))
             { RepeatBehavior = RepeatBehavior.Forever };
         SpinRotation2.BeginAnimation(RotateTransform.AngleProperty, spin2);
@@ -5214,25 +5219,45 @@ public partial class MainWindow : Window
         SpinOffset.BeginAnimation(RotateTransform.AngleProperty, null);
         SpinRotation2.BeginAnimation(RotateTransform.AngleProperty, null);
 
-        SpinArc.Visibility  = Visibility.Collapsed;
-        SpinArc2.Visibility = Visibility.Collapsed;
+        FadeElementOut(SpinArc, 0.3);
+        FadeElementOut(SpinArc2, 0.3);
+
+        StopSuccessRing();
 
         if (GetFixButtonIcon() is System.Windows.Shapes.Path iconEl)
         {
-            if (iconEl.Stroke is SolidColorBrush brush)
-                brush.BeginAnimation(SolidColorBrush.ColorProperty, null);
-
+            iconEl.BeginAnimation(System.Windows.Shapes.Path.StrokeProperty, null);
             iconEl.Stroke = new SolidColorBrush(success
                 ? Color.FromRgb(0x22, 0xc5, 0x5e)
                 : Color.FromRgb(0xef, 0x44, 0x44));
         }
     }
 
+    private void StopAllBypassServices()
+    {
+        var st = DiagnosticsEngine.CheckAppStatus();
+        if (_settings.EnableZapret && st.ZapretRunning)
+        {
+            foreach (var p in Process.GetProcessesByName("winws"))
+                try { p.Kill(); } catch { }
+        }
+        if (_settings.EnableTgWsProxy && st.TgWsProxyRunning)
+        {
+            foreach (var p in Process.GetProcessesByName("TgWsProxy"))
+                try { p.Kill(); } catch { }
+        }
+
+        StopGlow(false);
+    }
+
     private void PlayErrorRing()
     {
-        ErrorRing.Visibility = Visibility.Visible;
+        StopSuccessRing();
 
-        SetFixButtonIconColor(Color.FromRgb(0xef, 0x44, 0x44));
+        HideAllRings();
+        FadeElementIn(ErrorRing, 0.3);
+
+        AnimateIconColor(Color.FromRgb(0xef, 0x44, 0x44), 0.4);
 
         var shakeTransform = new TranslateTransform();
         FixBtn.RenderTransform = shakeTransform;
@@ -5261,6 +5286,272 @@ public partial class MainWindow : Window
 
         icon.BeginAnimation(System.Windows.Shapes.Path.StrokeProperty, null);
         icon.Stroke = new SolidColorBrush(color);
+    }
+
+    private void SetFixBtnConnected()
+    {
+        _isConnected = true;
+        _connectedSince = DateTime.Now;
+
+        AnimateButtonLabel("Подключено", "00:00");
+
+        _connectedTimer?.Stop();
+        _connectedTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _connectedTimer.Tick += (_, _) => UpdateConnectedTimer();
+        _connectedTimer.Start();
+    }
+
+    private void SetFixBtnDisconnected()
+    {
+        _isConnected = false;
+        _connectedTimer?.Stop();
+        _connectedTimer = null;
+
+        StopSuccessRing();
+
+        AnimateButtonLabel("Починить", "интернет");
+
+        AnimateProgressBar(0, Color.FromRgb(0x2e, 0x2e, 0x2e), "", 0.5);
+        SetupProgLbl.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+
+        HideAllRings();
+        FadeElementIn(IdleRingOuter, 0.4);
+        FadeElementIn(IdleRingInner, 0.5);
+
+        AnimateIconColor(Color.FromRgb(0x7c, 0x6a, 0xf7), 0.4);
+
+        _splitTarget = 0;
+        _colorTarget = 0;
+        _finalSuccess = true;
+    }
+
+    private void HideAllRings()
+    {
+        IdleRingOuter.Visibility = Visibility.Collapsed;
+        IdleRingInner.Visibility = Visibility.Collapsed;
+        SpinArc.Visibility = Visibility.Collapsed;
+        SpinArc2.Visibility = Visibility.Collapsed;
+        SuccessArc.Visibility = Visibility.Collapsed;
+        ErrorRing.Visibility = Visibility.Collapsed;
+        SuccessCheck.Visibility = Visibility.Collapsed;
+    }
+
+    private void StopSuccessRing()
+    {
+        _successRingTimer?.Stop();
+        _successRingTimer = null;
+        if (_successRingIconBrush is not null)
+        {
+            _successRingIconBrush.BeginAnimation(SolidColorBrush.ColorProperty, null);
+            _successRingIconBrush = null;
+        }
+    }
+
+    private void EnterWorkingState(string label)
+    {
+        _isConnected = false;
+        _connectedTimer?.Stop();
+        _connectedTimer = null;
+
+        AnimateButtonLabel("Починить", "интернет");
+
+        FixBtn.IsEnabled = false;
+
+        SetupProg.BeginAnimation(System.Windows.Controls.ProgressBar.ValueProperty, null);
+        SetupProg.BeginAnimation(System.Windows.Controls.ProgressBar.ForegroundProperty, null);
+        SetupProg.Value = 0;
+
+        var dur = new Duration(TimeSpan.FromSeconds(0.4));
+        var ease = new CubicEase { EasingMode = EasingMode.EaseInOut };
+        var fromColor = SetupProg.Foreground is SolidColorBrush bc ? bc.Color : Color.FromRgb(0x2e, 0x2e, 0x2e);
+        var animBrush = new SolidColorBrush(fromColor);
+        SetupProg.Foreground = animBrush;
+        animBrush.BeginAnimation(SolidColorBrush.ColorProperty,
+            new ColorAnimation(fromColor, Color.FromRgb(59, 130, 246), dur) { EasingFunction = ease });
+        SetupProgLbl.Text = label;
+
+        StopSuccessRing();
+
+        _splitTarget = 1;
+        _colorTarget = 0;
+        _finalSuccess = true;
+
+        HideAllRings();
+        FadeElementIn(SpinArc, 0.3);
+        FadeElementIn(SpinArc2, 0.3);
+
+        var spin1 = new DoubleAnimation(0, 360, new Duration(TimeSpan.FromSeconds(1.4)))
+            { RepeatBehavior = RepeatBehavior.Forever };
+        SpinOffset.BeginAnimation(RotateTransform.AngleProperty, spin1);
+
+        var spin2 = new DoubleAnimation(0, 360, new Duration(TimeSpan.FromSeconds(1.9)))
+            { RepeatBehavior = RepeatBehavior.Forever };
+        SpinRotation2.BeginAnimation(RotateTransform.AngleProperty, spin2);
+
+        if (GetFixButtonIcon() is System.Windows.Shapes.Path iconEl)
+        {
+            var iconBrush = new SolidColorBrush(Color.FromRgb(0x7c, 0x6a, 0xf7));
+            iconEl.Stroke = iconBrush;
+            var colorAnim = new ColorAnimation(
+                Color.FromRgb(0x7c, 0x6a, 0xf7),
+                Color.FromRgb(0x5b, 0x8d, 0xf5),
+                new Duration(TimeSpan.FromSeconds(1.8)))
+            {
+                AutoReverse = true,
+                RepeatBehavior = RepeatBehavior.Forever
+            };
+            iconBrush.BeginAnimation(SolidColorBrush.ColorProperty, colorAnim);
+        }
+    }
+
+    private void AnimateButtonLabel(string text1, string text2)
+    {
+        var line1 = FixBtn.Template.FindName("BtnLine1", FixBtn) as TextBlock;
+        var line2 = FixBtn.Template.FindName("BtnLine2", FixBtn) as TextBlock;
+        if (line1 is null || line2 is null) return;
+
+        var dur = new Duration(TimeSpan.FromSeconds(0.2));
+        var ease = new CubicEase { EasingMode = EasingMode.EaseInOut };
+
+        var fadeOut = new DoubleAnimation(1, 0, dur) { EasingFunction = ease };
+        fadeOut.Completed += (_, _) =>
+        {
+            line1.Text = text1;
+            line2.Text = text2;
+            line1.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, dur) { EasingFunction = ease });
+            line2.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, dur) { EasingFunction = ease });
+        };
+        line1.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+        line2.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(1, 0, dur) { EasingFunction = ease });
+    }
+
+    private void AnimateProgressBar(double targetValue, Color targetColor, string label, double durationSec = 0.6)
+    {
+        SetupProg.BeginAnimation(System.Windows.Controls.ProgressBar.ValueProperty, null);
+        SetupProg.BeginAnimation(System.Windows.Controls.ProgressBar.ForegroundProperty, null);
+
+        var dur = new Duration(TimeSpan.FromSeconds(durationSec));
+        var ease = new CubicEase { EasingMode = EasingMode.EaseInOut };
+
+        var valAnim = new DoubleAnimation(SetupProg.Value, targetValue, dur) { EasingFunction = ease };
+        SetupProg.BeginAnimation(System.Windows.Controls.ProgressBar.ValueProperty, valAnim);
+
+        var fromColor = SetupProg.Foreground is SolidColorBrush bc ? bc.Color : Color.FromRgb(0x2e, 0x2e, 0x2e);
+        var animBrush = new SolidColorBrush(fromColor);
+        SetupProg.Foreground = animBrush;
+        animBrush.BeginAnimation(SolidColorBrush.ColorProperty,
+            new ColorAnimation(fromColor, targetColor, dur) { EasingFunction = ease });
+
+        if (label is not null)
+            SetupProgLbl.Text = label;
+    }
+
+    private void FadeElementIn(FrameworkElement element, double durationSec = 0.3)
+    {
+        element.Visibility = Visibility.Visible;
+        element.Opacity = 0;
+        var anim = new DoubleAnimation(0, 1, new Duration(TimeSpan.FromSeconds(durationSec)))
+            { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+        element.BeginAnimation(UIElement.OpacityProperty, anim);
+    }
+
+    private void FadeElementOut(FrameworkElement element, double durationSec = 0.2)
+    {
+        var anim = new DoubleAnimation(1, 0, new Duration(TimeSpan.FromSeconds(durationSec)))
+            { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn } };
+        anim.Completed += (_, _) => element.Visibility = Visibility.Collapsed;
+        element.BeginAnimation(UIElement.OpacityProperty, anim);
+    }
+
+    private void AnimateSuccessArc(double durationSec = 0.6)
+    {
+        double circumference = 2 * Math.PI * 97;
+        SuccessArc.StrokeDashArray = new DoubleCollection { 0, circumference };
+        FadeElementIn(SuccessArc, 0.3);
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var timer = new System.Windows.Threading.DispatcherTimer
+            { Interval = TimeSpan.FromMilliseconds(16) };
+        _successRingTimer = timer;
+        timer.Tick += (s, e) =>
+        {
+            double t = Math.Min(sw.Elapsed.TotalSeconds / durationSec, 1.0);
+            double ease = t == 0 ? 0 : 1 - Math.Pow(2, -10 * t);
+            SuccessArc.StrokeDashArray = new DoubleCollection { ease * circumference, circumference };
+            if (t >= 1.0)
+            {
+                timer.Stop();
+                _successRingTimer = null;
+            }
+        };
+        timer.Start();
+    }
+
+    private void AnimateIconColor(Color targetColor, double durationSec = 0.5)
+    {
+        if (GetFixButtonIcon() is not System.Windows.Shapes.Path iconEl) return;
+        iconEl.BeginAnimation(System.Windows.Shapes.Path.StrokeProperty, null);
+        var fromColor = iconEl.Stroke is SolidColorBrush bc ? bc.Color : Color.FromRgb(0x7c, 0x6a, 0xf7);
+        var brush = new SolidColorBrush(fromColor);
+        iconEl.Stroke = brush;
+        _successRingIconBrush = brush;
+        brush.BeginAnimation(SolidColorBrush.ColorProperty,
+            new ColorAnimation(targetColor, new Duration(TimeSpan.FromSeconds(durationSec)))
+            { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut } });
+    }
+
+    private void CheckInitialServiceState()
+    {
+        var t = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        t.Tick += (_, _) =>
+        {
+            t.Stop();
+            var st = DiagnosticsEngine.CheckAppStatus();
+            bool allRunning = (!_settings.EnableZapret || st.ZapretRunning)
+                           && (!_settings.EnableTgWsProxy || st.TgWsProxyRunning);
+            if (!allRunning) return;
+
+            HideAllRings();
+            AnimateSuccessArc(0.6);
+            AnimateIconColor(Color.FromRgb(0x22, 0xc5, 0x5e), 0.5);
+
+            _splitTarget = 0;
+            _colorTarget = 1;
+            _finalSuccess = true;
+
+            AnimateProgressBar(100, Color.FromRgb(0x22, 0xc5, 0x5e), "Всё уже работает", 0.6);
+            SetFixBtnConnected();
+        };
+        t.Start();
+    }
+
+    private void SetConnectedFromStatus()
+    {
+        StopSuccessRing();
+
+        AnimateProgressBar(100, Color.FromRgb(34, 197, 94), "Всё уже работает", 0.6);
+
+        HideAllRings();
+        AnimateSuccessArc(0.6);
+
+        AnimateIconColor(Color.FromRgb(0x22, 0xc5, 0x5e), 0.5);
+
+        _splitTarget = 0;
+        _colorTarget = 1;
+        _finalSuccess = true;
+
+        SetFixBtnConnected();
+    }
+
+    private void UpdateConnectedTimer()
+    {
+        if (!_isConnected) return;
+        var elapsed = DateTime.Now - _connectedSince;
+        var line2 = FixBtn.Template.FindName("BtnLine2", FixBtn) as TextBlock;
+        if (line2 is not null)
+            line2.Text = elapsed.TotalHours >= 1
+                ? elapsed.ToString(@"h\:mm\:ss")
+                : elapsed.ToString(@"mm\:ss");
     }
 
     private void DiagRunBtn_Click(object s, RoutedEventArgs e)
@@ -5556,6 +5847,7 @@ public partial class MainWindow : Window
 
     private void LoadSettingsToPanel()
     {
+        _settingsLoaded = false;
         ZapretBox.Text   = _settings.ZapretPath;
         TgWsBox.Text     = _settings.TgWsProxyPath;
         AutoTgWsCB.IsChecked    = _settings.AutostartTgWsProxy;
@@ -5566,6 +5858,8 @@ public partial class MainWindow : Window
         TgWsCheckUpdatesCB.IsChecked    = _settings.TgWsProxyCheckUpdates;
         DiscordRpcCB.IsChecked      = _settings.DiscordRpcEnabled;
         AutoUpdatesCB.IsChecked     = _settings.AutoUpdates;
+        UseZapretCB.IsChecked = _settings.EnableZapret;
+        UseTgWsCB.IsChecked = _settings.EnableTgWsProxy;
         ShowGameOfferCB.IsChecked   = _settings.ShowGameOfferDialog;
         ShowServiceReminderCB.IsChecked = _settings.ShowLongCheckDialog;
         UpdateFixModeVisual(_settings.Mode);
@@ -5579,6 +5873,7 @@ public partial class MainWindow : Window
         RememberSizeCB.IsChecked = _settings.RememberWindowSize;
         ForceNetOkCB.IsChecked = _settings.ForceNetworkOk;
         LoadKeyLabels();
+        _settingsLoaded = true;
     }
 
     private void AutoSaveSettings()
@@ -5591,6 +5886,8 @@ public partial class MainWindow : Window
         _settings.AutoUpdates      = AutoUpdatesCB.IsChecked == true;
         _settings.ShowGameOfferDialog  = ShowGameOfferCB.IsChecked == true;
         _settings.ShowLongCheckDialog  = ShowServiceReminderCB.IsChecked == true;
+        _settings.EnableZapret = UseZapretCB.IsChecked == true;
+        _settings.EnableTgWsProxy = UseTgWsCB.IsChecked == true;
         _settings.RememberWindowSize = RememberSizeCB.IsChecked == true;
         _settings.ForceNetworkOk = ForceNetOkCB.IsChecked == true;
         SettingsService.Save(_settings);
@@ -10651,17 +10948,39 @@ public partial class MainWindow : Window
     {
         try
         {
-            using var regKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
-                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
+            string taskName = "NetFix";
+            string path = Environment.ProcessPath;
+
             if (enable)
             {
-                string path = Environment.ProcessPath;
-                regKey?.SetValue("NetFix", $"\"{path}\" --autostart");
+                var psi = new ProcessStartInfo("schtasks.exe",
+                    $"/create /tn \"{taskName}\" /tr \"\\\"{path}\\\" --autostart\" /sc onlogon /rl highest /f")
+                {
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                using var proc = Process.Start(psi);
+                proc?.WaitForExit();
             }
             else
             {
+                var psi = new ProcessStartInfo("schtasks.exe",
+                    $"/delete /tn \"{taskName}\" /f")
+                {
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                using var proc = Process.Start(psi);
+                proc?.WaitForExit();
+            }
+
+            try
+            {
+                using var regKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                    @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
                 regKey?.DeleteValue("NetFix", false);
             }
+            catch { }
         }
         catch (Exception ex)
         {

@@ -122,6 +122,8 @@ public class AppSettings
     public string OsuSortMode { get; set; } = "DateAddedDesc";
     public bool TgWsProxyCheckUpdates { get; set; } = true;
     public bool StartMinimizedToTray { get; set; } = false;
+    public bool EnableZapret { get; set; } = true;
+    public bool EnableTgWsProxy { get; set; } = true;
     public List<string> ActiveStrategyMods { get; set; } = [];
     public List<string> ActiveListMods { get; set; } = [];
     public bool RememberWindowSize { get; set; } = false;

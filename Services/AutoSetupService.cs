@@ -43,40 +43,54 @@ public static class AutoSetupService
         await Task.Delay(200);
 
         log("Проверяю последние версии инструментов…", "info");
-        string zapretVer   = await GetLatestGitHubRelease(ZapretRepo);
-        string tgWsVer     = await GetLatestGitHubRelease(TgWsProxyRepo);
+        string zapretVer   = settings.EnableZapret ? await GetLatestGitHubRelease(ZapretRepo) : "";
+        string tgWsVer     = settings.EnableTgWsProxy ? await GetLatestGitHubRelease(TgWsProxyRepo) : "";
         progress(0.20);
 
-        if (string.IsNullOrEmpty(settings.ZapretPath) || !File.Exists(settings.ZapretPath))
+        if (settings.EnableZapret)
         {
-            log($"Нахожу Zapret {(string.IsNullOrEmpty(zapretVer) ? "последнюю версию" : zapretVer)}…", "info");
-            log($"Откройте в браузере и скачайте архив для Windows:\nhttps://github.com/{ZapretRepo}/releases/latest", "link");
-            log("⏳ После скачивания укажите путь в Настройках → Пути к файлам", "warn");
+            if (string.IsNullOrEmpty(settings.ZapretPath) || !File.Exists(settings.ZapretPath))
+            {
+                log($"Нахожу Zapret {(string.IsNullOrEmpty(zapretVer) ? "последнюю версию" : zapretVer)}…", "info");
+                log($"Откройте в браузере и скачайте архив для Windows:\nhttps://github.com/{ZapretRepo}/releases/latest", "link");
+                log("⏳ После скачивания укажите путь в Настройках → Пути к файлам", "warn");
+            }
+            else
+            {
+                log($"Zapret найден: {settings.ZapretPath}", "ok");
+                if (!IsProcessRunning(["zapret", "nfqws", "winws"]))
+                    TryLaunch(settings.ZapretPath, log);
+                else
+                    log("Zapret уже запущен", "ok");
+            }
         }
         else
         {
-            log($"Zapret найден: {settings.ZapretPath}", "ok");
-            if (!IsProcessRunning(["zapret", "nfqws", "winws"]))
-                TryLaunch(settings.ZapretPath, log);
-            else
-                log("Zapret уже запущен", "ok");
+            log("Zapret отключён в настройках", "info");
         }
         progress(0.50);
         await Task.Delay(200);
 
-        if (string.IsNullOrEmpty(settings.TgWsProxyPath) || !File.Exists(settings.TgWsProxyPath))
+        if (settings.EnableTgWsProxy)
         {
-            log($"Нахожу tg-ws-proxy {(string.IsNullOrEmpty(tgWsVer) ? "последнюю версию" : tgWsVer)}…", "info");
-            log($"Откройте в браузере и скачайте для Windows:\nhttps://github.com/{TgWsProxyRepo}/releases/latest", "link");
-            log("⏳ После скачивания укажите путь в Настройках → Пути к файлам", "warn");
+            if (string.IsNullOrEmpty(settings.TgWsProxyPath) || !File.Exists(settings.TgWsProxyPath))
+            {
+                log($"Нахожу tg-ws-proxy {(string.IsNullOrEmpty(tgWsVer) ? "последнюю версию" : tgWsVer)}…", "info");
+                log($"Откройте в браузере и скачайте для Windows:\nhttps://github.com/{TgWsProxyRepo}/releases/latest", "link");
+                log("⏳ После скачивания укажите путь в Настройках → Пути к файлам", "warn");
+            }
+            else
+            {
+                log($"tg-ws-proxy найден: {settings.TgWsProxyPath}", "ok");
+                if (!IsProcessRunning(["tg-ws-proxy", "tgwsproxy"]))
+                    TryLaunch(settings.TgWsProxyPath, log);
+                else
+                    log("tg-ws-proxy уже запущен", "ok");
+            }
         }
         else
         {
-            log($"tg-ws-proxy найден: {settings.TgWsProxyPath}", "ok");
-            if (!IsProcessRunning(["tg-ws-proxy", "tgwsproxy"]))
-                TryLaunch(settings.TgWsProxyPath, log);
-            else
-                log("tg-ws-proxy уже запущен", "ok");
+            log("TgWsProxy отключён в настройках", "info");
         }
         progress(0.75);
         await Task.Delay(200);

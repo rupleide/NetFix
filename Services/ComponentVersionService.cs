@@ -17,10 +17,10 @@ public static class ComponentVersionService
     {
         try
         {
-            bool zapretInstalled = !string.IsNullOrEmpty(settings.ZapretPath) && File.Exists(settings.ZapretPath);
-            bool tgWsProxyInstalled = !string.IsNullOrEmpty(settings.TgWsProxyPath) && File.Exists(settings.TgWsProxyPath);
+            bool zapretCheck = settings.EnableZapret && !string.IsNullOrEmpty(settings.ZapretPath) && File.Exists(settings.ZapretPath);
+            bool tgWsProxyCheck = settings.EnableTgWsProxy && !string.IsNullOrEmpty(settings.TgWsProxyPath) && File.Exists(settings.TgWsProxyPath);
 
-            if (!zapretInstalled && !tgWsProxyInstalled)
+            if (!zapretCheck && !tgWsProxyCheck)
             {
                 return (true, "Компоненты не установлены");
             }
@@ -28,7 +28,7 @@ public static class ComponentVersionService
             bool zapretNeedsUpdate = false;
             bool tgWsProxyNeedsUpdate = false;
 
-            if (zapretInstalled)
+            if (zapretCheck)
             {
                 var zapretVersion = GetInstalledZapretVersion(settings.ZapretPath);
                 var latestZapretVersion = await GetLatestGitHubVersionAsync(ZapretRepo);
@@ -41,7 +41,7 @@ public static class ComponentVersionService
                 }
             }
 
-            if (tgWsProxyInstalled)
+            if (tgWsProxyCheck)
             {
                 var tgWsProxyVersion = GetInstalledTgWsProxyVersion(settings.TgWsProxyPath);
                 var latestTgWsProxyVersion = await GetLatestGitHubVersionAsync(TgWsProxyRepo);

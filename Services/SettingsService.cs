@@ -1,13 +1,15 @@
 using System.IO;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using NetFix.Models;
 
 namespace NetFix.Services;
 
 public static class SettingsService
 {
-    private static readonly string AppDir = AppContext.BaseDirectory;
+    private static readonly string AppDir = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "NetFix");
     private static readonly string SettingsFile = Path.Combine(AppDir, "settings.json");
     private static readonly string OnboardFile = Path.Combine(AppDir, ".onboarded");
 
@@ -16,10 +18,36 @@ public static class SettingsService
         WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,
     };
+
+    private static bool _migrated;
+
+    private static void EnsureMigrated()
+    {
+        if (_migrated) return;
+        _migrated = true;
+
+        try
+        {
+            var oldDir = AppContext.BaseDirectory;
+            var oldSettings = Path.Combine(oldDir, "settings.json");
+            var oldOnboard = Path.Combine(oldDir, ".onboarded");
+
+            Directory.CreateDirectory(AppDir);
+
+            if (!File.Exists(SettingsFile) && File.Exists(oldSettings))
+                File.Copy(oldSettings, SettingsFile);
+
+            if (!File.Exists(OnboardFile) && File.Exists(oldOnboard))
+                File.Copy(oldOnboard, OnboardFile);
+        }
+        catch { }
+    }
 
     public static AppSettings Load()
     {
+        EnsureMigrated();
         if (!File.Exists(SettingsFile)) return new();
         try
         {

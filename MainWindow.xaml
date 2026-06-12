@@ -856,7 +856,7 @@
                                          IsHitTestVisible="False" Opacity="0.5"/>
                                 <Ellipse x:Name="IdleRingInner" Width="174" Height="174"
                                          Stroke="#3b82f6" StrokeThickness="0.8"
-                                         StrokeDashArray="6 8" Fill="Transparent"
+                                         Fill="Transparent"
                                          IsHitTestVisible="False" Opacity="0.2"/>
                                 <Ellipse x:Name="PulseRing1" Width="180" Height="180"
                                          Stroke="#5b8df5" StrokeThickness="6" Fill="Transparent"
@@ -4716,8 +4716,17 @@
                                           Content="NetFix в автозапуск Windows" Margin="0,0,0,10"
                                           Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
                                  <CheckBox x:Name="StartMinimizedCB" Style="{StaticResource Toggle}"
-                                           Content="NetFix в трей при запуске" Margin="0,0,0,10"
-                                           Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
+                                            Content="NetFix в трей при запуске" Margin="0,0,0,10"
+                                            Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
+                                <Border Height="1" Background="#333333" Margin="0,0,0,16"/>
+                                <TextBlock Text="ИСПОЛЬЗУЕМЫЕ КОМПОНЕНТЫ" FontFamily="Segoe UI" FontSize="11"
+                                           Foreground="#888888" FontWeight="Bold" Margin="0,0,0,10"/>
+                                <CheckBox x:Name="UseZapretCB" Style="{StaticResource Toggle}"
+                                          Content="Использовать Zapret" Margin="0,0,0,10"
+                                          Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
+                                <CheckBox x:Name="UseTgWsCB" Style="{StaticResource Toggle}"
+                                          Content="Использовать TgWsProxy" Margin="0,0,0,14"
+                                          Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
                                 <Border Height="1" Background="#333333" Margin="0,0,0,16"/>
                                 <TextBlock Text="TgWsProxy" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
