@@ -47,7 +47,7 @@ public static class ModPackager
             if (File.Exists(batPath))
                 archive.CreateEntryFromFile(batPath, "strategy.bat");
         }
-        else if (mod.Type == ModType.List)
+        else if (mod.Type == ModType.List || mod.Type == ModType.Hosts)
         {
             var listPath = Path.Combine(mod.FolderPath, "list.txt");
             if (File.Exists(listPath))
@@ -84,7 +84,7 @@ public static class ModPackager
     }
 
     public static async Task<(ModEntry? Entry, string? Error)> ImportAsync(
-        string zipPath, List<string> activeStrategyMods, List<string> activeListMods)
+        string zipPath, List<string> activeStrategyMods, List<string> activeListMods, List<string> activeHostsMods)
     {
         var (meta, error) = await ReadModMetaFromArchive(zipPath);
         if (meta is null || error is not null)
@@ -94,6 +94,7 @@ public static class ModPackager
         {
             "strategy" => ModType.Strategy,
             "list" => ModType.List,
+            "hosts" => ModType.Hosts,
             "build" => ModType.Build,
             _ => ModType.Strategy,
         };
@@ -102,6 +103,7 @@ public static class ModPackager
         {
             ModType.Strategy => ModScanner.StrategiesRoot,
             ModType.List => ModScanner.ListsRoot,
+            ModType.Hosts => ModScanner.HostsRoot,
             _ => ModScanner.StrategiesRoot,
         };
 
@@ -133,6 +135,14 @@ public static class ModPackager
             return (null, $"Ошибка распаковки: {ex.Message}");
         }
 
+        var activeNames = modType switch
+        {
+            ModType.Strategy => activeStrategyMods,
+            ModType.List => activeListMods,
+            ModType.Hosts => activeHostsMods,
+            _ => new List<string>(),
+        };
+
         var entry_ = new ModEntry(
             Name: meta.Name,
             Author: meta.Author,
@@ -145,7 +155,7 @@ public static class ModPackager
             TargetFile: meta.TargetFile
         )
         {
-            IsActive = false,
+            IsActive = activeNames.Contains(dirName),
         };
 
         return (entry_, null);
@@ -154,7 +164,7 @@ public static class ModPackager
     public static ModEntry CreateNewMod(
         string name, string author, string version, string description, ModType type,
         string? batSourcePath, string? listSourcePath, string? listContent,
-        List<string> activeStrategyMods, List<string> activeListMods,
+        List<string> activeStrategyMods, List<string> activeListMods, List<string> activeHostsMods,
         string? targetFile = null)
     {
         var dirName = SanitizeFileName(name);
@@ -162,6 +172,7 @@ public static class ModPackager
         {
             ModType.Strategy => ModScanner.StrategiesRoot,
             ModType.List => ModScanner.ListsRoot,
+            ModType.Hosts => ModScanner.HostsRoot,
             _ => ModScanner.StrategiesRoot,
         };
 
@@ -172,6 +183,7 @@ public static class ModPackager
         {
             ModType.Strategy when batSourcePath is not null => Path.GetFileName(batSourcePath),
             ModType.List when listSourcePath is not null => Path.GetFileName(listSourcePath),
+            ModType.Hosts when listSourcePath is not null => Path.GetFileName(listSourcePath),
             _ => null,
         };
 
@@ -192,13 +204,19 @@ public static class ModPackager
         if (type == ModType.Strategy && batSourcePath is not null && File.Exists(batSourcePath))
             File.Copy(batSourcePath, Path.Combine(modDir, "strategy.bat"), overwrite: true);
 
-        if (type == ModType.List && !string.IsNullOrEmpty(listContent))
+        if ((type == ModType.List || type == ModType.Hosts) && !string.IsNullOrEmpty(listContent))
         {
             var listFile = Path.Combine(modDir, "list.txt");
             File.WriteAllText(listFile, listContent);
         }
 
-        var activeNames = type == ModType.Strategy ? activeStrategyMods : activeListMods;
+        var activeNames = type switch
+        {
+            ModType.Strategy => activeStrategyMods,
+            ModType.List => activeListMods,
+            ModType.Hosts => activeHostsMods,
+            _ => new List<string>(),
+        };
 
         return new ModEntry(
             Name: name,

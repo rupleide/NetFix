@@ -34,10 +34,16 @@ public partial class CreateModWindow : Window
             SubtitleText.Text = ".bat стратегия";
             StrategySection.Visibility = Visibility.Visible;
         }
-        else
+        else if (_modType == ModType.List)
         {
             SubtitleText.Text = "Список доменов";
             ListSection.Visibility = Visibility.Visible;
+        }
+        else if (_modType == ModType.Hosts)
+        {
+            SubtitleText.Text = "Hosts список";
+            ListSection.Visibility = Visibility.Visible;
+            ListInstructionText.Text = "Поддерживаются записи формата: IP-адрес домен (например, 127.0.0.1 example.com)";
         }
 
         AuthorBox.Text = Environment.UserName;
@@ -116,11 +122,12 @@ public partial class CreateModWindow : Window
 
     private void SelectListFile_Click(object sender, RoutedEventArgs e)
     {
+        var isHosts = _modType == ModType.Hosts;
         var dialog = new OpenFileDialog
         {
-            Filter = "Text files (*.txt)|*.txt",
-            Title = "Выберите файл списка",
-            InitialDirectory = @"C:\Zapret\lists",
+            Filter = isHosts ? "Hosts files (*.txt;hosts)|*.txt;hosts|Text files (*.txt)|*.txt" : "Text files (*.txt)|*.txt",
+            Title = isHosts ? "Выберите файл списка Hosts" : "Выберите файл списка",
+            InitialDirectory = isHosts ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), @"drivers\etc") : @"C:\Zapret\lists",
         };
 
         if (dialog.ShowDialog() == true)
@@ -153,15 +160,15 @@ public partial class CreateModWindow : Window
             return;
         }
 
-        if (_modType == ModType.List && string.IsNullOrEmpty(_selectedListFilePath))
+        if ((_modType == ModType.List || _modType == ModType.Hosts) && string.IsNullOrEmpty(_selectedListFilePath))
         {
-            ShowValidationHint("Выберите файл списка");
+            ShowValidationHint(_modType == ModType.Hosts ? "Выберите файл списка Hosts" : "Выберите файл списка");
             return;
         }
 
-        if (_modType == ModType.List && string.IsNullOrWhiteSpace(ListTextBox.Text))
+        if ((_modType == ModType.List || _modType == ModType.Hosts) && string.IsNullOrWhiteSpace(ListTextBox.Text))
         {
-            ShowValidationHint("Добавьте хотя бы один домен");
+            ShowValidationHint(_modType == ModType.Hosts ? "Добавьте хотя бы одну запись" : "Добавьте хотя бы один домен");
             ListTextBox.Focus();
             return;
         }
@@ -175,16 +182,17 @@ public partial class CreateModWindow : Window
         var settings = SettingsService.Load();
         var activeStrategy = settings.ActiveStrategyMods ?? [];
         var activeLists = settings.ActiveListMods ?? [];
+        var activeHosts = settings.ActiveHostsMods ?? [];
 
         string? listContent = null;
-        if (_modType == ModType.List)
+        if (_modType == ModType.List || _modType == ModType.Hosts)
         {
             var raw = ListTextBox.Text;
             if (!string.IsNullOrWhiteSpace(raw))
                 listContent = DomainListImporter.ParseText(raw);
         }
 
-        var targetFile = _modType == ModType.List && !string.IsNullOrEmpty(_selectedListFilePath)
+        var targetFile = (_modType == ModType.List || _modType == ModType.Hosts) && !string.IsNullOrEmpty(_selectedListFilePath)
             ? Path.GetFileName(_selectedListFilePath)
             : null;
 
@@ -199,6 +207,7 @@ public partial class CreateModWindow : Window
             listContent,
             activeStrategy,
             activeLists,
+            activeHosts,
             targetFile
         );
 

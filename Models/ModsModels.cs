@@ -3,7 +3,7 @@ using Color = System.Windows.Media.Color;
 
 namespace NetFix.Models;
 
-public enum ModType { Strategy, List, Build }
+public enum ModType { Strategy, List, Build, Hosts }
 
 public record ModEntry(
     string Name,

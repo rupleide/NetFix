@@ -427,7 +427,7 @@
                                  VerticalContentAlignment="Top"
                                  FontFamily="Consolas"
                                  FontSize="12"/>
-                        <TextBlock Text="Поддерживаются домены, IP-адреса и маски вида *.example.com"
+                        <TextBlock x:Name="ListInstructionText" Text="Поддерживаются домены, IP-адреса и маски вида *.example.com"
                                    Foreground="#555558"
                                    FontFamily="Segoe UI"
                                    FontSize="11"

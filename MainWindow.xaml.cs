@@ -5,8 +5,10 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -105,6 +107,8 @@ public partial class MainWindow : Window
 
     private AppSettings _settings = SettingsService.Load();
     private bool _settingsOpen = false;
+    private bool _isDialogOpen = false;
+    private bool _hostsWarningShown = false;
     private DispatcherTimer _monitorTimer = null!;
     private System.Windows.Forms.NotifyIcon _trayIcon = null!;
     private DispatcherTimer? _longCheckTimer = null;
@@ -231,10 +235,11 @@ public partial class MainWindow : Window
     private bool _settingsLoaded;
 
     private List<ModEntry> _allMods = [];
-    private bool _isStrategyTab = true;
+    private ModType _currentModsTab = ModType.Strategy;
     private bool _modsLoaded;
     private bool _strategyDirty;
     private bool _listsDirty;
+    private bool _hostsDirty;
     private DispatcherTimer? _savePosTimer;
     private bool _forceClose;
     private ModEntry? _dragMod;
@@ -900,12 +905,14 @@ public partial class MainWindow : Window
         ModsHomeScreen.Visibility = Visibility.Collapsed;
         ModsStrategiesScreen.Visibility = Visibility.Collapsed;
         ModsListsScreen.Visibility = Visibility.Collapsed;
+        ModsHostsScreen.Visibility = Visibility.Collapsed;
+        ModsListsChoiceScreen.Visibility = Visibility.Collapsed;
         ModsMyModsScreen.Visibility = Visibility.Collapsed;
         ModsEditorScreen.Visibility = Visibility.Collapsed;
         screen.Visibility = Visibility.Visible;
         ModsHeaderTitle.Text = title;
 
-        var showStatus = screen == ModsStrategiesScreen || screen == ModsListsScreen || screen == ModsMyModsScreen;
+        var showStatus = screen == ModsStrategiesScreen || screen == ModsListsScreen || screen == ModsHostsScreen || screen == ModsMyModsScreen;
         ModsHeaderStatus.Visibility = showStatus ? Visibility.Visible : Visibility.Collapsed;
         if (showStatus) ModsStatusText.Text = "";
     }
@@ -918,6 +925,10 @@ public partial class MainWindow : Window
             MainPage.Visibility = Visibility.Visible;
             ModsNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
         }
+        else if (ModsListsScreen.Visibility == Visibility.Visible || ModsHostsScreen.Visibility == Visibility.Visible)
+        {
+            ShowModsSubScreen(ModsListsChoiceScreen, "Списки обхода");
+        }
         else
         {
             ShowModsSubScreen(ModsHomeScreen, "Модификации");
@@ -926,16 +937,34 @@ public partial class MainWindow : Window
 
     private void ModsCardStrategies_Click(object s, RoutedEventArgs e)
     {
-        _isStrategyTab = true;
+        _currentModsTab = ModType.Strategy;
         ShowModsSubScreen(ModsStrategiesScreen, ".bat Стратегии");
         if (_modsLoaded) RefreshModsLists();
     }
 
     private void ModsCardLists_Click(object s, RoutedEventArgs e)
     {
-        _isStrategyTab = false;
+        ShowModsSubScreen(ModsListsChoiceScreen, "Списки обхода");
+    }
+
+    private void ChoiceDomainLists_Click(object s, RoutedEventArgs e)
+    {
+        _currentModsTab = ModType.List;
         ShowModsSubScreen(ModsListsScreen, "Листы доменов");
         if (_modsLoaded) RefreshModsLists();
+    }
+
+    private void ChoiceHostsLists_Click(object s, RoutedEventArgs e)
+    {
+        _currentModsTab = ModType.Hosts;
+        ShowModsSubScreen(ModsHostsScreen, "Hosts-файлы");
+        if (_modsLoaded) RefreshModsLists();
+
+        if (!_hostsWarningShown)
+        {
+            _hostsWarningShown = true;
+            ShowHostsWarningDialog(() => { });
+        }
     }
 
     private void ModsCardMyMods_Click(object s, RoutedEventArgs e)
@@ -954,7 +983,8 @@ public partial class MainWindow : Window
     {
         var activeStrategy = _settings.ActiveStrategyMods ?? [];
         var activeLists = _settings.ActiveListMods ?? [];
-        _allMods = ModScanner.ScanAll(activeStrategy, activeLists);
+        var activeHosts = _settings.ActiveHostsMods ?? [];
+        _allMods = ModScanner.ScanAll(activeStrategy, activeLists, activeHosts);
         RefreshModsLists();
         SyncActiveStrategyMods();
     }
@@ -975,20 +1005,24 @@ public partial class MainWindow : Window
 
     private void RefreshModsLists()
     {
-        var activeNames = _isStrategyTab
-            ? (_settings.ActiveStrategyMods ?? [])
-            : (_settings.ActiveListMods ?? []);
+        var activeNames = _currentModsTab switch
+        {
+            ModType.Strategy => _settings.ActiveStrategyMods ?? [],
+            ModType.List => _settings.ActiveListMods ?? [],
+            ModType.Hosts => _settings.ActiveHostsMods ?? [],
+            _ => []
+        };
 
         var activeMods = _allMods
-            .Where(m => (_isStrategyTab ? m.Type == ModType.Strategy : m.Type == ModType.List) && m.IsActive)
+            .Where(m => m.Type == _currentModsTab && m.IsActive)
             .OrderBy(m => { var idx = activeNames.IndexOf(ModScanner.GetModDirName(m)); return idx < 0 ? 999 : idx; })
             .ToList();
 
         var availableMods = _allMods
-            .Where(m => (_isStrategyTab ? m.Type == ModType.Strategy : m.Type == ModType.List) && !m.IsActive)
+            .Where(m => m.Type == _currentModsTab && !m.IsActive)
             .ToList();
 
-        if (_isStrategyTab)
+        if (_currentModsTab == ModType.Strategy)
         {
             AvailableList.ItemsSource = availableMods;
             ActiveList.ItemsSource = activeMods;
@@ -1004,7 +1038,7 @@ public partial class MainWindow : Window
             ModsApplyBtn.IsEnabled = _strategyDirty;
             ModsApplyBtn.Style = (Style)FindResource(_strategyDirty ? "AccentBtn" : "OutlineBtn");
         }
-        else
+        else if (_currentModsTab == ModType.List)
         {
             ListsAvailableList.ItemsSource = availableMods;
             ListsActiveList.ItemsSource = activeMods;
@@ -1022,16 +1056,48 @@ public partial class MainWindow : Window
             ListsApplyBtn.Style = (Style)FindResource(_listsDirty ? "AccentBtn" : "OutlineBtn");
             ResetListsArrows();
         }
+        else if (_currentModsTab == ModType.Hosts)
+        {
+            HostsAvailableList.ItemsSource = availableMods;
+            HostsActiveList.ItemsSource = activeMods;
+            HostsAvailableList.SelectedItem = null;
+            HostsActiveList.SelectedItem = null;
+
+            HostsAvailableCount.Text = availableMods.Count.ToString();
+            HostsActiveCount.Text = activeMods.Count.ToString();
+            HostsActiveCount.Foreground = new SolidColorBrush(activeMods.Count > 0
+                ? Color.FromRgb(0x22, 0xc5, 0x5e)
+                : Color.FromRgb(0x88, 0x88, 0x88));
+
+            HostsStatusText.Text = $"Листов Hosts: {availableMods.Count + activeMods.Count} | Активных: {activeMods.Count}";
+            HostsApplyBtn.IsEnabled = _hostsDirty;
+            HostsApplyBtn.Style = (Style)FindResource(_hostsDirty ? "AccentBtn" : "OutlineBtn");
+            ResetHostsArrows();
+        }
 
         UpdateModsStatus();
     }
 
     private void UpdateModsStatus()
     {
-        var isStrategy = _isStrategyTab;
-        var allCount = _allMods.Count(m => isStrategy ? m.Type == ModType.Strategy : m.Type == ModType.List);
-        var activeCount = isStrategy ? ActiveList.Items.Count : ListsActiveList.Items.Count;
-        var availCount = isStrategy ? AvailableList.Items.Count : ListsAvailableList.Items.Count;
+        var currentTab = _currentModsTab;
+        var allCount = _allMods.Count(m => m.Type == currentTab);
+
+        var activeCount = currentTab switch
+        {
+            ModType.Strategy => ActiveList.Items.Count,
+            ModType.List => ListsActiveList.Items.Count,
+            ModType.Hosts => HostsActiveList.Items.Count,
+            _ => 0
+        };
+
+        var availCount = currentTab switch
+        {
+            ModType.Strategy => AvailableList.Items.Count,
+            ModType.List => ListsAvailableList.Items.Count,
+            ModType.Hosts => HostsAvailableList.Items.Count,
+            _ => 0
+        };
 
         ModsHeaderStatus.Text = activeCount > 0
             ? $"ВКЛЮЧЕНО: {activeCount} модов"
@@ -1040,11 +1106,27 @@ public partial class MainWindow : Window
             ? Color.FromRgb(0x22, 0xc5, 0x5e)
             : Color.FromRgb(0x88, 0x88, 0x88));
 
-        if (isStrategy)
+        if (currentTab == ModType.Strategy)
         {
             AvailableCount.Text = availCount.ToString();
             ActiveCount.Text = activeCount.ToString();
             ActiveCount.Foreground = new SolidColorBrush(activeCount > 0
+                ? Color.FromRgb(0x22, 0xc5, 0x5e)
+                : Color.FromRgb(0x88, 0x88, 0x88));
+        }
+        else if (currentTab == ModType.List)
+        {
+            ListsAvailableCount.Text = availCount.ToString();
+            ListsActiveCount.Text = activeCount.ToString();
+            ListsActiveCount.Foreground = new SolidColorBrush(activeCount > 0
+                ? Color.FromRgb(0x22, 0xc5, 0x5e)
+                : Color.FromRgb(0x88, 0x88, 0x88));
+        }
+        else if (currentTab == ModType.Hosts)
+        {
+            HostsAvailableCount.Text = availCount.ToString();
+            HostsActiveCount.Text = activeCount.ToString();
+            HostsActiveCount.Foreground = new SolidColorBrush(activeCount > 0
                 ? Color.FromRgb(0x22, 0xc5, 0x5e)
                 : Color.FromRgb(0x88, 0x88, 0x88));
         }
@@ -1108,9 +1190,14 @@ public partial class MainWindow : Window
     {
         mod.IsActive = activate;
 
-        var list = mod.Type == ModType.Strategy
-            ? _settings.ActiveStrategyMods
-            : _settings.ActiveListMods;
+        List<string> list;
+        if (mod.Type == ModType.Strategy)
+            list = _settings.ActiveStrategyMods;
+        else if (mod.Type == ModType.List)
+            list = _settings.ActiveListMods;
+        else
+            list = _settings.ActiveHostsMods;
+
         var dirName = ModScanner.GetModDirName(mod);
 
         if (activate)
@@ -1125,6 +1212,7 @@ public partial class MainWindow : Window
 
         SaveModsSettings();
         if (mod.Type == ModType.List) _listsDirty = true;
+        else if (mod.Type == ModType.Hosts) _hostsDirty = true;
         else _strategyDirty = true;
 
         if (mod.Type == ModType.Strategy && !string.IsNullOrEmpty(_settings.ZapretPath))
@@ -1145,6 +1233,12 @@ public partial class MainWindow : Window
         {
             var allLists = _allMods.Where(m => m.Type == ModType.List).ToList();
             ModActivator.ApplyListMods(allLists);
+        }
+
+        if (mod.Type == ModType.Hosts)
+        {
+            var allHosts = _allMods.Where(m => m.Type == ModType.Hosts).ToList();
+            ModActivator.ApplyHostsMods(allHosts);
         }
 
         if (ModsMyModsScreen.Visibility == Visibility.Visible)
@@ -1278,7 +1372,7 @@ public partial class MainWindow : Window
 
     private void CreateModBtn_Click(object sender, RoutedEventArgs e)
     {
-        var type = _isStrategyTab ? ModType.Strategy : ModType.List;
+        var type = _currentModsTab;
         var dialog = new CreateModWindow(type);
         dialog.Owner = this;
 
@@ -1288,8 +1382,9 @@ public partial class MainWindow : Window
             SaveModsSettings();
             if (dialog.CreatedEntry.IsActive)
             {
-                if (_isStrategyTab) _strategyDirty = true;
-                else _listsDirty = true;
+                if (_currentModsTab == ModType.Strategy) _strategyDirty = true;
+                else if (_currentModsTab == ModType.List) _listsDirty = true;
+                else if (_currentModsTab == ModType.Hosts) _hostsDirty = true;
             }
             RefreshModsLists();
             if (ModsMyModsScreen.Visibility == Visibility.Visible)
@@ -1340,7 +1435,8 @@ public partial class MainWindow : Window
         {
             var activeStrategy = _settings.ActiveStrategyMods ?? [];
             var activeLists = _settings.ActiveListMods ?? [];
-            var (entry, importError) = await ModPackager.ImportAsync(zipPath, activeStrategy, activeLists);
+            var activeHosts = _settings.ActiveHostsMods ?? [];
+            var (entry, importError) = await ModPackager.ImportAsync(zipPath, activeStrategy, activeLists, activeHosts);
 
             if (entry is not null)
             {
@@ -1349,6 +1445,7 @@ public partial class MainWindow : Window
                 if (entry.IsActive)
                 {
                     if (entry.Type == ModType.List) _listsDirty = true;
+                    else if (entry.Type == ModType.Hosts) _hostsDirty = true;
                     else _strategyDirty = true;
                 }
                 RefreshModsLists();
@@ -1367,32 +1464,51 @@ public partial class MainWindow : Window
     {
         SaveModsSettings();
 
-        var title = _isStrategyTab ? "Применение стратегий" : "Применение списков";
-        var message = _isStrategyTab
-            ? "Сохранить порядок .bat стратегий?"
-            : "Применить активные списки доменов?";
+        var title = _currentModsTab switch
+        {
+            ModType.Strategy => "Применение стратегий",
+            ModType.List => "Применение списков",
+            ModType.Hosts => "Применение Hosts-файла",
+            _ => "Применение изменений"
+        };
+        var message = _currentModsTab switch
+        {
+            ModType.Strategy => "Сохранить порядок .bat стратегий?",
+            ModType.List => "Применить активные списки доменов?",
+            ModType.Hosts => "Применить активные Hosts-моды к системному файлу hosts?",
+            _ => "Применить изменения?"
+        };
 
         ShowConfirmDialog(title, message, ok =>
         {
             if (!ok) return;
 
-            if (!_isStrategyTab)
+            if (_currentModsTab == ModType.List)
             {
                 var allLists = _allMods.Where(m => m.Type == ModType.List).ToList();
-
                 var (success, error) = ModActivator.ApplyListMods(allLists);
                 if (!success)
                     ShowModsError(error ?? "Ошибка применения");
                 else
                     ShowModsSuccess("Списки доменов применены");
+                _listsDirty = false;
+            }
+            else if (_currentModsTab == ModType.Hosts)
+            {
+                var allHosts = _allMods.Where(m => m.Type == ModType.Hosts).ToList();
+                var (success, error) = ModActivator.ApplyHostsMods(allHosts);
+                if (!success)
+                    ShowModsError(error ?? "Ошибка применения");
+                else
+                    ShowModsSuccess("Hosts-файлы применены");
+                _hostsDirty = false;
             }
             else
             {
                 ShowModsSuccess("Порядок стратегий сохранён");
+                _strategyDirty = false;
             }
 
-            if (_isStrategyTab) _strategyDirty = false;
-            else _listsDirty = false;
             RefreshModsLists();
         }, confirmText: "Применить", confirmIsDestructive: false);
     }
@@ -1407,6 +1523,10 @@ public partial class MainWindow : Window
             var allLists = _allMods.Where(m => m.Type == ModType.List).ToList();
             ModActivator.ApplyListMods(allLists);
             _listsDirty = false;
+
+            var allHosts = _allMods.Where(m => m.Type == ModType.Hosts).ToList();
+            ModActivator.ApplyHostsMods(allHosts);
+            _hostsDirty = false;
         }, confirmText: "Применить", confirmIsDestructive: false);
     }
 
@@ -1574,6 +1694,7 @@ public partial class MainWindow : Window
                 if (mod.IsActive)
                 {
                     if (mod.Type == ModType.List) _listsDirty = true;
+                    else if (mod.Type == ModType.Hosts) _hostsDirty = true;
                     else _strategyDirty = true;
                 }
 
@@ -1590,8 +1711,16 @@ public partial class MainWindow : Window
                     File.WriteAllLines(targetPath, result);
                 }
 
-                var allLists = _allMods.Where(m => m.Type == ModType.List).ToList();
-                ModActivator.ApplyListMods(allLists);
+                if (mod.Type == ModType.List)
+                {
+                    var allLists = _allMods.Where(m => m.Type == ModType.List).ToList();
+                    ModActivator.ApplyListMods(allLists);
+                }
+                else if (mod.Type == ModType.Hosts)
+                {
+                    var allHosts = _allMods.Where(m => m.Type == ModType.Hosts).ToList();
+                    ModActivator.ApplyHostsMods(allHosts);
+                }
 
                 RefreshModsLists();
                 RefreshMyMods();
@@ -1676,7 +1805,15 @@ public partial class MainWindow : Window
 
         AddFolderFiles(_editorFileList.Items, @"C:\Zapret\lists", "Листы:", "*.txt");
         AddFolderFiles(_editorFileList.Items, @"C:\Zapret", "Bat файлы:", "*.bat");
+
         AddModFolders(_editorFileList.Items);
+
+        var hostsPath = Services.Mods.ModActivator.GetSystemHostsPath();
+        if (File.Exists(hostsPath))
+        {
+            _editorFileList.Items.Add(MakeHeader("Системный hosts:"));
+            _editorFileList.Items.Add(MakeFile("hosts", hostsPath));
+        }
 
         if (_editorFileList.Items.Count > 0)
         {
@@ -1774,6 +1911,17 @@ public partial class MainWindow : Window
                 items.Add(MakeFile(name, dir));
             }
         }
+
+        var hostsDir = Path.Combine(modsDir, "hosts");
+        if (Directory.Exists(hostsDir))
+        {
+            items.Add(MakeSubHeader("hosts:"));
+            foreach (var dir in Directory.GetDirectories(hostsDir).OrderBy(d => System.IO.Path.GetFileName(d)))
+            {
+                var name = System.IO.Path.GetFileName(dir);
+                items.Add(MakeFile(name, dir));
+            }
+        }
     }
 
     private void ModsEditorFileList_SelectionChanged(object s, SelectionChangedEventArgs e)
@@ -1837,17 +1985,28 @@ public partial class MainWindow : Window
                     var editedMod = _allMods.FirstOrDefault(m =>
                         _modsEditorFilePath.StartsWith(m.FolderPath, StringComparison.OrdinalIgnoreCase));
 
-                    if (editedMod is not null && editedMod.Type == ModType.List)
+                    if (editedMod is not null)
                     {
-                        var allLists = _allMods.Where(m => m.Type == ModType.List).ToList();
-                        var (success, error) = ModActivator.ApplyListMods(allLists);
-                        if (!success)
-                            ModsStatusText.Text = $"⚠️ Сохранено, но ошибка применения: {error}";
+                        if (editedMod.Type == ModType.List)
+                        {
+                            var allLists = _allMods.Where(m => m.Type == ModType.List).ToList();
+                            var (success, error) = ModActivator.ApplyListMods(allLists);
+                            if (!success)
+                                ModsStatusText.Text = $"⚠️ Сохранено, но ошибка применения: {error}";
+                        }
+                        else if (editedMod.Type == ModType.Hosts)
+                        {
+                            var allHosts = _allMods.Where(m => m.Type == ModType.Hosts).ToList();
+                            var (success, error) = ModActivator.ApplyHostsMods(allHosts);
+                            if (!success)
+                                ModsStatusText.Text = $"⚠️ Сохранено, но ошибка применения: {error}";
+                        }
                     }
 
                     var strategyNames = _settings.ActiveStrategyMods ?? [];
                     var listNames = _settings.ActiveListMods ?? [];
-                    _allMods = ModScanner.ScanAll(strategyNames, listNames);
+                    var hostsNames = _settings.ActiveHostsMods ?? [];
+                    _allMods = ModScanner.ScanAll(strategyNames, listNames, hostsNames);
                     SyncActiveStrategyMods();
                     RefreshModsLists();
                     if (ModsMyModsScreen.Visibility == Visibility.Visible)
@@ -2031,11 +2190,17 @@ public partial class MainWindow : Window
     }
     private void ListsCreateBtn_Click(object sender, RoutedEventArgs e)
     {
-        _isStrategyTab = false;
+        _currentModsTab = ModType.List;
         CreateModBtn_Click(sender, e);
     }
 
-    private async void ListsImportBtn_Click(object sender, RoutedEventArgs e)
+    private void HostsCreateBtn_Click(object sender, RoutedEventArgs e)
+    {
+        _currentModsTab = ModType.Hosts;
+        CreateModBtn_Click(sender, e);
+    }
+
+    private async Task ImportModInternalAsync(ModType defaultType)
     {
         var openDialog = new OpenFileDialog
         {
@@ -2043,13 +2208,15 @@ public partial class MainWindow : Window
             Title = "Выберите файл мода",
         };
 
+        var statusText = defaultType == ModType.Hosts ? HostsStatusText : ListsStatusText;
+
         if (openDialog.ShowDialog() == true)
         {
             var (meta, readError) = await ModPackager.ReadModMetaFromArchive(openDialog.FileName);
             if (meta is null || readError is not null)
             {
-                ListsStatusText.Text = $"Ошибка: {readError ?? "Не удалось прочитать"}";
-                ListsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
+                statusText.Text = $"Ошибка: {readError ?? "Не удалось прочитать"}";
+                statusText.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
                 return;
             }
 
@@ -2060,22 +2227,55 @@ public partial class MainWindow : Window
             {
                 var activeStrategy = _settings.ActiveStrategyMods ?? [];
                 var activeLists = _settings.ActiveListMods ?? [];
-                var (entry, importError) = await ModPackager.ImportAsync(openDialog.FileName, activeStrategy, activeLists);
+                var activeHosts = _settings.ActiveHostsMods ?? [];
+                var (entry, importError) = await ModPackager.ImportAsync(openDialog.FileName, activeStrategy, activeLists, activeHosts);
 
-                    if (entry is not null)
+                if (entry is not null)
+                {
+                    _allMods.Add(entry);
+                    SaveModsSettings();
+                    if (entry.IsActive)
                     {
-                        _allMods.Add(entry);
-                        SaveModsSettings();
-                        if (entry.IsActive) _listsDirty = true;
-                        RefreshModsLists();
-                        ListsStatusText.Text = $"✅ Мод '{meta.Name}' импортирован";
-                    ListsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+                        if (entry.Type == ModType.List) _listsDirty = true;
+                        else if (entry.Type == ModType.Hosts) _hostsDirty = true;
+                        else _strategyDirty = true;
+                    }
+                    RefreshModsLists();
+                    statusText.Text = $"✅ Мод '{meta.Name}' импортирован";
+                    statusText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
                 }
                 else
                 {
-                    ListsStatusText.Text = $"❌ {importError ?? "Ошибка импорта"}";
-                    ListsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
+                    statusText.Text = $"❌ {importError ?? "Ошибка импорта"}";
+                    statusText.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
                 }
+            }
+        }
+    }
+
+    private async void ListsImportBtn_Click(object sender, RoutedEventArgs e)
+    {
+        await ImportModInternalAsync(ModType.List);
+    }
+
+    private async void HostsImportBtn_Click(object sender, RoutedEventArgs e)
+    {
+        await ImportModInternalAsync(ModType.Hosts);
+    }
+
+    private void HostsOpenFolderBtn_Click(object sender, RoutedEventArgs e)
+    {
+        var hostsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), @"drivers\etc\hosts");
+        var dir = Path.GetDirectoryName(hostsPath);
+        if (Directory.Exists(dir))
+        {
+            try
+            {
+                Process.Start("explorer.exe", $"/select,\"{hostsPath}\"");
+            }
+            catch
+            {
+                Process.Start("explorer.exe", dir);
             }
         }
     }
@@ -2103,6 +2303,144 @@ public partial class MainWindow : Window
             _listsDirty = false;
             RefreshModsLists();
         }, confirmText: "Применить", confirmIsDestructive: false);
+    }
+
+    private void HostsApplyBtn_Click(object sender, RoutedEventArgs e)
+    {
+        SaveModsSettings();
+
+        ShowConfirmDialog("Применение Hosts-файла", "Применить активные Hosts-моды к системному файлу hosts?", ok =>
+        {
+            if (!ok) return;
+
+            var allHosts = _allMods.Where(m => m.Type == ModType.Hosts).ToList();
+            var (success, error) = ModActivator.ApplyHostsMods(allHosts);
+            if (!success)
+            {
+                HostsStatusText.Text = $"❌ {error ?? "Ошибка применения"}";
+                HostsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
+            }
+            else
+            {
+                HostsStatusText.Text = "✅ Hosts-файлы применены";
+                HostsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+            }
+            _hostsDirty = false;
+            RefreshModsLists();
+        }, confirmText: "Применить", confirmIsDestructive: false);
+    }
+
+    private void ResetHostsArrows()
+    {
+        HostsMoveRightBtn.IsEnabled = false;
+        HostsMoveLeftBtn.IsEnabled = false;
+        if (HostsMoveRightBtn.Content is System.Windows.Shapes.Path rp)
+            rp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+        if (HostsMoveLeftBtn.Content is System.Windows.Shapes.Path lp)
+            lp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+    }
+
+    private void HostsMoveRightBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (_pendingToggleMod is not ModEntry mod)
+        {
+            return;
+        }
+
+        HostsMoveRightBtn.IsEnabled = false;
+        HostsMoveLeftBtn.IsEnabled = false;
+        if (HostsMoveRightBtn.Content is System.Windows.Shapes.Path rp)
+            rp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+        if (HostsMoveLeftBtn.Content is System.Windows.Shapes.Path lp)
+            lp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+
+        _pendingToggleMod = null;
+        ToggleModActive(mod, true);
+    }
+
+    private void HostsMoveLeftBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (_pendingToggleMod is not ModEntry mod)
+        {
+            return;
+        }
+
+        HostsMoveRightBtn.IsEnabled = false;
+        HostsMoveLeftBtn.IsEnabled = false;
+        if (HostsMoveRightBtn.Content is System.Windows.Shapes.Path rp)
+            rp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+        if (HostsMoveLeftBtn.Content is System.Windows.Shapes.Path lp)
+            lp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+
+        _pendingToggleMod = null;
+        ToggleModActive(mod, false);
+    }
+
+    private void HostsAvailableList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        _isDragPending = false;
+        _pendingToggleMod = e.AddedItems.Count > 0 ? e.AddedItems[0] as ModEntry : null;
+
+        if (_pendingToggleMod is null) return;
+
+        HostsActiveList.SelectedItem = null;
+        HostsMoveRightBtn.IsEnabled = true;
+        HostsMoveLeftBtn.IsEnabled = false;
+        if (HostsMoveRightBtn.Content is System.Windows.Shapes.Path rp)
+            rp.Stroke = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+        if (HostsMoveLeftBtn.Content is System.Windows.Shapes.Path lp)
+            lp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+    }
+
+    private void HostsActiveList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        _isDragPending = false;
+        _pendingToggleMod = e.AddedItems.Count > 0 ? e.AddedItems[0] as ModEntry : null;
+
+        if (_pendingToggleMod is null) return;
+
+        HostsAvailableList.SelectedItem = null;
+        HostsMoveRightBtn.IsEnabled = false;
+        HostsMoveLeftBtn.IsEnabled = true;
+        if (HostsMoveRightBtn.Content is System.Windows.Shapes.Path rp)
+            rp.Stroke = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58));
+        if (HostsMoveLeftBtn.Content is System.Windows.Shapes.Path lp)
+            lp.Stroke = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+    }
+
+    private void HostsListBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is ListBox listBox)
+        {
+            var item = FindListBoxItem(e.OriginalSource as DependencyObject);
+            if (item?.DataContext is ModEntry mod)
+            {
+                _dragMod = mod;
+                _dragFromActive = listBox == HostsActiveList;
+                _dragStartPoint = e.GetPosition(null);
+                _isDragPending = true;
+            }
+            else
+            { /* bypassed */ }
+        }
+    }
+
+    private void HostsAvailableList_Drop(object sender, DragEventArgs e)
+    {
+        if (_dragMod is null) return;
+        if (_dragFromActive)
+            ToggleModActive(_dragMod, false);
+        _dragMod = null;
+        RemoveDragAdorner();
+    }
+
+    private void HostsActiveList_Drop(object sender, DragEventArgs e)
+    {
+        if (_dragMod is null) return;
+        if (!_dragFromActive)
+            ToggleModActive(_dragMod, true);
+        _dragMod = null;
+        RemoveDragAdorner();
     }
 
     private void UpdateComponentsBtn_Click(object s, RoutedEventArgs e)
@@ -9486,6 +9824,464 @@ public partial class MainWindow : Window
             });
     }
 
+    private void ShowHostsWarningDialog(Action onClose)
+    {
+        var win = new NetFix.Views.HostsInfoWindow { Owner = this };
+        win.ShowDialog();
+        onClose();
+    }
+
+    private void _ShowHostsWarningDialog_UNUSED(Action onClose)
+    {
+        var overlay = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = System.Windows.VerticalAlignment.Stretch
+        };
+
+        var dialog = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x18)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x2d)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(14),
+            MaxWidth = 460,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = System.Windows.VerticalAlignment.Center,
+            ClipToBounds = true
+        };
+
+        var dialogGrid = new Grid();
+
+        var grad1 = new Border
+        {
+            CornerRadius = new CornerRadius(13),
+            Opacity = 0.3,
+            Background = new RadialGradientBrush
+            {
+                ColorInterpolationMode = ColorInterpolationMode.ScRgbLinearInterpolation,
+                Center = new Point(0.5, 1.0),
+                GradientOrigin = new Point(0.5, 1.0),
+                RadiusX = 0.55,
+                RadiusY = 0.45,
+                GradientStops = new GradientStopCollection
+                {
+                    new GradientStop(Color.FromArgb(0x50, 0x63, 0x66, 0xf1), 0.0),
+                    new GradientStop(Color.FromArgb(0x00, 0x63, 0x66, 0xf1), 1.0)
+                }
+            }
+        };
+        dialogGrid.Children.Add(grad1);
+
+        var grad2 = new Border
+        {
+            CornerRadius = new CornerRadius(13),
+            Opacity = 0.25,
+            Background = new RadialGradientBrush
+            {
+                ColorInterpolationMode = ColorInterpolationMode.ScRgbLinearInterpolation,
+                Center = new Point(0.1, 0.1),
+                GradientOrigin = new Point(0.1, 0.1),
+                RadiusX = 0.35,
+                RadiusY = 0.30,
+                GradientStops = new GradientStopCollection
+                {
+                    new GradientStop(Color.FromArgb(0x30, 0x8b, 0x5c, 0xf6), 0.0),
+                    new GradientStop(Color.FromArgb(0x00, 0x8b, 0x5c, 0xf6), 1.0)
+                }
+            }
+        };
+        dialogGrid.Children.Add(grad2);
+
+        var grad3 = new Border
+        {
+            CornerRadius = new CornerRadius(13),
+            Opacity = 0.15,
+            Background = new RadialGradientBrush
+            {
+                ColorInterpolationMode = ColorInterpolationMode.ScRgbLinearInterpolation,
+                Center = new Point(0.9, 0.8),
+                GradientOrigin = new Point(0.9, 0.8),
+                RadiusX = 0.30,
+                RadiusY = 0.25,
+                GradientStops = new GradientStopCollection
+                {
+                    new GradientStop(Color.FromArgb(0x28, 0x4f, 0x46, 0xe5), 0.0),
+                    new GradientStop(Color.FromArgb(0x00, 0x4f, 0x46, 0xe5), 1.0)
+                }
+            }
+        };
+        dialogGrid.Children.Add(grad3);
+
+        try
+        {
+            var noiseBorder = new Border
+            {
+                CornerRadius = new CornerRadius(13),
+                Opacity = 0.04,
+                IsHitTestVisible = false,
+                Background = new ImageBrush
+                {
+                    ImageSource = new BitmapImage(new Uri("pack://application:,,,/Assets/noise.png")),
+                    TileMode = TileMode.Tile,
+                    ViewportUnits = BrushMappingMode.Absolute,
+                    Viewport = new Rect(0, 0, 512, 512),
+                    Stretch = Stretch.None
+                }
+            };
+            dialogGrid.Children.Add(noiseBorder);
+        }
+        catch { }
+
+        var contentLayout = new Grid();
+        contentLayout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        contentLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        contentLayout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+        var headerPanel = new Grid { Margin = new Thickness(28, 20, 28, 12) };
+        var headerStack = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 16)
+        };
+
+        var iconBorder = new Border
+        {
+            Width = 32,
+            Height = 32,
+            CornerRadius = new CornerRadius(8),
+            Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x22)),
+            Margin = new Thickness(0, 0, 12, 0)
+        };
+        var infoText = new TextBlock
+        {
+            Text = "i",
+            FontFamily = new FontFamily("Consolas"),
+            FontSize = 18,
+            FontWeight = FontWeights.Bold,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = System.Windows.VerticalAlignment.Center,
+            Margin = new Thickness(0, -2, 0, 0)
+        };
+        iconBorder.Child = infoText;
+        headerStack.Children.Add(iconBorder);
+
+        var titleStack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+        titleStack.Children.Add(new TextBlock
+        {
+            Text = "СИСТЕМНЫЙ ФАЙЛ",
+            FontSize = 11,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58)),
+            FontWeight = FontWeights.Medium,
+            FontFamily = new FontFamily("Segoe UI")
+        });
+        titleStack.Children.Add(new TextBlock
+        {
+            Text = "Раздел Hosts-файлов",
+            FontSize = 15,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xf0, 0xf0, 0xf0)),
+            FontFamily = new FontFamily("Segoe UI")
+        });
+        headerStack.Children.Add(titleStack);
+        headerPanel.Children.Add(headerStack);
+
+        var separator = new Border
+        {
+            Height = 1,
+            Background = new SolidColorBrush(Color.FromRgb(0x22, 0x22, 0x2a)),
+            Margin = new Thickness(0, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Bottom
+        };
+        headerPanel.Children.Add(separator);
+
+        contentLayout.Children.Add(headerPanel);
+        Grid.SetRow(headerPanel, 0);
+
+        var scrollViewer = new ScrollViewer
+        {
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            Margin = new Thickness(28, 16, 28, 0),
+            MaxHeight = 280
+        };
+
+        var contentStack = new StackPanel { Margin = new Thickness(0, 0, 12, 0) };
+
+        void AddHeading(string text)
+        {
+            contentStack.Children.Add(new TextBlock
+            {
+                Text = text,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 14,
+                FontWeight = FontWeights.Bold,
+                Foreground = Brushes.White,
+                Margin = new Thickness(0, 14, 0, 8)
+            });
+        }
+
+        void AddSeparator()
+        {
+            contentStack.Children.Add(new Border
+            {
+                Height = 1,
+                Background = new SolidColorBrush(Color.FromRgb(0x22, 0x22, 0x2a)),
+                Margin = new Thickness(0, 14, 0, 14)
+            });
+        }
+
+        TextBlock CreateParagraph()
+        {
+            var tb = new TextBlock
+            {
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 13,
+                TextWrapping = TextWrapping.Wrap,
+                LineHeight = 18,
+                Foreground = new SolidColorBrush(Color.FromRgb(0xbb, 0xbb, 0xbb)),
+                Margin = new Thickness(0, 0, 0, 8)
+            };
+            contentStack.Children.Add(tb);
+            return tb;
+        }
+
+        void AddSpan(TextBlock tb, string text, bool bold = false, Color? color = null)
+        {
+            var run = new Run(text);
+            if (bold) run.FontWeight = FontWeights.Bold;
+            if (color.HasValue)
+            {
+                run.Foreground = new SolidColorBrush(color.Value);
+            }
+            else
+            {
+                run.Foreground = bold ? Brushes.White : new SolidColorBrush(Color.FromRgb(0xbb, 0xbb, 0xbb));
+            }
+            tb.Inlines.Add(run);
+        }
+
+        void AddCodeBlock(string code)
+        {
+            var codeBorder = new Border
+            {
+                Background = new SolidColorBrush(Color.FromRgb(0x1a, 0x1a, 0x1c)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x2d)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(6),
+                Padding = new Thickness(12, 8, 12, 8),
+                Margin = new Thickness(0, 6, 0, 12),
+                Cursor = Cursors.Hand
+            };
+
+            var codeGrid = new Grid();
+            codeGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            codeGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var codeText = new TextBlock
+            {
+                Text = code,
+                FontFamily = new FontFamily("Consolas"),
+                FontSize = 12,
+                Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44)),
+                VerticalAlignment = System.Windows.VerticalAlignment.Center
+            };
+            codeGrid.Children.Add(codeText);
+            Grid.SetColumn(codeText, 0);
+
+            var hintText = new TextBlock
+            {
+                Text = "(нажмите для ввода в cmd)",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 10,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x69)),
+                VerticalAlignment = System.Windows.VerticalAlignment.Center,
+                Margin = new Thickness(10, 0, 0, 0)
+            };
+            codeGrid.Children.Add(hintText);
+            Grid.SetColumn(hintText, 1);
+
+            codeBorder.Child = codeGrid;
+
+            codeBorder.MouseLeftButtonDown += (s, e) =>
+            {
+                try
+                {
+                    Clipboard.SetText(code);
+                    var psi = new ProcessStartInfo("cmd.exe")
+                    {
+                        Arguments = $"/k \"{code}\"",
+                        WorkingDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        UseShellExecute = true
+                    };
+                    Process.Start(psi);
+                    ShowNotification("Командная строка", "Команда выполнена в командной строке.", false);
+                }
+                catch (Exception ex)
+                {
+                    ShowNotification("Ошибка", "Не удалось открыть cmd: " + ex.Message, true);
+                }
+            };
+
+            contentStack.Children.Add(codeBorder);
+        }
+
+        void AddLinkItem(string prefix, string linkText, string url, string suffix)
+        {
+            var tb = new TextBlock
+            {
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 13,
+                TextWrapping = TextWrapping.Wrap,
+                LineHeight = 18,
+                Margin = new Thickness(0, 0, 0, 6)
+            };
+
+            AddSpan(tb, prefix);
+
+            var hyper = new Hyperlink(new Run(linkText))
+            {
+                NavigateUri = new Uri(url),
+                Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+                FontWeight = FontWeights.SemiBold
+            };
+            hyper.RequestNavigate += (sender, e) =>
+            {
+                try { Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true }); } catch { }
+                e.Handled = true;
+            };
+            tb.Inlines.Add(hyper);
+
+            AddSpan(tb, suffix);
+            contentStack.Children.Add(tb);
+        }
+
+        var intro = CreateParagraph();
+        AddSpan(intro, "Этот раздел критически важен для ");
+        AddSpan(intro, "разблокировки популярных нейросетей и сервисов", bold: true);
+        AddSpan(intro, " (");
+        AddSpan(intro, "ChatGPT, Gemini, Grok", bold: true);
+        AddSpan(intro, " и многих других) напрямую, без потери скорости.");
+
+        AddSeparator();
+
+        AddHeading("💡 Как это работает?");
+        var howItWorks = CreateParagraph();
+        AddSpan(howItWorks, "Активация hosts-модов автоматически добавляет правила в системный файл Windows. Запросы к заблокированным доменам перенаправляются на альтернативные, рабочие IP-адреса (обратные прокси), минуя стандартные блокировки.");
+
+        AddSeparator();
+
+        AddHeading("⚠️ Почему моды могут не работать и как это исправить?");
+
+        var bullet1 = CreateParagraph();
+        AddSpan(bullet1, "• ");
+        AddSpan(bullet1, "Права доступа", bold: true);
+        AddSpan(bullet1, ": Приложение обязательно должно быть запущенно ");
+        AddSpan(bullet1, "от имени Администратора", bold: true, color: Color.FromRgb(0xef, 0x44, 0x44));
+        AddSpan(bullet1, ", иначе Windows просто не разрешит изменить системный файл.");
+
+        var bullet2 = CreateParagraph();
+        AddSpan(bullet2, "• ");
+        AddSpan(bullet2, "Блокировка провайдером", bold: true);
+        AddSpan(bullet2, ": Ваш интернет-провайдер может блокировать трафик по IP-адресу напрямую или использовать DPI. В таком случае hosts-мод не поможет - нужно комбинировать его с другими инструментами обхода.");
+
+        var bullet3 = CreateParagraph();
+        AddSpan(bullet3, "• ");
+        AddSpan(bullet3, "Защита системы", bold: true);
+        AddSpan(bullet3, ": Сторонние антивирусы или встроенный Windows Defender часто блокируют любые изменения в файле hosts, считая это действием вируса. Временно отключите защиту или добавьте приложение в исключения.");
+
+        var bullet4 = CreateParagraph();
+        AddSpan(bullet4, "• ");
+        AddSpan(bullet4, "Кэш браузера (Важно)", bold: true);
+        AddSpan(bullet4, ": После применения мода ");
+        AddSpan(bullet4, "обязательно перезагрузите браузер", bold: true);
+        AddSpan(bullet4, ". Ещё лучше - полностью очистить DNS-кэш в системе.");
+
+        var bullet5 = CreateParagraph();
+        AddSpan(bullet5, "• ");
+        AddSpan(bullet5, "Динамические IP", bold: true);
+        AddSpan(bullet5, ": Рабочие адреса платформ периодически меняются, из-за чего старые моды теряют актуальность.");
+
+        AddSeparator();
+
+        AddHeading("🚀 Полезные советы для стабильной работы");
+
+        var tip1 = CreateParagraph();
+        AddSpan(tip1, "• ");
+        AddSpan(tip1, "Очистка DNS-кэша", bold: true);
+        AddSpan(tip1, ": Если после применения мода ничего не изменилось, откройте командную строку (cmd) от админа и выполните:");
+
+        AddCodeBlock("ipconfig /flushdns");
+
+        var tip2 = CreateParagraph();
+        AddSpan(tip2, "• ");
+        AddSpan(tip2, "Проверка режима Инкогнито", bold: true);
+        AddSpan(tip2, ": Проверяйте работу сервисов в режиме инкогнито, чтобы исключить влияние старых куки (cookies) и кэша браузера.");
+
+        var tip3 = CreateParagraph();
+        AddSpan(tip3, "• ");
+        AddSpan(tip3, "Следите за обновлениями", bold: true);
+        AddSpan(tip3, ": Свежие и актуальные моды вы всегда можете найти в комментариях моего Telegram-канала ");
+        AddSpan(tip3, "NetFix", bold: true);
+        AddSpan(tip3, ", либо собрать собственный рабочий вариант.");
+
+        AddSeparator();
+
+        AddHeading("🌐 Полезные ссылки и готовые DNS");
+        var linksIntro = CreateParagraph();
+        AddSpan(linksIntro, "Если вам нужны полностью готовые решения, вы можете взять рабочие адреса и настроить всё здесь:");
+
+        AddLinkItem("• ", "Инфо и база хостов (dns.malw.link)", "https://info.dns.malw.link/hosts", " - готовые списки и правила для hosts.");
+        AddLinkItem("• ", "Зеркало Geohide DNS", "https://dns.geohide.ru:8443/", " - рабочие адреса для настройки обхода.");
+
+        scrollViewer.Content = contentStack;
+        contentLayout.Children.Add(scrollViewer);
+        Grid.SetRow(scrollViewer, 1);
+
+        var footerBorder = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x1a, 0x1a, 0x1c)),
+            CornerRadius = new CornerRadius(0, 0, 14, 14),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x38)),
+            BorderThickness = new Thickness(0, 1, 0, 0),
+            Margin = new Thickness(0, 16, 0, 0),
+            Padding = new Thickness(28, 12, 28, 12)
+        };
+
+        var footerGrid = new Grid();
+        footerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        footerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var okBtn = new Button
+        {
+            Content = "Понятно",
+            Style = (Style)FindResource("AccentBtn"),
+            MinWidth = 130,
+            MinHeight = 36,
+            Cursor = Cursors.Hand
+        };
+        okBtn.Click += (_, _) =>
+        {
+            ContentGrid.Children.Remove(overlay);
+            onClose();
+        };
+
+        footerGrid.Children.Add(okBtn);
+        Grid.SetColumn(okBtn, 1);
+
+        footerBorder.Child = footerGrid;
+        contentLayout.Children.Add(footerBorder);
+        Grid.SetRow(footerBorder, 2);
+
+        dialogGrid.Children.Add(contentLayout);
+        dialog.Child = dialogGrid;
+        overlay.Child = dialog;
+        ContentGrid.Children.Add(overlay);
+    }
+
     private void ShowConfirmDialog(string title, string message, Action<bool> callback,
         string confirmText = "Удалить", bool confirmIsDestructive = true)
     {
@@ -11908,6 +12704,1420 @@ public partial class MainWindow : Window
         fadeAnim.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(dur))));
         fadeAnim.Completed += (_, _) => overlay.Children.Remove(particle);
         particle.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
+    }
+
+    public record DnsServerInfo(string Name, string Description, string Primary, string Secondary, string DohTemplate = "");
+
+    private static readonly IReadOnlyList<DnsServerInfo> PredefinedDnsServers = [
+        new DnsServerInfo("Системный (DHCP)", "Использовать DNS-серверы, полученные от роутера или провайдера", "dhcp", "", ""),
+        new DnsServerInfo("Xbox-DNS.ru", "Альтернативный DNS для восстановления доступа к сетевым службам Xbox Live в РФ", "111.88.96.50", "111.88.96.51", "https://xbox-dns.ru/dns-query"),
+        new DnsServerInfo("Cloudflare DNS", "Высокопроизводительный публичный DNS-сервер с упором на скорость и приватность", "1.1.1.1", "1.0.0.1", "https://cloudflare-dns.com/dns-query"),
+        new DnsServerInfo("Google Public DNS", "Надежный глобальный DNS-сервер с высокой стабильностью работы", "8.8.8.8", "8.8.4.4", "https://dns.google/dns-query"),
+        new DnsServerInfo("Yandex.DNS", "Быстрый публичный DNS-сервер от Яндекса с минимальной задержкой в РФ", "77.88.8.8", "77.88.8.1", ""),
+        new DnsServerInfo("AdGuard DNS", "Альтернативный DNS с функцией блокировки рекламы, трекеров и фишинга", "94.140.14.14", "94.140.15.15", "https://dns.adguard-dns.com/dns-query")
+    ];
+
+    private void DnsMenuBtn_Click(object s, RoutedEventArgs e)
+    {
+        HeaderMainView.Visibility = Visibility.Collapsed;
+        HeaderDnsView.Visibility = Visibility.Visible;
+
+        LoadDnsServers();
+
+        var slideOut = new DoubleAnimation(0, -300, TimeSpan.FromMilliseconds(200))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        var slideIn = new DoubleAnimation(300, 0, TimeSpan.FromMilliseconds(200))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+
+        MainViewTrans.BeginAnimation(TranslateTransform.XProperty, slideOut);
+        DnsViewTrans.BeginAnimation(TranslateTransform.XProperty, slideIn);
+    }
+
+    private void DnsBackBtn_Click(object s, RoutedEventArgs e)
+    {
+        HeaderDnsView.Visibility = Visibility.Collapsed;
+        HeaderMainView.Visibility = Visibility.Visible;
+
+        var slideIn = new DoubleAnimation(-300, 0, TimeSpan.FromMilliseconds(200))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        var slideOut = new DoubleAnimation(0, 300, TimeSpan.FromMilliseconds(200))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+
+        MainViewTrans.BeginAnimation(TranslateTransform.XProperty, slideIn);
+        DnsViewTrans.BeginAnimation(TranslateTransform.XProperty, slideOut);
+    }
+
+    private static List<string> GetCurrentDnsAddresses()
+    {
+        try
+        {
+            var activeInterface = NetworkInterface.GetAllNetworkInterfaces()
+                .FirstOrDefault(ni =>
+                    ni.OperationalStatus == OperationalStatus.Up &&
+                    (ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet || ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211) &&
+                    ni.GetIPProperties().GatewayAddresses.Any());
+
+            if (activeInterface is not null)
+            {
+                var props = activeInterface.GetIPProperties();
+                return props.DnsAddresses.Select(addr => addr.ToString()).ToList();
+            }
+        }
+        catch { }
+        return [];
+    }
+
+    private void LoadDnsServers()
+    {
+        DnsListContainer.Children.Clear();
+
+        var currentDnsList = GetCurrentDnsAddresses();
+
+        foreach (var dns in PredefinedDnsServers)
+        {
+            bool isActive = false;
+            if (dns.Primary == "dhcp")
+            {
+                isActive = !PredefinedDnsServers.Any(x => x.Primary != "dhcp" && currentDnsList.Contains(x.Primary));
+            }
+            else
+            {
+                isActive = currentDnsList.Contains(dns.Primary);
+            }
+
+            var card = new Border
+            {
+                Background = new SolidColorBrush(Color.FromRgb(0x25, 0x25, 0x25)),
+                CornerRadius = new CornerRadius(10),
+                BorderBrush = new SolidColorBrush(isActive ? Color.FromRgb(0x22, 0xc5, 0x5e) : Color.FromRgb(0x33, 0x33, 0x33)),
+                BorderThickness = isActive ? new Thickness(1.5) : new Thickness(1.0),
+                Padding = new Thickness(12, 7, 12, 7),
+                Margin = new Thickness(0, 0, 0, 5),
+                Cursor = Cursors.Hand,
+                Height = 80,
+                Tag = dns
+            };
+
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(38) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var iconBorder = new Border
+            {
+                Width = 26, Height = 26,
+                CornerRadius = new CornerRadius(7),
+                Background = new SolidColorBrush(isActive ? Color.FromRgb(0x05, 0x2e, 0x16) : Color.FromRgb(0x1a, 0x2a, 0x3a)),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+                VerticalAlignment = System.Windows.VerticalAlignment.Center
+            };
+            iconBorder.Child = new TextBlock
+            {
+                Text = dns.Name.Substring(0, 1).ToUpper(),
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 12,
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(isActive ? Color.FromRgb(0x22, 0xc5, 0x5e) : Color.FromRgb(0x3b, 0x82, 0xf6)),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = System.Windows.VerticalAlignment.Center
+            };
+
+            var info = new StackPanel { VerticalAlignment = System.Windows.VerticalAlignment.Center };
+
+            var namePanel = new StackPanel { Orientation = Orientation.Horizontal };
+            namePanel.Children.Add(new TextBlock
+            {
+                Text = dns.Name,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 13,
+                Foreground = Brushes.White,
+                FontWeight = FontWeights.SemiBold
+            });
+
+            if (isActive)
+            {
+                var activeBadge = new Border
+                {
+                    Background = new SolidColorBrush(Color.FromRgb(0x05, 0x2e, 0x16)),
+                    CornerRadius = new CornerRadius(3),
+                    Padding = new Thickness(4, 1, 4, 1.5),
+                    Margin = new Thickness(6, 0, 0, 0),
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                activeBadge.Child = new TextBlock
+                {
+                    Text = "активен",
+                    FontFamily = new FontFamily("Segoe UI"),
+                    FontSize = 9,
+                    Foreground = new SolidColorBrush(Color.FromRgb(0x4a, 0xde, 0x80)),
+                    FontWeight = FontWeights.Bold
+                };
+                namePanel.Children.Add(activeBadge);
+            }
+
+            info.Children.Add(namePanel);
+
+            info.Children.Add(new TextBlock
+            {
+                Text = dns.Description,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 10.5,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+                Margin = new Thickness(0, 1, 0, 0),
+                TextWrapping = TextWrapping.Wrap,
+                MaxHeight = 30,
+                TextTrimming = TextTrimming.CharacterEllipsis
+            });
+
+            if (dns.Primary != "dhcp")
+            {
+                info.Children.Add(new TextBlock
+                {
+                    Text = $"{dns.Primary} | {dns.Secondary}",
+                    FontFamily = new FontFamily("Consolas"),
+                    FontSize = 9.5,
+                    Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58)),
+                    Margin = new Thickness(0, 2, 0, 0)
+                });
+            }
+
+            Grid.SetColumn(iconBorder, 0);
+            Grid.SetColumn(info, 1);
+            grid.Children.Add(iconBorder);
+            grid.Children.Add(info);
+
+            card.Child = grid;
+
+            card.MouseLeftButtonUp += DnsCard_Click;
+            card.MouseEnter += (_, _) => {
+                if (!isActive) card.Background = new SolidColorBrush(Color.FromRgb(0x2d, 0x2d, 0x2d));
+            };
+            card.MouseLeave += (_, _) => {
+                if (!isActive) card.Background = new SolidColorBrush(Color.FromRgb(0x25, 0x25, 0x25));
+            };
+
+            DnsListContainer.Children.Add(card);
+        }
+
+        DnsListContainer.Children.Add(new Border
+        {
+            Height = 1,
+            Background = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x2d)),
+            Margin = new Thickness(0, 5, 0, 8)
+        });
+
+        var resetCard = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x25, 0x25, 0x25)),
+            CornerRadius = new CornerRadius(10),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+            BorderThickness = new Thickness(1.0),
+            Padding = new Thickness(12, 7, 12, 7),
+            Margin = new Thickness(0, 0, 0, 5),
+            Cursor = Cursors.Hand,
+            Height = 80
+        };
+
+        var resetGrid = new Grid();
+        resetGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(38) });
+        resetGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+        var resetIconBorder = new Border
+        {
+            Width = 24, Height = 24,
+            CornerRadius = new CornerRadius(6),
+            Background = new SolidColorBrush(Color.FromRgb(0x45, 0x1a, 0x1a)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+            VerticalAlignment = System.Windows.VerticalAlignment.Center
+        };
+        resetIconBorder.Child = new System.Windows.Shapes.Path
+        {
+            Data = Geometry.Parse("M6,6 L18,18 M18,6 L6,18"),
+            Stroke = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44)),
+            StrokeThickness = 2,
+            Width = 12, Height = 12,
+            Stretch = Stretch.Uniform,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = System.Windows.VerticalAlignment.Center
+        };
+
+        var resetInfo = new StackPanel { VerticalAlignment = System.Windows.VerticalAlignment.Center };
+        resetInfo.Children.Add(new TextBlock
+        {
+            Text = "Сбросить все настройки DNS",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 12.5,
+            Foreground = Brushes.White,
+            FontWeight = FontWeights.SemiBold
+        });
+        resetInfo.Children.Add(new TextBlock
+        {
+            Text = "Вернуть настройки сетевых адаптеров на автоматическое получение DNS (DHCP)",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 10,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            Margin = new Thickness(0, 1, 0, 0),
+            TextWrapping = TextWrapping.Wrap,
+            MaxHeight = 28,
+            TextTrimming = TextTrimming.CharacterEllipsis
+        });
+
+        Grid.SetColumn(resetIconBorder, 0);
+        Grid.SetColumn(resetInfo, 1);
+        resetGrid.Children.Add(resetIconBorder);
+        resetGrid.Children.Add(resetInfo);
+        resetCard.Child = resetGrid;
+
+        resetCard.MouseLeftButtonUp += (s, e) => ShowResetAllDnsConfirmDialog();
+        resetCard.MouseEnter += (_, _) => {
+            resetCard.Background = new SolidColorBrush(Color.FromRgb(0x2d, 0x2d, 0x2d));
+            resetCard.BorderBrush = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
+        };
+        resetCard.MouseLeave += (_, _) => {
+            resetCard.Background = new SolidColorBrush(Color.FromRgb(0x25, 0x25, 0x25));
+            resetCard.BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33));
+        };
+
+        DnsListContainer.Children.Add(resetCard);
+    }
+
+    private async void RunDnsTestInApp(DnsServerInfo dns)
+    {
+        if (_isDialogOpen)
+        {
+            return;
+        }
+        _isDialogOpen = true;
+
+        var cts = new CancellationTokenSource();
+        Color accentColor = Color.FromRgb(0xea, 0xb3, 0x08);
+
+        var overlay = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(180, 0, 0, 0)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+        Grid.SetRowSpan(overlay, 3);
+        MainGrid.Children.Add(overlay);
+
+        var dialogCard = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x18)),
+            BorderBrush = new SolidColorBrush(accentColor),
+            BorderThickness = new Thickness(0, 3, 0, 0),
+            CornerRadius = new CornerRadius(14),
+            Width = 480,
+            Margin = new Thickness(40),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = Colors.Black,
+                BlurRadius = 30,
+                ShadowDepth = 0,
+                Opacity = 0.5
+            }
+        };
+        Grid.SetRowSpan(dialogCard, 3);
+
+        var cardContent = new StackPanel { Margin = new Thickness(24, 20, 24, 20) };
+
+        var titleText = new TextBlock
+        {
+            Text = $"Диагностика: {dns.Name}",
+            FontSize = 16,
+            FontWeight = FontWeights.Bold,
+            Foreground = Brushes.White,
+            TextAlignment = TextAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 14)
+        };
+        cardContent.Children.Add(titleText);
+
+        var logScroll = new ScrollViewer
+        {
+            Height = 180,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            Margin = new Thickness(0, 0, 0, 14)
+        };
+        var logBorder = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x0f, 0x0f, 0x11)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x2d, 0x2d, 0x30)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(10)
+        };
+        var logText = new TextBlock
+        {
+            FontFamily = new FontFamily("Consolas"),
+            FontSize = 11,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
+            TextWrapping = TextWrapping.Wrap,
+            LineHeight = 16
+        };
+        logBorder.Child = logText;
+        logScroll.Content = logBorder;
+        cardContent.Children.Add(logScroll);
+
+        var progressBar = new System.Windows.Controls.ProgressBar
+        {
+            Height = 3,
+            IsIndeterminate = true,
+            Foreground = new SolidColorBrush(accentColor),
+            Background = new SolidColorBrush(Color.FromRgb(0x2e, 0x2e, 0x2e)),
+            Margin = new Thickness(0, 0, 0, 14)
+        };
+        cardContent.Children.Add(progressBar);
+
+        var verdictText = new TextBlock
+        {
+            Text = "Выполняется диагностика DNS-серверов...",
+            FontSize = 13,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            TextAlignment = TextAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 16)
+        };
+        cardContent.Children.Add(verdictText);
+
+        var closeBtn = new Button
+        {
+            Content = "Отмена",
+            Width = 120, Height = 36,
+            Foreground = Brushes.White,
+            Cursor = Cursors.Hand,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+        };
+        closeBtn.Style = (Style)FindResource("OutlineBtn");
+
+        var btnTemplate = new ControlTemplate(typeof(Button));
+        var btnBorder = new FrameworkElementFactory(typeof(Border));
+        btnBorder.SetValue(Border.BackgroundProperty, new TemplateBindingExtension(Button.BackgroundProperty));
+        btnBorder.SetValue(Border.CornerRadiusProperty, new CornerRadius(8));
+        btnBorder.SetValue(Border.PaddingProperty, new Thickness(0));
+        var btnPresenter = new FrameworkElementFactory(typeof(ContentPresenter));
+        btnPresenter.SetValue(ContentPresenter.HorizontalAlignmentProperty, System.Windows.HorizontalAlignment.Center);
+        btnPresenter.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
+        btnBorder.AppendChild(btnPresenter);
+        btnTemplate.VisualTree = btnBorder;
+        closeBtn.Template = btnTemplate;
+
+        cardContent.Children.Add(closeBtn);
+        dialogCard.Child = cardContent;
+        MainGrid.Children.Add(dialogCard);
+
+        overlay.Opacity = 0;
+        dialogCard.Opacity = 0;
+        dialogCard.RenderTransform = new ScaleTransform(0.95, 0.95);
+        dialogCard.RenderTransformOrigin = new Point(0.5, 0.5);
+
+        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150));
+        var scaleIn = new DoubleAnimation(0.95, 1, TimeSpan.FromMilliseconds(200))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+
+        overlay.BeginAnimation(OpacityProperty, fadeIn);
+        dialogCard.BeginAnimation(OpacityProperty, fadeIn);
+        ((ScaleTransform)dialogCard.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleIn);
+        ((ScaleTransform)dialogCard.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty, scaleIn);
+
+        bool isDone = false;
+
+        closeBtn.Click += (s, e) =>
+        {
+            if (!isDone)
+            {
+                cts.Cancel();
+            }
+            bool completedHandled = false;
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(150));
+            fadeOut.Completed += (s2, e2) =>
+            {
+                if (completedHandled) return;
+                completedHandled = true;
+
+                MainGrid.Children.Remove(overlay);
+                MainGrid.Children.Remove(dialogCard);
+                _isDialogOpen = false;
+            };
+            overlay.BeginAnimation(OpacityProperty, fadeOut);
+            dialogCard.BeginAnimation(OpacityProperty, fadeOut);
+        };
+
+        _ = Task.Run(async () =>
+        {
+            StringBuilder sb = new StringBuilder();
+            void AppendLog(string text)
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    sb.AppendLine(text);
+                    logText.Text = sb.ToString();
+                    logScroll.ScrollToEnd();
+                });
+            }
+
+            AppendLog($"[{DateTime.Now:HH:mm:ss}] Начало проверки DNS: {dns.Name}");
+            AppendLog($"[{DateTime.Now:HH:mm:ss}] Основной IP: {dns.Primary}");
+            if (!string.IsNullOrEmpty(dns.Secondary))
+            {
+                AppendLog($"[{DateTime.Now:HH:mm:ss}] Резервный IP: {dns.Secondary}");
+            }
+            AppendLog("----------------------------------------");
+
+            bool primaryGoogleOk = false;
+            bool primaryGeminiOk = false;
+            bool primaryChatGptOk = false;
+
+            bool secondaryGoogleOk = false;
+            bool secondaryGeminiOk = false;
+            bool secondaryChatGptOk = false;
+
+            if (cts.Token.IsCancellationRequested) return;
+            AppendLog($"[{DateTime.Now:HH:mm:ss}] [Primary] Тест резолва google.com...");
+            var resGoogle = await PerformDnsResolveAsync(dns.Primary, "google.com", cts.Token);
+            if (resGoogle.Success)
+            {
+                primaryGoogleOk = true;
+                AppendLog($"[{DateTime.Now:HH:mm:ss}] [Primary] Успешно! Время ответа: {resGoogle.ElapsedMs} мс");
+
+                if (!cts.Token.IsCancellationRequested)
+                {
+                    AppendLog($"[{DateTime.Now:HH:mm:ss}] [Primary] Проверка доступа к Gemini...");
+                    var resGemini = await TestServiceAccessAsync("Gemini", "gemini.google.com", dns.Primary, cts.Token);
+                    primaryGeminiOk = resGemini.Success;
+                    AppendLog($"[{DateTime.Now:HH:mm:ss}] [Primary] Gemini: {resGemini.Details}");
+                }
+
+                if (!cts.Token.IsCancellationRequested)
+                {
+                    AppendLog($"[{DateTime.Now:HH:mm:ss}] [Primary] Проверка доступа к ChatGPT...");
+                    var resChatGPT = await TestServiceAccessAsync("ChatGPT", "chatgpt.com", dns.Primary, cts.Token);
+                    primaryChatGptOk = resChatGPT.Success;
+                    AppendLog($"[{DateTime.Now:HH:mm:ss}] [Primary] ChatGPT: {resChatGPT.Details}");
+                }
+            }
+            else
+            {
+                AppendLog($"[{DateTime.Now:HH:mm:ss}] [Primary] Ошибка резолва: {resGoogle.Output}");
+            }
+
+            if (!string.IsNullOrEmpty(dns.Secondary) && !cts.Token.IsCancellationRequested)
+            {
+                AppendLog("----------------------------------------");
+                AppendLog($"[{DateTime.Now:HH:mm:ss}] [Secondary] Тест резолва google.com...");
+                var resGoogleSec = await PerformDnsResolveAsync(dns.Secondary, "google.com", cts.Token);
+                if (resGoogleSec.Success)
+                {
+                    secondaryGoogleOk = true;
+                    AppendLog($"[{DateTime.Now:HH:mm:ss}] [Secondary] Успешно! Время ответа: {resGoogleSec.ElapsedMs} мс");
+
+                    if (!cts.Token.IsCancellationRequested)
+                    {
+                        AppendLog($"[{DateTime.Now:HH:mm:ss}] [Secondary] Проверка доступа к Gemini...");
+                        var resGeminiSec = await TestServiceAccessAsync("Gemini", "gemini.google.com", dns.Secondary, cts.Token);
+                        secondaryGeminiOk = resGeminiSec.Success;
+                        AppendLog($"[{DateTime.Now:HH:mm:ss}] [Secondary] Gemini: {resGeminiSec.Details}");
+                    }
+
+                    if (!cts.Token.IsCancellationRequested)
+                    {
+                        AppendLog($"[{DateTime.Now:HH:mm:ss}] [Secondary] Проверка доступа к ChatGPT...");
+                        var resChatGPTSec = await TestServiceAccessAsync("ChatGPT", "chatgpt.com", dns.Secondary, cts.Token);
+                        secondaryChatGptOk = resChatGPTSec.Success;
+                        AppendLog($"[{DateTime.Now:HH:mm:ss}] [Secondary] ChatGPT: {resChatGPTSec.Details}");
+                    }
+                }
+                else
+                {
+                    AppendLog($"[{DateTime.Now:HH:mm:ss}] [Secondary] Ошибка резолва: {resGoogleSec.Output}");
+                }
+            }
+
+            if (cts.Token.IsCancellationRequested) return;
+
+            Dispatcher.Invoke(() =>
+            {
+                progressBar.Visibility = Visibility.Collapsed;
+                isDone = true;
+                closeBtn.Content = "Готово";
+                closeBtn.Style = (Style)FindResource("AccentBtn");
+                closeBtn.Template = btnTemplate;
+
+                bool primaryFullyOk = primaryGoogleOk && primaryGeminiOk && primaryChatGptOk;
+                bool secondaryFullyOk = string.IsNullOrEmpty(dns.Secondary) || (secondaryGoogleOk && secondaryGeminiOk && secondaryChatGptOk);
+
+                bool anyGoogleOk = primaryGoogleOk || secondaryGoogleOk;
+                bool allFullyOk = primaryFullyOk && secondaryFullyOk;
+
+                if (allFullyOk)
+                {
+                    verdictText.Text = "DNS-сервер работает отлично! Доступ к Gemini и ChatGPT открыт.";
+                    verdictText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+                    dialogCard.BorderBrush = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+                    logText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+                }
+                else if (anyGoogleOk)
+                {
+                    verdictText.Text = "DNS работает, но Gemini или ChatGPT заблокированы!";
+                    verdictText.Foreground = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08));
+                    dialogCard.BorderBrush = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08));
+                    logText.Foreground = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08));
+                }
+                else
+                {
+                    verdictText.Text = "DNS-сервер не отвечает на запросы!";
+                    verdictText.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
+                    dialogCard.BorderBrush = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
+                    logText.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
+                }
+            });
+        });
+    }
+
+    private record DnsResolveResult(bool Success, string Output, long ElapsedMs, List<string> Ips);
+
+    private static async Task<DnsResolveResult> PerformDnsResolveAsync(string dnsIp, string domain, CancellationToken token)
+    {
+        var sw = Stopwatch.StartNew();
+        try
+        {
+            var localIp = GetPhysicalAdapterIP();
+            var localEp = localIp is not null ? new IPEndPoint(localIp, 0) : new IPEndPoint(IPAddress.Any, 0);
+
+            using var udp = new UdpClient(localEp);
+            udp.Client.SendTimeout = 2500;
+            udp.Client.ReceiveTimeout = 2500;
+
+            var txId = (ushort)Random.Shared.Next(0, 65536);
+            var query = BuildDnsQuery(domain, txId);
+            var serverEp = new IPEndPoint(IPAddress.Parse(dnsIp), 53);
+
+            await udp.SendAsync(query, serverEp, token);
+
+            var receiveTask = udp.ReceiveAsync(token);
+            var result = await receiveTask.AsTask().WaitAsync(TimeSpan.FromSeconds(2.5), token);
+
+            var ips = ParseDnsResponse(result.Buffer);
+            sw.Stop();
+
+            if (ips.Count == 0)
+            {
+                return new DnsResolveResult(false, "DNS-сервер вернул пустой ответ или не содержит записей типа A.", sw.ElapsedMilliseconds, []);
+            }
+
+            return new DnsResolveResult(true, string.Join("\n", ips), sw.ElapsedMilliseconds, ips);
+        }
+        catch (OperationCanceledException)
+        {
+            return new DnsResolveResult(false, "Время ожидания запроса (2.5 сек) истекло.", sw.ElapsedMilliseconds, []);
+        }
+        catch (Exception ex)
+        {
+            return new DnsResolveResult(false, $"Ошибка DNS: {ex.Message}", sw.ElapsedMilliseconds, []);
+        }
+    }
+
+    private static IPAddress? GetPhysicalAdapterIP()
+    {
+        try
+        {
+            var activeInterface = NetworkInterface.GetAllNetworkInterfaces()
+                .FirstOrDefault(ni =>
+                    ni.OperationalStatus == OperationalStatus.Up &&
+                    (ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet || ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211) &&
+                    ni.GetIPProperties().GatewayAddresses.Any());
+
+            if (activeInterface is not null)
+            {
+                var ipProp = activeInterface.GetIPProperties();
+                var ipv4 = ipProp.UnicastAddresses
+                    .FirstOrDefault(ua => ua.Address.AddressFamily == AddressFamily.InterNetwork);
+                if (ipv4 is not null)
+                {
+                    return ipv4.Address;
+                }
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    private static byte[] BuildDnsQuery(string domain, ushort txId)
+    {
+        var buf = new List<byte>
+        {
+            (byte)(txId >> 8), (byte)(txId & 0xff),
+            0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+        };
+        foreach (var part in domain.Split('.'))
+        {
+            buf.Add((byte)part.Length);
+            buf.AddRange(Encoding.ASCII.GetBytes(part));
+        }
+        buf.Add(0);
+        buf.AddRange([0x00, 0x01, 0x00, 0x01]);
+        return [.. buf];
+    }
+
+    private static List<string> ParseDnsResponse(byte[] data)
+    {
+        var ips = new List<string>();
+        try
+        {
+            int ancount = (data[6] << 8) | data[7];
+            if (ancount == 0) return ips;
+            int i = 12;
+            while (i < data.Length && data[i] != 0) i += data[i] + 1;
+            i += 5;
+            for (int a = 0; a < ancount && i + 10 < data.Length; a++)
+            {
+                if ((data[i] & 0xc0) == 0xc0)
+                {
+                    i += 2;
+                }
+                else
+                {
+                    while (i < data.Length && data[i] != 0) i += data[i] + 1;
+                    i++;
+                }
+                int rtype = (data[i] << 8) | data[i + 1];
+                int rdlen = (data[i + 8] << 8) | data[i + 9];
+                i += 10;
+                if (rtype == 1 && rdlen == 4 && i + 4 <= data.Length)
+                    ips.Add($"{data[i]}.{data[i+1]}.{data[i+2]}.{data[i+3]}");
+                i += rdlen;
+            }
+        }
+        catch { }
+        return ips;
+    }
+
+    private record ServiceTestResult(bool Success, string Details);
+
+    private static async Task<ServiceTestResult> TestServiceAccessAsync(string serviceName, string domain, string dnsIp, CancellationToken token)
+    {
+        var resolveResult = await PerformDnsResolveAsync(dnsIp, domain, token);
+        if (!resolveResult.Success)
+        {
+            return new ServiceTestResult(false, $"Не удалось разрешить домен {domain}: {resolveResult.Output}");
+        }
+
+        if (resolveResult.Ips.Count == 0)
+        {
+            return new ServiceTestResult(false, $"В ответе DNS для {domain} не найдено IP-адресов.");
+        }
+
+        string firstIp = resolveResult.Ips[0];
+        string ipListStr = string.Join(", ", resolveResult.Ips);
+
+        try
+        {
+            var localIp = GetPhysicalAdapterIP();
+            var localEp = localIp is not null ? new IPEndPoint(localIp, 0) : new IPEndPoint(IPAddress.Any, 0);
+
+            using var tcp = new TcpClient(localEp);
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
+            cts.CancelAfter(TimeSpan.FromSeconds(2.5));
+
+            await tcp.ConnectAsync(firstIp, 443, cts.Token);
+            return new ServiceTestResult(true, $"Успешно! {domain} -> [{ipListStr}]. Подключение к {firstIp}:443 установлено.");
+        }
+        catch (OperationCanceledException)
+        {
+            return new ServiceTestResult(false, $"Таймаут подключения (2.5 сек) к {firstIp}:443 ({domain}). IP: [{ipListStr}].");
+        }
+        catch (Exception ex)
+        {
+            return new ServiceTestResult(false, $"Ошибка подключения к {firstIp}:443 ({domain}): {ex.Message}. IP: [{ipListStr}].");
+        }
+    }
+
+    private void DnsCard_Click(object s, MouseButtonEventArgs e)
+    {
+        e.Handled = true;
+        if ((s as Border)?.Tag is not DnsServerInfo dns) return;
+
+        var currentDnsList = GetCurrentDnsAddresses();
+        if (dns.Primary != "dhcp" && currentDnsList.Contains(dns.Primary))
+        {
+            return;
+        }
+
+        ShowDnsConfirmDialog(dns);
+    }
+
+    private void ShowDnsConfirmDialog(DnsServerInfo dns)
+    {
+        if (_isDialogOpen)
+        {
+            return;
+        }
+        _isDialogOpen = true;
+        bool isDhcp = dns.Primary == "dhcp";
+        Color accentColor = isDhcp ? Color.FromRgb(0x22, 0xc5, 0x5e) : Color.FromRgb(0x3b, 0x82, 0xf6);
+        string themeBtnStyle = isDhcp ? "GreenAccentBtn" : "AccentBtn";
+
+        var overlay = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(180, 0, 0, 0)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+        Grid.SetRowSpan(overlay, 3);
+        MainGrid.Children.Add(overlay);
+
+        var dialogCard = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x18)),
+            BorderBrush = new SolidColorBrush(accentColor),
+            BorderThickness = new Thickness(0, 3, 0, 0),
+            CornerRadius = new CornerRadius(14),
+            MaxWidth = 460,
+            Margin = new Thickness(40),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = Colors.Black,
+                BlurRadius = 30,
+                ShadowDepth = 0,
+                Opacity = 0.5
+            }
+        };
+        Grid.SetRowSpan(dialogCard, 3);
+
+        var cardContent = new StackPanel { Margin = new Thickness(32, 28, 32, 28) };
+
+        var rotateTransform = new RotateTransform();
+
+        var iconBorder = new Border
+        {
+            Width = 56, Height = 56,
+            CornerRadius = new CornerRadius(28),
+            Background = new SolidColorBrush(accentColor) { Opacity = 0.15 },
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 20),
+            RenderTransform = rotateTransform,
+            RenderTransformOrigin = new Point(0.5, 0.5)
+        };
+
+        var icon = new System.Windows.Shapes.Path
+        {
+            Data = Geometry.Parse(isDhcp
+                ? "M21,11c-0.6,0-1,0.4-1,1c0,2.9-1.5,5.5-4,6.9c-3.8,2.2-8.7,0.9-10.9-2.9C2.9,12.2,4.2,7.3,8,5.1c3.3-1.9,7.3-1.2,9.8,1.4h-2.4c-0.6,0-1,0.4-1,1s0.4,1,1,1h4.5c0.6,0,1-0.4,1-1V3c0-0.6-0.4-1-1-1s-1,0.4-1,1v1.8C17,3,14.6,2,12,2C6.5,2,2,6.5,2,12s4.5,10,10,10c5.5,0,10-4.5,10-10C22,11.4,21.6,11,21,11z"
+                : "M 20,20 H 30 V 22 H 20 Z M 20,24 H 26 V 26 H 20 Z M30,17V16A13.9871,13.9871,0,1,0,19.23,29.625l-.46-1.9463A12.0419,12.0419,0,0,1,16,28c-.19,0-.375-.0186-.563-.0273A20.3044,20.3044,0,0,1,12.0259,17Zm-2.0415-2H21.9751A24.2838,24.2838,0,0,0,19.2014,4.4414,12.0228,12.0228,0,0,1,27.9585,15ZM16.563,4.0273A20.3044,20.3044,0,0,1,19.9741,15H12.0259A20.3044,20.3044,0,0,1,15.437,4.0273C15.625,4.0186,15.81,4,16,4S16.375,4.0186,16.563,4.0273Zm-3.7644.4141A24.2838,24.2838,0,0,0,10.0249,15H4.0415A12.0228,12.0228,0,0,1,12.7986,4.4414Zm0,23.1172A12.0228,12.0228,0,0,1,4.0415,17h5.9834A24.2838,24.2838,0,0,0,12.7986,27.5586Z"),
+            Fill = new SolidColorBrush(accentColor),
+            Width = 28, Height = 28,
+            Stretch = Stretch.Uniform,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        iconBorder.Child = icon;
+        cardContent.Children.Add(iconBorder);
+
+        var titleText = new TextBlock
+        {
+            Text = dns.Name,
+            FontSize = 20,
+            FontWeight = FontWeights.Bold,
+            Foreground = Brushes.White,
+            TextAlignment = TextAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 16)
+        };
+        cardContent.Children.Add(titleText);
+
+        string desc = isDhcp
+            ? "Настройки DNS будут автоматически определяться вашим роутером или провайдером."
+            : $"Вы действительно хотите подключить DNS-сервер «{dns.Name}»?\n\n" +
+              $"Основной: {dns.Primary}\n" +
+              $"Дополнительный: {dns.Secondary}" +
+              (string.IsNullOrEmpty(dns.DohTemplate) ? "" : $"\nШифрование DoH: {dns.DohTemplate}");
+
+        var descText = new TextBlock
+        {
+            Text = desc,
+            FontSize = 14,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc)),
+            TextAlignment = TextAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+            LineHeight = 20,
+            Margin = new Thickness(0, 0, 0, 24)
+        };
+        cardContent.Children.Add(descText);
+
+        var loaderPanel = new StackPanel
+        {
+            Visibility = Visibility.Collapsed,
+            Margin = new Thickness(0, 0, 0, 10)
+        };
+        var loaderText = new TextBlock
+        {
+            Text = isDhcp ? "Сбрасываем настройки DNS..." : $"Подключаем {dns.Name}...",
+            FontSize = 13,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            TextAlignment = TextAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 12)
+        };
+        var progressBar = new System.Windows.Controls.ProgressBar
+        {
+            Height = 4,
+            IsIndeterminate = true,
+            Foreground = new SolidColorBrush(accentColor),
+            Background = new SolidColorBrush(Color.FromRgb(0x2e, 0x2e, 0x2e)),
+            Margin = new Thickness(20, 0, 20, 0)
+        };
+        loaderPanel.Children.Add(loaderText);
+        loaderPanel.Children.Add(progressBar);
+        cardContent.Children.Add(loaderPanel);
+
+        var buttonsPanel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+        };
+
+        var applyBtn = new Button
+        {
+            Content = "Применить",
+            Width = 140, Height = 40,
+            Margin = new Thickness(0, 0, 10, 0),
+            Foreground = Brushes.White,
+            FontSize = 13,
+            FontWeight = FontWeights.SemiBold,
+            Cursor = Cursors.Hand
+        };
+        applyBtn.Style = (Style)FindResource(themeBtnStyle);
+
+        var cancelBtn = new Button
+        {
+            Content = "Отмена",
+            Width = 100, Height = 40,
+            Background = Brushes.Transparent,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+            BorderThickness = new Thickness(1),
+            FontSize = 13,
+            Cursor = Cursors.Hand
+        };
+        cancelBtn.Style = (Style)FindResource("OutlineBtn");
+
+        bool isApplying = false;
+        applyBtn.Click += async (s, e) =>
+        {
+            if (isApplying)
+            {
+                return;
+            }
+            isApplying = true;
+
+            descText.Visibility = Visibility.Collapsed;
+            buttonsPanel.Visibility = Visibility.Collapsed;
+            loaderPanel.Visibility = Visibility.Visible;
+
+            var rotationAnim = new DoubleAnimation(0, 360, TimeSpan.FromSeconds(1))
+            {
+                RepeatBehavior = RepeatBehavior.Forever
+            };
+            rotateTransform.BeginAnimation(RotateTransform.AngleProperty, rotationAnim);
+
+            bool ok = await SetDnsServerAsync(dns.Primary, dns.Secondary, dns.DohTemplate);
+
+            bool completedHandled = false;
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(200));
+            fadeOut.Completed += (s2, e2) =>
+            {
+                if (completedHandled) return;
+                completedHandled = true;
+
+                MainGrid.Children.Remove(overlay);
+                MainGrid.Children.Remove(dialogCard);
+                _isDialogOpen = false;
+
+                if (ok)
+                {
+                    LoadDnsServers();
+                    ShowNotification("Успех", $"DNS-сервер «{dns.Name}» успешно установлен! Для применения изменений полностью перезагрузите браузер.", false);
+                }
+            };
+            overlay.BeginAnimation(OpacityProperty, fadeOut);
+            dialogCard.BeginAnimation(OpacityProperty, fadeOut);
+        };
+
+        cancelBtn.Click += (s, e) =>
+        {
+            bool completedHandled = false;
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(150));
+            fadeOut.Completed += (s2, e2) =>
+            {
+                if (completedHandled) return;
+                completedHandled = true;
+
+                MainGrid.Children.Remove(overlay);
+                MainGrid.Children.Remove(dialogCard);
+                _isDialogOpen = false;
+            };
+            overlay.BeginAnimation(OpacityProperty, fadeOut);
+            dialogCard.BeginAnimation(OpacityProperty, fadeOut);
+        };
+
+        buttonsPanel.Children.Add(applyBtn);
+        buttonsPanel.Children.Add(cancelBtn);
+        cardContent.Children.Add(buttonsPanel);
+
+        dialogCard.Child = cardContent;
+        MainGrid.Children.Add(dialogCard);
+
+        overlay.Opacity = 0;
+        dialogCard.Opacity = 0;
+        dialogCard.RenderTransform = new ScaleTransform(0.95, 0.95);
+        dialogCard.RenderTransformOrigin = new Point(0.5, 0.5);
+
+        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150));
+        var scaleIn = new DoubleAnimation(0.95, 1, TimeSpan.FromMilliseconds(200))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+
+        overlay.BeginAnimation(OpacityProperty, fadeIn);
+        dialogCard.BeginAnimation(OpacityProperty, fadeIn);
+        ((ScaleTransform)dialogCard.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleIn);
+        ((ScaleTransform)dialogCard.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty, scaleIn);
+
+        overlay.MouseLeftButtonDown += (s, e) =>
+        {
+            if (loaderPanel.Visibility == Visibility.Visible)
+            {
+                return;
+            }
+            bool completedHandled = false;
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(150));
+            fadeOut.Completed += (s2, e2) =>
+            {
+                if (completedHandled) return;
+                completedHandled = true;
+
+                MainGrid.Children.Remove(overlay);
+                MainGrid.Children.Remove(dialogCard);
+                _isDialogOpen = false;
+            };
+            overlay.BeginAnimation(OpacityProperty, fadeOut);
+            dialogCard.BeginAnimation(OpacityProperty, fadeOut);
+        };
+    }
+
+    private void ShowResetAllDnsConfirmDialog()
+    {
+        if (_isDialogOpen)
+        {
+            return;
+        }
+        _isDialogOpen = true;
+
+        Color accentColor = Color.FromRgb(0xef, 0x44, 0x44);
+
+        var overlay = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(180, 0, 0, 0)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+        Grid.SetRowSpan(overlay, 3);
+        MainGrid.Children.Add(overlay);
+
+        var dialogCard = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x18)),
+            BorderBrush = new SolidColorBrush(accentColor),
+            BorderThickness = new Thickness(0, 3, 0, 0),
+            CornerRadius = new CornerRadius(14),
+            MaxWidth = 460,
+            Margin = new Thickness(40),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = Colors.Black,
+                BlurRadius = 30,
+                ShadowDepth = 0,
+                Opacity = 0.5
+            }
+        };
+        Grid.SetRowSpan(dialogCard, 3);
+
+        var cardContent = new StackPanel { Margin = new Thickness(32, 28, 32, 28) };
+
+        var rotateTransform = new RotateTransform();
+
+        var iconBorder = new Border
+        {
+            Width = 56, Height = 56,
+            CornerRadius = new CornerRadius(28),
+            Background = new SolidColorBrush(accentColor) { Opacity = 0.15 },
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 20),
+            RenderTransform = rotateTransform,
+            RenderTransformOrigin = new Point(0.5, 0.5)
+        };
+
+        var icon = new System.Windows.Shapes.Path
+        {
+            Data = Geometry.Parse("M12,2 L22,20 L2,20 Z M12,9 L12,14 M12,16 L12,18"),
+            Stroke = new SolidColorBrush(accentColor),
+            StrokeThickness = 2.5,
+            Width = 28, Height = 28,
+            Stretch = Stretch.Uniform,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        iconBorder.Child = icon;
+        cardContent.Children.Add(iconBorder);
+
+        var titleText = new TextBlock
+        {
+            Text = "Сбросить настройки DNS?",
+            FontSize = 20,
+            FontWeight = FontWeights.Bold,
+            Foreground = Brushes.White,
+            TextAlignment = TextAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 16)
+        };
+        cardContent.Children.Add(titleText);
+
+        var descText = new TextBlock
+        {
+            Text = "Это действие вернет настройки всех сетевых адаптеров на автоматическое получение DNS (DHCP), очистит системный кэш DNS и удалит все настройки DoH.",
+            FontSize = 14,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc)),
+            TextAlignment = TextAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+            LineHeight = 20,
+            Margin = new Thickness(0, 0, 0, 24)
+        };
+        cardContent.Children.Add(descText);
+
+        var loaderPanel = new StackPanel
+        {
+            Visibility = Visibility.Collapsed,
+            Margin = new Thickness(0, 0, 0, 10)
+        };
+        var loaderText = new TextBlock
+        {
+            Text = "Сбрасываем все настройки DNS...",
+            FontSize = 13,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            TextAlignment = TextAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 12)
+        };
+        var progressBar = new System.Windows.Controls.ProgressBar
+        {
+            Height = 4,
+            IsIndeterminate = true,
+            Foreground = new SolidColorBrush(accentColor),
+            Background = new SolidColorBrush(Color.FromRgb(0x2e, 0x2e, 0x2e)),
+            Margin = new Thickness(20, 0, 20, 0)
+        };
+        loaderPanel.Children.Add(loaderText);
+        loaderPanel.Children.Add(progressBar);
+        cardContent.Children.Add(loaderPanel);
+
+        var buttonsPanel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+        };
+
+        var resetBtn = new Button
+        {
+            Content = "Сбросить",
+            Width = 140, Height = 40,
+            Margin = new Thickness(0, 0, 10, 0),
+            Foreground = Brushes.White,
+            Background = new SolidColorBrush(accentColor),
+            BorderThickness = new Thickness(0),
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 13,
+            FontWeight = FontWeights.SemiBold,
+            Cursor = Cursors.Hand
+        };
+
+        var btnTemplate = new ControlTemplate(typeof(Button));
+        var btnBorder = new FrameworkElementFactory(typeof(Border));
+        btnBorder.SetValue(Border.BackgroundProperty, new TemplateBindingExtension(Button.BackgroundProperty));
+        btnBorder.SetValue(Border.CornerRadiusProperty, new CornerRadius(10));
+        btnBorder.SetValue(Border.PaddingProperty, new TemplateBindingExtension(Button.PaddingProperty));
+        var btnPresenter = new FrameworkElementFactory(typeof(ContentPresenter));
+        btnPresenter.SetValue(ContentPresenter.HorizontalAlignmentProperty, System.Windows.HorizontalAlignment.Center);
+        btnPresenter.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
+        btnBorder.AppendChild(btnPresenter);
+        btnTemplate.VisualTree = btnBorder;
+        var hoverTrigger = new Trigger { Property = Button.IsMouseOverProperty, Value = true };
+        hoverTrigger.Setters.Add(new Setter(Button.OpacityProperty, 0.9));
+        btnTemplate.Triggers.Add(hoverTrigger);
+        resetBtn.Template = btnTemplate;
+
+        var cancelBtn = new Button
+        {
+            Content = "Отмена",
+            Width = 100, Height = 40,
+            Background = Brushes.Transparent,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+            BorderThickness = new Thickness(1),
+            FontSize = 13,
+            Cursor = Cursors.Hand
+        };
+        cancelBtn.Style = (Style)FindResource("OutlineBtn");
+
+        bool isResetting = false;
+        resetBtn.Click += async (s, e) =>
+        {
+            if (isResetting)
+            {
+                return;
+            }
+            isResetting = true;
+
+            descText.Visibility = Visibility.Collapsed;
+            buttonsPanel.Visibility = Visibility.Collapsed;
+            loaderPanel.Visibility = Visibility.Visible;
+
+
+
+            bool ok = await ApplyFullDnsResetAsync();
+
+            bool completedHandled = false;
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(200));
+            fadeOut.Completed += (s2, e2) =>
+            {
+                if (completedHandled) return;
+                completedHandled = true;
+
+                MainGrid.Children.Remove(overlay);
+                MainGrid.Children.Remove(dialogCard);
+                _isDialogOpen = false;
+
+                if (ok)
+                {
+                    LoadDnsServers();
+                    ShowFullDnsResetSuccessNotification();
+                }
+            };
+            overlay.BeginAnimation(OpacityProperty, fadeOut);
+            dialogCard.BeginAnimation(OpacityProperty, fadeOut);
+        };
+
+        cancelBtn.Click += (s, e) =>
+        {
+            bool completedHandled = false;
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(150));
+            fadeOut.Completed += (s2, e2) =>
+            {
+                if (completedHandled) return;
+                completedHandled = true;
+
+                MainGrid.Children.Remove(overlay);
+                MainGrid.Children.Remove(dialogCard);
+                _isDialogOpen = false;
+            };
+            overlay.BeginAnimation(OpacityProperty, fadeOut);
+            dialogCard.BeginAnimation(OpacityProperty, fadeOut);
+        };
+
+        buttonsPanel.Children.Add(resetBtn);
+        buttonsPanel.Children.Add(cancelBtn);
+        cardContent.Children.Add(buttonsPanel);
+
+        dialogCard.Child = cardContent;
+        MainGrid.Children.Add(dialogCard);
+
+        overlay.Opacity = 0;
+        dialogCard.Opacity = 0;
+        dialogCard.RenderTransform = new ScaleTransform(0.95, 0.95);
+        dialogCard.RenderTransformOrigin = new Point(0.5, 0.5);
+
+        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150));
+        var scaleIn = new DoubleAnimation(0.95, 1, TimeSpan.FromMilliseconds(200))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+
+        overlay.BeginAnimation(OpacityProperty, fadeIn);
+        dialogCard.BeginAnimation(OpacityProperty, fadeIn);
+        ((ScaleTransform)dialogCard.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleIn);
+        ((ScaleTransform)dialogCard.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty, scaleIn);
+
+        overlay.MouseLeftButtonDown += (s, e) =>
+        {
+            if (loaderPanel.Visibility == Visibility.Visible)
+            {
+                return;
+            }
+            bool completedHandled = false;
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(150));
+            fadeOut.Completed += (s2, e2) =>
+            {
+                if (completedHandled) return;
+                completedHandled = true;
+
+                MainGrid.Children.Remove(overlay);
+                MainGrid.Children.Remove(dialogCard);
+                _isDialogOpen = false;
+            };
+            overlay.BeginAnimation(OpacityProperty, fadeOut);
+            dialogCard.BeginAnimation(OpacityProperty, fadeOut);
+        };
+    }
+
+    private async Task<bool> ApplyFullDnsResetAsync()
+    {
+        try
+        {
+            string psCommand =
+                "Get-NetIPInterface -AddressFamily IPv4 | ForEach-Object { Set-DnsClientServerAddress -InterfaceIndex $_.InterfaceIndex -ResetServerAddresses -ErrorAction SilentlyContinue }; " +
+                "Get-ChildItem 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Dnscache\\InterfaceSpecificParameters' -ErrorAction SilentlyContinue | ForEach-Object { Remove-Item -Path \"$($_.PsPath)\\DohInterfaceSettings\" -Recurse -Force -ErrorAction SilentlyContinue }; " +
+                "Get-DnsClientDohServerAddress -ErrorAction SilentlyContinue | Remove-DnsClientDohServerAddress -ErrorAction SilentlyContinue; " +
+                "Clear-DnsClientCache";
+
+            var psi = new ProcessStartInfo
+            {
+                FileName = "powershell",
+                Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{psCommand}\"",
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            using var process = Process.Start(psi);
+            if (process is not null)
+            {
+                var stdErrTask = process.StandardError.ReadToEndAsync();
+                var stdOutTask = process.StandardOutput.ReadToEndAsync();
+
+                await process.WaitForExitAsync();
+                var stdErr = await stdErrTask;
+                var stdOut = await stdOutTask;
+
+                if (process.ExitCode != 0)
+                {
+                    Dispatcher.Invoke(() => ShowNotification("Ошибка сброса", $"Не удалось сбросить настройки DNS (код {process.ExitCode}): {stdErr}", true));
+                    return false;
+                }
+                return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Dispatcher.Invoke(() => ShowNotification("Ошибка сброса", $"Исключение при сбросе DNS: {ex.Message}", true));
+        }
+        return false;
+    }
+
+    private void ShowFullDnsResetSuccessNotification()
+    {
+        ShowNotification("Настройки сброшены", "Все настройки DNS успешно возвращены к значениям по умолчанию (DHCP). Системный DNS-кэш очищен.", false);
+    }
+
+    private async Task<bool> SetDnsServerAsync(string primary, string secondary, string dohTemplate = "")
+    {
+        try
+        {
+            var activeInterface = NetworkInterface.GetAllNetworkInterfaces()
+                .FirstOrDefault(ni =>
+                    ni.OperationalStatus == OperationalStatus.Up &&
+                    (ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet || ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211) &&
+                    ni.GetIPProperties().GatewayAddresses.Any());
+
+            if (activeInterface is null)
+            {
+                Dispatcher.Invoke(() => ShowNotification("Ошибка", "Не найден активный сетевой адаптер.", true));
+                return false;
+            }
+
+            string interfaceName = activeInterface.Name;
+            string interfaceId = activeInterface.Id;
+            string psCommand;
+
+            if (primary == "dhcp")
+            {
+                psCommand = $"Set-DnsClientServerAddress -InterfaceAlias '{interfaceName}' -ResetServerAddresses";
+                string regPath = $"HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Dnscache\\InterfaceSpecificParameters\\{interfaceId}";
+                psCommand += $"; if (Test-Path '{regPath}\\DohInterfaceSettings') {{ Remove-Item -Path '{regPath}\\DohInterfaceSettings' -Recurse -Force }}" +
+                             $"; Clear-DnsClientCache";
+            }
+            else
+            {
+                string addresses = string.IsNullOrEmpty(secondary) ? $"'{primary}'" : $"'{primary}', '{secondary}'";
+                psCommand = $"Set-DnsClientServerAddress -InterfaceAlias '{interfaceName}' -ServerAddresses ({addresses})";
+
+                if (!string.IsNullOrEmpty(dohTemplate))
+                {
+                    psCommand += $"; if (Get-Command Add-DnsClientDohServerAddress -ErrorAction SilentlyContinue) {{" +
+                                 $" Add-DnsClientDohServerAddress -ServerAddress '{primary}' -DohTemplate '{dohTemplate}' -AllowFallbackToUdp $False -AutoUpgrade $True -ErrorAction SilentlyContinue";
+                    if (!string.IsNullOrEmpty(secondary))
+                    {
+                        psCommand += $"; Add-DnsClientDohServerAddress -ServerAddress '{secondary}' -DohTemplate '{dohTemplate}' -AllowFallbackToUdp $False -AutoUpgrade $True -ErrorAction SilentlyContinue";
+                    }
+                    psCommand += " }";
+
+                    string regPath = $"HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Dnscache\\InterfaceSpecificParameters\\{interfaceId}";
+                    psCommand += $"; if (!(Test-Path '{regPath}\\DohInterfaceSettings\\Doh\\{primary}')) {{ New-Item -Path '{regPath}\\DohInterfaceSettings\\Doh\\{primary}' -Force | Out-Null }}";
+                    psCommand += $"; New-ItemProperty -Path '{regPath}\\DohInterfaceSettings\\Doh\\{primary}' -Name 'DohFlags' -Value 1 -PropertyType QWord -Force | Out-Null";
+
+                    if (!string.IsNullOrEmpty(secondary))
+                    {
+                        psCommand += $"; if (!(Test-Path '{regPath}\\DohInterfaceSettings\\Doh\\{secondary}')) {{ New-Item -Path '{regPath}\\DohInterfaceSettings\\Doh\\{secondary}' -Force | Out-Null }}";
+                        psCommand += $"; New-ItemProperty -Path '{regPath}\\DohInterfaceSettings\\Doh\\{secondary}' -Name 'DohFlags' -Value 1 -PropertyType QWord -Force | Out-Null";
+                    }
+                }
+
+                psCommand += $"; Clear-DnsClientCache";
+            }
+
+            var psi = new ProcessStartInfo
+            {
+                FileName = "powershell",
+                Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{psCommand}\"",
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            using var process = Process.Start(psi);
+            if (process is not null)
+            {
+                var stdErrTask = process.StandardError.ReadToEndAsync();
+                var stdOutTask = process.StandardOutput.ReadToEndAsync();
+
+                await process.WaitForExitAsync();
+                var stdErr = await stdErrTask;
+                var stdOut = await stdOutTask;
+
+                if (process.ExitCode != 0)
+                {
+                    Dispatcher.Invoke(() => ShowNotification("Ошибка", $"Ошибка при настройке DNS (код {process.ExitCode}): {stdErr}", true));
+                    return false;
+                }
+                return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Dispatcher.Invoke(() => ShowNotification("Ошибка", $"Ошибка при настройке DNS: {ex.Message}", true));
+        }
+        return false;
     }
 
     private class DragAdorner : Adorner

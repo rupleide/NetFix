@@ -10,6 +10,7 @@ public static class ModScanner
     private static readonly string ModsDir = Path.Combine(AppDir, "Mods");
     private static readonly string StrategiesDir = Path.Combine(ModsDir, "strategies");
     private static readonly string ListsDir = Path.Combine(ModsDir, "lists");
+    private static readonly string HostsDir = Path.Combine(ModsDir, "hosts");
     private static readonly string BuildsDir = Path.Combine(ModsDir, "builds");
     private static readonly string BackupDir = Path.Combine(ModsDir, "_backup");
 
@@ -21,22 +22,25 @@ public static class ModScanner
     public static string ModsRoot => ModsDir;
     public static string StrategiesRoot => StrategiesDir;
     public static string ListsRoot => ListsDir;
+    public static string HostsRoot => HostsDir;
     public static string BackupRoot => BackupDir;
 
     public static void EnsureDirectories()
     {
         Directory.CreateDirectory(StrategiesDir);
         Directory.CreateDirectory(ListsDir);
+        Directory.CreateDirectory(HostsDir);
         Directory.CreateDirectory(BuildsDir);
         Directory.CreateDirectory(BackupDir);
     }
 
-    public static List<ModEntry> ScanAll(List<string> activeStrategyMods, List<string> activeListMods)
+    public static List<ModEntry> ScanAll(List<string> activeStrategyMods, List<string> activeListMods, List<string> activeHostsMods)
     {
         var result = new List<ModEntry>();
 
         result.AddRange(ScanFolder(StrategiesDir, ModType.Strategy, activeStrategyMods));
         result.AddRange(ScanFolder(ListsDir, ModType.List, activeListMods));
+        result.AddRange(ScanFolder(HostsDir, ModType.Hosts, activeHostsMods));
 
         return result;
     }
@@ -111,7 +115,7 @@ public static class ModScanner
 
     public static string? FindListFile(ModEntry mod)
     {
-        if (mod.Type != ModType.List)
+        if (mod.Type != ModType.List && mod.Type != ModType.Hosts)
             return null;
 
         var listPath = Path.Combine(mod.FolderPath, "list.txt");

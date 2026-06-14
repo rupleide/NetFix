@@ -49,6 +49,7 @@ public partial class ImportModWindow : Window
 
         var hasBat = _meta.Type == "strategy";
         var hasList = _meta.Type == "list";
+        var hasHosts = _meta.Type == "hosts";
 
         var okColor = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
         var dimColor = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x66));
@@ -65,6 +66,7 @@ public partial class ImportModWindow : Window
         {
             (hasBat, "Стратегия запуска (.bat)"),
             (hasList, "Список доменов"),
+            (hasHosts, "Список Hosts"),
             (false, "Бинарник"),
         };
 

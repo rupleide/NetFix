@@ -126,12 +126,15 @@ public class AppSettings
     public bool EnableTgWsProxy { get; set; } = true;
     public List<string> ActiveStrategyMods { get; set; } = [];
     public List<string> ActiveListMods { get; set; } = [];
+    public List<string> ActiveHostsMods { get; set; } = [];
     public bool RememberWindowSize { get; set; } = false;
     public bool ForceNetworkOk { get; set; } = false;
     public double WindowWidth { get; set; } = 880;
     public double WindowHeight { get; set; } = 680;
     public double WindowLeft { get; set; } = double.NaN;
     public double WindowTop { get; set; } = double.NaN;
+    public List<string> PreviousDnsAddresses { get; set; } = [];
+    public bool PreviousDnsWasDhcp { get; set; } = true;
 }
 
 public record GameTrackStats

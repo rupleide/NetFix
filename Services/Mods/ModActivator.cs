@@ -125,4 +125,80 @@ public static class ModActivator
 
         return dangerous;
     }
+
+    public static string GetSystemHostsPath()
+    {
+        if (Environment.Is64BitOperatingSystem && !Environment.Is64BitProcess)
+        {
+            var windir = Environment.GetEnvironmentVariable("windir") ?? @"C:\Windows";
+            return Path.Combine(windir, @"Sysnative\drivers\etc\hosts");
+        }
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), @"drivers\etc\hosts");
+    }
+
+    public static (bool Success, string? Error) ApplyHostsMods(List<ModEntry> allHostsMods)
+    {
+        try
+        {
+            var hostsPath = GetSystemHostsPath();
+            if (!File.Exists(hostsPath))
+            {
+                return (false, "Системный файл hosts не найден.");
+            }
+
+            var currentLines = File.ReadAllLines(hostsPath).ToList();
+
+            int startIndex = currentLines.FindIndex(l => l.Contains("# --- NETFIX HOSTS MODS START ---"));
+            int endIndex = currentLines.FindIndex(l => l.Contains("# --- NETFIX HOSTS MODS END ---"));
+
+            if (startIndex >= 0 && endIndex >= 0 && endIndex >= startIndex)
+            {
+                currentLines.RemoveRange(startIndex, endIndex - startIndex + 1);
+            }
+            else if (startIndex >= 0)
+            {
+                currentLines.RemoveRange(startIndex, currentLines.Count - startIndex);
+            }
+
+            var activeHosts = allHostsMods.Where(m => m.Type == ModType.Hosts && m.IsActive).ToList();
+
+            if (activeHosts.Count > 0)
+            {
+                while (currentLines.Count > 0 && string.IsNullOrWhiteSpace(currentLines[^1]))
+                {
+                    currentLines.RemoveAt(currentLines.Count - 1);
+                }
+
+                currentLines.Add("");
+                currentLines.Add("# --- NETFIX HOSTS MODS START ---");
+
+                foreach (var mod in activeHosts)
+                {
+                    currentLines.Add($"# [{mod.Name}]");
+                    var listFile = ModScanner.FindListFile(mod);
+                    if (listFile != null && File.Exists(listFile))
+                    {
+                        var lines = File.ReadAllLines(listFile);
+                        foreach (var line in lines)
+                        {
+                            var trimmed = line.Trim();
+                            if (trimmed.Length > 0)
+                            {
+                                currentLines.Add(trimmed);
+                            }
+                        }
+                    }
+                }
+
+                currentLines.Add("# --- NETFIX HOSTS MODS END ---");
+            }
+
+            File.WriteAllLines(hostsPath, currentLines);
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            return (false, $"Ошибка применения hosts модов: {ex.Message}");
+        }
+    }
 }
