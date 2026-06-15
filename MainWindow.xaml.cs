@@ -893,6 +893,7 @@ public partial class MainWindow : Window
         if (!_modsLoaded)
         {
             ModScanner.EnsureDirectories();
+            AutoHostsModService.EnsureAutoMods();
             RefreshMods();
             _modsLoaded = true;
             UpdateModsStatus();
@@ -959,6 +960,10 @@ public partial class MainWindow : Window
         _currentModsTab = ModType.Hosts;
         ShowModsSubScreen(ModsHostsScreen, "Hosts-файлы");
         if (_modsLoaded) RefreshModsLists();
+
+        _ = AutoHostsModService.UpdateAutoModsMetadataAsync().ContinueWith(_ =>
+            Dispatcher.Invoke(() => { if (_modsLoaded) RefreshModsLists(); }));
+        _ = AutoHostsModService.RefreshAutoModFilesAsync();
 
         if (!_hostsWarningShown)
         {
@@ -1496,12 +1501,23 @@ public partial class MainWindow : Window
             else if (_currentModsTab == ModType.Hosts)
             {
                 var allHosts = _allMods.Where(m => m.Type == ModType.Hosts).ToList();
-                var (success, error) = ModActivator.ApplyHostsMods(allHosts);
-                if (!success)
-                    ShowModsError(error ?? "Ошибка применения");
-                else
-                    ShowModsSuccess("Hosts-файлы применены");
-                _hostsDirty = false;
+                var activeAutoMods = allHosts.Where(m => m.IsActive).ToList();
+
+                ModsStatusText.Text = "Загрузка авто-списков...";
+                ModsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+
+                _ = AutoHostsModService.DownloadAutoModsFilesAsync(activeAutoMods).ContinueWith(t =>
+                    Dispatcher.Invoke(() =>
+                    {
+                        var (success, error) = ModActivator.ApplyHostsMods(allHosts);
+                        if (!success)
+                            ShowModsError(error ?? "Ошибка применения");
+                        else
+                            ShowModsSuccess("Hosts-файлы применены");
+                        _hostsDirty = false;
+                        RefreshModsLists();
+                    }));
+                return;
             }
             else
             {
@@ -1655,6 +1671,7 @@ public partial class MainWindow : Window
     private void DeleteModCard_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not ModEntry mod) return;
+        if (mod.IsAutoMod) return;
 
         ShowConfirmDialog(
             "Удалить мод?",

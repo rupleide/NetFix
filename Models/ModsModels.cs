@@ -20,6 +20,7 @@ public record ModEntry(
     public bool IsActive { get; set; } = false;
     public int SortOrder { get; set; } = 0;
     [JsonIgnore] public bool HasSourceFileName => !string.IsNullOrEmpty(SourceFileName);
+    [JsonIgnore] public bool IsAutoMod => System.IO.Path.GetFileName(FolderPath) is "dns_malw_link" or "geo_hide";
 
     public Color AccentColor => GetAccentColor(Name);
 

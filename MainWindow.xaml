@@ -2762,7 +2762,7 @@
                                                 Width="16" Height="16" Stretch="Uniform"/>
                                       </Button>
                                      <Button Style="{StaticResource HoverActionBtn}" Margin="6,0,0,0"
-                                             Tag="{Binding}" Click="DeleteModCard_Click"
+                                             Tag="{Binding}" x:Name="DeleteBtn" Click="DeleteModCard_Click"
                                              ToolTip="Удалить">
                                          <Path Data="{StaticResource TrashIcon}" Stroke="#ef4444" StrokeThickness="1.5"
                                                Width="16" Height="16" Stretch="Uniform"/>
@@ -2884,6 +2884,31 @@
                                     <Setter TargetName="MoveArrowLeft" Property="Visibility" Value="Visible"/>
                                      <Setter TargetName="CardMoveBtn" Property="ToolTip" Value="Убрать"/>
                                 </DataTrigger>
+                                <DataTrigger Binding="{Binding IsAutoMod}" Value="True">
+                                    <Setter TargetName="DeleteBtn" Property="Visibility" Value="Collapsed"/>
+                                    <Setter TargetName="StatusStrip" Property="Background" Value="#f97316"/>
+                                    <Setter TargetName="BottomGlow" Property="Fill">
+                                        <Setter.Value>
+                                            <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                                 Center="0.0,1.0" GradientOrigin="0.0,1.0"
+                                                                 RadiusX="0.6" RadiusY="0.5">
+                                                <GradientStop Color="#f97316" Offset="0.0"/>
+                                                <GradientStop Color="#00000000" Offset="1.0"/>
+                                            </RadialGradientBrush>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter TargetName="TopGlow" Property="Fill">
+                                        <Setter.Value>
+                                            <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                                 Center="1.0,0.0" GradientOrigin="1.0,0.0"
+                                                                 RadiusX="0.6" RadiusY="0.5">
+                                                <GradientStop Color="#f97316" Offset="0.0"/>
+                                                <GradientStop Color="#00000000" Offset="1.0"/>
+                                            </RadialGradientBrush>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter TargetName="CardAuthor" Property="Foreground" Value="#f97316"/>
+                                </DataTrigger>
                              </DataTemplate.Triggers>
                         </DataTemplate>
                      <DataTemplate x:Key="MyModCardTpl">
@@ -2897,7 +2922,7 @@
                                     <RowDefinition Height="*"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
-                                <Border Grid.Row="0" Height="3" CornerRadius="1.5"
+                                <Border x:Name="TopStrip" Grid.Row="0" Height="3" CornerRadius="1.5"
                                         Background="#a855f7" Margin="0,0,0,12"
                                         HorizontalAlignment="Stretch"/>
                                 <TextBlock Grid.Row="1" Text="{Binding Name}" FontSize="14"
@@ -2933,7 +2958,7 @@
                                                   Width="10" Height="10" Stretch="Uniform"/>
                                         </Button>
                                         <Button Style="{StaticResource FlatBtn}" Width="24" Height="24" Padding="0" Margin="6,0,0,0"
-                                                Tag="{Binding}" Click="DeleteModCard_Click">
+                                                Tag="{Binding}" x:Name="DeleteBtn" Click="DeleteModCard_Click">
                                             <Path Data="{StaticResource CloseIcon}" Stroke="#ef4444" StrokeThickness="1.5"
                                                   Width="10" Height="10" Stretch="Uniform"/>
                                         </Button>
@@ -2941,6 +2966,12 @@
                                 </StackPanel>
                             </Grid>
                         </Border>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsAutoMod}" Value="True">
+                                <Setter TargetName="DeleteBtn" Property="Visibility" Value="Collapsed"/>
+                                <Setter TargetName="TopStrip" Property="Background" Value="#f97316"/>
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
                      </DataTemplate>
                        <DataTemplate x:Key="MyModCardTplBig">
                               <Border Height="120" VerticalAlignment="Top" Margin="6" CornerRadius="12"
@@ -3134,7 +3165,7 @@
                                                    Width="16" Height="16" Stretch="Uniform"/>
                                          </Button>
                                          <Button Style="{StaticResource HoverActionBtn}" Margin="6,0,0,0"
-                                                 Tag="{Binding}" Click="DeleteModCard_Click"
+                                                 Tag="{Binding}" x:Name="DeleteBtn" Click="DeleteModCard_Click"
                                                  ToolTip="Удалить">
                                              <Path Data="{StaticResource TrashIcon}" Stroke="#ef4444" StrokeThickness="1.5"
                                                    Width="16" Height="16" Stretch="Uniform"/>
@@ -3221,6 +3252,31 @@
                                       </Setter>
                                       <Setter TargetName="CardAuthor" Property="Foreground" Value="#06b6d4"/>
                                   </DataTrigger>
+                                 <DataTrigger Binding="{Binding IsAutoMod}" Value="True">
+                                     <Setter TargetName="DeleteBtn" Property="Visibility" Value="Collapsed"/>
+                                  <Setter TargetName="StatusStrip" Property="Background" Value="#f97316"/>
+                                  <Setter TargetName="BottomGlow" Property="Fill">
+                                      <Setter.Value>
+                                          <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                               Center="0.0,1.0" GradientOrigin="0.0,1.0"
+                                                               RadiusX="0.6" RadiusY="0.5">
+                                              <GradientStop Color="#f97316" Offset="0.0"/>
+                                              <GradientStop Color="#00000000" Offset="1.0"/>
+                                          </RadialGradientBrush>
+                                      </Setter.Value>
+                                  </Setter>
+                                  <Setter TargetName="TopGlow" Property="Fill">
+                                      <Setter.Value>
+                                          <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                               Center="1.0,0.0" GradientOrigin="1.0,0.0"
+                                                               RadiusX="0.6" RadiusY="0.5">
+                                              <GradientStop Color="#f97316" Offset="0.0"/>
+                                              <GradientStop Color="#00000000" Offset="1.0"/>
+                                          </RadialGradientBrush>
+                                      </Setter.Value>
+                                  </Setter>
+                                  <Setter TargetName="CardAuthor" Property="Foreground" Value="#f97316"/>
+                                 </DataTrigger>
                             </DataTemplate.Triggers>
                        </DataTemplate>
                       <Style x:Key="ModListBox" TargetType="ListBox">
