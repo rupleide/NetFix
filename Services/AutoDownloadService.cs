@@ -578,11 +578,52 @@ public static class AutoDownloadService
                         "RAR архивы не поддерживаются автоматической установкой.\n" +
                         "Пожалуйста, скачайте ZIP версию Zapret с GitHub или установите вручную.");
                 }
+
+                var serviceBatPath = FindFile(destinationDir, "service.bat");
+                if (string.IsNullOrEmpty(serviceBatPath))
+                {
+                    throw new FileNotFoundException("Файл service.bat не найден в распакованном архиве.");
+                }
+
+                var batDir = Path.GetDirectoryName(serviceBatPath);
+                if (!string.IsNullOrEmpty(batDir) && !batDir.Equals(destinationDir, StringComparison.OrdinalIgnoreCase))
+                {
+                    foreach (var dir in Directory.GetDirectories(batDir))
+                    {
+                        var destDir = Path.Combine(destinationDir, Path.GetFileName(dir));
+                        if (Directory.Exists(destDir))
+                        {
+                            Directory.Delete(destDir, true);
+                        }
+                        Directory.Move(dir, destDir);
+                    }
+
+                    foreach (var file in Directory.GetFiles(batDir))
+                    {
+                        var destFile = Path.Combine(destinationDir, Path.GetFileName(file));
+                        File.Move(file, destFile, overwrite: true);
+                    }
+
+                    string relative = Path.GetRelativePath(destinationDir, batDir);
+                    string firstSegment = relative.Split(['/', '\\'], StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
+                    if (!string.IsNullOrEmpty(firstSegment))
+                    {
+                        string topLevelDirToDelete = Path.Combine(destinationDir, firstSegment);
+                        if (Directory.Exists(topLevelDirToDelete))
+                        {
+                            Directory.Delete(topLevelDirToDelete, true);
+                        }
+                    }
+                }
             });
         }
         catch (NotSupportedException)
         {
             throw;
+        }
+        catch (FileNotFoundException ex)
+        {
+            throw new Exception(ex.Message);
         }
         catch (Exception ex) when (ex.Message.Contains("Central Directory") || ex.Message.Contains("ZIP") || ex.Message.Contains("archive"))
         {
