@@ -1193,6 +1193,51 @@ public partial class MainWindow : Window
 
     private void ToggleModActive(ModEntry mod, bool activate)
     {
+        if (activate && mod.Type == ModType.Hosts)
+        {
+            var listFile = ModScanner.FindListFile(mod);
+            if (listFile != null && File.Exists(listFile))
+            {
+                try
+                {
+                    int lineCount = File.ReadLines(listFile).Count(l => !string.IsNullOrWhiteSpace(l));
+                    if (lineCount > 10000)
+                    {
+                        ShowConfirmDialog(
+                            "Внимание: Большой список",
+                            $"Мод '{mod.Name}' содержит большое количество записей ({lineCount} строк).\n\nБольшое количество строк в файле hosts может сильно замедлить скорость интернета или даже полностью его отключить из-за ограничений службы DNS в Windows.\n\nВы действительно хотите активировать этот мод?",
+                            ok =>
+                            {
+                                if (ok)
+                                {
+                                    ExecuteToggleModActive(mod, true);
+                                }
+                                else
+                                {
+                                    mod.IsActive = false;
+                                    RefreshModsLists();
+                                    if (ModsMyModsScreen.Visibility == Visibility.Visible)
+                                        RefreshMyMods();
+                                }
+                            },
+                            confirmText: "Активировать",
+                            confirmIsDestructive: true
+                        );
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AppendLog($"Ошибка проверки размера мода: {ex.Message}", "error");
+                }
+            }
+        }
+
+        ExecuteToggleModActive(mod, activate);
+    }
+
+    private void ExecuteToggleModActive(ModEntry mod, bool activate)
+    {
         mod.IsActive = activate;
 
         List<string> list;
@@ -2295,6 +2340,117 @@ public partial class MainWindow : Window
                 Process.Start("explorer.exe", dir);
             }
         }
+    }
+
+    private void HostsResetBtn_Click(object sender, RoutedEventArgs e)
+    {
+        ShowConfirmDialog(
+            "Пересоздание Hosts-файла",
+            "Вы уверены, что хотите пересоздать системный файл hosts? Все активные hosts-моды будут отключены и перенесены в доступные, а текущие записи в файле hosts стерты и заменены стандартным шаблоном.",
+            ok =>
+            {
+                if (!ok) return;
+                try
+                {
+                    var hostsPath = ModActivator.GetSystemHostsPath();
+                    var dir = Path.GetDirectoryName(hostsPath);
+                    if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                    {
+                        Directory.CreateDirectory(dir);
+                    }
+
+                    var allHosts = _allMods.Where(m => m.Type == ModType.Hosts).ToList();
+                    foreach (var mod in allHosts)
+                    {
+                        mod.IsActive = false;
+                    }
+                    _settings.ActiveHostsMods.Clear();
+                    SaveModsSettings();
+
+                    var sb = new StringBuilder();
+                    sb.AppendLine("# Copyright (c) 1993-2009 Microsoft Corp.");
+                    sb.AppendLine("#");
+                    sb.AppendLine("# This is a sample HOSTS file used by Microsoft TCP/IP for Windows.");
+                    sb.AppendLine("#");
+                    sb.AppendLine("# This file contains the mappings of IP addresses to host names. Each");
+                    sb.AppendLine("# entry should be kept on an individual line. The IP address should");
+                    sb.AppendLine("# be placed in the first column followed by the corresponding host name.");
+                    sb.AppendLine("# The IP address and the host name should be separated by at least one");
+                    sb.AppendLine("# space.");
+                    sb.AppendLine("#");
+                    sb.AppendLine("# Additionally, comments (such as these) may be inserted on individual");
+                    sb.AppendLine("# lines or following the machine name denoted by a '#' symbol.");
+                    sb.AppendLine("#");
+                    sb.AppendLine("# For example:");
+                    sb.AppendLine("#");
+                    sb.AppendLine("#      102.54.94.97     rhino.acme.com          # source server");
+                    sb.AppendLine("#       38.25.63.10     x.acme.com              # x client host");
+                    sb.AppendLine();
+                    sb.AppendLine("# localhost name resolution is handled within DNS itself.");
+                    sb.AppendLine("#	127.0.0.1       localhost");
+                    sb.AppendLine("#	::1             localhost");
+                    sb.AppendLine();
+                    sb.AppendLine("149.154.167.220 my.telegram.org");
+                    sb.AppendLine("149.154.167.220 oauth.telegram.org");
+                    sb.AppendLine("149.154.167.220 cdn.telesco.pe");
+                    sb.AppendLine("149.154.167.220 cdn1.telesco.pe");
+                    sb.AppendLine("149.154.167.220 cdn2.telesco.pe");
+                    sb.AppendLine("149.154.167.220 cdn3.telesco.pe");
+                    sb.AppendLine("149.154.167.220 cdn4.telesco.pe");
+                    sb.AppendLine("149.154.167.220 cdn5.telesco.pe");
+                    sb.AppendLine("149.154.167.220 core.telegram.org");
+                    sb.AppendLine("149.154.167.220 zws4.web.telegram.org");
+                    sb.AppendLine("149.154.167.220 vesta.web.telegram.org");
+                    sb.AppendLine("149.154.167.220 vesta-1.web.telegram.org");
+                    sb.AppendLine("149.154.167.220 venus-1.web.telegram.org");
+                    sb.AppendLine("149.154.167.220 telegram.me");
+                    sb.AppendLine("149.154.167.220 telegram.dog");
+                    sb.AppendLine("149.154.167.220 telegram.space");
+                    sb.AppendLine("149.154.167.220 telesco.pe");
+                    sb.AppendLine("149.154.167.220 tg.dev");
+                    sb.AppendLine("149.154.167.220 telegram.org");
+                    sb.AppendLine("149.154.167.220 t.me");
+                    sb.AppendLine("149.154.167.220 api.telegram.org");
+                    sb.AppendLine("149.154.167.220 td.telegram.org");
+                    sb.AppendLine("149.154.167.220 venus.web.telegram.org");
+                    sb.AppendLine("149.154.167.220 web.telegram.org");
+                    sb.AppendLine("149.154.167.220 kws2-1.web.telegram.org");
+                    sb.AppendLine("149.154.167.220 kws2.web.telegram.org");
+                    sb.AppendLine("149.154.167.220 kws4-1.web.telegram.org");
+                    sb.AppendLine("149.154.167.220 kws4.web.telegram.org");
+                    sb.AppendLine("149.154.167.220 zws2-1.web.telegram.org");
+                    sb.AppendLine("149.154.167.220 zws2.web.telegram.org");
+                    sb.AppendLine("149.154.167.220 zws4-1.web.telegram.org");
+                    sb.AppendLine();
+                    sb.AppendLine("185.199.109.133 raw.githubusercontent.com");
+                    sb.AppendLine("185.199.109.133 release-assets.githubusercontent.com");
+                    sb.AppendLine("185.199.108.133 private-user-images.githubusercontent.com");
+                    sb.AppendLine("185.199.108.133 gist.githubusercontent.com");
+                    sb.AppendLine("185.199.108.133 avatars.githubusercontent.com");
+                    sb.AppendLine();
+                    for (int i = 10000; i <= 10199; i++)
+                    {
+                        sb.AppendLine($"104.25.158.178 finland{i}.discord.media");
+                    }
+
+                    File.WriteAllText(hostsPath, sb.ToString(), Encoding.UTF8);
+
+                    HostsStatusText.Text = "✅ Hosts-файл успешно пересоздан, все моды деактивированы";
+                    HostsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+                    _hostsDirty = false;
+                    RefreshModsLists();
+                    if (ModsMyModsScreen.Visibility == Visibility.Visible)
+                        RefreshMyMods();
+                }
+                catch (Exception ex)
+                {
+                    HostsStatusText.Text = "❌ Ошибка: " + ex.Message;
+                    HostsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
+                }
+            },
+            confirmText: "Пересоздать",
+            confirmIsDestructive: true
+        );
     }
 
     private void ListsApplyBtn_Click(object sender, RoutedEventArgs e)
