@@ -368,6 +368,6 @@ NetFix_Setup*.iss
 \!ПРИ НОВОЙ ВЕРСИИ.md
 Релиз*
 описание релизов.md
-
-
-
+# NetFix Fallback Binaries
+Assets/Fallback/zapret-fallback.zip
+Assets/Fallback/tgwsproxy-fallback.exe
