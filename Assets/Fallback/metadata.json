@@ -1,0 +1,12 @@
+{
+  "Zapret": {
+    "Version": "1.9.9d",
+    "ReleaseDate": "2026-07-10",
+    "Sha256": "cca30a0c7a9327841047147af2c100024734855b9d18a4f9d84b81479afb2ef3"
+  },
+  "TgWsProxy": {
+    "Version": "1.8.1",
+    "ReleaseDate": "2026-07-10",
+    "Sha256": "840f1c7dae30f492a305f8006256cc2e09426be104c14844cb9be44f966c178d"
+  }
+}

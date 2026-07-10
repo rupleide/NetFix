@@ -75,7 +75,7 @@ public static class ComponentVersionService
         }
     }
 
-    private static string? GetInstalledZapretVersion(string serviceBatPath)
+    public static string? GetInstalledZapretVersion(string serviceBatPath)
     {
         try
         {
@@ -109,7 +109,7 @@ public static class ComponentVersionService
         }
     }
 
-    private static string? GetInstalledTgWsProxyVersion(string exePath)
+    public static string? GetInstalledTgWsProxyVersion(string exePath)
     {
         try
         {
@@ -149,7 +149,7 @@ public static class ComponentVersionService
         }
     }
 
-    private static bool IsNewerVersion(string version1, string version2)
+    public static bool IsNewerVersion(string version1, string version2)
     {
         try
         {

@@ -107,6 +107,7 @@ public partial class MainWindow : Window
 
     private AppSettings _settings = SettingsService.Load();
     private bool _settingsOpen = false;
+    private bool _onboardForceReserve = false;
     private bool _isDialogOpen = false;
     private bool _hostsWarningShown = false;
     private DispatcherTimer _monitorTimer = null!;
@@ -115,6 +116,7 @@ public partial class MainWindow : Window
     private bool _checkInProgress = false;
     private bool _autoFixRunning = false;
     private int _zapretToggleFails = 0;
+    private int _mainZapretStartFails = 0;
     private Views.ZapretConfigWindow? _configWindow = null;
 
     private bool _isConnected;
@@ -2665,6 +2667,17 @@ public partial class MainWindow : Window
         }
     }
 
+    private void TrackMainZapretStartFail()
+    {
+        _mainZapretStartFails++;
+        if (_mainZapretStartFails >= 2)
+        {
+            _mainZapretStartFails = 0;
+            AppendLog("2 неудачных попытки запуска с главной кнопки — запускаю Исправить", "warn");
+            FixServiceBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        }
+    }
+
     private void ShowUpdateComponentsDialog()
     {
         var overlay = new Border
@@ -3462,6 +3475,352 @@ public partial class MainWindow : Window
             MainGrid.Children.Remove(overlay);
             MainGrid.Children.Remove(dialogCard);
         };
+    }
+
+    public enum FallbackDialogResult
+    {
+        InstallReserve,
+        Retry,
+        Cancel
+    }
+
+    private Task<FallbackDialogResult> ShowFallbackDialogAsync(string componentName, string version, string date, bool hasInternet = true)
+    {
+        TaskCompletionSource<FallbackDialogResult> tcs = new TaskCompletionSource<FallbackDialogResult>();
+
+        Dispatcher.Invoke(() =>
+        {
+            Border overlay = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch
+            };
+            Grid.SetRowSpan(overlay, 3);
+            MainGrid.Children.Add(overlay);
+
+            Border dialogCard = new Border
+            {
+                Background = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x18)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08)),
+                BorderThickness = new Thickness(0, 3, 0, 0),
+                CornerRadius = new CornerRadius(14),
+                MaxWidth = 520,
+                Margin = new Thickness(40),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Effect = new System.Windows.Media.Effects.DropShadowEffect
+                {
+                    Color = Colors.Black,
+                    BlurRadius = 30,
+                    ShadowDepth = 0,
+                    Opacity = 0.5
+                }
+            };
+            Grid.SetRowSpan(dialogCard, 3);
+
+            StackPanel cardContent = new StackPanel
+            {
+                Margin = new Thickness(32, 28, 32, 28)
+            };
+
+            Border iconBorder = new Border
+            {
+                Width = 56,
+                Height = 56,
+                CornerRadius = new CornerRadius(28),
+                Background = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08)) { Opacity = 0.15 },
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                Margin = new Thickness(0, 0, 0, 20)
+            };
+
+            System.Windows.Shapes.Path warningIcon = new System.Windows.Shapes.Path
+            {
+                Data = Geometry.Parse("M12 2L2 22h20L12 2zm1 18h-2v-2h2v2zm0-4h-2v-6h2v6z"),
+                Fill = new SolidColorBrush(Color.FromRgb(0xea, 0xb3, 0x08)),
+                Width = 28,
+                Height = 28,
+                Stretch = Stretch.Uniform,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            iconBorder.Child = warningIcon;
+            cardContent.Children.Add(iconBorder);
+
+            string title = hasInternet ? "GitHub недоступен" : "Нет подключения к интернету";
+            TextBlock titleText = new TextBlock
+            {
+                Text = title,
+                FontSize = 20,
+                FontWeight = FontWeights.Bold,
+                Foreground = Brushes.White,
+                TextAlignment = TextAlignment.Center,
+                Margin = new Thickness(0, 0, 0, 16)
+            };
+            cardContent.Children.Add(titleText);
+
+            string connectionStatusText = hasInternet
+                ? $"NetFix не может подключиться к GitHub, чтобы скачать {componentName} напрямую. Это может быть временная блокировка или проблемы с сетью (хотя интернет на другие ресурсы есть).\n\n"
+                : $"Отсутствует подключение к интернету. Проверьте ваше сетевое подключение.\n\n";
+
+            TextBlock descText = new TextBlock
+            {
+                Text = connectionStatusText +
+                       $"Можно установить резервную копию — она хранится внутри NetFix и работает так же, но может быть не самой последней версии (актуальна на {date}, версия {version}).\n\n" +
+                       "Установить резервную копию?",
+                FontSize = 14,
+                Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc)),
+                TextAlignment = TextAlignment.Center,
+                TextWrapping = TextWrapping.Wrap,
+                LineHeight = 22,
+                Margin = new Thickness(0, 0, 0, 24)
+            };
+            cardContent.Children.Add(descText);
+
+            StackPanel buttonPanel = new StackPanel
+            {
+                Orientation = System.Windows.Controls.Orientation.Horizontal,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+            };
+
+            Button installBtn = new Button
+            {
+                Content = "Установить",
+                MinWidth = 120,
+                Padding = new Thickness(20, 0, 20, 0),
+                Height = 40,
+                Foreground = Brushes.White,
+                FontSize = 13,
+                FontWeight = FontWeights.SemiBold,
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Margin = new Thickness(6, 0, 6, 0),
+                Style = (Style)FindResource("AccentBtn")
+            };
+
+            Button retryBtn = new Button
+            {
+                Content = "Повторить попытку",
+                MinWidth = 120,
+                Padding = new Thickness(20, 0, 20, 0),
+                Height = 40,
+                Foreground = Brushes.White,
+                FontSize = 13,
+                FontWeight = FontWeights.SemiBold,
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Margin = new Thickness(6, 0, 6, 0),
+                Style = (Style)FindResource("OutlineBtn")
+            };
+
+            Button cancelBtn = new Button
+            {
+                Content = "Отмена",
+                MinWidth = 100,
+                Padding = new Thickness(20, 0, 20, 0),
+                Height = 40,
+                Foreground = Brushes.White,
+                FontSize = 13,
+                FontWeight = FontWeights.SemiBold,
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Margin = new Thickness(6, 0, 6, 0),
+                Style = (Style)FindResource("OutlineBtn")
+            };
+
+            void CloseDialog(FallbackDialogResult result)
+            {
+                MainGrid.Children.Remove(overlay);
+                MainGrid.Children.Remove(dialogCard);
+                tcs.TrySetResult(result);
+            }
+
+            installBtn.Click += (s, e) => CloseDialog(FallbackDialogResult.InstallReserve);
+            retryBtn.Click += (s, e) => CloseDialog(FallbackDialogResult.Retry);
+            cancelBtn.Click += (s, e) => CloseDialog(FallbackDialogResult.Cancel);
+
+            buttonPanel.Children.Add(installBtn);
+            buttonPanel.Children.Add(retryBtn);
+            buttonPanel.Children.Add(cancelBtn);
+
+            cardContent.Children.Add(buttonPanel);
+
+            dialogCard.Child = cardContent;
+            MainGrid.Children.Add(dialogCard);
+
+            overlay.Opacity = 0;
+            dialogCard.Opacity = 0;
+            dialogCard.RenderTransform = new ScaleTransform(0.9, 0.9);
+            dialogCard.RenderTransformOrigin = new System.Windows.Point(0.5, 0.5);
+
+            DoubleAnimation fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+            DoubleAnimation scaleIn = new DoubleAnimation(0.9, 1, TimeSpan.FromMilliseconds(300))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+
+            overlay.BeginAnimation(OpacityProperty, fadeIn);
+            dialogCard.BeginAnimation(OpacityProperty, fadeIn);
+            ((ScaleTransform)dialogCard.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleIn);
+            ((ScaleTransform)dialogCard.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty, scaleIn);
+
+            overlay.MouseLeftButtonDown += (s, e) => CloseDialog(FallbackDialogResult.Cancel);
+        });
+
+        return tcs.Task;
+    }
+
+    private Task<bool> ShowConfirmDialogAsync(string title, string text, string okBtnText = "Да", string cancelBtnText = "Отмена")
+    {
+        TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
+
+        Dispatcher.Invoke(() =>
+        {
+            Border overlay = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch
+            };
+            Grid.SetRowSpan(overlay, 3);
+            MainGrid.Children.Add(overlay);
+
+            Border dialogCard = new Border
+            {
+                Background = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x18)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44)),
+                BorderThickness = new Thickness(0, 3, 0, 0),
+                CornerRadius = new CornerRadius(14),
+                MaxWidth = 480,
+                Margin = new Thickness(40),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Effect = new System.Windows.Media.Effects.DropShadowEffect
+                {
+                    Color = Colors.Black,
+                    BlurRadius = 30,
+                    ShadowDepth = 0,
+                    Opacity = 0.5
+                }
+            };
+            Grid.SetRowSpan(dialogCard, 3);
+
+            StackPanel cardContent = new StackPanel { Margin = new Thickness(32, 28, 32, 28) };
+
+            Border iconBorder = new Border
+            {
+                Width = 56,
+                Height = 56,
+                CornerRadius = new CornerRadius(28),
+                Background = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44)) { Opacity = 0.15 },
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                Margin = new Thickness(0, 0, 0, 20)
+            };
+
+            System.Windows.Shapes.Path warningIcon = new System.Windows.Shapes.Path
+            {
+                Data = Geometry.Parse("M12 2L2 22h20L12 2zm1 18h-2v-2h2v2zm0-4h-2v-6h2v6z"),
+                Fill = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44)),
+                Width = 28,
+                Height = 28,
+                Stretch = Stretch.Uniform,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            iconBorder.Child = warningIcon;
+            cardContent.Children.Add(iconBorder);
+
+            TextBlock titleText = new TextBlock
+            {
+                Text = title,
+                FontSize = 20,
+                FontWeight = FontWeights.Bold,
+                Foreground = Brushes.White,
+                TextAlignment = TextAlignment.Center,
+                Margin = new Thickness(0, 0, 0, 16)
+            };
+            cardContent.Children.Add(titleText);
+
+            TextBlock descText = new TextBlock
+            {
+                Text = text,
+                FontSize = 14,
+                Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc)),
+                TextAlignment = TextAlignment.Center,
+                TextWrapping = TextWrapping.Wrap,
+                LineHeight = 22,
+                Margin = new Thickness(0, 0, 0, 24)
+            };
+            cardContent.Children.Add(descText);
+
+            StackPanel buttonPanel = new StackPanel
+            {
+                Orientation = System.Windows.Controls.Orientation.Horizontal,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+            };
+
+            Button okBtn = new Button
+            {
+                Content = okBtnText,
+                MinWidth = 120,
+                Padding = new Thickness(20, 0, 20, 0),
+                Height = 40,
+                Foreground = Brushes.White,
+                FontSize = 13,
+                FontWeight = FontWeights.SemiBold,
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Margin = new Thickness(6, 0, 6, 0),
+                Style = (Style)FindResource("RedAccentBtn")
+            };
+
+            Button cancelBtn = new Button
+            {
+                Content = cancelBtnText,
+                MinWidth = 120,
+                Padding = new Thickness(20, 0, 20, 0),
+                Height = 40,
+                Foreground = Brushes.White,
+                FontSize = 13,
+                FontWeight = FontWeights.SemiBold,
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Margin = new Thickness(6, 0, 6, 0),
+                Style = (Style)FindResource("OutlineBtn")
+            };
+
+            void Close(bool result)
+            {
+                MainGrid.Children.Remove(overlay);
+                MainGrid.Children.Remove(dialogCard);
+                tcs.TrySetResult(result);
+            }
+
+            okBtn.Click += (s, e) => Close(true);
+            cancelBtn.Click += (s, e) => Close(false);
+
+            buttonPanel.Children.Add(okBtn);
+            buttonPanel.Children.Add(cancelBtn);
+            cardContent.Children.Add(buttonPanel);
+
+            dialogCard.Child = cardContent;
+            MainGrid.Children.Add(dialogCard);
+
+            overlay.Opacity = 0;
+            dialogCard.Opacity = 0;
+            dialogCard.RenderTransform = new ScaleTransform(0.9, 0.9);
+            dialogCard.RenderTransformOrigin = new System.Windows.Point(0.5, 0.5);
+
+            DoubleAnimation fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+            DoubleAnimation scaleIn = new DoubleAnimation(0.9, 1, TimeSpan.FromMilliseconds(300))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+
+            overlay.BeginAnimation(OpacityProperty, fadeIn);
+            dialogCard.BeginAnimation(OpacityProperty, fadeIn);
+            ((ScaleTransform)dialogCard.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleIn);
+            ((ScaleTransform)dialogCard.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty, scaleIn);
+
+            overlay.MouseLeftButtonDown += (s, e) => Close(false);
+        });
+
+        return tcs.Task;
     }
 
     private void ShowFullScanRequiredNotification(
@@ -4725,6 +5084,27 @@ public partial class MainWindow : Window
                     NetLbl.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
                 }
             });
+
+            if (ok)
+            {
+                try
+                {
+                    var availability = await GitHubAvailabilityChecker.CheckAvailabilityAsync();
+                    if (availability == GitHubAvailabilityResult.Available)
+                    {
+                        var (needsUpdate, reason) = await ComponentVersionService.CheckIfUpdateNeededAsync(_settings);
+                        if (needsUpdate)
+                        {
+                            await Task.Delay(2000);
+                            Dispatcher.Invoke(() =>
+                            {
+                                AppendLog($"⚡ На GitHub доступны новые версии компонентов. Нажмите «Починить интернет», чтобы обновиться.", "info");
+                            });
+                        }
+                    }
+                }
+                catch { }
+            }
         });
     }
 
@@ -5387,7 +5767,7 @@ public partial class MainWindow : Window
                 SetupProg.Value = 50 + (ratio * 50);
                 SetupProgLbl.Text = $"Настройка: {(int)(ratio * 100)}%";
             }),
-            doneCb: (success, _) => Dispatcher.Invoke(() => {
+            doneCb: (success, _) => Dispatcher.Invoke(async () => {
                 StopGlow(success);
 
                 _discord.IsScanning = false;
@@ -5395,11 +5775,10 @@ public partial class MainWindow : Window
                 if (success)
                 {
                     SetFixBtnConnected();
-                    _discord.SetAllGood(
-                        DiagnosticsEngine.CheckAppStatus().ZapretRunning,
-                        DiagnosticsEngine.CheckAppStatus().TgWsProxyRunning);
+                    _discord.SetAllGood(true, true);
                 }
                 else _discord.SetProblems("Ошибка автонастройки");
+
                 FixBtn.IsEnabled = true;
 
                 StopLongCheckTimer();
@@ -5419,6 +5798,23 @@ public partial class MainWindow : Window
                     AnimateProgressBar(100, Color.FromRgb(239, 68, 68), "Ошибка", 0.5);
                     AppendLog("Произошла ошибка при автоматической настройке. Проверьте пути в настройках.", "error");
                     PlayErrorRing();
+                }
+
+                await Task.Delay(2500);
+
+                var appStatus = DiagnosticsEngine.CheckAppStatus();
+                _discord.SetAllGood(appStatus.ZapretRunning, appStatus.TgWsProxyRunning);
+
+                if (_settings.EnableZapret)
+                {
+                    if (!appStatus.ZapretRunning)
+                    {
+                        TrackMainZapretStartFail();
+                    }
+                    else
+                    {
+                        _mainZapretStartFails = 0;
+                    }
                 }
             }),
             settings: _settings);
@@ -5606,6 +6002,18 @@ public partial class MainWindow : Window
         AppendLog($"АВТОМАТИЧЕСКАЯ УСТАНОВКА КОМПОНЕНТОВ [ ВРЕМЯ: {timeStr} ]", "system");
         AppendLog("spacer");
 
+        AppendLog("Проверяю доступность GitHub...", "info");
+        var availability = await GitHubAvailabilityChecker.CheckAvailabilityAsync();
+
+        bool useReserve = false;
+
+        if (availability != GitHubAvailabilityResult.Available)
+        {
+            string reason = availability == GitHubAvailabilityResult.Timeout ? "таймаут подключения" : "блокировка или проблемы с сетью";
+            AppendLog($"GitHub недоступен ({reason}). Автоматически переключаюсь на встроенную резервную копию...", "warn");
+            useReserve = true;
+        }
+
         AppendLog("Запуск автоматической установки компонентов...", "info");
         AppendLog("Это может занять несколько минут.", "info");
         AppendLog("spacer");
@@ -5620,7 +6028,8 @@ public partial class MainWindow : Window
                 AppendLog("spacer");
                 AppendLog(err, "error");
             }),
-            preserveLists: preserveLists
+            preserveLists: preserveLists,
+            forceReserve: useReserve
         );
 
         Dispatcher.Invoke(() => {
@@ -11501,7 +11910,19 @@ public partial class MainWindow : Window
     {
         AddOnboardTitle(p, "Способ установки");
         AddOnboardSub(p, "Как вы хотите установить компоненты для обхода блокировок?\nПрограмма может сделать всё автоматически примерно за 15 секунд.");
-        AddOnboardBtn(p, "Автоматическая установка (15 сек)", "#22c55e", () => ShowOnboardScreen(16));
+
+        AddOnboardBtn(p, "Автоматическая установка (15 сек)", "#22c55e", () =>
+        {
+            _onboardForceReserve = false;
+            ShowOnboardScreen(16);
+        });
+
+        AddOnboardBtn(p, "Автоматическая (Резерв)", "#3b82f6", () =>
+        {
+            _onboardForceReserve = true;
+            ShowOnboardScreen(16);
+        });
+
         AddOnboardBtn(p, "Ручная установка", "#2e2e2e", () => ShowOnboardScreen(17), foreground: "#888888");
     }
 
@@ -11769,15 +12190,48 @@ public partial class MainWindow : Window
 
         Task.Run(async () =>
         {
-            bool success = await AutoDownloadService.AutoInstallAllAsync(
-                msg => AppendLog(msg),
-                prog => Dispatcher.Invoke(() =>
+            bool executeInstall = false;
+            bool useReserve = false;
+
+            if (_onboardForceReserve)
+            {
+                executeInstall = true;
+                useReserve = true;
+            }
+            else
+            {
+                AppendLog("Проверяю доступность GitHub...");
+                var availability = await GitHubAvailabilityChecker.CheckAvailabilityAsync();
+                if (availability == GitHubAvailabilityResult.Available)
                 {
-                    progBar.Value = prog * 100;
-                    progText.Text = $"Загрузка... {(int)(prog * 100)}%";
-                }),
-                err => AppendLog("ОШИБКА: " + err)
-            );
+                    AppendLog("GitHub доступен. Начинаю загрузку...");
+                    executeInstall = true;
+                    useReserve = false;
+                }
+                else
+                {
+                    string reason = availability == GitHubAvailabilityResult.Timeout ? "таймаут подключения" : "блокировка или проблемы с сетью";
+                    AppendLog($"⚠️ GitHub недоступен ({reason}). Автоматически переключаюсь на встроенную резервную копию...");
+                    executeInstall = true;
+                    useReserve = true;
+                }
+            }
+
+            bool success = false;
+            if (executeInstall)
+            {
+                success = await AutoDownloadService.AutoInstallAllAsync(
+                    msg => AppendLog(msg),
+                    prog => Dispatcher.Invoke(() =>
+                    {
+                        progBar.Value = prog * 100;
+                        progText.Text = $"Установка... {(int)(prog * 100)}%";
+                    }),
+                    err => AppendLog("ОШИБКА: " + err),
+                    preserveLists: false,
+                    forceReserve: useReserve
+                );
+            }
 
             Dispatcher.Invoke(() =>
             {

@@ -66,7 +66,8 @@
                         Orientation="Horizontal" HorizontalAlignment="Right"
                         Margin="0,20,0,0">
                 <Button x:Name="SecondaryBtn" Content="Закрыть"
-                        Width="100" Height="36" Margin="0,0,10,0"
+                        MinWidth="100" Height="36" Margin="0,0,10,0"
+                        Padding="16,0,16,0"
                         Background="Transparent" Foreground="#888888"
                         BorderBrush="#333333" BorderThickness="1"
                         Cursor="Hand" Click="SecondaryBtn_Click">
@@ -78,7 +79,8 @@
                                         <Border Background="{TemplateBinding Background}"
                                                 BorderBrush="{TemplateBinding BorderBrush}"
                                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                                CornerRadius="8">
+                                                CornerRadius="8"
+                                                Padding="{TemplateBinding Padding}">
                                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
                                     </ControlTemplate>
@@ -88,7 +90,8 @@
                     </Button.Style>
                 </Button>
                 <Button x:Name="PrimaryBtn" Content="Установить"
-                        Width="120" Height="36"
+                        MinWidth="120" Height="36"
+                        Padding="16,0,16,0"
                         Background="#3b82f6" Foreground="White"
                         BorderThickness="0" Cursor="Hand"
                         Visibility="Collapsed"
@@ -99,7 +102,8 @@
                                 <Setter.Value>
                                     <ControlTemplate TargetType="Button">
                                         <Border Background="{TemplateBinding Background}"
-                                                CornerRadius="8">
+                                                CornerRadius="8"
+                                                Padding="{TemplateBinding Padding}">
                                             <Border.Effect>
                                                 <DropShadowEffect Color="#3b82f6" BlurRadius="12" ShadowDepth="0" Opacity="0.4"/>
                                             </Border.Effect>

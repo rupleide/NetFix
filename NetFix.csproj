@@ -12,9 +12,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
     <RollForward>LatestMajor</RollForward>
-    <Version>1.1.7</Version>
-    <AssemblyVersion>1.1.7.0</AssemblyVersion>
-    <FileVersion>1.1.7.0</FileVersion>
+    <Version>1.1.8</Version>
+    <AssemblyVersion>1.1.8.0</AssemblyVersion>
+    <FileVersion>1.1.8.0</FileVersion>
     <Copyright>© 2024-2026 rupleide</Copyright>
     <Product>NetFix</Product>
     <Description>NetFix - GUI приложение для обхода блокировок Telegram и Discord</Description>
@@ -48,5 +48,11 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="DiscordRichPresence" Version="1.6.1.70" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\Fallback\zapret-fallback.zip" />
+    <EmbeddedResource Include="Assets\Fallback\tgwsproxy-fallback.exe" />
+    <EmbeddedResource Include="Assets\Fallback\metadata.json" />
   </ItemGroup>
 </Project>

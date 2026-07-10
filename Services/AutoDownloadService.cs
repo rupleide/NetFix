@@ -26,7 +26,8 @@ public static class AutoDownloadService
         Action<string> onLog,
         Action<double> onProgress,
         Action<string> onError,
-        bool preserveLists = false)
+        bool preserveLists = false,
+        bool forceReserve = false)
     {
         try
         {
@@ -132,30 +133,90 @@ public static class AutoDownloadService
                 onLog("Создаю временную папку для установки...");
                 Directory.CreateDirectory(tempInstallDir);
 
-                onLog("Получаю информацию о последней версии Zapret...");
-                var zapretInfo = await GetLatestReleaseInfoAsync(ZapretRepo);
-                if (zapretInfo == null)
+                ReleaseInfo? zapretInfo = null;
+                string? zapretArchive = null;
+
+                bool useLocalZapret = forceReserve;
+
+                if (!useLocalZapret)
                 {
-                    onError("❌ Не удалось получить информацию о Zapret с GitHub.\n\nВозможные причины:\n• Нет подключения к интернету\n• GitHub заблокирован\n• Включен VPN - попробуйте выключить или сменить сервер\n• Включен Zapret - попробуйте выключить или сменить конфиг");
-                    return false;
+                    try
+                    {
+                        onLog("Получаю информацию о последней версии Zapret...");
+                        zapretInfo = await GetLatestReleaseInfoAsync(ZapretRepo);
+                        if (zapretInfo != null)
+                        {
+                            onProgress(0.10);
+                            onLog($"✅ Найдена версия Zapret: {zapretInfo.Version}");
+                            onLog($"Загружаю архив по ссылке: {zapretInfo.DownloadUrl}");
+
+                            zapretArchive = await DownloadFileAsync(
+                                zapretInfo.DownloadUrl,
+                                Path.Combine(Path.GetTempPath(), "zapret_autoinstall.zip"),
+                                p => onProgress(0.10 + p * 0.30));
+
+                            if (zapretArchive == null)
+                            {
+                                onLog("⚠️ Ошибка при скачивании архива Zapret с GitHub.");
+                                useLocalZapret = true;
+                            }
+                        }
+                        else
+                        {
+                            onLog("⚠️ Не удалось получить информацию о последней версии Zapret с GitHub.");
+                            useLocalZapret = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        onLog($"⚠️ Ошибка работы с GitHub для Zapret: {ex.Message}");
+                        useLocalZapret = true;
+                    }
                 }
-                onProgress(0.10);
 
-                onLog($"✅ Найдена версия Zapret: {zapretInfo.Version}");
-                onLog($"Загружаю архив по ссылке: {zapretInfo.DownloadUrl}");
-
-                var zapretArchive = await DownloadFileAsync(
-                    zapretInfo.DownloadUrl,
-                    Path.Combine(Path.GetTempPath(), "zapret_autoinstall.zip"),
-                    p => onProgress(0.10 + p * 0.30));
-
-                if (zapretArchive == null)
+                if (useLocalZapret)
                 {
-                    onError("❌ Не удалось скачать Zapret.\n\nВозможные причины:\n• Нет подключения к интернету\n• GitHub заблокирован\n• Включен VPN - попробуйте выключить или сменить сервер\n• Включен Zapret - попробуйте выключить или сменить конфиг");
-                    return false;
+                    onLog("ℹ️ Переключаюсь на встроенный архив Zapret...");
+                    var manifest = ReserveComponentProvider.GetManifest();
+                    if (manifest is null)
+                    {
+                        onError("❌ Не удалось загрузить манифест встроенных резервных копий.");
+                        return false;
+                    }
+
+                    zapretInfo = new ReleaseInfo { Version = manifest.Zapret.Version, DownloadUrl = "embedded://zapret" };
+                    onProgress(0.10);
+
+                    onLog("ℹ️ Атрибуция компонентов резервной копии:");
+                    onLog($"   • Zapret: bol-van/Flowseal (лицензия MIT, версия: {manifest.Zapret.Version} от {manifest.Zapret.ReleaseDate})");
+
+                    onLog($"Копирую встроенный архив Zapret (версия: {zapretInfo.Version})...");
+                    string zapretDest = Path.Combine(Path.GetTempPath(), "zapret_autoinstall.zip");
+                    using (var srcStream = ReserveComponentProvider.GetZapretStream())
+                    {
+                        if (srcStream is null)
+                        {
+                            onError("❌ Встроенный ресурс Zapret не найден.");
+                            return false;
+                        }
+                        using (var destStream = new FileStream(zapretDest, FileMode.Create, FileAccess.Write, FileShare.None))
+                        {
+                            await srcStream.CopyToAsync(destStream);
+                        }
+                    }
+
+                    onLog("Проверяю контрольную сумму архива Zapret...");
+                    if (!await ReserveComponentProvider.VerifyFileHashAsync(zapretDest, manifest.Zapret.Sha256))
+                    {
+                        onError("❌ Ошибка проверки целостности резервной копии Zapret (хэш не совпадает).\n\nВозможные причины:\n• Файл резервной копии поврежден в процессе сборки\n• Резервный архив был модифицирован сторонней программой\n\nРекомендуется выполнить ручную установку или перекачать NetFix.");
+                        return false;
+                    }
+
+                    zapretArchive = zapretDest;
+                    onProgress(0.40);
                 }
 
-                onLog("✅ Zapret успешно скачан");
+                onLog("✅ Zapret успешно скопирован/скачан");
                 onLog("Распаковываю Zapret в TEMP папку...");
 
                 var zapretPath = await ExtractArchiveAsync(zapretArchive, tempInstallDir);
@@ -247,59 +308,91 @@ public static class AutoDownloadService
                 onLog($"✅ service.bat найден: {serviceBat}");
                 onProgress(0.60);
 
+                ReleaseInfo? tgWsInfo = null;
                 string? tgWsExe = null;
 
-                onLog("Получаю информацию о последней версии TgWsProxy...");
-                var tgWsInfo = await GetLatestReleaseInfoAsync(TgWsProxyRepo);
-                if (tgWsInfo == null)
+                bool useLocalTgWs = forceReserve;
+
+                if (!useLocalTgWs)
                 {
-                    var existingTgWsProxy = FindFile(mainInstallDir, "TgWsProxy.exe");
-                    if (!string.IsNullOrEmpty(existingTgWsProxy))
+                    try
                     {
-                        onLog($"⚠️ Не удалось получить информацию о TgWsProxy с GitHub, использую существующую версию");
-                        onLog($"✅ TgWsProxy найден: {existingTgWsProxy}");
-                        tgWsExe = existingTgWsProxy;
-                        onProgress(0.95);
-                    }
-                    else
-                    {
-                        onError("❌ Не удалось получить информацию о TgWsProxy с GitHub.\n\nВозможные причины:\n• Нет подключения к интернету\n• GitHub заблокирован\n• Включен VPN - попробуйте выключить или сменить сервер\n• Включен Zapret - попробуйте выключить или сменить конфиг");
-                        return false;
-                    }
-                }
-                else
-                {
-                    onProgress(0.65);
-
-                    onLog($"✅ Найдена версия TgWsProxy: {tgWsInfo.Version}");
-                    onLog("Скачиваю TgWsProxy...");
-
-                    tgWsExe = await DownloadFileAsync(
-                        tgWsInfo.DownloadUrl,
-                        Path.Combine(mainInstallDir, "TgWsProxy.exe"),
-                        p => onProgress(0.65 + p * 0.30));
-
-                    if (tgWsExe == null)
-                    {
-                        var existingTgWsProxy = FindFile(mainInstallDir, "TgWsProxy.exe");
-                        if (!string.IsNullOrEmpty(existingTgWsProxy))
+                        onLog("Получаю информацию о последней версии TgWsProxy...");
+                        tgWsInfo = await GetLatestReleaseInfoAsync(TgWsProxyRepo);
+                        if (tgWsInfo != null)
                         {
-                            onLog($"⚠️ Не удалось скачать новую версию TgWsProxy, использую существующую");
-                            onLog($"✅ TgWsProxy найден: {existingTgWsProxy}");
-                            tgWsExe = existingTgWsProxy;
-                            onProgress(0.95);
+                            onProgress(0.65);
+                            onLog($"✅ Найдена версия TgWsProxy: {tgWsInfo.Version}");
+                            onLog("Скачиваю TgWsProxy...");
+
+                            tgWsExe = await DownloadFileAsync(
+                                tgWsInfo.DownloadUrl,
+                                Path.Combine(mainInstallDir, "TgWsProxy.exe"),
+                                p => onProgress(0.65 + p * 0.30));
+
+                            if (tgWsExe == null)
+                            {
+                                onLog("⚠️ Не удалось скачать новую версию TgWsProxy с GitHub.");
+                                useLocalTgWs = true;
+                            }
+                            else
+                            {
+                                onLog($"✅ TgWsProxy успешно скачан: {tgWsExe}");
+                                onProgress(0.95);
+                            }
                         }
                         else
                         {
-                            onError("❌ Не удалось скачать TgWsProxy.\n\nВозможные причины:\n• Нет подключения к интернету\n• GitHub заблокирован\n• Включен VPN - попробуйте выключить или сменить сервер\n• Включен Zapret - попробуйте выключить или сменить конфиг");
-                            return false;
+                            onLog("⚠️ Не удалось получить информацию о TgWsProxy с GitHub.");
+                            useLocalTgWs = true;
                         }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        onLog($"✅ TgWsProxy успешно скачан: {tgWsExe}");
-                        onProgress(0.95);
+                        onLog($"⚠️ Ошибка работы с GitHub для TgWsProxy: {ex.Message}");
+                        useLocalTgWs = true;
                     }
+                }
+
+                if (useLocalTgWs)
+                {
+                    onLog("ℹ️ Переключаюсь на встроенный файл TgWsProxy...");
+                    var manifest = ReserveComponentProvider.GetManifest();
+                    if (manifest is null)
+                    {
+                        onError("❌ Не удалось загрузить манифест встроенных резервных копий.");
+                        return false;
+                    }
+
+                    tgWsInfo = new ReleaseInfo { Version = manifest.TgWsProxy.Version, DownloadUrl = "embedded://tgwsproxy" };
+                    onLog($"   • TgWsProxy: Flowseal (лицензия MIT, версия: {manifest.TgWsProxy.Version} от {manifest.TgWsProxy.ReleaseDate})");
+                    onLog("spacer");
+
+                    onLog($"Копирую встроенный файл TgWsProxy (версия: {tgWsInfo.Version})...");
+                    string tgWsDest = Path.Combine(mainInstallDir, "TgWsProxy.exe");
+
+                    using (var srcStream = ReserveComponentProvider.GetTgWsProxyStream())
+                    {
+                        if (srcStream is null)
+                        {
+                            onError("❌ Встроенный ресурс TgWsProxy не найден.");
+                            return false;
+                        }
+                        using (var destStream = new FileStream(tgWsDest, FileMode.Create, FileAccess.Write, FileShare.None))
+                        {
+                            await srcStream.CopyToAsync(destStream);
+                        }
+                    }
+
+                    onLog("Проверяю контрольную сумму файла TgWsProxy...");
+                    if (!await ReserveComponentProvider.VerifyFileHashAsync(tgWsDest, manifest.TgWsProxy.Sha256))
+                    {
+                        onError("❌ Ошибка проверки целостности резервной копии TgWsProxy (хэш не совпадает).\n\nВозможные причины:\n• Файл резервной копии поврежден в процессе сборки\n• Исполняемый файл был модифицирован сторонней программой\n\nРекомендуется выполнить ручную установку или перекачать NetFix.");
+                        return false;
+                    }
+
+                    tgWsExe = tgWsDest;
+                    onProgress(0.95);
                 }
 
                 onLog("Сохраняю настройки в приложении...");
