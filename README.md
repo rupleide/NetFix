@@ -36,7 +36,7 @@
 | Источник | Ссылка |
 |:---:|:---:|
 | 🚀 GitHub (рекомендуется) | **[Скачать последнюю версию](https://github.com/rupleide/NetFix/releases/latest)** |
-| ☁️ Google Drive (зеркало) | **[Открыть зеркало](https://drive.google.com/file/d/16X7Z74aEHOgKr63Yr5DGPUYlxotTsnUP/view)** |
+| ☁️ Google Drive (зеркало) | **[Открыть зеркало](https://drive.google.com/file/d/1Abx7w89Ji1PC2zKa5DHSsMD3ZeJBJOrv/view)** |
 
 </div>
 
