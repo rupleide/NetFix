@@ -36,7 +36,7 @@
 | Источник | Ссылка |
 |:---:|:---:|
 | 🚀 GitHub (рекомендуется) | **[Скачать последнюю версию](https://github.com/rupleide/NetFix/releases/latest)** |
-| ☁️ Google Drive (зеркало) | **[Открыть зеркало](https://drive.google.com/file/d/1Abx7w89Ji1PC2zKa5DHSsMD3ZeJBJOrv/view)** |
+| ☁️ Google Drive (зеркало) | **[Открыть зеркало](https://drive.google.com/file/d/12DsaDPyBjLTEFCHvsvVfHxFK7fcjIZDF/view)** |
 
 </div>
 
@@ -55,7 +55,7 @@
 - 📺 **Поддержка Smart TV:** Удобное управление как с сенсорного экрана, так и обычным пультом от телевизора.
 - ⚡ **Автоматический подбор:** Приложение само находит рабочие настройки под вашего провайдера.
 
-> 📥 **[Скачать NetFix Mobile на GitHub Releases](https://github.com/rupleide/NetFixMobile/releases/latest)** | **[Зеркало (Google Drive)](https://drive.google.com/file/d/1Bu3Knaf1lqTi24366fnxVY2xWD0RdvIj/view)** | **[Исходный код](https://github.com/rupleide/NetFixMobile)**
+> 📥 **[Скачать NetFix Mobile на GitHub Releases](https://github.com/rupleide/NetFixMobile/releases/latest)** | **[Исходный код](https://github.com/rupleide/NetFixMobile)**
 
 ---
 
