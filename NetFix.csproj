@@ -12,9 +12,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
     <RollForward>LatestMajor</RollForward>
-    <Version>1.1.8</Version>
-    <AssemblyVersion>1.1.8.0</AssemblyVersion>
-    <FileVersion>1.1.8.0</FileVersion>
+    <Version>1.1.9</Version>
+    <AssemblyVersion>1.1.9.0</AssemblyVersion>
+    <FileVersion>1.1.9.0</FileVersion>
     <Copyright>© 2024-2026 rupleide</Copyright>
     <Product>NetFix</Product>
     <Description>NetFix - GUI приложение для обхода блокировок Telegram и Discord</Description>
@@ -40,11 +40,14 @@
     <Resource Include="Assets\noise.png" />
   </ItemGroup>
 
-  <!-- Копируем папку Tracks в выходную директорию -->
   <ItemGroup>
     <None Include="Tracks\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Assets\Screenshots\hd_phototv.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Resource Include="Assets\Screenshots\hd_phototv.png" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="DiscordRichPresence" Version="1.6.1.70" />

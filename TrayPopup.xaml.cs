@@ -25,6 +25,8 @@ public partial class TrayPopup : Window
     private static readonly SolidColorBrush _brushGreenDot = new(Color.FromRgb(0x22, 0xC5, 0x5E));
     private static readonly SolidColorBrush _brushTransparent = new(Colors.Transparent);
 
+    public static DateTime LastClosedTime { get; private set; }
+
     public TrayPopup()
     {
         InitializeComponent();
@@ -34,6 +36,12 @@ public partial class TrayPopup : Window
         Deactivated += (_, _) => SafeClose();
 
         Loaded += OnLoaded;
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        LastClosedTime = DateTime.UtcNow;
+        base.OnClosed(e);
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)

@@ -31,7 +31,7 @@ public static class ModActivator
                     var dirName = ModScanner.GetModDirName(mod);
                     var listFile = ModScanner.FindListFile(mod);
                     if (listFile != null && File.Exists(listFile))
-                    { /* bypassed */ }
+                    { }
 
                     var domains = ReadModDomains(mod);
                     if (domains.Count > 0)

@@ -135,6 +135,7 @@ public class AppSettings
     public double WindowTop { get; set; } = double.NaN;
     public List<string> PreviousDnsAddresses { get; set; } = [];
     public bool PreviousDnsWasDhcp { get; set; } = true;
+    public bool AutoEacBypass { get; set; } = false;
 }
 
 public record GameTrackStats

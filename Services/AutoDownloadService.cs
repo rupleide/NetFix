@@ -101,11 +101,13 @@ public static class AutoDownloadService
             {
                 bool hasExistingZapret = false;
                 bool hasExistingTgWsProxy = false;
+                string? existingServiceBat = null;
+                string? existingTgWsProxy = null;
 
                 if (Directory.Exists(mainInstallDir))
                 {
-                    var existingServiceBat = FindFile(mainInstallDir, "service.bat");
-                    var existingTgWsProxy = FindFile(mainInstallDir, "TgWsProxy.exe");
+                    existingServiceBat = FindFile(mainInstallDir, "service.bat");
+                    existingTgWsProxy = FindFile(mainInstallDir, "TgWsProxy.exe");
 
                     hasExistingZapret = !string.IsNullOrEmpty(existingServiceBat);
                     hasExistingTgWsProxy = !string.IsNullOrEmpty(existingTgWsProxy);
@@ -174,7 +176,23 @@ public static class AutoDownloadService
                     }
                 }
 
-                if (useLocalZapret)
+                bool skipZapretExtraction = false;
+                if (useLocalZapret && hasExistingZapret)
+                {
+                    var manifest = ReserveComponentProvider.GetManifest();
+                    string? installedVer = ComponentVersionService.GetInstalledZapretVersion(existingServiceBat);
+                    if (manifest != null && !string.IsNullOrEmpty(installedVer))
+                    {
+                        if (installedVer == manifest.Zapret.Version || ComponentVersionService.IsNewerVersion(installedVer, manifest.Zapret.Version))
+                        {
+                            onLog($"⚠️ Связь с GitHub отсутствует. Установленная версия Zapret ({installedVer}) новее или равна резервной ({manifest.Zapret.Version}), оставляю текущие файлы без изменений.");
+                            skipZapretExtraction = true;
+                            zapretInfo = new ReleaseInfo { Version = installedVer, DownloadUrl = "local://zapret" };
+                        }
+                    }
+                }
+
+                if (useLocalZapret && !skipZapretExtraction)
                 {
                     onLog("ℹ️ Переключаюсь на встроенный архив Zapret...");
                     var manifest = ReserveComponentProvider.GetManifest();
@@ -216,80 +234,83 @@ public static class AutoDownloadService
                     onProgress(0.40);
                 }
 
-                onLog("✅ Zapret успешно скопирован/скачан");
-                onLog("Распаковываю Zapret в TEMP папку...");
-
-                var zapretPath = await ExtractArchiveAsync(zapretArchive, tempInstallDir);
-                onProgress(0.50);
-
-                var preservedFiles = new List<(string Source, string Backup)>();
-                if (preserveLists)
+                if (!skipZapretExtraction)
                 {
-                    string listsDir = Path.Combine(mainInstallDir, "lists");
-                    if (Directory.Exists(listsDir))
+                    onLog("✅ Zapret успешно скопирован/скачан");
+                    onLog("Распаковываю Zapret в TEMP папку...");
+
+                    var zapretPath = await ExtractArchiveAsync(zapretArchive, tempInstallDir);
+                    onProgress(0.50);
+
+                    var preservedFiles = new List<(string Source, string Backup)>();
+                    if (preserveLists)
                     {
-                        onLog("📋 Сохраняю пользовательские файлы lists...");
-                        foreach (var fileName in ProtectedListFiles)
+                        string listsDir = Path.Combine(mainInstallDir, "lists");
+                        if (Directory.Exists(listsDir))
                         {
-                            var src = Path.Combine(listsDir, fileName);
-                            if (File.Exists(src))
+                            onLog("📋 Сохраняю пользовательские файлы lists...");
+                            foreach (var fileName in ProtectedListFiles)
                             {
-                                var backup = Path.Combine(Path.GetTempPath(), $"NetFix_Preserve_{Guid.NewGuid()}_{fileName}");
-                                File.Copy(src, backup, true);
-                                preservedFiles.Add((src, backup));
-                                onLog($"  → {fileName} сохранён");
+                                var src = Path.Combine(listsDir, fileName);
+                                if (File.Exists(src))
+                                {
+                                    var backup = Path.Combine(Path.GetTempPath(), $"NetFix_Preserve_{Guid.NewGuid()}_{fileName}");
+                                    File.Copy(src, backup, true);
+                                    preservedFiles.Add((src, backup));
+                                    onLog($"  → {fileName} сохранён");
+                                }
                             }
-                        }
-                        if (preservedFiles.Count > 0)
-                            onLog($"✅ Сохранено {preservedFiles.Count} файлов");
-                        else
-                            onLog("⚠️ Ни один из защищаемых файлов не найден");
-                    }
-                }
-
-                onLog("Копирую файлы в C:\\Zapret (с заменой существующих)...");
-                MoveDirectoryContents(tempInstallDir, mainInstallDir);
-
-                if (preservedFiles.Count > 0)
-                {
-                    onLog("📋 Восстанавливаю пользовательские файлы...");
-                    foreach (var (source, backup) in preservedFiles)
-                    {
-                        try
-                        {
-                            var dir = Path.GetDirectoryName(source);
-                            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-                            File.Copy(backup, source, true);
-                            File.Delete(backup);
-                            onLog($"  → {Path.GetFileName(source)} восстановлен");
-                        }
-                        catch (Exception ex)
-                        {
-                            onLog($"  ⚠️ {Path.GetFileName(source)}: {ex.Message}");
+                            if (preservedFiles.Count > 0)
+                                onLog($"✅ Сохранено {preservedFiles.Count} файлов");
+                            else
+                                onLog("⚠️ Ни один из защищаемых файлов не найден");
                         }
                     }
-                    onLog("✅ Пользовательские файлы восстановлены");
-                }
 
-                if (!preserveLists)
-                {
-                    string listsDir = Path.Combine(mainInstallDir, "lists");
-                    if (Directory.Exists(listsDir))
+                    onLog("Копирую файлы в C:\\Zapret (с заменой существующих)...");
+                    MoveDirectoryContents(tempInstallDir, mainInstallDir);
+
+                    if (preservedFiles.Count > 0)
                     {
-                        foreach (var fileName in ProtectedListFiles)
+                        onLog("📋 Восстанавливаю пользовательские файлы...");
+                        foreach (var (source, backup) in preservedFiles)
                         {
-                            var filePath = Path.Combine(listsDir, fileName);
                             try
                             {
-                                if (File.Exists(filePath))
-                                {
-                                    File.Delete(filePath);
-                                    onLog($"  → {fileName} удалён (будут использованы стандартные)");
-                                }
+                                var dir = Path.GetDirectoryName(source);
+                                if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                                File.Copy(backup, source, true);
+                                File.Delete(backup);
+                                onLog($"  → {Path.GetFileName(source)} восстановлен");
                             }
                             catch (Exception ex)
                             {
-                                onLog($"  ⚠️ {fileName}: {ex.Message}");
+                                onLog($"  ⚠️ {Path.GetFileName(source)}: {ex.Message}");
+                            }
+                        }
+                        onLog("✅ Пользовательские файлы восстановлены");
+                    }
+
+                    if (!preserveLists)
+                    {
+                        string listsDir = Path.Combine(mainInstallDir, "lists");
+                        if (Directory.Exists(listsDir))
+                        {
+                            foreach (var fileName in ProtectedListFiles)
+                            {
+                                var filePath = Path.Combine(listsDir, fileName);
+                                try
+                                {
+                                    if (File.Exists(filePath))
+                                    {
+                                        File.Delete(filePath);
+                                        onLog($"  → {fileName} удалён (будут использованы стандартные)");
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    onLog($"  ⚠️ {fileName}: {ex.Message}");
+                                }
                             }
                         }
                     }
@@ -354,7 +375,24 @@ public static class AutoDownloadService
                     }
                 }
 
-                if (useLocalTgWs)
+                bool skipTgWsExtraction = false;
+                if (useLocalTgWs && hasExistingTgWsProxy)
+                {
+                    var manifest = ReserveComponentProvider.GetManifest();
+                    string? installedVer = ComponentVersionService.GetInstalledTgWsProxyVersion(existingTgWsProxy);
+                    if (manifest != null && !string.IsNullOrEmpty(installedVer))
+                    {
+                        if (installedVer == manifest.TgWsProxy.Version || ComponentVersionService.IsNewerVersion(installedVer, manifest.TgWsProxy.Version))
+                        {
+                            onLog($"⚠️ Связь с GitHub отсутствует. Установленная версия TgWsProxy ({installedVer}) новее или равна резервной ({manifest.TgWsProxy.Version}), оставляю текущий файл без изменений.");
+                            skipTgWsExtraction = true;
+                            tgWsExe = existingTgWsProxy;
+                            tgWsInfo = new ReleaseInfo { Version = installedVer, DownloadUrl = "local://tgwsproxy" };
+                        }
+                    }
+                }
+
+                if (useLocalTgWs && !skipTgWsExtraction)
                 {
                     onLog("ℹ️ Переключаюсь на встроенный файл TgWsProxy...");
                     var manifest = ReserveComponentProvider.GetManifest();
@@ -475,7 +513,7 @@ public static class AutoDownloadService
                 if (Directory.Exists(tempInstallDir))
                 {
                     try { Directory.Delete(tempInstallDir, true); }
-                    catch { /* Игнорируем ошибки очистки временной папки */ }
+                    catch { }
                 }
             }
         }

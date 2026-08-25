@@ -7,6 +7,7 @@
         WindowStyle="None" AllowsTransparency="True"
         Background="Transparent"
         ResizeMode="CanResize"
+        ShowInTaskbar="True"
         WindowStartupLocation="CenterScreen">
     <WindowChrome.WindowChrome>
         <WindowChrome ResizeBorderThickness="5" CaptionHeight="0"
@@ -51,6 +52,9 @@
         <PathGeometry x:Key="DnsIcon">M 20,20 H 30 V 22 H 20 Z M 20,24 H 26 V 26 H 20 Z M30,17V16A13.9871,13.9871,0,1,0,19.23,29.625l-.46-1.9463A12.0419,12.0419,0,0,1,16,28c-.19,0-.375-.0186-.563-.0273A20.3044,20.3044,0,0,1,12.0259,17Zm-2.0415-2H21.9751A24.2838,24.2838,0,0,0,19.2014,4.4414,12.0228,12.0228,0,0,1,27.9585,15ZM16.563,4.0273A20.3044,20.3044,0,0,1,19.9741,15H12.0259A20.3044,20.3044,0,0,1,15.437,4.0273C15.625,4.0186,15.81,4,16,4S16.375,4.0186,16.563,4.0273Zm-3.7644.4141A24.2838,24.2838,0,0,0,10.0249,15H4.0415A12.0228,12.0228,0,0,1,12.7986,4.4414Zm0,23.1172A12.0228,12.0228,0,0,1,4.0415,17h5.9834A24.2838,24.2838,0,0,0,12.7986,27.5586Z</PathGeometry>
         <PathGeometry x:Key="ExternalLinkIcon">M392.857,292.354h-18.274c-2.669,0-4.859,0.855-6.563,2.573c-1.718,1.708-2.573,3.897-2.573,6.563v91.361 c0,12.563-4.47,23.315-13.415,32.262c-8.945,8.945-19.701,13.414-32.264,13.414H82.224c-12.562,0-23.317-4.469-32.264-13.414 c-8.945-8.946-13.417-19.698-13.417-32.262V155.31c0-12.562,4.471-23.313,13.417-32.259c8.947-8.947,19.702-13.418,32.264-13.418 h200.994c2.669,0,4.859-0.859,6.57-2.57c1.711-1.713,2.566-3.9,2.566-6.567V82.221c0-2.662-0.855-4.853-2.566-6.563 c-1.711-1.713-3.901-2.568-6.57-2.568H82.224c-22.648,0-42.016,8.042-58.102,24.125C8.042,113.297,0,132.665,0,155.313v237.542 c0,22.647,8.042,42.018,24.123,58.095c16.086,16.084,35.454,24.13,58.102,24.13h237.543c22.647,0,42.017-8.046,58.101-24.13 c16.085-16.077,24.127-35.447,24.127-58.095v-91.358c0-2.669-0.856-4.859-2.574-6.57 C397.709,293.209,395.519,292.354,392.857,292.354z M506.199,41.971c-3.617-3.617-7.905-5.424-12.85-5.424H347.171c-4.948,0-9.233,1.807-12.847,5.424 c-3.617,3.615-5.428,7.898-5.428,12.847s1.811,9.233,5.428,12.85l50.247,50.248L198.424,304.067 c-1.906,1.903-2.856,4.093-2.856,6.563c0,2.479,0.953,4.668,2.856,6.571l32.548,32.544c1.903,1.903,4.093,2.852,6.567,2.852 s4.665-0.948,6.567-2.852l186.148-186.148l50.251,50.248c3.614,3.617,7.898,5.426,12.847,5.426s9.233-1.809,12.851-5.426 c3.617-3.616,5.424-7.898,5.424-12.847V54.818C511.626,49.866,509.813,45.586,506.199,41.971z</PathGeometry>
         <PathGeometry x:Key="LikeIcon">M8,11.47A18.74,18.74,0,0,0,10.69,8.9a18.74,18.74,0,0,0,1.76-2.42A6.42,6.42,0,0,0,13,5.41l1.74-4.57a4.45,4.45,0,0,1,2.83,2A4,4,0,0,1,18,4.77a2.67,2.67,0,0,1-.09.55L16.72,9.05h5.22a2,2,0,0,1,2,1.85,19.32,19.32,0,0,1-.32,5.44,33.83,33.83,0,0,1-1.23,4.34,3.78,3.78,0,0,1-3.58,2.49,25.54,25.54,0,0,1-6.28-.66A45.85,45.85,0,0,1,8,21.26V11.47Z M5,9H1a1,1,0,0,0-1,1V22a1,1,0,0,0,1,1H5a1,1,0,0,0,1-1V10A1,1,0,0,0,5,9ZM3,21a1,1,0,1,1,1-1A1,1,0,0,1,3,21Z</PathGeometry>
+        <PathGeometry x:Key="FlowRoutingIcon">M48,60A12,12,0,1,0,60,72,12.0081,12.0081,0,0,0,48,60Z M22.6055,46.6289A5.9994,5.9994,0,1,0,31.1133,55.09a24.2258,24.2258,0,0,1,33.7734,0,5.9512,5.9512,0,0,0,4.2539,1.77,6,6,0,0,0,4.2539-10.23C59.7773,32.918,36.2227,32.918,22.6055,46.6289Z M90.27,29.7773a59.1412,59.1412,0,0,0-84.539,0,5.9994,5.9994,0,1,0,8.5312,8.4375c18.1172-18.3281,49.3594-18.3281,67.4766,0A5.9994,5.9994,0,1,0,90.27,29.7773Z</PathGeometry>
+        <PathGeometry x:Key="FlowShieldIcon">M12 12.5C13.1046 12.5 14 11.6046 14 10.5C14 9.39542 13.1046 8.49999 12 8.49999C10.8954 8.49999 10 9.39542 10 10.5C10 11.6046 10.8954 12.5 12 12.5ZM12 12.5V15.5M20 12C20 16.4611 14.54 19.6937 12.6414 20.683C12.4361 20.79 12.3334 20.8435 12.191 20.8712C12.08 20.8928 11.92 20.8928 11.809 20.8712C11.6666 20.8435 11.5639 20.79 11.3586 20.683C9.45996 19.6937 4 16.4611 4 12V8.21759C4 7.41808 4 7.01833 4.13076 6.6747C4.24627 6.37113 4.43398 6.10027 4.67766 5.88552C4.9535 5.64243 5.3278 5.50207 6.0764 5.22134L11.4382 3.21067C11.6461 3.13271 11.75 3.09373 11.857 3.07827C11.9518 3.06457 12.0482 3.06457 12.143 3.07827C12.25 3.09373 12.3539 3.13271 12.5618 3.21067L17.9236 5.22134C18.6722 5.50207 19.0465 5.64243 19.3223 5.88552C19.566 6.10027 19.7537 6.37113 19.8692 6.6747C20 7.01833 20 7.41808 20 8.21759V12Z</PathGeometry>
+        <PathGeometry x:Key="FlowServerIcon">M18 7H18.01M15 7H15.01M18 17H18.01M15 17H15.01M6 10H18C18.9319 10 19.3978 10 19.7654 9.84776C20.2554 9.64477 20.6448 9.25542 20.8478 8.76537C21 8.39782 21 7.93188 21 7C21 6.06812 21 5.60218 20.8478 5.23463C20.6448 4.74458 20.2554 4.35523 19.7654 4.15224C19.3978 4 18.9319 4 18 4H6C5.06812 4 4.60218 4 4.23463 4.15224C3.74458 4.35523 3.35523 4.74458 3.15224 5.23463C3 5.60218 3 6.06812 3 7C3 7.93188 3 8.39782 3.15224 8.76537C3.35523 9.25542 3.74458 9.64477 4.23463 9.84776C4.60218 10 5.06812 10 6 10ZM6 20H18C18.9319 20 19.3978 20 19.7654 19.8478C20.2554 19.6448 20.6448 19.2554 20.8478 18.7654C21 18.3978 21 17.9319 21 17C21 16.0681 21 15.6022 20.8478 15.2346C20.6448 14.7446 20.2554 14.3552 19.7654 14.1522C19.3978 14 18.9319 14 18 14H6C5.06812 14 4.60218 14 4.23463 14.1522C3.74458 14.3552 3.35523 14.7446 3.15224 15.2346C3 15.6022 3 16.0681 3 17C3 17.9319 3 18.3978 3.15224 18.7654C3.35523 19.2554 3.74458 19.6448 4.23463 19.8478C4.60218 20 5.06812 20 6 20Z</PathGeometry>
         <Style x:Key="FlatBtn" TargetType="Button">
             <Setter Property="Background"   Value="Transparent"/>
             <Setter Property="BorderBrush"  Value="Transparent"/>
@@ -74,6 +78,45 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        
+        <ControlTemplate x:Key="OverlayScrollViewerTemplate" TargetType="ScrollViewer">
+            <Grid Background="{TemplateBinding Background}">
+                <ScrollContentPresenter x:Name="PART_ScrollContentPresenter" 
+                                        Margin="{TemplateBinding Padding}" 
+                                        Content="{TemplateBinding Content}" 
+                                        ContentTemplate="{TemplateBinding ContentTemplate}" 
+                                        CanContentScroll="{TemplateBinding CanContentScroll}"/>
+                <ScrollBar x:Name="PART_VerticalScrollBar" 
+                           HorizontalAlignment="Right" 
+                           VerticalAlignment="Stretch"
+                           Width="6"
+                           Margin="0,4,-12,4"
+                           Opacity="0.65"
+                           AutomationProperties.AutomationId="VerticalScrollBar"
+                           Cursor="Arrow"
+                           Value="{TemplateBinding VerticalOffset}"
+                           Maximum="{TemplateBinding ScrollableHeight}"
+                           Minimum="0"
+                           ViewportSize="{TemplateBinding ViewportHeight}"
+                           Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"/>
+                <ScrollBar x:Name="PART_HorizontalScrollBar" 
+                           VerticalAlignment="Bottom" 
+                           HorizontalAlignment="Stretch"
+                           Height="8"
+                           Margin="0,0,0,2"
+                           AutomationProperties.AutomationId="HorizontalScrollBar"
+                           Cursor="Arrow"
+                           Value="{TemplateBinding HorizontalOffset}"
+                           Maximum="{TemplateBinding ScrollableWidth}"
+                           Minimum="0"
+                           ViewportSize="{TemplateBinding ViewportWidth}"
+                           Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"/>
+            </Grid>
+        </ControlTemplate>
+        <Style x:Key="OverlayScrollViewer" TargetType="ScrollViewer">
+            <Setter Property="Template" Value="{StaticResource OverlayScrollViewerTemplate}"/>
+        </Style>
+
         <Style x:Key="FlatBtnCentered" TargetType="Button" BasedOn="{StaticResource FlatBtn}">
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -225,6 +268,113 @@
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <ControlTemplate x:Key="DarkComboBoxToggleButton" TargetType="ToggleButton">
+            <Border x:Name="border" Background="#19191e" BorderBrush="#2a2a30" BorderThickness="1" CornerRadius="8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="32"/>
+                    </Grid.ColumnDefinitions>
+                    <Path Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" 
+                          Data="M0,0 L4,4 L8,0" Stroke="#888888" StrokeThickness="1.5" Fill="Transparent"/>
+                </Grid>
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="border" Property="Background" Value="#222228"/>
+                    <Setter TargetName="border" Property="BorderBrush" Value="#3b82f6"/>
+                </Trigger>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter TargetName="border" Property="Background" Value="#222228"/>
+                    <Setter TargetName="border" Property="BorderBrush" Value="#3b82f6"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+        <Style x:Key="DarkGlassComboBox" TargetType="ComboBox">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#19191e"/>
+            <Setter Property="BorderBrush" Value="#2a2a30"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton x:Name="ToggleButton" 
+                                          Template="{StaticResource DarkComboBoxToggleButton}" 
+                                          Focusable="False" 
+                                          IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" 
+                                          ClickMode="Press"/>
+                            <ContentPresenter x:Name="ContentSite" 
+                                              IsHitTestVisible="False" 
+                                              Content="{TemplateBinding SelectionBoxItem}" 
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" 
+                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" 
+                                              Margin="12,2,32,2" 
+                                              VerticalAlignment="Center" 
+                                              HorizontalAlignment="Left"/>
+                            <Popup x:Name="Popup" 
+                                   Placement="Bottom" 
+                                   IsOpen="{TemplateBinding IsDropDownOpen}" 
+                                   AllowsTransparency="True" 
+                                   Focusable="False" 
+                                   PopupAnimation="Slide"
+                                   MaxHeight="320">
+                                <Grid x:Name="DropDown" 
+                                      SnapsToDevicePixels="True" 
+                                      MinWidth="{TemplateBinding ActualWidth}">
+                                    <Border x:Name="DropDownBorder" 
+                                            Background="#16161a" 
+                                            BorderThickness="1" 
+                                            BorderBrush="#2a2a30" 
+                                            CornerRadius="8" 
+                                            Margin="0,4,0,4">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="#000000" BlurRadius="16" ShadowDepth="4" Opacity="0.7"/>
+                                        </Border.Effect>
+                                        <ScrollViewer Margin="4,6" SnapsToDevicePixels="True">
+                                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Grid>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="Padding" Value="10,8"/>
+                        <Setter Property="Cursor" Value="Hand"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ComboBoxItem">
+                                    <Border x:Name="itemBorder" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}" Margin="0,1">
+                                        <ContentPresenter/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="itemBorder" Property="Background" Value="#22222a"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="itemBorder" Property="Background" Value="#263b82f6"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
                 </Setter.Value>
             </Setter>
         </Style>
@@ -450,14 +600,20 @@
             <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
             <Setter Property="HorizontalScrollBarVisibility" Value="Disabled"/>
             <Setter Property="Padding"          Value="10"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="UseLayoutRounding" Value="True"/>
+            <Setter Property="RenderOptions.ClearTypeHint" Value="Enabled"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RichTextBox">
                         <Border Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="10" Padding="{TemplateBinding Padding}">
-                            <ScrollViewer x:Name="PART_ContentHost"/>
+                                CornerRadius="10" Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True" UseLayoutRounding="True"
+                                RenderOptions.ClearTypeHint="Enabled">
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                          SnapsToDevicePixels="True" UseLayoutRounding="True"/>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
@@ -689,7 +845,7 @@
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="32"/>
             </Grid.RowDefinitions>
-            <Border Grid.Row="0" Background="#1e1e1e" CornerRadius="11,11,0,0"
+            <Border Grid.Row="0" x:Name="AppHeaderBar" Background="#1e1e1e" CornerRadius="11,11,0,0"
                     MouseLeftButtonDown="Header_Drag">
                 <Grid Margin="18,0,12,0">
                     <Grid.ColumnDefinitions>
@@ -698,21 +854,64 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="NetFix" FontFamily="Segoe UI" FontSize="18"
+                        <TextBlock x:Name="AppLogoTitle" Text="NetFix" FontFamily="Segoe UI" FontSize="18"
                                    FontWeight="Bold" Foreground="White"/>
-                        <TextBlock Text="  by rupleide" FontFamily="Segoe UI" FontSize="11"
+                        <TextBlock x:Name="AppAuthorTitle" Text="  by rupleide" FontFamily="Segoe UI" FontSize="11"
                                    Foreground="#888888" VerticalAlignment="Center" Margin="0,0,15,0"/>
                         <Ellipse x:Name="NetDot" Width="8" Height="8" Fill="#888888" VerticalAlignment="Center"/>
                         <TextBlock x:Name="NetLbl" Text="Сеть" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
                                    Foreground="#888888" VerticalAlignment="Center" Margin="5,0,15,0"/>
-                        <Ellipse x:Name="VpnDot" Width="8" Height="8" Fill="#888888" VerticalAlignment="Center"/>
-                        <TextBlock Text="VPN" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
-                                   Foreground="#888888" VerticalAlignment="Center" Margin="5,0,15,0"/>
+                        <StackPanel x:Name="VpnStatusPanel" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,15,0"
+                                    Background="Transparent" Cursor="Help" WindowChrome.IsHitTestVisibleInChrome="True"
+                                    ToolTipService.InitialShowDelay="0"
+                                    ToolTipService.ShowDuration="15000"
+                                    ToolTipService.BetweenShowDelay="0">
+                            <StackPanel.ToolTip>
+                                <ToolTip Background="Transparent"
+                                         BorderThickness="0"
+                                         HasDropShadow="False"
+                                         Placement="Bottom"
+                                         VerticalOffset="4">
+                                    <ToolTip.Style>
+                                        <Style TargetType="ToolTip">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsOpen" Value="True">
+                                                    <Trigger.EnterActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                                 From="0" To="1"
+                                                                                 Duration="0:0:0.1"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </Trigger.EnterActions>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ToolTip.Style>
+                                    <Border Background="#181818"
+                                            BorderBrush="#252525"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            Padding="10,8"
+                                            MaxWidth="340">
+                                        <StackPanel>
+                                            <TextBlock Text="Индикатор VPN" FontFamily="Segoe UI" FontSize="12" FontWeight="Bold" Foreground="#d8b4fe" Margin="0,0,0,5"/>
+                                            <TextBlock Text="В NetFix нет встроенного VPN!&#x0a;&#x0a;Этот индикатор показывает, включён ли сторонний VPN-клиент на вашем компьютере (например Happ, Amnezia, WireGuard, WARP или др.).&#x0a;&#x0a;• Зелёный - на ПК сейчас активен сторонний VPN.&#x0a;• Серый - VPN выключен, работает прямой интернет (используется Zapret)."
+                                                       FontFamily="Segoe UI" FontSize="11.5" Foreground="#aaaaaa" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </Border>
+                                </ToolTip>
+                            </StackPanel.ToolTip>
+                            <Ellipse x:Name="VpnDot" Width="8" Height="8" Fill="#888888" VerticalAlignment="Center"/>
+                            <TextBlock Text="VPN" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
+                                       Foreground="#888888" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                        </StackPanel>
                         <Ellipse x:Name="ZapretDot" Width="8" Height="8" Fill="#888888" VerticalAlignment="Center"/>
-                        <TextBlock Text="Zapret" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
+                        <TextBlock x:Name="ZapretLbl" Text="Zapret" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
                                    Foreground="#888888" VerticalAlignment="Center" Margin="5,0,15,0"/>
                         <Ellipse x:Name="TgWsDot" Width="8" Height="8" Fill="#888888" VerticalAlignment="Center"/>
-                        <TextBlock Text="TgWsProxy" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
+                        <TextBlock x:Name="TgWsLbl" Text="TgWsProxy" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
                                    Foreground="#888888" VerticalAlignment="Center" Margin="5,0,0,0"/>
                     </StackPanel>
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
@@ -767,13 +966,13 @@
                                       IsHitTestVisible="False"/>
                             </Grid>
                         </Button>
-                        <Button Style="{StaticResource FlatBtnCentered}"
+                        <Button x:Name="MinBtn" Style="{StaticResource FlatBtnCentered}"
                                 Width="34" Height="18.62" MinWidth="34" MinHeight="18.62" Padding="0,0,0,1" FontSize="14"
                                 WindowChrome.IsHitTestVisibleInChrome="True"
                                 Click="MinBtn_Click" Margin="4,0,0,0">
                             <TextBlock Text="−" Margin="0,-1,0,0"/>
                         </Button>
-                        <Button Style="{StaticResource CloseBtn}"
+                        <Button x:Name="CloseBtn" Style="{StaticResource CloseBtn}"
                                 Width="34" Height="18.62" Padding="0" Margin="-6,0,0,0"
                                 WindowChrome.IsHitTestVisibleInChrome="True"
                                 Click="CloseBtn_Click">
@@ -790,7 +989,7 @@
                 <Grid x:Name="MainPageContainer" ClipToBounds="True">
                     <ScrollViewer x:Name="MainPage" VerticalScrollBarVisibility="Auto">
                         <Grid>
-                            <Grid IsHitTestVisible="False" ClipToBounds="True" 
+                            <Grid x:Name="AuroraLayer" IsHitTestVisible="False" ClipToBounds="True" 
                                   Panel.ZIndex="-1"
                                   VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
                                   RenderOptions.EdgeMode="Aliased">
@@ -855,25 +1054,26 @@
                                 </Rectangle>
                             </Grid>
                             <StackPanel Margin="32,24,32,24" Panel.ZIndex="1">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,4">
-                            <Path Data="{StaticResource BoltIcon}" 
-                                  Fill="White"
-                                  Width="20" Height="20"
-                                  Stretch="Uniform"
-                                  Margin="0,0,8,0"
-                                  VerticalAlignment="Center"/>
-                            <TextBlock Text="Починить Telegram и Discord"
-                                       FontFamily="Segoe UI" FontSize="22" FontWeight="Bold"
-                                       Foreground="White"
-                                       TextAlignment="Center"
-                                       VerticalAlignment="Center"/>
+                        <StackPanel x:Name="MainTitleBlock" Margin="0,0,0,24">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,4">
+                                <Path Data="{StaticResource BoltIcon}" 
+                                      Fill="White"
+                                      Width="20" Height="20"
+                                      Stretch="Uniform"
+                                      Margin="0,0,8,0"
+                                      VerticalAlignment="Center"/>
+                                <TextBlock Text="Починить Telegram и Discord"
+                                           FontFamily="Segoe UI" FontSize="22" FontWeight="Bold"
+                                           Foreground="White"
+                                           TextAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Text="Одна кнопка - скачает, настроит и запустит всё необходимое."
+                                       FontFamily="Segoe UI" FontSize="13" Foreground="#888888"
+                                       HorizontalAlignment="Center"
+                                       TextAlignment="Center"/>
                         </StackPanel>
-                        <TextBlock Text="Одна кнопка - скачает, настроит и запустит всё необходимое."
-                                   FontFamily="Segoe UI" FontSize="13" Foreground="#888888"
-                                   HorizontalAlignment="Center"
-                                   TextAlignment="Center"
-                                   Margin="0,0,0,24"/>
-                        <Grid Margin="0,0,0,8">
+                        <Grid x:Name="MainCoreBlock" Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="200"/>
@@ -1142,28 +1342,39 @@
                                 </Grid>
                             </StackPanel>
                         </Grid>
-                        <ProgressBar x:Name="SetupProg" Value="0" Maximum="100" Margin="0,16,0,0"/>
-                        <TextBlock x:Name="SetupProgLbl" Text="" FontSize="12"
-                                   Foreground="#888888" Margin="0,5,0,0"/>
-                        <Border Height="1" Background="#333333" Margin="0,24,0,0"/>
-                        <Grid Margin="0,16,0,0">
-                            <TextBlock Text="Лог" FontFamily="Segoe UI" FontSize="13"
-                                       FontWeight="Bold" Foreground="#888888" VerticalAlignment="Center"/>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button Content="Скопировать" Style="{StaticResource FlatBtn}" FontSize="11"
-                                        Height="24" Padding="8,2" Margin="0,0,8,0"
-                                        WindowChrome.IsHitTestVisibleInChrome="True"
-                                        Click="CopyLog_Click"/>
-                                <Button Content="Очистить" Style="{StaticResource FlatBtn}" FontSize="11"
-                                        Height="24" Padding="8,2"
-                                        WindowChrome.IsHitTestVisibleInChrome="True"
-                                        Click="ClearLog_Click"/>
+                        <StackPanel x:Name="MainLogBlock"
+                                    SnapsToDevicePixels="True" UseLayoutRounding="True"
+                                    RenderOptions.ClearTypeHint="Enabled">
+                            <StackPanel x:Name="SetupProgContainer">
+                                <ProgressBar x:Name="SetupProg" Value="0" Maximum="100" Margin="0,16,0,0"/>
+                                <TextBlock x:Name="SetupProgLbl" Text="" FontSize="12"
+                                           Foreground="#888888" Margin="0,5,0,0"/>
+                                <Border Height="1" Background="#333333" Margin="0,24,0,0"/>
                             </StackPanel>
-                        </Grid>
-                        <RichTextBox x:Name="LogBox" Style="{StaticResource LogBox}"
-                                     Height="270" Margin="0,8,0,16">
-                            <FlowDocument PagePadding="0"/>
-                        </RichTextBox>
+                            <Grid x:Name="LogHeaderContainer" Margin="0,16,0,0">
+                                <TextBlock Text="Лог" FontFamily="Segoe UI" FontSize="13"
+                                           FontWeight="Bold" Foreground="#888888" VerticalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Content="Скопировать" Style="{StaticResource FlatBtn}" FontSize="11"
+                                            Height="24" Padding="8,2" Margin="0,0,8,0"
+                                            WindowChrome.IsHitTestVisibleInChrome="True"
+                                            Click="CopyLog_Click"/>
+                                    <Button Content="Очистить" Style="{StaticResource FlatBtn}" FontSize="11"
+                                            Height="24" Padding="8,2"
+                                            WindowChrome.IsHitTestVisibleInChrome="True"
+                                            Click="ClearLog_Click"/>
+                                </StackPanel>
+                            </Grid>
+                            <Grid x:Name="LogBoxWrapper" Height="270" Margin="0,8,0,16">
+                                <Grid.Clip>
+                                    <RectangleGeometry x:Name="LogBoxClipGeom" Rect="0,0,1200,270" RadiusX="10" RadiusY="10"/>
+                                </Grid.Clip>
+                                <RichTextBox x:Name="LogBox" Style="{StaticResource LogBox}"
+                                             Height="270" VerticalAlignment="Top">
+                                    <FlowDocument PagePadding="0"/>
+                                </RichTextBox>
+                            </Grid>
+                        </StackPanel>
                     </StackPanel>
                         </Grid>
                 </ScrollViewer>
@@ -2476,57 +2687,1013 @@
                     </ScrollViewer>
                 </Grid>
                 <Grid x:Name="DiagPage" Visibility="Collapsed">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <Grid Grid.Row="0" Margin="32,20,32,0">
-                        <StackPanel Orientation="Horizontal">
-                            <Button Style="{StaticResource BackBtn}"
+                    
+                    <Grid x:Name="DiagHomeScreen" Visibility="Visible">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0" Margin="32,20,32,0">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Style="{StaticResource BackBtn}"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="BackBtn_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource ArrowLeftIcon}" 
+                                              Stroke="#888888"
+                                              StrokeThickness="2"
+                                              Width="14" Height="14"
+                                              Stretch="Uniform"
+                                              Margin="0,0,6,0"
+                                              VerticalAlignment="Center"/>
+                                        <TextBlock Text="Назад" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <TextBlock Text="Диагностика" FontFamily="Segoe UI" FontSize="18"
+                                           FontWeight="Bold" Foreground="White"
+                                           VerticalAlignment="Center" Margin="16,0,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                        
+                        <Border Grid.Row="1" Height="1" Background="#333333" Margin="32,14,32,0"/>
+
+                        <Grid Grid.Row="2" IsHitTestVisible="False" Panel.ZIndex="-1"
+                              VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                              ClipToBounds="True" RenderOptions.EdgeMode="Aliased">
+                            <Rectangle Opacity="0.5">
+                                <Rectangle.Fill>
+                                    <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                         Center="0.5,1.0" GradientOrigin="0.5,1.0"
+                                                         RadiusX="0.55" RadiusY="0.45">
+                                        <GradientStop Color="#506366f1" Offset="0.000"/>
+                                        <GradientStop Color="#4D6366f1" Offset="0.053"/>
+                                        <GradientStop Color="#476366f1" Offset="0.105"/>
+                                        <GradientStop Color="#416366f1" Offset="0.158"/>
+                                        <GradientStop Color="#3A6366f1" Offset="0.211"/>
+                                        <GradientStop Color="#346366f1" Offset="0.263"/>
+                                        <GradientStop Color="#2D6366f1" Offset="0.316"/>
+                                        <GradientStop Color="#276366f1" Offset="0.368"/>
+                                        <GradientStop Color="#216366f1" Offset="0.421"/>
+                                        <GradientStop Color="#1B6366f1" Offset="0.474"/>
+                                        <GradientStop Color="#166366f1" Offset="0.526"/>
+                                        <GradientStop Color="#116366f1" Offset="0.579"/>
+                                        <GradientStop Color="#0D6366f1" Offset="0.632"/>
+                                        <GradientStop Color="#096366f1" Offset="0.684"/>
+                                        <GradientStop Color="#066366f1" Offset="0.737"/>
+                                        <GradientStop Color="#046366f1" Offset="0.789"/>
+                                        <GradientStop Color="#026366f1" Offset="0.842"/>
+                                        <GradientStop Color="#016366f1" Offset="0.895"/>
+                                        <GradientStop Color="#006366f1" Offset="0.947"/>
+                                        <GradientStop Color="#006366f1" Offset="1.000"/>
+                                    </RadialGradientBrush>
+                                </Rectangle.Fill>
+                            </Rectangle>
+                            <Rectangle Opacity="0.4">
+                                <Rectangle.Fill>
+                                    <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                         Center="0.1,0.1" GradientOrigin="0.1,0.1"
+                                                         RadiusX="0.35" RadiusY="0.30">
+                                        <GradientStop Color="#308B5CF6" Offset="0.000"/>
+                                        <GradientStop Color="#2E8B5CF6" Offset="0.053"/>
+                                        <GradientStop Color="#298B5CF6" Offset="0.105"/>
+                                        <GradientStop Color="#248B5CF6" Offset="0.158"/>
+                                        <GradientStop Color="#1F8B5CF6" Offset="0.211"/>
+                                        <GradientStop Color="#1A8B5CF6" Offset="0.263"/>
+                                        <GradientStop Color="#168B5CF6" Offset="0.316"/>
+                                        <GradientStop Color="#128B5CF6" Offset="0.368"/>
+                                        <GradientStop Color="#0E8B5CF6" Offset="0.421"/>
+                                        <GradientStop Color="#0B8B5CF6" Offset="0.474"/>
+                                        <GradientStop Color="#088B5CF6" Offset="0.526"/>
+                                        <GradientStop Color="#068B5CF6" Offset="0.579"/>
+                                        <GradientStop Color="#048B5CF6" Offset="0.632"/>
+                                        <GradientStop Color="#038B5CF6" Offset="0.684"/>
+                                        <GradientStop Color="#028B5CF6" Offset="0.737"/>
+                                        <GradientStop Color="#018B5CF6" Offset="0.789"/>
+                                        <GradientStop Color="#018B5CF6" Offset="0.842"/>
+                                        <GradientStop Color="#008B5CF6" Offset="0.895"/>
+                                        <GradientStop Color="#008B5CF6" Offset="0.947"/>
+                                        <GradientStop Color="#008B5CF6" Offset="1.000"/>
+                                    </RadialGradientBrush>
+                                </Rectangle.Fill>
+                            </Rectangle>
+                            <Rectangle Opacity="0.3">
+                                <Rectangle.Fill>
+                                    <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                         Center="0.9,0.8" GradientOrigin="0.9,0.8"
+                                                         RadiusX="0.30" RadiusY="0.25">
+                                        <GradientStop Color="#284F46E5" Offset="0.000"/>
+                                        <GradientStop Color="#264F46E5" Offset="0.053"/>
+                                        <GradientStop Color="#234F46E5" Offset="0.105"/>
+                                        <GradientStop Color="#1F4F46E5" Offset="0.158"/>
+                                        <GradientStop Color="#1C4F46E5" Offset="0.211"/>
+                                        <GradientStop Color="#184F46E5" Offset="0.263"/>
+                                        <GradientStop Color="#154F46E5" Offset="0.316"/>
+                                        <GradientStop Color="#124F46E5" Offset="0.368"/>
+                                        <GradientStop Color="#0F4F46E5" Offset="0.421"/>
+                                        <GradientStop Color="#0C4F46E5" Offset="0.474"/>
+                                        <GradientStop Color="#094F46E5" Offset="0.526"/>
+                                        <GradientStop Color="#074F46E5" Offset="0.579"/>
+                                        <GradientStop Color="#054F46E5" Offset="0.632"/>
+                                        <GradientStop Color="#044F46E5" Offset="0.684"/>
+                                        <GradientStop Color="#034F46E5" Offset="0.737"/>
+                                        <GradientStop Color="#024F46E5" Offset="0.789"/>
+                                        <GradientStop Color="#014F46E5" Offset="0.842"/>
+                                        <GradientStop Color="#014F46E5" Offset="0.895"/>
+                                        <GradientStop Color="#004F46E5" Offset="0.947"/>
+                                        <GradientStop Color="#004F46E5" Offset="1.000"/>
+                                    </RadialGradientBrush>
+                                </Rectangle.Fill>
+                            </Rectangle>
+                            <Rectangle IsHitTestVisible="False" Opacity="0.04"
+                                       RenderOptions.BitmapScalingMode="NearestNeighbor">
+                                <Rectangle.Fill>
+                                    <ImageBrush ImageSource="Assets/noise.png"
+                                                TileMode="Tile" ViewportUnits="Absolute"
+                                                Viewport="0,0,512,512" Stretch="None"/>
+                                </Rectangle.Fill>
+                            </Rectangle>
+                        </Grid>
+
+                        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="32,20,32,20">
+                            <StackPanel MaxWidth="840" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="ВЫБЕРИТЕ РЕЖИМ ДИАГНОСТИКИ" 
+                                           FontFamily="Segoe UI" FontSize="20" 
+                                           FontWeight="Bold" Foreground="White" 
+                                           TextAlignment="Center"
+                                           Margin="0,0,0,8"/>
+                                <TextBlock Text="Глубокая проверка сетевых цепочек или доступности сервисов" 
+                                           FontFamily="Segoe UI" FontSize="12.5" 
+                                           Foreground="#888890" 
+                                           TextAlignment="Center"
+                                           Margin="0,0,0,26"/>
+
+                                <Grid Height="250">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Button Grid.Column="0" Style="{StaticResource FlatBtn}" Padding="0"
+                                            Click="DiagCardTestConnection_Click" Margin="0,0,10,0"
+                                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                        <Grid>
+                                            <Border x:Name="DiagConnCard" Background="{StaticResource CardBgBrush}" CornerRadius="16"
+                                                    BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1">
+                                                <Grid>
+                                                    <Rectangle x:Name="DiagConnBottomGlow" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                                               Width="140" Height="100" Opacity="0.25"
+                                                               RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
+                                                        <Rectangle.Fill>
+                                                            <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                                                 Center="0.0,1.0" GradientOrigin="0.0,1.0"
+                                                                                 RadiusX="0.6" RadiusY="0.5">
+                                                                <GradientStop Color="#3b82f6" Offset="0.0"/>
+                                                                <GradientStop Color="#00000000" Offset="1.0"/>
+                                                            </RadialGradientBrush>
+                                                        </Rectangle.Fill>
+                                                    </Rectangle>
+                                                    <Rectangle x:Name="DiagConnTopGlow" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                               Width="140" Height="100" Opacity="0.15"
+                                                               RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
+                                                        <Rectangle.Fill>
+                                                            <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                                                 Center="1.0,0.0" GradientOrigin="1.0,0.0"
+                                                                                 RadiusX="0.6" RadiusY="0.5">
+                                                                <GradientStop Color="#3b82f6" Offset="0.0"/>
+                                                                <GradientStop Color="#00000000" Offset="1.0"/>
+                                                            </RadialGradientBrush>
+                                                        </Rectangle.Fill>
+                                                    </Rectangle>
+                                                    <Rectangle IsHitTestVisible="False" Opacity="0.04"
+                                                               RenderOptions.BitmapScalingMode="NearestNeighbor">
+                                                        <Rectangle.Fill>
+                                                            <ImageBrush ImageSource="Assets/noise.png"
+                                                                        TileMode="Tile" ViewportUnits="Absolute"
+                                                                        Viewport="0,0,512,512" Stretch="None"/>
+                                                        </Rectangle.Fill>
+                                                    </Rectangle>
+                                                    <Grid Margin="20,16,20,16" VerticalAlignment="Center">
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        <Border Grid.Row="0" Width="72" Height="72" CornerRadius="18"
+                                                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                            <Border.Background>
+                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                                    <GradientStop Color="#3b82f6" Offset="0"/>
+                                                                    <GradientStop Color="#2563eb" Offset="1"/>
+                                                                </LinearGradientBrush>
+                                                            </Border.Background>
+                                                            <Path Data="{StaticResource BoltIcon}"
+                                                                  Fill="White"
+                                                                  Width="30" Height="30" Stretch="Uniform"
+                                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        <StackPanel Grid.Row="1" Margin="0,12,0,0">
+                                                            <TextBlock Text="Анализ соединений" FontSize="16"
+                                                                       FontWeight="SemiBold" Foreground="White"
+                                                                       HorizontalAlignment="Center"/>
+                                                            <TextBlock Text="Сквозная цепочка слоёв" FontSize="11.5"
+                                                                       Foreground="#77777a" HorizontalAlignment="Center"
+                                                                       Margin="0,3,0,0"/>
+                                                        </StackPanel>
+                                                        <TextBlock Grid.Row="2" 
+                                                                   Text="Послойная диагностика сетевых пакетов для приложений и всей системы в реальном времени" 
+                                                                   FontFamily="Segoe UI" FontSize="11" Foreground="#66666e" 
+                                                                   TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,0" LineHeight="15"/>
+                                                    </Grid>
+                                                </Grid>
+                                                <Border.Triggers>
+                                                    <EventTrigger RoutedEvent="Mouse.MouseEnter">
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetName="DiagConnBottomGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.2" To="0.45">
+                                                                    <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                                </DoubleAnimation>
+                                                                <DoubleAnimation Storyboard.TargetName="DiagConnTopGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.2" To="0.30">
+                                                                    <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                                </DoubleAnimation>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </EventTrigger>
+                                                    <EventTrigger RoutedEvent="Mouse.MouseLeave">
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetName="DiagConnBottomGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.15" To="0.25">
+                                                                    <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                                </DoubleAnimation>
+                                                                <DoubleAnimation Storyboard.TargetName="DiagConnTopGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.15" To="0.15">
+                                                                    <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                                </DoubleAnimation>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </EventTrigger>
+                                                </Border.Triggers>
+                                            </Border>
+                                            <Border CornerRadius="16" BorderBrush="#3b82f6" BorderThickness="0,3,0,0"
+                                                    Background="Transparent" IsHitTestVisible="False"/>
+                                        </Grid>
+                                    </Button>
+
+                                    <Button Grid.Column="1" Style="{StaticResource FlatBtn}" Padding="0"
+                                            Click="DiagCardAvailability_Click" Margin="10,0,0,0"
+                                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                        <Grid>
+                                            <Border x:Name="DiagAvailCard" Background="{StaticResource CardBgBrush}" CornerRadius="16"
+                                                    BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1">
+                                                <Grid>
+                                                    <Rectangle x:Name="DiagAvailBottomGlow" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                                               Width="140" Height="100" Opacity="0.25"
+                                                               RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
+                                                        <Rectangle.Fill>
+                                                            <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                                                 Center="0.0,1.0" GradientOrigin="0.0,1.0"
+                                                                                 RadiusX="0.6" RadiusY="0.5">
+                                                                <GradientStop Color="#22c55e" Offset="0.0"/>
+                                                                <GradientStop Color="#00000000" Offset="1.0"/>
+                                                            </RadialGradientBrush>
+                                                        </Rectangle.Fill>
+                                                    </Rectangle>
+                                                    <Rectangle x:Name="DiagAvailTopGlow" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                               Width="140" Height="100" Opacity="0.15"
+                                                               RenderOptions.EdgeMode="Aliased" RadiusX="16" RadiusY="16">
+                                                        <Rectangle.Fill>
+                                                            <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                                                 Center="1.0,0.0" GradientOrigin="1.0,0.0"
+                                                                                 RadiusX="0.6" RadiusY="0.5">
+                                                                <GradientStop Color="#22c55e" Offset="0.0"/>
+                                                                <GradientStop Color="#00000000" Offset="1.0"/>
+                                                            </RadialGradientBrush>
+                                                        </Rectangle.Fill>
+                                                    </Rectangle>
+                                                    <Rectangle IsHitTestVisible="False" Opacity="0.04"
+                                                               RenderOptions.BitmapScalingMode="NearestNeighbor">
+                                                        <Rectangle.Fill>
+                                                            <ImageBrush ImageSource="Assets/noise.png"
+                                                                        TileMode="Tile" ViewportUnits="Absolute"
+                                                                        Viewport="0,0,512,512" Stretch="None"/>
+                                                        </Rectangle.Fill>
+                                                    </Rectangle>
+                                                    <Grid Margin="20,16,20,16" VerticalAlignment="Center">
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        <Border Grid.Row="0" Width="72" Height="72" CornerRadius="18"
+                                                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                            <Border.Background>
+                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                                    <GradientStop Color="#22c55e" Offset="0"/>
+                                                                    <GradientStop Color="#16a34a" Offset="1"/>
+                                                                </LinearGradientBrush>
+                                                            </Border.Background>
+                                                            <Path Data="{StaticResource SearchIcon}"
+                                                                  Stroke="White" StrokeThickness="2.2"
+                                                                  Width="30" Height="30" Stretch="Uniform"
+                                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        <StackPanel Grid.Row="1" Margin="0,12,0,0">
+                                                            <TextBlock Text="Диагностика доступности" FontSize="16"
+                                                                       FontWeight="SemiBold" Foreground="White"
+                                                                       HorizontalAlignment="Center"/>
+                                                            <TextBlock Text="DPI, Telegram DC и DNS" FontSize="11.5"
+                                                                       Foreground="#77777a" HorizontalAlignment="Center"
+                                                                       Margin="0,3,0,0"/>
+                                                        </StackPanel>
+                                                        <TextBlock Grid.Row="2" 
+                                                                   Text="Глубокий анализ блокировок ТСПУ, доступности дата-центров Telegram и спуфинга DNS" 
+                                                                   FontFamily="Segoe UI" FontSize="11" Foreground="#66666e" 
+                                                                   TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,0" LineHeight="15"/>
+                                                    </Grid>
+                                                </Grid>
+                                                <Border.Triggers>
+                                                    <EventTrigger RoutedEvent="Mouse.MouseEnter">
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetName="DiagAvailBottomGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.2" To="0.45">
+                                                                    <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                                </DoubleAnimation>
+                                                                <DoubleAnimation Storyboard.TargetName="DiagAvailTopGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.30" To="0.30">
+                                                                    <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                                </DoubleAnimation>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </EventTrigger>
+                                                    <EventTrigger RoutedEvent="Mouse.MouseLeave">
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetName="DiagAvailBottomGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.15" To="0.25">
+                                                                    <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                                </DoubleAnimation>
+                                                                <DoubleAnimation Storyboard.TargetName="DiagAvailTopGlow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.15" To="0.15">
+                                                                    <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                                </DoubleAnimation>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </EventTrigger>
+                                                </Border.Triggers>
+                                            </Border>
+                                            <Border CornerRadius="16" BorderBrush="#22c55e" BorderThickness="0,3,0,0"
+                                                    Background="Transparent" IsHitTestVisible="False"/>
+                                        </Grid>
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <Grid x:Name="DiagConnectionScreen" Visibility="Collapsed"
+                          UseLayoutRounding="True" RenderOptions.EdgeMode="Unspecified"
+                          TextOptions.TextRenderingMode="Grayscale" TextOptions.TextFormattingMode="Ideal">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <Grid Grid.Row="0" Margin="32,18,32,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Style="{StaticResource BackBtn}"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="DiagSubScreenBack_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource ArrowLeftIcon}" 
+                                              Stroke="#888888"
+                                              StrokeThickness="2"
+                                              Width="14" Height="14"
+                                              Stretch="Uniform"
+                                              Margin="0,0,6,0"
+                                              VerticalAlignment="Center"/>
+                                        <TextBlock Text="К выбору" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <TextBlock Text="Анализ соединений" FontFamily="Segoe UI" FontSize="18"
+                                           FontWeight="Bold" Foreground="White"
+                                           VerticalAlignment="Center" Margin="16,0,0,0"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Grid Height="34" Margin="0" VerticalAlignment="Center">
+                                    
+                                    <Rectangle RadiusX="8" RadiusY="8" Fill="#1a1a1e" Stroke="#2a2a30" StrokeThickness="1"/>
+
+                                    <Grid Margin="3">
+                                        
+                                        <Border x:Name="ConnModeIndicator" Width="100" Height="26"
+                                                HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                CornerRadius="6"
+                                                Background="#3b82f6"
+                                                SnapsToDevicePixels="True" UseLayoutRounding="True">
+                                            <Border.RenderTransform>
+                                                <TranslateTransform x:Name="ConnModeIndicatorTrans" X="0"/>
+                                            </Border.RenderTransform>
+                                        </Border>
+
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            
+                                            <Border x:Name="ConnModeAppBtn" Width="100" Height="26"
+                                                    Background="Transparent" Cursor="Hand"
+                                                    CornerRadius="6"
+                                                    MouseLeftButtonUp="ConnModeAppBtn_Click"
+                                                    MouseEnter="ConnModeTab_MouseEnter"
+                                                    MouseLeave="ConnModeTab_MouseLeave"
+                                                    WindowChrome.IsHitTestVisibleInChrome="True">
+                                                <TextBlock x:Name="ConnModeAppText" Text="Приложение"
+                                                           FontFamily="Segoe UI" FontSize="12" FontWeight="SemiBold"
+                                                           Foreground="#ffffff"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+
+                                            <Border x:Name="ConnModeSystemBtn" Width="100" Height="26"
+                                                    Background="Transparent" Cursor="Hand"
+                                                    CornerRadius="6"
+                                                    MouseLeftButtonUp="ConnModeSystemBtn_Click"
+                                                    MouseEnter="ConnModeTab_MouseEnter"
+                                                    MouseLeave="ConnModeTab_MouseLeave"
+                                                    WindowChrome.IsHitTestVisibleInChrome="True">
+                                                <TextBlock x:Name="ConnModeSystemText" Text="Система"
+                                                           FontFamily="Segoe UI" FontSize="12" FontWeight="SemiBold"
+                                                           Foreground="#888890"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+                                </Grid>
+
+                                <Button x:Name="ConnRefreshBtn"
+                                        Style="{StaticResource BackBtn}"
+                                        Margin="10,0,0,0" Padding="10,6"
+                                        ToolTipService.InitialShowDelay="0"
+                                        ToolTipService.ShowDuration="10000"
+                                        ToolTipService.BetweenShowDelay="0"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="ConnRefreshBtn_Click">
+                                    <Button.ToolTip>
+                                        <ToolTip Background="Transparent" BorderThickness="0" HasDropShadow="False" Placement="Bottom" VerticalOffset="4">
+                                            <ToolTip.Style>
+                                                <Style TargetType="ToolTip">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsOpen" Value="True">
+                                                            <Trigger.EnterActions>
+                                                                <BeginStoryboard>
+                                                                    <Storyboard>
+                                                                        <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.1"/>
+                                                                    </Storyboard>
+                                                                </BeginStoryboard>
+                                                            </Trigger.EnterActions>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ToolTip.Style>
+                                            <Border Background="#181818" BorderBrush="#252525" BorderThickness="1" CornerRadius="6" Padding="8,5">
+                                                <TextBlock Text="Обновить данные сейчас" FontFamily="Segoe UI" FontSize="11.5" Foreground="#aaaaaa"/>
+                                            </Border>
+                                        </ToolTip>
+                                    </Button.ToolTip>
+                                    <Path x:Name="ConnRefreshIcon" Data="{StaticResource RefreshIcon}" Fill="#888888" Width="13" Height="13" Stretch="Uniform" RenderTransformOrigin="0.5,0.5">
+                                        <Path.RenderTransform>
+                                            <RotateTransform x:Name="ConnRefreshRotate" Angle="0"/>
+                                        </Path.RenderTransform>
+                                    </Path>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                        
+                        <Border Grid.Row="1" Height="1" Background="#2a2a30" Margin="32,14,32,0"
+                                SnapsToDevicePixels="True" UseLayoutRounding="True"/>
+                        
+                        <Grid Grid.Row="2" IsHitTestVisible="False" Panel.ZIndex="-1"
+                              VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                              ClipToBounds="True" RenderOptions.EdgeMode="Aliased">
+                            <Rectangle Opacity="0.5">
+                                <Rectangle.Fill>
+                                    <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                         Center="0.5,1.0" GradientOrigin="0.5,1.0"
+                                                         RadiusX="0.55" RadiusY="0.45">
+                                        <GradientStop Color="#506366f1" Offset="0.000"/>
+                                        <GradientStop Color="#4D6366f1" Offset="0.053"/>
+                                        <GradientStop Color="#476366f1" Offset="0.105"/>
+                                        <GradientStop Color="#416366f1" Offset="0.158"/>
+                                        <GradientStop Color="#3A6366f1" Offset="0.211"/>
+                                        <GradientStop Color="#346366f1" Offset="0.263"/>
+                                        <GradientStop Color="#2D6366f1" Offset="0.316"/>
+                                        <GradientStop Color="#276366f1" Offset="0.368"/>
+                                        <GradientStop Color="#216366f1" Offset="0.421"/>
+                                        <GradientStop Color="#1B6366f1" Offset="0.474"/>
+                                        <GradientStop Color="#166366f1" Offset="0.526"/>
+                                        <GradientStop Color="#116366f1" Offset="0.579"/>
+                                        <GradientStop Color="#0D6366f1" Offset="0.632"/>
+                                        <GradientStop Color="#096366f1" Offset="0.684"/>
+                                        <GradientStop Color="#066366f1" Offset="0.737"/>
+                                        <GradientStop Color="#046366f1" Offset="0.789"/>
+                                        <GradientStop Color="#026366f1" Offset="0.842"/>
+                                        <GradientStop Color="#016366f1" Offset="0.895"/>
+                                        <GradientStop Color="#006366f1" Offset="0.947"/>
+                                        <GradientStop Color="#006366f1" Offset="1.000"/>
+                                    </RadialGradientBrush>
+                                </Rectangle.Fill>
+                            </Rectangle>
+                            <Rectangle Opacity="0.4">
+                                <Rectangle.Fill>
+                                    <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                         Center="0.1,0.1" GradientOrigin="0.1,0.1"
+                                                         RadiusX="0.35" RadiusY="0.30">
+                                        <GradientStop Color="#308B5CF6" Offset="0.000"/>
+                                        <GradientStop Color="#2E8B5CF6" Offset="0.053"/>
+                                        <GradientStop Color="#298B5CF6" Offset="0.105"/>
+                                        <GradientStop Color="#248B5CF6" Offset="0.158"/>
+                                        <GradientStop Color="#1F8B5CF6" Offset="0.211"/>
+                                        <GradientStop Color="#1A8B5CF6" Offset="0.263"/>
+                                        <GradientStop Color="#168B5CF6" Offset="0.316"/>
+                                        <GradientStop Color="#128B5CF6" Offset="0.368"/>
+                                        <GradientStop Color="#0E8B5CF6" Offset="0.421"/>
+                                        <GradientStop Color="#0B8B5CF6" Offset="0.474"/>
+                                        <GradientStop Color="#088B5CF6" Offset="0.526"/>
+                                        <GradientStop Color="#068B5CF6" Offset="0.579"/>
+                                        <GradientStop Color="#048B5CF6" Offset="0.632"/>
+                                        <GradientStop Color="#038B5CF6" Offset="0.684"/>
+                                        <GradientStop Color="#028B5CF6" Offset="0.737"/>
+                                        <GradientStop Color="#018B5CF6" Offset="0.789"/>
+                                        <GradientStop Color="#018B5CF6" Offset="0.842"/>
+                                        <GradientStop Color="#008B5CF6" Offset="0.895"/>
+                                        <GradientStop Color="#008B5CF6" Offset="0.947"/>
+                                        <GradientStop Color="#008B5CF6" Offset="1.000"/>
+                                    </RadialGradientBrush>
+                                </Rectangle.Fill>
+                            </Rectangle>
+                            <Rectangle Opacity="0.3">
+                                <Rectangle.Fill>
+                                    <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                         Center="0.9,0.8" GradientOrigin="0.9,0.8"
+                                                         RadiusX="0.30" RadiusY="0.25">
+                                        <GradientStop Color="#284F46E5" Offset="0.000"/>
+                                        <GradientStop Color="#264F46E5" Offset="0.053"/>
+                                        <GradientStop Color="#234F46E5" Offset="0.105"/>
+                                        <GradientStop Color="#1F4F46E5" Offset="0.158"/>
+                                        <GradientStop Color="#1C4F46E5" Offset="0.211"/>
+                                        <GradientStop Color="#184F46E5" Offset="0.263"/>
+                                        <GradientStop Color="#154F46E5" Offset="0.316"/>
+                                        <GradientStop Color="#124F46E5" Offset="0.368"/>
+                                        <GradientStop Color="#0F4F46E5" Offset="0.421"/>
+                                        <GradientStop Color="#0C4F46E5" Offset="0.474"/>
+                                        <GradientStop Color="#094F46E5" Offset="0.526"/>
+                                        <GradientStop Color="#074F46E5" Offset="0.579"/>
+                                        <GradientStop Color="#054F46E5" Offset="0.632"/>
+                                        <GradientStop Color="#044F46E5" Offset="0.684"/>
+                                        <GradientStop Color="#034F46E5" Offset="0.737"/>
+                                        <GradientStop Color="#024F46E5" Offset="0.789"/>
+                                        <GradientStop Color="#014F46E5" Offset="0.842"/>
+                                        <GradientStop Color="#014F46E5" Offset="0.895"/>
+                                        <GradientStop Color="#004F46E5" Offset="0.947"/>
+                                        <GradientStop Color="#004F46E5" Offset="1.000"/>
+                                    </RadialGradientBrush>
+                                </Rectangle.Fill>
+                            </Rectangle>
+                            <Rectangle IsHitTestVisible="False" Opacity="0.04"
+                                       RenderOptions.BitmapScalingMode="NearestNeighbor">
+                                <Rectangle.Fill>
+                                    <ImageBrush ImageSource="Assets/noise.png"
+                                                TileMode="Tile" ViewportUnits="Absolute"
+                                                Viewport="0,0,512,512" Stretch="None"/>
+                                </Rectangle.Fill>
+                            </Rectangle>
+                        </Grid>
+
+                        <Grid Grid.Row="2" Margin="32,16,32,16">
+                            
+                            <Grid x:Name="ConnAppView" Visibility="Visible" ClipToBounds="False">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <Grid Grid.Row="0" Margin="0,0,0,12" Panel.ZIndex="1000" ClipToBounds="False">
+                                    <Rectangle RadiusX="10" RadiusY="10" Fill="#16161a" Stroke="#2a2a30" StrokeThickness="1"/>
+                                    <Grid Margin="14,12" Panel.ZIndex="1000" ClipToBounds="False">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0" Text="Приложение:" FontFamily="Segoe UI" FontSize="13.5" 
+                                                   FontWeight="Bold" Foreground="White" VerticalAlignment="Center" Margin="0,0,14,0"/>
+
+                                        <Grid Grid.Column="1" Panel.ZIndex="1000" ClipToBounds="False" Height="44">
+                                            
+                                            <Border x:Name="ConnAppSelectorBorder" 
+                                                    Background="#19191e" BorderBrush="#2a2a30" BorderThickness="1" 
+                                                    CornerRadius="8" Height="44"
+                                                    UseLayoutRounding="True"/>
+
+                                            <Grid Height="44" Margin="12,0" Cursor="Hand" 
+                                                  MouseLeftButtonUp="ConnAppSelectorBtn_Click"
+                                                  Background="Transparent">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="28"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="92"/>
+                                                    <ColumnDefinition Width="92"/>
+                                                    <ColumnDefinition Width="18"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <Image x:Name="ConnSelectedAppIcon" Grid.Column="0" Width="20" Height="20" Margin="0,0,8,0" 
+                                                       VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                                <TextBlock x:Name="ConnSelectedAppName" Grid.Column="1" Text="Выберите приложение" 
+                                                           FontFamily="Segoe UI" FontWeight="Bold" FontSize="13.5" Foreground="White" 
+                                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,10,0"/>
+
+                                                <Grid Grid.Column="2" x:Name="ConnSelectedAppSocketsBadge" 
+                                                      Width="88" Height="25" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                    <Rectangle RadiusX="6" RadiusY="6" Fill="#1b1b22" Stroke="#2c2c36" StrokeThickness="1"/>
+                                                    <TextBlock x:Name="ConnSelectedAppSocketsText" Text="0 сокетов" 
+                                                               FontSize="11" Foreground="#4ade80" FontWeight="SemiBold" 
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Grid>
+
+                                                <Grid Grid.Column="3" x:Name="ConnSelectedAppPidBadge" 
+                                                      Width="88" Height="25" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                    <Rectangle RadiusX="6" RadiusY="6" Fill="#1b1b22" Stroke="#2c2c36" StrokeThickness="1"/>
+                                                    <TextBlock x:Name="ConnSelectedAppPidText" Text="PID: 0" FontSize="10.5" Foreground="#94a3b8" FontWeight="SemiBold"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Grid>
+
+                                                <Path x:Name="ConnAppDropdownArrow" Grid.Column="4" Data="M0,0 L4,4 L8,0" Stroke="#888888" StrokeThickness="1.5" Fill="Transparent" 
+                                                      VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,2,0"/>
+                                            </Grid>
+
+                                            <Canvas VerticalAlignment="Bottom" Height="0" Panel.ZIndex="9999" ClipToBounds="False">
+                                                <Grid x:Name="ConnAppDropdownBorder" 
+                                                      Visibility="Collapsed"
+                                                      Canvas.Top="-2"
+                                                      Panel.ZIndex="9999"
+                                                      Width="{Binding ElementName=ConnAppSelectorBorder, Path=ActualWidth}">
+                                                    <Border x:Name="ConnAppDropdownBg"
+                                                            Background="#19191e" BorderBrush="#2a2a30" BorderThickness="1,0,1,1" CornerRadius="0,0,8,8">
+                                                        <Border.Effect>
+                                                            <DropShadowEffect Color="#000000" BlurRadius="14" Direction="270" ShadowDepth="5" Opacity="0.7"/>
+                                                        </Border.Effect>
+                                                    </Border>
+                                                    
+                                                    <Border Height="4" VerticalAlignment="Top" Background="#19191e" Margin="1,0,1,0" SnapsToDevicePixels="True"/>
+                                                    <Grid Margin="8,6,8,6">
+                                                        <Grid.RenderTransform>
+                                                            <TranslateTransform x:Name="ConnAppDropdownTrans" Y="0"/>
+                                                        </Grid.RenderTransform>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="*"/>
+                                                        </Grid.RowDefinitions>
+
+                                                        <Grid Grid.Row="0" Height="38" Margin="4,2,4,8">
+                                                            <Rectangle RadiusX="6" RadiusY="6" Fill="#141417" Stroke="#2a2a30" StrokeThickness="1"/>
+                                                            <Grid Margin="10,0">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                </Grid.ColumnDefinitions>
+
+                                                                <Path Grid.Column="0" Data="{StaticResource SearchIcon}"
+                                                                      Stroke="#777780" StrokeThickness="2" Width="13" Height="13"
+                                                                      Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+                                                                <Border Grid.Column="1" Width="1" Height="16" Background="#2e2e36" 
+                                                                        Margin="8,0,8,0" VerticalAlignment="Center"
+                                                                        SnapsToDevicePixels="True" UseLayoutRounding="True"/>
+
+                                                                <Grid Grid.Column="2">
+                                                                    <TextBox x:Name="ConnProcessSearchBox"
+                                                                             Background="Transparent" Foreground="#ddd" FontFamily="Segoe UI" FontSize="12.5"
+                                                                             BorderThickness="0" Padding="0,4,8,4" VerticalContentAlignment="Center"
+                                                                             TextChanged="ConnProcessSearchBox_TextChanged"
+                                                                             GotFocus="TrackSearchBox_GotFocus" LostFocus="TrackSearchBox_LostFocus"
+                                                                             CaretBrush="#3b82f6"/>
+                                                                    <TextBlock x:Name="ConnSearchPlaceholder" Text="Поиск приложений..." IsHitTestVisible="False"
+                                                                               Foreground="#666" FontSize="12.5" Margin="2,0,0,0" VerticalAlignment="Center"/>
+                                                                </Grid>
+                                                            </Grid>
+                                                        </Grid>
+
+                                                        <Border Grid.Row="1" Height="1" Background="#24242c" Margin="4,0,4,6"
+                                                                SnapsToDevicePixels="True" UseLayoutRounding="True"/>
+
+                                                        <ScrollViewer Grid.Row="2" x:Name="ConnAppListScrollViewer" 
+                                                                      MaxHeight="260" VerticalScrollBarVisibility="Auto" 
+                                                                      UseLayoutRounding="True"
+                                                                      PreviewMouseWheel="ConnAppList_PreviewMouseWheel">
+                                                            <StackPanel x:Name="ConnAppItemsContainer"/>
+                                                        </ScrollViewer>
+                                                    </Grid>
+                                                </Grid>
+                                            </Canvas>
+                                        </Grid>
+                                    </Grid>
+                                </Grid>
+
+                                <Grid Grid.Row="1" x:Name="ConnSummaryCard" Margin="0,0,0,12">
+                                    <Rectangle RadiusX="10" RadiusY="10" Fill="#16161a" Stroke="#2a2a30" StrokeThickness="1"/>
+                                    <Grid Margin="14,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock x:Name="ConnSummaryText" Grid.Column="0" 
+                                                   Text="Выберите приложение для детального анализа сетевой цепочки" 
+                                                   FontFamily="Segoe UI" FontSize="13" FontWeight="SemiBold" 
+                                                   Foreground="#cccccc" VerticalAlignment="Center"/>
+
+                                        <WrapPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <Border x:Name="FilterChipAll" Margin="4,0,0,0" CornerRadius="6" Cursor="Hand"
+                                                    Background="#222228" BorderBrush="#eeeeee" BorderThickness="1"
+                                                    MouseLeftButtonUp="FilterChip_Click" Tag="All">
+                                                <TextBlock x:Name="BadgeAllText" Text="Все: 0" FontSize="11" Foreground="#eeeeee" FontWeight="SemiBold" Margin="8,3"/>
+                                            </Border>
+                                            <Border x:Name="FilterChipVpn" Margin="4,0,0,0" CornerRadius="6" Cursor="Hand" Opacity="0.55"
+                                                    Background="#221638" BorderBrush="#33333d" BorderThickness="1"
+                                                    ToolTipService.InitialShowDelay="50"
+                                                    ToolTipService.BetweenShowDelay="0"
+                                                    ToolTipService.ShowDuration="30000"
+                                                    MouseLeftButtonUp="FilterChip_Click" Tag="VPN">
+                                                <Border.ToolTip>
+                                                    <ToolTip Background="#18181b" Foreground="#f4f4f5" BorderBrush="#27272a" BorderThickness="1" Padding="10,8" MaxWidth="340">
+                                                        <StackPanel>
+                                                            <TextBlock Text="Фильтр: VPN-соединения" FontWeight="Bold" FontSize="12" Foreground="#d8b4fe" Margin="0,0,0,4"/>
+                                                            <TextBlock Text="В NetFix нет встроенного VPN. Эта метка лишь показывает соединения, идущие через сторонний VPN-клиент на вашем ПК (например Happ, Amnezia, WireGuard или др.)."
+                                                                       TextWrapping="Wrap" FontSize="11.5" Foreground="#d4d4d8"/>
+                                                        </StackPanel>
+                                                    </ToolTip>
+                                                </Border.ToolTip>
+                                                <TextBlock x:Name="BadgeVpnText" Text="VPN: 0" FontSize="11" Foreground="#d8b4fe" FontWeight="SemiBold" Margin="8,3"/>
+                                            </Border>
+                                            <Border x:Name="FilterChipDirect" Margin="4,0,0,0" CornerRadius="6" Cursor="Hand" Opacity="0.55"
+                                                    Background="#11281c" BorderBrush="#33333d" BorderThickness="1"
+                                                    MouseLeftButtonUp="FilterChip_Click" Tag="Direct">
+                                                <TextBlock x:Name="BadgeDirectText" Text="Прямой: 0" FontSize="11" Foreground="#86efac" FontWeight="SemiBold" Margin="8,3"/>
+                                            </Border>
+                                            <Border x:Name="FilterChipHosts" Margin="4,0,0,0" CornerRadius="6" Cursor="Hand" Opacity="0.55"
+                                                    Background="#2b200c" BorderBrush="#33333d" BorderThickness="1"
+                                                    MouseLeftButtonUp="FilterChip_Click" Tag="Hosts">
+                                                <TextBlock x:Name="BadgeHostsText" Text="Hosts: 0" FontSize="11" Foreground="#fde047" FontWeight="SemiBold" Margin="8,3"/>
+                                            </Border>
+                                            <Border x:Name="FilterChipProxy" Margin="4,0,0,0" CornerRadius="6" Cursor="Hand" Opacity="0.55"
+                                                    Background="#0b242e" BorderBrush="#33333d" BorderThickness="1"
+                                                    MouseLeftButtonUp="FilterChip_Click" Tag="Proxy">
+                                                <TextBlock x:Name="BadgeProxyText" Text="TgWsProxy: 0" FontSize="11" Foreground="#67e8f9" FontWeight="SemiBold" Margin="8,3"/>
+                                            </Border>
+                                            <Border x:Name="FilterChipZapret" Margin="4,0,0,0" CornerRadius="6" Cursor="Hand" Opacity="0.55"
+                                                    Background="#2e1a0c" BorderBrush="#33333d" BorderThickness="1"
+                                                    MouseLeftButtonUp="FilterChip_Click" Tag="Zapret">
+                                                <TextBlock x:Name="BadgeZapretText" Text="Zapret: 0" FontSize="11" Foreground="#fdba74" FontWeight="SemiBold" Margin="8,3"/>
+                                            </Border>
+                                        </WrapPanel>
+                                    </Grid>
+                                </Grid>
+
+                                <ScrollViewer Grid.Row="2" Style="{StaticResource OverlayScrollViewer}" VerticalScrollBarVisibility="Auto">
+                                    <StackPanel x:Name="ConnListContainer">
+                                        <TextBlock Text="Загрузка списка приложений..." 
+                                                   FontFamily="Segoe UI" FontSize="13" Foreground="#888888" Margin="0,10,0,0"/>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Grid>
+
+                            <ScrollViewer x:Name="ConnSystemView" Visibility="Collapsed" Style="{StaticResource OverlayScrollViewer}" VerticalScrollBarVisibility="Auto">
+                                <StackPanel>
+                                    
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <Grid Grid.Column="0" Margin="0,0,8,0">
+                                            <Rectangle RadiusX="10" RadiusY="10" Fill="#16161a" Stroke="#2a2a30" StrokeThickness="1"/>
+                                            <StackPanel Margin="14,12">
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                    <Ellipse x:Name="SysZapretDot" Width="8" Height="8" Fill="#22c55e" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="Zapret / WinDivert" FontFamily="Segoe UI" FontSize="13.5" FontWeight="Bold" Foreground="White"/>
+                                                </StackPanel>
+                                                <TextBlock x:Name="SysZapretStatus" Text="Драйвер WinDivert активен" FontSize="11.5" Foreground="#aaaaaa" Margin="0,0,0,4"/>
+                                                <TextBlock x:Name="SysZapretConfig" Text="Конфиг: general (ALT2).bat" FontSize="11" Foreground="#888888" Margin="0,0,0,2"/>
+                                                <TextBlock Text="Фильтр: TCP/UDP 80, 443, 50000-50010" FontSize="10.5" Foreground="#555558"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <Grid Grid.Column="1" Margin="4,0,4,0">
+                                            <Rectangle RadiusX="10" RadiusY="10" Fill="#16161a" Stroke="#2a2a30" StrokeThickness="1"/>
+                                            <StackPanel Margin="14,12">
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                    <Ellipse x:Name="SysTgWsDot" Width="8" Height="8" Fill="#22c55e" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="TgWsProxy" FontFamily="Segoe UI" FontSize="13.5" FontWeight="Bold" Foreground="White"/>
+                                                </StackPanel>
+                                                <TextBlock x:Name="SysTgWsStatus" Text="Прокси запущен (127.0.0.1:1080)" FontSize="11.5" Foreground="#aaaaaa" Margin="0,0,0,4"/>
+                                                <TextBlock x:Name="SysTgWsConns" Text="Активных клиентов: 0" FontSize="11" Foreground="#888888" Margin="0,0,0,2"/>
+                                                <TextBlock Text="Перенаправляет трафик Telegram" FontSize="10.5" Foreground="#555558"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <Grid Grid.Column="2" Margin="8,0,0,0">
+                                            <Rectangle RadiusX="10" RadiusY="10" Fill="#16161a" Stroke="#2a2a30" StrokeThickness="1"/>
+                                            <StackPanel Margin="14,12">
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                    <Path Data="{StaticResource SearchIcon}" Stroke="#3b82f6" StrokeThickness="1.8" Width="13" Height="13" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="Маршрут по умолчанию" FontFamily="Segoe UI" FontSize="13.5" FontWeight="Bold" Foreground="White"/>
+                                                </StackPanel>
+                                                <TextBlock x:Name="SysDefaultRoute" Text="Основной адаптер" FontSize="11.5" Foreground="#aaaaaa" Margin="0,0,0,4" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock x:Name="SysHostsCount" Text="Записей в hosts: 0" FontSize="11" Foreground="#888888" Margin="0,0,0,2"/>
+                                                <TextBlock x:Name="SysDnsCount" Text="DNS серверов: 0" FontSize="10.5" Foreground="#555558"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Grid>
+
+                                    <TextBlock Text="Сетевые адаптеры и DNS" FontFamily="Segoe UI" FontSize="15" FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
+                                    <StackPanel x:Name="SysAdaptersContainer" Margin="0,0,0,20">
+                                        <TextBlock Text="Загрузка списка адаптеров..." FontSize="12" Foreground="#888888"/>
+                                    </StackPanel>
+
+                                    <TextBlock Text="Сетевая активность процессов" FontFamily="Segoe UI" FontSize="15" FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
+                                    <StackPanel x:Name="SysProcessesContainer" Margin="0,0,0,20">
+                                        <TextBlock Text="Загрузка активности процессов..." FontSize="12" Foreground="#888888"/>
+                                    </StackPanel>
+
+                                    <TextBlock Text="Активные записи в файле hosts" FontFamily="Segoe UI" FontSize="15" FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
+                                    <StackPanel x:Name="SysHostsContainer" Margin="0,0,0,20">
+                                        <TextBlock Text="Загрузка записей hosts..." FontSize="12" Foreground="#888888"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Grid>
+                    </Grid>
+
+                    <Grid x:Name="DiagAvailabilityScreen" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0" Margin="32,20,32,0">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Style="{StaticResource BackBtn}"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="DiagSubScreenBack_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource ArrowLeftIcon}" 
+                                              Stroke="#888888"
+                                              StrokeThickness="2"
+                                              Width="14" Height="14"
+                                              Stretch="Uniform"
+                                              Margin="0,0,6,0"
+                                              VerticalAlignment="Center"/>
+                                        <TextBlock Text="К выбору" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <TextBlock Text="Диагностика доступности" FontFamily="Segoe UI" FontSize="18"
+                                           FontWeight="Bold" Foreground="White"
+                                           VerticalAlignment="Center" Margin="16,0,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                        
+                        <Border Grid.Row="1" Height="1" Background="#333333" Margin="32,14,32,0"/>
+                        
+                        <Grid Grid.Row="2" Grid.RowSpan="3" IsHitTestVisible="False" Panel.ZIndex="-1"
+                              VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                              ClipToBounds="True" RenderOptions.EdgeMode="Aliased">
+                            <Rectangle Opacity="0.5">
+                                <Rectangle.Fill>
+                                    <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                         Center="0.5,1.0" GradientOrigin="0.5,1.0"
+                                                         RadiusX="0.55" RadiusY="0.45">
+                                        <GradientStop Color="#506366f1" Offset="0.000"/>
+                                        <GradientStop Color="#4D6366f1" Offset="0.053"/>
+                                        <GradientStop Color="#476366f1" Offset="0.105"/>
+                                        <GradientStop Color="#416366f1" Offset="0.158"/>
+                                        <GradientStop Color="#3A6366f1" Offset="0.211"/>
+                                        <GradientStop Color="#346366f1" Offset="0.263"/>
+                                        <GradientStop Color="#2D6366f1" Offset="0.316"/>
+                                        <GradientStop Color="#276366f1" Offset="0.368"/>
+                                        <GradientStop Color="#216366f1" Offset="0.421"/>
+                                        <GradientStop Color="#1B6366f1" Offset="0.474"/>
+                                        <GradientStop Color="#166366f1" Offset="0.526"/>
+                                        <GradientStop Color="#116366f1" Offset="0.579"/>
+                                        <GradientStop Color="#0D6366f1" Offset="0.632"/>
+                                        <GradientStop Color="#096366f1" Offset="0.684"/>
+                                        <GradientStop Color="#066366f1" Offset="0.737"/>
+                                        <GradientStop Color="#046366f1" Offset="0.789"/>
+                                        <GradientStop Color="#026366f1" Offset="0.842"/>
+                                        <GradientStop Color="#016366f1" Offset="0.895"/>
+                                        <GradientStop Color="#006366f1" Offset="0.947"/>
+                                        <GradientStop Color="#006366f1" Offset="1.000"/>
+                                    </RadialGradientBrush>
+                                </Rectangle.Fill>
+                            </Rectangle>
+                            <Rectangle Opacity="0.4">
+                                <Rectangle.Fill>
+                                    <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                         Center="0.1,0.1" GradientOrigin="0.1,0.1"
+                                                         RadiusX="0.35" RadiusY="0.30">
+                                        <GradientStop Color="#308B5CF6" Offset="0.000"/>
+                                        <GradientStop Color="#2E8B5CF6" Offset="0.053"/>
+                                        <GradientStop Color="#298B5CF6" Offset="0.105"/>
+                                        <GradientStop Color="#248B5CF6" Offset="0.158"/>
+                                        <GradientStop Color="#1F8B5CF6" Offset="0.211"/>
+                                        <GradientStop Color="#1A8B5CF6" Offset="0.263"/>
+                                        <GradientStop Color="#168B5CF6" Offset="0.316"/>
+                                        <GradientStop Color="#128B5CF6" Offset="0.368"/>
+                                        <GradientStop Color="#0E8B5CF6" Offset="0.421"/>
+                                        <GradientStop Color="#0B8B5CF6" Offset="0.474"/>
+                                        <GradientStop Color="#088B5CF6" Offset="0.526"/>
+                                        <GradientStop Color="#068B5CF6" Offset="0.579"/>
+                                        <GradientStop Color="#048B5CF6" Offset="0.632"/>
+                                        <GradientStop Color="#038B5CF6" Offset="0.684"/>
+                                        <GradientStop Color="#028B5CF6" Offset="0.737"/>
+                                        <GradientStop Color="#018B5CF6" Offset="0.789"/>
+                                        <GradientStop Color="#018B5CF6" Offset="0.842"/>
+                                        <GradientStop Color="#008B5CF6" Offset="0.895"/>
+                                        <GradientStop Color="#008B5CF6" Offset="0.947"/>
+                                        <GradientStop Color="#008B5CF6" Offset="1.000"/>
+                                    </RadialGradientBrush>
+                                </Rectangle.Fill>
+                            </Rectangle>
+                            <Rectangle Opacity="0.3">
+                                <Rectangle.Fill>
+                                    <RadialGradientBrush ColorInterpolationMode="ScRgbLinearInterpolation"
+                                                         Center="0.9,0.8" GradientOrigin="0.9,0.8"
+                                                         RadiusX="0.30" RadiusY="0.25">
+                                        <GradientStop Color="#284F46E5" Offset="0.000"/>
+                                        <GradientStop Color="#264F46E5" Offset="0.053"/>
+                                        <GradientStop Color="#234F46E5" Offset="0.105"/>
+                                        <GradientStop Color="#1F4F46E5" Offset="0.158"/>
+                                        <GradientStop Color="#1C4F46E5" Offset="0.211"/>
+                                        <GradientStop Color="#184F46E5" Offset="0.263"/>
+                                        <GradientStop Color="#154F46E5" Offset="0.316"/>
+                                        <GradientStop Color="#124F46E5" Offset="0.368"/>
+                                        <GradientStop Color="#0F4F46E5" Offset="0.421"/>
+                                        <GradientStop Color="#0C4F46E5" Offset="0.474"/>
+                                        <GradientStop Color="#094F46E5" Offset="0.526"/>
+                                        <GradientStop Color="#074F46E5" Offset="0.579"/>
+                                        <GradientStop Color="#054F46E5" Offset="0.632"/>
+                                        <GradientStop Color="#044F46E5" Offset="0.684"/>
+                                        <GradientStop Color="#034F46E5" Offset="0.737"/>
+                                        <GradientStop Color="#024F46E5" Offset="0.789"/>
+                                        <GradientStop Color="#014F46E5" Offset="0.842"/>
+                                        <GradientStop Color="#014F46E5" Offset="0.895"/>
+                                        <GradientStop Color="#004F46E5" Offset="0.947"/>
+                                        <GradientStop Color="#004F46E5" Offset="1.000"/>
+                                    </RadialGradientBrush>
+                                </Rectangle.Fill>
+                            </Rectangle>
+                            <Rectangle IsHitTestVisible="False" Opacity="0.04"
+                                       RenderOptions.BitmapScalingMode="NearestNeighbor">
+                                <Rectangle.Fill>
+                                    <ImageBrush ImageSource="Assets/noise.png"
+                                                TileMode="Tile" ViewportUnits="Absolute"
+                                                Viewport="0,0,512,512" Stretch="None"/>
+                                </Rectangle.Fill>
+                            </Rectangle>
+                        </Grid>
+                        
+                        <StackPanel Grid.Row="2" Margin="32,14,32,0">
+                            <Button x:Name="DiagRunBtn"
+                                    Style="{StaticResource AccentBtn}" HorizontalAlignment="Left"
                                     WindowChrome.IsHitTestVisibleInChrome="True"
-                                    Click="BackBtn_Click">
+                                    Click="DiagRunBtn_Click">
                                 <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource ArrowLeftIcon}" 
-                                          Stroke="#888888"
+                                    <Path Data="{StaticResource SearchIcon}" 
+                                          Stroke="White"
                                           StrokeThickness="2"
-                                          Width="14" Height="14"
+                                          Width="16" Height="16"
                                           Stretch="Uniform"
-                                          Margin="0,0,6,0"
+                                          Margin="0,0,8,0"
                                           VerticalAlignment="Center"/>
-                                    <TextBlock Text="Назад" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Запустить проверку" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
-                            <TextBlock Text="Диагностика" FontFamily="Segoe UI" FontSize="18"
-                                       FontWeight="Bold" Foreground="White"
-                                       VerticalAlignment="Center" Margin="16,0,0,0"/>
+                            <ProgressBar x:Name="DiagProg" Value="0" Maximum="100" Margin="0,12,0,0"/>
+                            <TextBlock x:Name="DiagProgLbl" Text="" FontSize="12"
+                                       Foreground="#888888" Margin="0,5,0,0"/>
                         </StackPanel>
+                        <Border Grid.Row="3" Height="1" Background="#333333" Margin="32,14,32,0"/>
+                        <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto" Margin="32,14,32,0">
+                            <StackPanel x:Name="DiagResults"/>
+                        </ScrollViewer>
                     </Grid>
-                    <StackPanel Grid.Row="1" Margin="32,14,32,0">
-                        <Button x:Name="DiagRunBtn"
-                                Style="{StaticResource AccentBtn}" HorizontalAlignment="Left"
-                                WindowChrome.IsHitTestVisibleInChrome="True"
-                                Click="DiagRunBtn_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <Path Data="{StaticResource SearchIcon}" 
-                                      Stroke="White"
-                                      StrokeThickness="2"
-                                      Width="16" Height="16"
-                                      Stretch="Uniform"
-                                      Margin="0,0,8,0"
-                                      VerticalAlignment="Center"/>
-                                <TextBlock Text="Запустить проверку" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
-                        <ProgressBar x:Name="DiagProg" Value="0" Maximum="100" Margin="0,12,0,0"/>
-                        <TextBlock x:Name="DiagProgLbl" Text="" FontSize="12"
-                                   Foreground="#888888" Margin="0,5,0,0"/>
-                    </StackPanel>
-                    <Border Grid.Row="2" Height="1" Background="#333333" Margin="32,14,32,0"/>
-                    <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" Margin="32,14,32,0">
-                        <StackPanel x:Name="DiagResults"/>
-                    </ScrollViewer>
                 </Grid>
            <Grid x:Name="ModsPage" Visibility="Collapsed">
                <Grid.Resources>
@@ -5101,8 +6268,8 @@
                </Grid>
            </Grid>
             </Grid>
-            <Border Grid.Row="2" Background="#1e1e1e" CornerRadius="0,0,11,11">
-                <Grid Margin="18,0,12,0">
+            <Border Grid.Row="2" x:Name="AppBottomBar" Background="#1e1e1e" CornerRadius="0,0,11,11">
+                <Grid x:Name="AppBottomContent" Margin="18,0,12,0">
                     <Button HorizontalAlignment="Right"
                             Style="{StaticResource FlatBtn}" FontSize="11"
                             WindowChrome.IsHitTestVisibleInChrome="True"
@@ -5204,8 +6371,78 @@
                                           Content="Использовать Zapret" Margin="0,0,0,10"
                                           Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
                                 <CheckBox x:Name="UseTgWsCB" Style="{StaticResource Toggle}"
-                                          Content="Использовать TgWsProxy" Margin="0,0,0,14"
+                                          Content="Использовать TgWsProxy" Margin="0,0,0,10"
                                           Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
+                                <Grid Margin="0,0,0,14" Height="22">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="AutoEacBypassCB" Style="{StaticResource Toggle}"
+                                              Content="Обходить античит (EAC / BattlEye)" VerticalAlignment="Center"
+                                              Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
+                                    <Button x:Name="EacInfoBtn" Grid.Column="1" Width="20" Height="20"
+                                            HorizontalAlignment="Left" VerticalAlignment="Center"
+                                            Padding="0" Margin="6,0,0,0"
+                                            Background="Transparent" BorderThickness="0"
+                                            Cursor="Hand" Click="EacInfoBtn_Click"
+                                            WindowChrome.IsHitTestVisibleInChrome="True"
+                                            ToolTipService.InitialShowDelay="0"
+                                            ToolTipService.ShowDuration="15000"
+                                            ToolTipService.BetweenShowDelay="0">
+                                        <Button.ToolTip>
+                                            <ToolTip Background="Transparent"
+                                                     BorderThickness="0"
+                                                     HasDropShadow="False"
+                                                     Placement="Bottom"
+                                                     VerticalOffset="4">
+                                                <ToolTip.Style>
+                                                    <Style TargetType="ToolTip">
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsOpen" Value="True">
+                                                                <Trigger.EnterActions>
+                                                                    <BeginStoryboard>
+                                                                        <Storyboard>
+                                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                                             From="0" To="1"
+                                                                                             Duration="0:0:0.1"/>
+                                                                        </Storyboard>
+                                                                    </BeginStoryboard>
+                                                                </Trigger.EnterActions>
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </ToolTip.Style>
+                                                <Border Background="#181818"
+                                                        BorderBrush="#252525"
+                                                        BorderThickness="1"
+                                                        CornerRadius="6"
+                                                        Padding="10,8"
+                                                        MaxWidth="340">
+                                                    <TextBlock Text="При запуске игр (Rust, Apex и др.) античит намертво закрывает Zapret, но даёт запустить игру без него.&#x0a;&#x0a;Включите эту функцию, и NetFix сделает всё за вас: после запуска игры вы сможете пользоваться Discord как обычно.&#x0a;&#x0a;Включайте на свой страх и риск, античиты могут выдать блокировку!"
+                                                               FontFamily="Segoe UI"
+                                                               FontSize="11.5"
+                                                               Foreground="#aaaaaa"
+                                                               TextWrapping="Wrap"/>
+                                                </Border>
+                                            </ToolTip>
+                                        </Button.ToolTip>
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Grid Background="Transparent">
+                                                    <Path Width="13" Height="13" Stretch="Uniform"
+                                                          Fill="#71717a"
+                                                          Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M13,17H11V11H13V17M13,9H11V7H13V9Z"/>
+                                                </Grid>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Opacity" Value="0.75"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                </Grid>
                                 <Border Height="1" Background="#333333" Margin="0,0,0,16"/>
                                 <TextBlock Text="TgWsProxy" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,12"/>
@@ -5339,7 +6576,7 @@
                                 <Border Height="1" Background="#333333" Margin="0,4"/>
                                 <TextBlock Text="БУДУЩЕЕ ПРОЕКТА И ПОДДЕРЖКА" FontFamily="Segoe UI" FontSize="11"
                                            Foreground="#888888" FontWeight="Bold" Margin="0,0,0,10"/>
-                                <TextBlock Text="Нравится, как всё работает? Ты можешь поддержать разработку! В планах, реализовать такое же приложение на телефон с полным функционалом, потому что на мобилках сейчас такая же беда с интернетом.&#x0a;Если хочешь помочь финансово, жми на кнопку ниже. А если ты шаришь в коде и хочешь вписаться в разработку напрямую, пиши мне в личку, обсудим."
+                                <TextBlock Text="Нравится, как всё работает? Ты можешь поддержать разработку! NetFix доступен на Windows, а также вышло официальное приложение NetFix Mobile для телефонов и Smart TV на Android.&#x0a;Если хочешь помочь финансово, жми на кнопку ниже. А если ты шаришь в коде и хочешь вписаться в разработку напрямую, пиши мне в личку, обсудим."
                                            Foreground="#f0f0f0" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
                                 <Button Style="{StaticResource AccentBtn}" HorizontalAlignment="Stretch" Padding="12,8" Margin="0,0,0,6"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
@@ -5429,7 +6666,23 @@
                                               Stretch="Uniform"
                                               Margin="0,0,6,0"
                                               VerticalAlignment="Center"/>
-                                        <TextBlock Text="NetFix на GitHub" VerticalAlignment="Center"/>
+                                        <TextBlock Text="NetFix на GitHub (Windows)" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button HorizontalAlignment="Left"
+                                        Style="{StaticResource FlatBtn}" Foreground="#3b82f6"
+                                        FontSize="12" Padding="0,4"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        Click="LinkNetFixMobile_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource ArrowUpRightIcon}" 
+                                              Stroke="#3b82f6"
+                                              StrokeThickness="2"
+                                              Width="12" Height="12"
+                                              Stretch="Uniform"
+                                              Margin="0,0,6,0"
+                                              VerticalAlignment="Center"/>
+                                        <TextBlock Text="NetFix Mobile на GitHub (Android / TV)" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
                                 <Button HorizontalAlignment="Left"
@@ -5933,6 +7186,10 @@
                     </Grid>
                     </Border>
                 </Grid>
+                
+                <Border Grid.Row="0" Grid.RowSpan="3" x:Name="EntranceCurtain"
+                        Background="#161616" CornerRadius="11" Panel.ZIndex="999"
+                        Opacity="0" Visibility="Collapsed" IsHitTestVisible="False"/>
             </Grid>
     </Border>
 </Window>

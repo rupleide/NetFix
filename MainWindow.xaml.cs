@@ -61,6 +61,9 @@ public partial class MainWindow : Window
     [DllImport("user32.dll", SetLastError = true)]
     private static extern IntPtr FindWindow(string? lpClassName, string? lpWindowName);
 
+    [DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
+
     [DllImport("user32.dll", SetLastError = true)]
     private static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string? lpszClass, string? lpszWindow);
 
@@ -81,6 +84,25 @@ public partial class MainWindow : Window
 
     [DllImport("kernel32.dll")]
     private static extern bool SetProcessWorkingSetSize(IntPtr handle, IntPtr min, IntPtr max);
+
+    [DllImport("dwmapi.dll", PreserveSig = true)]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+    private const int DWMWA_CLOAK = 13;
+
+    private static bool SetCloak(IntPtr hwnd, bool cloak)
+    {
+        if (hwnd == IntPtr.Zero) return false;
+        try
+        {
+            int val = cloak ? 1 : 0;
+            int hr = DwmSetWindowAttribute(hwnd, DWMWA_CLOAK, ref val, sizeof(int));
+            return hr == 0;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 
     [StructLayout(LayoutKind.Sequential)]
     private struct RECT
@@ -108,6 +130,7 @@ public partial class MainWindow : Window
     private AppSettings _settings = SettingsService.Load();
     private bool _settingsOpen = false;
     private bool _onboardForceReserve = false;
+    private bool _onboardIsManual = false;
     private bool _isDialogOpen = false;
     private bool _hostsWarningShown = false;
     private DispatcherTimer _monitorTimer = null!;
@@ -125,6 +148,14 @@ public partial class MainWindow : Window
     private bool _isInstalling = false;
     private DispatcherTimer? _successRingTimer;
     private SolidColorBrush? _successRingIconBrush;
+
+    private DnsEtwMonitor? _dnsEtwMonitor;
+    private DispatcherTimer? _connAnalysisTimer;
+    private bool _connAnalysisActive = false;
+    private bool _isSystemMode = false;
+    private ProcessItemModel? _selectedConnApp;
+    private List<ProcessItemModel> _allProcesses = [];
+    private readonly HashSet<string> _expandedConnKeys = [];
 
     private static ScrollViewer? FindScrollViewer(DependencyObject parent)
     {
@@ -231,8 +262,10 @@ public partial class MainWindow : Window
     private ICollectionView? _userTracksView;
     private ICollectionView? _osuTracksView;
     private string _userSearchText = string.Empty;
+    private bool _isEntranceAnimating = false;
     private string _osuSearchText = string.Empty;
     private string _statsSearchText = string.Empty;
+    private bool _wasClosedToTray = false;
 
     private bool _settingsLoaded;
 
@@ -402,9 +435,12 @@ public partial class MainWindow : Window
             }
         }
         LoadFaqItems();
-        UpdateSelectedConfigDisplay();
-
         InitNetworkMonitor();
+
+        if (_settings.AutoEacBypass)
+        {
+            AntiCheatBypassService.StartWatcher(OnAntiCheatDetected);
+        }
 
         if (_settings.AutostartTgWsProxy
             && !string.IsNullOrEmpty(_settings.TgWsProxyPath)
@@ -426,15 +462,7 @@ public partial class MainWindow : Window
 
         if (_settings.StartMinimizedToTray && Environment.GetCommandLineArgs().Contains("--autostart"))
         {
-            Opacity = 0;
-            Show();
-            await Task.Delay(50);
             Hide();
-            Opacity = 1;
-            RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
-            GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true, compacting: true);
-            GC.WaitForPendingFinalizers();
-            SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle, -1, -1);
         }
     }
 
@@ -471,8 +499,17 @@ public partial class MainWindow : Window
 
     private void ShowTrayMenu()
     {
+        if ((DateTime.UtcNow - TrayPopup.LastClosedTime).TotalMilliseconds < 300)
+            return;
+
         foreach (Window win in System.Windows.Application.Current.Windows)
-            if (win is TrayPopup) { win.Close(); return; }
+        {
+            if (win is TrayPopup popupWin)
+            {
+                popupWin.Close();
+                return;
+            }
+        }
 
         var popup = new TrayPopup { Owner = this };
 
@@ -509,18 +546,63 @@ public partial class MainWindow : Window
 
         popup.Left = left;
         popup.Top  = top;
+        popup.Activate();
+    }
+
+    protected override void OnStateChanged(EventArgs e)
+    {
+        base.OnStateChanged(e);
+        if (WindowState == WindowState.Normal)
+        {
+            _auroraTimer?.Start();
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(350);
+                Dispatcher.Invoke(() =>
+                {
+                    _monitorTimer?.Start();
+                    _netTimer?.Start();
+                    _pingTimer?.Start();
+                });
+            });
+        }
     }
 
     public void ShowFromTray()
     {
-        RenderOptions.ProcessRenderMode = RenderMode.Default;
+        bool wasClosedToTray = _wasClosedToTray || !IsVisible || Visibility != Visibility.Visible;
+        _wasClosedToTray = false;
+
         Show();
         WindowState = WindowState.Normal;
         Activate();
+
+        var helper = new System.Windows.Interop.WindowInteropHelper(this);
+        if (helper.Handle != IntPtr.Zero)
+            SetForegroundWindow(helper.Handle);
+
         _auroraTimer?.Start();
-        _monitorTimer?.Start();
-        _netTimer?.Start();
-        _pingTimer?.Start();
+
+        if (wasClosedToTray && MainPage != null && MainPage.Visibility == Visibility.Visible && SettingsService.IsOnboarded)
+        {
+            if (EntranceCurtain != null)
+            {
+                EntranceCurtain.Visibility = Visibility.Visible;
+                EntranceCurtain.Opacity = 1;
+            }
+            PlayEpicMainEntranceAnimation(0);
+        }
+
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(350);
+            Dispatcher.Invoke(() =>
+            {
+                _monitorTimer?.Start();
+                _netTimer?.Start();
+                _pingTimer?.Start();
+            });
+        });
     }
 
     public void StartAuroraTimer()
@@ -870,6 +952,7 @@ public partial class MainWindow : Window
 
     private void ModsNavBtn_Click(object s, RoutedEventArgs e)
     {
+        StopConnectionAnalysis();
         StopGame();
         StopEditorRecording();
         ShowModsPage();
@@ -877,6 +960,7 @@ public partial class MainWindow : Window
 
     private void ShowModsPage()
     {
+        StopConnectionAnalysis();
         MainPage.Visibility = Visibility.Collapsed;
         GamePage.Visibility = Visibility.Collapsed;
         FaqPage.Visibility = Visibility.Collapsed;
@@ -1359,7 +1443,7 @@ public partial class MainWindow : Window
                 _isDragPending = true;
             }
             else
-            { /* bypassed */ }
+            { }
         }
     }
 
@@ -2231,7 +2315,7 @@ public partial class MainWindow : Window
                 _isDragPending = true;
             }
             else
-            { /* bypassed */ }
+            { }
         }
     }
 
@@ -2596,7 +2680,7 @@ public partial class MainWindow : Window
                 _isDragPending = true;
             }
             else
-            { /* bypassed */ }
+            { }
         }
     }
 
@@ -4122,6 +4206,7 @@ public partial class MainWindow : Window
     {
         if (_forceClose)
         {
+            StopConnectionAnalysis();
             _discord.Dispose();
             _ping.Dispose();
             _trayIcon.Visible = false;
@@ -4131,15 +4216,41 @@ public partial class MainWindow : Window
         }
 
         e.Cancel = true;
+        PerformCloseToTray();
+    }
+
+    private void PerformCloseToTray()
+    {
+        _wasClosedToTray = true;
+        StopConnectionAnalysis();
         _auroraTimer?.Stop();
         _monitorTimer?.Stop();
         _netTimer?.Stop();
         _pingTimer?.Stop();
-        RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
-        Hide();
-        GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true, compacting: true);
-        GC.WaitForPendingFinalizers();
-        SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle, -1, -1);
+
+        if (MainPage != null && MainPage.Visibility == Visibility.Visible && SettingsService.IsOnboarded)
+        {
+            if (EntranceCurtain != null)
+            {
+                EntranceCurtain.Visibility = Visibility.Visible;
+                EntranceCurtain.Opacity = 1;
+            }
+            PrepareMainEntranceState();
+            UpdateLayout();
+        }
+
+        int frameCount = 0;
+        void OnRenderFrame(object? sender, EventArgs e)
+        {
+            frameCount++;
+            if (frameCount >= 2)
+            {
+                CompositionTarget.Rendering -= OnRenderFrame;
+                Hide();
+            }
+        }
+
+        CompositionTarget.Rendering += OnRenderFrame;
     }
 
     public void ForceExit()
@@ -4150,9 +4261,7 @@ public partial class MainWindow : Window
 
     private void FadeIn()
     {
-        Opacity = 0;
-        var anim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300));
-        BeginAnimation(OpacityProperty, anim);
+        PlayEpicMainEntranceAnimation(0);
     }
 
     private void Header_Drag(object sender, MouseButtonEventArgs e)
@@ -4164,15 +4273,7 @@ public partial class MainWindow : Window
 
     private void CloseBtn_Click(object s, RoutedEventArgs e)
     {
-        _auroraTimer?.Stop();
-        _monitorTimer?.Stop();
-        _netTimer?.Stop();
-        _pingTimer?.Stop();
-        RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
-        Hide();
-        GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true, compacting: true);
-        GC.WaitForPendingFinalizers();
-        SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle, -1, -1);
+        PerformCloseToTray();
     }
 
     private void DiagNavBtn_Click(object s, RoutedEventArgs e)
@@ -4191,6 +4292,11 @@ public partial class MainWindow : Window
         SolutionPage.Visibility = Visibility.Collapsed;
         ModsPage.Visibility = Visibility.Collapsed;
         DiagPage.Visibility = Visibility.Visible;
+
+        DiagHomeScreen.Visibility = Visibility.Visible;
+        DiagConnectionScreen.Visibility = Visibility.Collapsed;
+        DiagAvailabilityScreen.Visibility = Visibility.Collapsed;
+
         DiagNavBtn.Foreground = Brushes.White;
         GameNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
         FaqNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
@@ -4641,7 +4747,7 @@ public partial class MainWindow : Window
         stack.Children.Add(headerStack);
 
         stack.Children.Add(new TextBlock {
-            Text = "TgWsProxy на Android!",
+            Text = "NetFix Mobile уже вышел!",
             FontSize = 18,
             FontWeight = FontWeights.Bold,
             Foreground = Brushes.White,
@@ -4649,14 +4755,14 @@ public partial class MainWindow : Window
         });
 
         stack.Children.Add(new TextBlock {
-            Text = "Telegram будет работать на телефоне без VPN",
+            Text = "YouTube и Telegram на смартфонах и Smart TV в один клик",
             FontSize = 14,
             Foreground = new SolidColorBrush(Color.FromRgb(0xaa, 0xdd, 0xaa)),
             Margin = new Thickness(0, 0, 0, 12)
         });
 
         var arrowText = new TextBlock {
-            Text = "Узнать подробнее →",
+            Text = "Узнать подробнее и скачать →",
             FontSize = 13,
             FontWeight = FontWeights.Medium,
             Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e))
@@ -4681,7 +4787,7 @@ public partial class MainWindow : Window
 
     private void ShowAndroidInfo()
     {
-        FaqHeaderTitle.Text = "Android решение";
+        FaqHeaderTitle.Text = "NetFix Mobile";
         FaqContainer.Children.Clear();
 
         var mainCard = new Border {
@@ -4690,76 +4796,155 @@ public partial class MainWindow : Window
             BorderThickness = new Thickness(0, 3, 0, 0),
             CornerRadius = new CornerRadius(12),
             Padding = new Thickness(24),
+            SnapsToDevicePixels = true,
+            UseLayoutRounding = true
         };
+        TextOptions.SetTextFormattingMode(mainCard, TextFormattingMode.Ideal);
+        TextOptions.SetTextRenderingMode(mainCard, TextRenderingMode.Grayscale);
 
         var stack = new StackPanel();
 
         stack.Children.Add(new TextBlock {
-            Text = "TgWsProxy на Android",
-            FontSize = 19,
+            Text = "NetFix Mobile для Android & Smart TV",
+            FontSize = 20,
             FontWeight = FontWeights.Bold,
             Foreground = Brushes.White,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 6)
+        });
+
+        stack.Children.Add(new TextBlock {
+            Text = "Одна кнопка, и интернет снова работает. Прокси Телеграм (Proxy Telegram) и обход блокировок на телефоне и телевизоре.",
+            FontSize = 14,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x4a, 0xde, 0x80)),
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 0, 0, 18)
         });
 
-        var infoText = "Новый способ обхода блокировок Telegram на Android\n\n" +
-            "Пока NetFix Mobile находится в разработке, делюсь рабочим решением от стороннего разработчика LemoLev. " +
-            "Это отличный вариант для тех, кто устал от VPN и хочет стабильной работы Telegram через прокси.\n\n" +
-            "Важное уточнение: Этот метод, «домашнее» решение. Прокси не работает на мобильном интернете. " +
-            "Но если вы подключены к Wi-Fi или кто-то раздает вам интернет, всё должно работать.\n\n" +
-            "Полная инструкция по установке и настройке, а также APK-файл доступны в моём Telegram-канале. " +
-            "Там всё очень подробно расписано, шаг за шагом.\n\n" +
-            "Переходите в канал для получения инструкции и файла:";
+        try
+        {
+            BitmapImage? bmp = null;
+            try
+            {
+                bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.UriSource = new Uri("pack://application:,,,/Assets/Screenshots/hd_phototv.png", UriKind.Absolute);
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.EndInit();
+                bmp.Freeze();
+            }
+            catch
+            {
+                bmp = null;
+            }
+
+            if (bmp == null)
+            {
+                string[] candidatePaths = [
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Screenshots", "hd_phototv.png"),
+                    Path.GetFullPath("Assets/Screenshots/hd_phototv.png"),
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Assets", "Screenshots", "hd_phototv.png")
+                ];
+                foreach (var path in candidatePaths)
+                {
+                    if (File.Exists(path))
+                    {
+                        try
+                        {
+                            var diskBmp = new BitmapImage();
+                            diskBmp.BeginInit();
+                            diskBmp.UriSource = new Uri(path, UriKind.Absolute);
+                            diskBmp.CacheOption = BitmapCacheOption.OnLoad;
+                            diskBmp.EndInit();
+                            diskBmp.Freeze();
+                            bmp = diskBmp;
+                            break;
+                        }
+                        catch { }
+                    }
+                }
+            }
+
+            if (bmp != null)
+            {
+                var imgBorder = new Border
+                {
+                    CornerRadius = new CornerRadius(10),
+                    ClipToBounds = true,
+                    Margin = new Thickness(0, 0, 0, 20),
+                    Background = new SolidColorBrush(Color.FromRgb(0x10, 0x10, 0x12)),
+                    BorderBrush = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x2e)),
+                    BorderThickness = new Thickness(1),
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+                };
+                var img = new System.Windows.Controls.Image
+                {
+                    Source = bmp,
+                    Stretch = Stretch.Uniform,
+                    MaxHeight = 360
+                };
+                RenderOptions.SetBitmapScalingMode(img, BitmapScalingMode.HighQuality);
+                imgBorder.Child = img;
+                stack.Children.Add(imgBorder);
+            }
+        }
+        catch { }
+
+        var aboutTitle = new TextBlock {
+            Text = "💡 О проекте",
+            FontSize = 16,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = Brushes.White,
+            Margin = new Thickness(0, 0, 0, 8)
+        };
+        stack.Children.Add(aboutTitle);
+
+        var infoText = "Блокировки давно перестали быть проблемой одного только компьютера. YouTube тормозит на телевизоре, Telegram не грузит фото и видео на телефоне в мобильной сети, и если на десктопе с этим уже давно разобрался NetFix, то на Android до сих пор приходилось вручную возиться со сложными утилитами и настройками.\n\n" +
+            "NetFix Mobile - официальный мобильный клиент, созданный по принципу «одной кнопки». Внутри одного APK работает обход DPI и встроенный локальный TgWsProxy Android (прокси Телеграм / Proxy Telegram), работающие как два независимых сервиса. Приложение само тестирует сеть, подбирает рабочую конфигурацию под вашего провайдера и запускает всё в один клик, без танцев с бубном и настроек.\n\n" +
+            "От автора: Мобильная версия переносит философию «просто нажми кнопку» на Android - и на телефоны, и на телевизоры. Интерфейс одинаково удобно управляется как пальцем на сенсорном экране, так и обычным пультом от Smart TV.";
 
         stack.Children.Add(new TextBlock {
             Text = infoText,
-            FontSize = 15,
+            FontSize = 14,
             Foreground = new SolidColorBrush(Color.FromRgb(0xdd, 0xdd, 0xdd)),
             TextWrapping = TextWrapping.Wrap,
-            LineHeight = 24,
-            Margin = new Thickness(0, 0, 0, 16)
+            LineHeight = 22,
+            Margin = new Thickness(0, 0, 0, 18)
         });
 
-        var linkBtn = new Button {
-            Style = (Style)FindResource("AccentBtn"),
-            Background = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
+        var ghBtn = new Button {
+            Style = (Style)FindResource("GreenAccentBtn"),
+            Padding = new Thickness(20, 10, 20, 10),
+            Margin = new Thickness(0, 0, 0, 20),
             HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
-            Margin = new Thickness(0, 0, 0, 0)
+            Cursor = Cursors.Hand
+        };
+        ghBtn.Content = "🚀 Скачать на GitHub (APK)";
+        ghBtn.Click += (_, _) => OpenUrl("https://github.com/rupleide/NetFixMobile/releases/latest");
+        stack.Children.Add(ghBtn);
+
+        var reqBorder = new Border {
+            Background = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x18)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x2e, 0x2e, 0x32)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(16, 14, 16, 14)
         };
 
-        var linkBtnContent = new StackPanel { Orientation = Orientation.Horizontal };
-        var linkIcon = new System.Windows.Shapes.Path {
-            Data = (Geometry)FindResource("ExternalLinkIcon"),
-            Fill = Brushes.White,
-            Width = 14,
-            Height = 14,
-            Stretch = Stretch.Uniform,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(0, 0, 8, 0)
+        var reqText = "📋 Системные требования:\n" +
+            "• ОС: Android 8.0 (API 26) и новее\n" +
+            "• Архитектуры: arm64-v8a, armeabi-v7a, x86, x86_64\n" +
+            "• Совместимость: Смартфоны, планшеты, ТВ-приставки и телевизоры на Android TV / Google TV\n" +
+            "• Разрешения: При первом запуске система попросит подтвердить создание VPN-туннеля (стандартный диалог Android для работы обхода DPI).";
+
+        reqBorder.Child = new TextBlock {
+            Text = reqText,
+            FontSize = 13,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xaa, 0xaa, 0xaa)),
+            TextWrapping = TextWrapping.Wrap,
+            LineHeight = 20
         };
-        linkBtnContent.Children.Add(linkIcon);
-        linkBtnContent.Children.Add(new TextBlock {
-            Text = "Открыть Telegram-канал @NetFixRuBi",
-            VerticalAlignment = VerticalAlignment.Center
-        });
-        linkBtn.Content = linkBtnContent;
-        linkBtn.Click += (s, e) => {
-            try {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo {
-                    FileName = "tg://resolve?domain=NetFixRuBi",
-                    UseShellExecute = true
-                });
-            } catch {
-                try {
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo {
-                        FileName = "https://t.me/NetFixRuBi",
-                        UseShellExecute = true
-                    });
-                } catch { }
-            }
-        };
-        stack.Children.Add(linkBtn);
+        stack.Children.Add(reqBorder);
 
         mainCard.Child = stack;
         FaqContainer.Children.Add(mainCard);
@@ -4823,6 +5008,7 @@ public partial class MainWindow : Window
             AddQuestion("Программа пишет 'Access Denied'", "Всегда запускай скрипты и .exe файлы от имени Администратора. Антивирусы также могут блокировать работу Zapret, добавь папку C:\\Zapret в исключения.");
             AddQuestion("Влияет ли это на пинг в играх?", "Нет, Zapret работает только с заблокированными доменами. Твой пинг в играх (CS, Dota, Valorant) останется прежним.");
             AddQuestion("Некоторые сайты перестали открываться после включения Zapret. Что делать?", "Это происходит потому, что выбранный метод обхода (конфиг) конфликтует с защитой конкретного сайта. Например у меня самого конфиг general (SIMPLE FAKE).bat мешает работе Steam, Suno AI или банковских приложений.\n\nРешение:\n\n1. Попробуй сменить конфиг на другой (например, с припиской ALT или DESYNC).\n\n2. Если не помогает, на время работы с этим сайтом просто выключи Zapret.");
+            AddQuestion("Как исключить приложение из VPN-туннеля в happ", "1. Откройте приложение Happ (happ-tun).\n\n2. Перейдите в раздел «Настройки правил» (Routing / Правила маршрутизации).\n\n3. В блоке правил прямого выхода (Direct / Прямой трафик) добавьте имя процесса приложения (например, msedge.exe, Sky.exe или Discord.exe).\n\n4. Сохраните настройки — трафик выбранного приложения начнёт идти напрямую через физический сетевой адаптер в обход VPN.");
         }
     }
 
@@ -4971,6 +5157,7 @@ public partial class MainWindow : Window
 
     private void BackBtn_Click(object s, RoutedEventArgs e)
     {
+        StopConnectionAnalysis();
         DiagPage.Visibility = Visibility.Collapsed;
         MainPage.Visibility = Visibility.Visible;
         DiagNavBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
@@ -6355,7 +6542,6 @@ public partial class MainWindow : Window
 
         var valAnim = new DoubleAnimation(SetupProg.Value, targetValue, dur) { EasingFunction = ease };
         SetupProg.BeginAnimation(System.Windows.Controls.ProgressBar.ValueProperty, valAnim);
-
         var fromColor = SetupProg.Foreground is SolidColorBrush bc ? bc.Color : Color.FromRgb(0x2e, 0x2e, 0x2e);
         var animBrush = new SolidColorBrush(fromColor);
         SetupProg.Foreground = animBrush;
@@ -6473,6 +6659,2386 @@ public partial class MainWindow : Window
                 ? elapsed.ToString(@"h\:mm\:ss")
                 : elapsed.ToString(@"mm\:ss");
     }
+
+    private void DiagCardTestConnection_Click(object sender, RoutedEventArgs e)
+    {
+        DiagHomeScreen.Visibility = Visibility.Collapsed;
+        DiagAvailabilityScreen.Visibility = Visibility.Collapsed;
+        DiagConnectionScreen.Visibility = Visibility.Visible;
+        StartConnectionAnalysis();
+    }
+
+    private void DiagCardAvailability_Click(object sender, RoutedEventArgs e)
+    {
+        StopConnectionAnalysis();
+        DiagHomeScreen.Visibility = Visibility.Collapsed;
+        DiagConnectionScreen.Visibility = Visibility.Collapsed;
+        DiagAvailabilityScreen.Visibility = Visibility.Visible;
+    }
+
+    private void DiagSubScreenBack_Click(object sender, RoutedEventArgs e)
+    {
+        StopConnectionAnalysis();
+        DiagConnectionScreen.Visibility = Visibility.Collapsed;
+        DiagAvailabilityScreen.Visibility = Visibility.Collapsed;
+        DiagHomeScreen.Visibility = Visibility.Visible;
+    }
+
+    #region Connection Analysis (Диагностика → Анализ соединений)
+
+    private readonly object _connAnalysisLock = new();
+
+    private void StartConnectionAnalysis()
+    {
+        lock (_connAnalysisLock)
+        {
+            if (_connAnalysisActive) return;
+            _connAnalysisActive = true;
+
+            try
+            {
+                _dnsEtwMonitor ??= new DnsEtwMonitor();
+                _dnsEtwMonitor.Start();
+            }
+            catch
+            {
+            }
+
+            if (_connAnalysisTimer is null)
+            {
+                _connAnalysisTimer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromMilliseconds(1500)
+                };
+                _connAnalysisTimer.Tick += (_, _) =>
+                {
+                    if (_connAnalysisActive && DiagPage.Visibility == Visibility.Visible && DiagConnectionScreen.Visibility == Visibility.Visible)
+                    {
+                        RefreshConnectionAnalysis();
+                    }
+                };
+            }
+            _connAnalysisTimer.Start();
+
+            Task.Run(() =>
+            {
+                var procs = ConnectionAnalysisService.GetRunningProcesses();
+                Dispatcher.Invoke(() =>
+                {
+                    if (!_connAnalysisActive) return;
+                    _allProcesses = procs;
+                    UpdateProcessListUi();
+                    RefreshConnectionAnalysis();
+                });
+            });
+        }
+    }
+
+    private void StopConnectionAnalysis()
+    {
+        lock (_connAnalysisLock)
+        {
+            if (!_connAnalysisActive && _dnsEtwMonitor is null && _connAnalysisTimer is null) return;
+            _connAnalysisActive = false;
+            _connAnalysisTimer?.Stop();
+            _connAnalysisTimer = null;
+            ConnectionAnalysisService.ResetCpuHistory();
+
+            try
+            {
+                _dnsEtwMonitor?.Stop();
+                _dnsEtwMonitor?.Dispose();
+                _dnsEtwMonitor = null;
+            }
+            catch { }
+        }
+    }
+
+    private void UpdateProcessListUi(string filter = "")
+    {
+        var list = _allProcesses;
+        if (!string.IsNullOrWhiteSpace(filter))
+        {
+            list = _allProcesses
+                .Where(p => p.AppName.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                            p.DisplayName.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                            p.WindowTitle.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                            p.ExePath.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                            p.ProcessIds.Any(pid => pid.ToString().Contains(filter, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+        }
+
+        PopulateAppItemsList(list);
+
+        if (_selectedConnApp is null && list.Count > 0)
+        {
+            var preferred = list.FirstOrDefault(p => p.IsCommonApp) ?? list[0];
+            SelectApplication(preferred);
+        }
+    }
+
+    private void PopulateAppItemsList(List<ProcessItemModel> list)
+    {
+        ConnAppItemsContainer.Children.Clear();
+
+        if (list.Count == 0)
+        {
+            var noApps = new TextBlock
+            {
+                Text = "Приложения не найдены",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 12.5,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+                Padding = new Thickness(12, 20, 12, 20),
+                TextAlignment = TextAlignment.Center
+            };
+            ConnAppItemsContainer.Children.Add(noApps);
+            return;
+        }
+
+        for (int i = 0; i < list.Count; i++)
+        {
+            var app = list[i];
+            bool isSelected = _selectedConnApp != null && _selectedConnApp.AppName == app.AppName;
+
+            var itemGrid = new Grid { Margin = new Thickness(2, 1, 2, 1), Cursor = Cursors.Hand };
+            var itemBg = new System.Windows.Shapes.Rectangle
+            {
+                Fill = isSelected ? new SolidColorBrush(Color.FromRgb(0x1e, 0x27, 0x3d)) : System.Windows.Media.Brushes.Transparent,
+                Stroke = isSelected ? new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)) : System.Windows.Media.Brushes.Transparent,
+                StrokeThickness = isSelected ? 1 : 0,
+                RadiusX = 6,
+                RadiusY = 6
+            };
+            itemGrid.Children.Add(itemBg);
+
+            var grid = new Grid { Margin = new Thickness(10, 8, 10, 8) };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(28) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(92) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(92) });
+
+            var iconImg = new System.Windows.Controls.Image
+            {
+                Source = app.Icon,
+                Width = 20,
+                Height = 20,
+                Margin = new Thickness(0, 0, 8, 0),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            RenderOptions.SetBitmapScalingMode(iconImg, BitmapScalingMode.HighQuality);
+            Grid.SetColumn(iconImg, 0);
+            grid.Children.Add(iconImg);
+
+            var infoStack = new StackPanel
+            {
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 8, 0)
+            };
+            infoStack.Children.Add(new TextBlock
+            {
+                Text = app.AppName,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 13,
+                FontWeight = FontWeights.Bold,
+                Foreground = System.Windows.Media.Brushes.White,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+                TextTrimming = TextTrimming.CharacterEllipsis
+            });
+
+            if (!string.IsNullOrWhiteSpace(app.WindowTitle) &&
+                !app.WindowTitle.Equals(app.AppName, StringComparison.OrdinalIgnoreCase) &&
+                !app.WindowTitle.Equals(app.ExePath, StringComparison.OrdinalIgnoreCase) &&
+                !app.WindowTitle.StartsWith(app.AppName + " ", StringComparison.OrdinalIgnoreCase))
+            {
+                infoStack.Children.Add(new TextBlock
+                {
+                    Text = app.WindowTitle.Trim(),
+                    FontFamily = new FontFamily("Segoe UI"),
+                    FontSize = 11,
+                    Foreground = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x6e)),
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    MaxWidth = 340,
+                    Margin = new Thickness(0, 2, 0, 0)
+                });
+            }
+            Grid.SetColumn(infoStack, 1);
+            grid.Children.Add(infoStack);
+
+            var socketBadge = new Grid
+            {
+                Width = 88,
+                Height = 25,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            socketBadge.Children.Add(new System.Windows.Shapes.Rectangle
+            {
+                Fill = new SolidColorBrush(Color.FromRgb(0x1b, 0x1b, 0x22)),
+                Stroke = new SolidColorBrush(Color.FromRgb(0x2c, 0x2c, 0x36)),
+                StrokeThickness = 1,
+                RadiusX = 6,
+                RadiusY = 6
+            });
+            socketBadge.Children.Add(new TextBlock
+            {
+                Text = $"{app.ConnectionCount} сокетов",
+                FontSize = 10.5,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x4a, 0xde, 0x80)),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            Grid.SetColumn(socketBadge, 2);
+            grid.Children.Add(socketBadge);
+
+            var procBadge = new Grid
+            {
+                Width = 88,
+                Height = 25,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            procBadge.Children.Add(new System.Windows.Shapes.Rectangle
+            {
+                Fill = new SolidColorBrush(Color.FromRgb(0x1b, 0x1b, 0x22)),
+                Stroke = new SolidColorBrush(Color.FromRgb(0x2c, 0x2c, 0x36)),
+                StrokeThickness = 1,
+                RadiusX = 6,
+                RadiusY = 6
+            });
+            procBadge.Children.Add(new TextBlock
+            {
+                Text = app.ProcessCountBadge,
+                FontSize = 10.5,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x94, 0xa3, 0xb8)),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            Grid.SetColumn(procBadge, 3);
+            grid.Children.Add(procBadge);
+
+            itemGrid.Children.Add(grid);
+
+            itemGrid.MouseEnter += (s, e) =>
+            {
+                if (_selectedConnApp?.AppName != app.AppName)
+                    itemBg.Fill = new SolidColorBrush(Color.FromRgb(0x20, 0x20, 0x28));
+            };
+            itemGrid.MouseLeave += (s, e) =>
+            {
+                if (_selectedConnApp?.AppName != app.AppName)
+                    itemBg.Fill = System.Windows.Media.Brushes.Transparent;
+            };
+
+            itemGrid.MouseLeftButtonUp += (s, e) =>
+            {
+                SelectApplication(app);
+                CloseConnAppDropdown();
+            };
+
+            ConnAppItemsContainer.Children.Add(itemGrid);
+
+            if (i < list.Count - 1)
+            {
+                ConnAppItemsContainer.Children.Add(new Border
+                {
+                    Height = 1,
+                    Background = new SolidColorBrush(Color.FromRgb(0x20, 0x20, 0x26)),
+                    Margin = new Thickness(8, 2, 8, 2),
+                    SnapsToDevicePixels = true,
+                    UseLayoutRounding = true
+                });
+            }
+        }
+    }
+
+    private void SelectApplication(ProcessItemModel app)
+    {
+        _selectedConnApp = app;
+        ConnSelectedAppIcon.Source = app.Icon;
+        ConnSelectedAppName.Text = app.AppName;
+        ConnSelectedAppSocketsText.Text = $"{app.ConnectionCount} сокетов";
+        ConnSelectedAppPidText.Text = app.ProcessCountBadge;
+        RefreshAppConnections();
+    }
+
+    private bool _isConnDropdownOpen = false;
+    private bool _isAnimatingConnDropdown = false;
+
+    protected override void OnPreviewMouseLeftButtonDown(MouseButtonEventArgs e)
+    {
+        base.OnPreviewMouseLeftButtonDown(e);
+
+        if (_isConnDropdownOpen && !_isAnimatingConnDropdown)
+        {
+            var posBtn = e.GetPosition(ConnAppSelectorBorder);
+            var posDrop = e.GetPosition(ConnAppDropdownBorder);
+
+            bool hitBtn = posBtn.X >= 0 && posBtn.X <= ConnAppSelectorBorder.ActualWidth &&
+                         posBtn.Y >= 0 && posBtn.Y <= ConnAppSelectorBorder.ActualHeight;
+
+            bool hitDrop = posDrop.X >= 0 && posDrop.X <= ConnAppDropdownBorder.ActualWidth &&
+                          posDrop.Y >= 0 && posDrop.Y <= ConnAppDropdownBorder.ActualHeight;
+
+            if (!hitBtn && !hitDrop)
+            {
+                CloseConnAppDropdown();
+            }
+        }
+    }
+
+    private void OpenConnAppDropdown()
+    {
+        if (_isConnDropdownOpen || _isAnimatingConnDropdown) return;
+        _isAnimatingConnDropdown = true;
+        _isConnDropdownOpen = true;
+
+        ConnAppSelectorBorder.CornerRadius = new CornerRadius(8, 8, 0, 0);
+        ConnAppSelectorBorder.BorderThickness = new Thickness(1, 1, 1, 0);
+        ConnAppSelectorBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x30));
+        ConnAppDropdownArrow.Data = Geometry.Parse("M0,4 L4,0 L8,4");
+
+        ConnAppDropdownBorder.Visibility = Visibility.Visible;
+        var opacityAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        opacityAnim.Completed += (_, _) =>
+        {
+            _isAnimatingConnDropdown = false;
+            ConnProcessSearchBox.Focus();
+            ConnProcessSearchBox.SelectAll();
+        };
+
+        ConnAppDropdownBorder.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
+    }
+
+    private void CloseConnAppDropdown(Action? onClosed = null)
+    {
+        if (!_isConnDropdownOpen || _isAnimatingConnDropdown) return;
+        _isAnimatingConnDropdown = true;
+
+        var opacityAnim = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(160))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+        };
+
+        opacityAnim.Completed += (_, _) =>
+        {
+            _isConnDropdownOpen = false;
+            _isAnimatingConnDropdown = false;
+            ConnAppDropdownBorder.Visibility = Visibility.Collapsed;
+            ConnAppSelectorBorder.CornerRadius = new CornerRadius(8);
+            ConnAppSelectorBorder.BorderThickness = new Thickness(1);
+            ConnAppSelectorBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x30));
+            ConnAppDropdownArrow.Data = Geometry.Parse("M0,0 L4,4 L8,0");
+            onClosed?.Invoke();
+        };
+
+        ConnAppDropdownBorder.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
+    }
+
+    private void ConnAppSelectorBtn_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (_isConnDropdownOpen)
+        {
+            CloseConnAppDropdown();
+        }
+        else
+        {
+            OpenConnAppDropdown();
+        }
+    }
+
+    private void ConnProcessSearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (ConnSearchPlaceholder != null)
+            ConnSearchPlaceholder.Visibility = string.IsNullOrEmpty(ConnProcessSearchBox.Text) ? Visibility.Visible : Visibility.Collapsed;
+        UpdateProcessListUi(ConnProcessSearchBox.Text);
+    }
+
+    private void ConnAppList_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (sender is ScrollViewer sv)
+        {
+            e.Handled = true;
+            double delta = e.Delta > 0 ? -30 : 30;
+            sv.ScrollToVerticalOffset(sv.VerticalOffset + delta);
+        }
+    }
+
+    private static readonly SolidColorBrush ConnTabActiveFg = new SolidColorBrush(Colors.White);
+    private static readonly SolidColorBrush ConnTabInactiveFg = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x90));
+    private static readonly SolidColorBrush ConnTabHoverFg = new SolidColorBrush(Color.FromRgb(0xdd, 0xdd, 0xe0));
+
+    private void AnimateConnModeSwitch(bool toSystem, Action? onCompleted = null)
+    {
+        double targetX = toSystem ? 100 : 0;
+        var anim = new DoubleAnimation(targetX, TimeSpan.FromMilliseconds(120))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        if (onCompleted != null)
+        {
+            anim.Completed += (_, _) => onCompleted();
+        }
+        ConnModeIndicatorTrans.BeginAnimation(TranslateTransform.XProperty, anim);
+
+        ConnModeAppText.Foreground = toSystem ? ConnTabInactiveFg : ConnTabActiveFg;
+        ConnModeSystemText.Foreground = toSystem ? ConnTabActiveFg : ConnTabInactiveFg;
+    }
+
+    private void ConnModeAppBtn_Click(object sender, MouseButtonEventArgs? e)
+    {
+        if (!_isSystemMode) return;
+        _isSystemMode = false;
+        AnimateConnModeSwitch(false, () =>
+        {
+            ConnAppView.Visibility = Visibility.Visible;
+            ConnSystemView.Visibility = Visibility.Collapsed;
+            RefreshConnectionAnalysis();
+        });
+    }
+
+    private void ConnModeSystemBtn_Click(object sender, MouseButtonEventArgs? e)
+    {
+        if (_isSystemMode) return;
+        _isSystemMode = true;
+        AnimateConnModeSwitch(true, () =>
+        {
+            ConnAppView.Visibility = Visibility.Collapsed;
+            ConnSystemView.Visibility = Visibility.Visible;
+            RefreshConnectionAnalysis();
+        });
+    }
+
+    private void ConnModeTab_MouseEnter(object sender, MouseEventArgs e)
+    {
+        if (sender is Border b)
+        {
+            if (b == ConnModeAppBtn && _isSystemMode)
+                ConnModeAppText.Foreground = ConnTabHoverFg;
+            else if (b == ConnModeSystemBtn && !_isSystemMode)
+                ConnModeSystemText.Foreground = ConnTabHoverFg;
+        }
+    }
+
+    private void ConnModeTab_MouseLeave(object sender, MouseEventArgs e)
+    {
+        if (sender is Border b)
+        {
+            if (b == ConnModeAppBtn && _isSystemMode)
+                ConnModeAppText.Foreground = ConnTabInactiveFg;
+            else if (b == ConnModeSystemBtn && !_isSystemMode)
+                ConnModeSystemText.Foreground = ConnTabInactiveFg;
+        }
+    }
+
+    private void ConnRefreshBtn_Click(object sender, RoutedEventArgs e)
+    {
+        var spinAnim = new DoubleAnimation(0, 360, TimeSpan.FromMilliseconds(450))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        ConnRefreshRotate.BeginAnimation(RotateTransform.AngleProperty, spinAnim);
+        RefreshConnectionAnalysis();
+    }
+
+    private void RefreshConnectionAnalysis()
+    {
+        if (_isSystemMode)
+        {
+            RefreshSystemOverview();
+        }
+        else
+        {
+            RefreshAppConnections();
+        }
+    }
+
+    private string _activeFilter = "All";
+    private string _lastPrimaryConnKey = "";
+    private bool _isSecondaryListExpanded = false;
+    private List<ConnectionDetailModel> _lastAppConnections = [];
+    private ConnectionSummaryModel _lastAppSummary = new();
+
+    private void FilterChip_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.Tag is string tag)
+        {
+            _activeFilter = tag;
+            UpdateFilterChipsUi();
+            if (_lastAppConnections.Count > 0)
+            {
+                RenderAppConnections(_lastAppConnections, _lastAppSummary);
+            }
+        }
+    }
+
+    private void UpdateFilterChipsUi()
+    {
+        var chips = new (Border? Chip, string Tag, Color Color)[]
+        {
+            (FilterChipAll, "All", Color.FromRgb(0xee, 0xee, 0xee)),
+            (FilterChipVpn, "VPN", Color.FromRgb(0xa8, 0x55, 0xf7)),
+            (FilterChipDirect, "Direct", Color.FromRgb(0x22, 0xc5, 0x5e)),
+            (FilterChipHosts, "Hosts", Color.FromRgb(0xea, 0xb3, 0x08)),
+            (FilterChipProxy, "Proxy", Color.FromRgb(0x06, 0xb6, 0xd4)),
+            (FilterChipZapret, "Zapret", Color.FromRgb(0xf9, 0x73, 0x16)),
+        };
+
+        foreach (var (chip, tag, color) in chips)
+        {
+            if (chip is null) continue;
+            bool isSelected = _activeFilter.Equals(tag, StringComparison.OrdinalIgnoreCase);
+            chip.Opacity = isSelected ? 1.0 : 0.55;
+            chip.BorderBrush = isSelected ? new SolidColorBrush(color) : new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x3d));
+            chip.BorderThickness = new Thickness(1);
+        }
+    }
+
+    private void RefreshAppConnections()
+    {
+        if (_selectedConnApp is null || _selectedConnApp.ProcessIds.Count == 0) return;
+
+        var pids = _selectedConnApp.ProcessIds.ToList();
+        var etw = _dnsEtwMonitor;
+        int tgWsPort = 1080;
+        var cache = ZapretConfigService.LoadCache();
+        string zapretConfig = cache?.CurrentConfig ?? "general (ALT2).bat";
+        bool isTgWsRunning = Process.GetProcessesByName("TgWsProxy").Length > 0;
+        bool isZapretRunning = Process.GetProcessesByName("winws").Length > 0;
+
+        string appKey = _selectedConnApp?.AppKey ?? "";
+
+        Task.Run(() =>
+        {
+            var (conns, summary) = ConnectionAnalysisService.GetConnectionsForProcess(
+                pids, etw, tgWsPort, isTgWsRunning, isZapretRunning, zapretConfig, appKey);
+
+            Dispatcher.Invoke(() =>
+            {
+                _lastAppConnections = conns;
+                _lastAppSummary = summary;
+                RenderAppConnections(conns, summary);
+            });
+        });
+    }
+
+    private void RefreshSystemOverview()
+    {
+        int tgWsPort = 1080;
+        var cache = ZapretConfigService.LoadCache();
+        string zapretConfig = cache?.CurrentConfig ?? "general (ALT2).bat";
+
+        Task.Run(() =>
+        {
+            var overview = ConnectionAnalysisService.GetSystemOverview(tgWsPort, zapretConfig);
+            Dispatcher.Invoke(() => RenderSystemOverview(overview));
+        });
+    }
+
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, double> _journeyScrollOffsets = new();
+    private readonly HashSet<string> _expandedTechDetailsKeys = new();
+
+    private static ScrollViewer? FindParentScrollViewer(DependencyObject? child)
+    {
+        while (child != null)
+        {
+            if (child is ScrollViewer sv) return sv;
+            child = VisualTreeHelper.GetParent(child);
+        }
+        return null;
+    }
+
+    private void RenderAppConnections(List<ConnectionDetailModel> conns, ConnectionSummaryModel summary)
+    {
+        ConnSummaryText.Text = summary.SummaryText;
+        BadgeAllText.Text = $"Все: {summary.TotalCount}";
+        BadgeVpnText.Text = $"VPN: {summary.VpnCount}";
+        BadgeDirectText.Text = $"Прямой: {summary.DirectCount}";
+        BadgeHostsText.Text = $"Hosts: {summary.HostsCount}";
+        BadgeProxyText.Text = $"TgWsProxy: {summary.ProxyCount}";
+        BadgeZapretText.Text = $"Zapret: {summary.ZapretCount}";
+
+        if (BadgeZapretText.Parent is FrameworkElement zapretBadgeBorder)
+        {
+            zapretBadgeBorder.Visibility = summary.ZapretCount > 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        UpdateFilterChipsUi();
+
+        var parentScrollViewer = FindParentScrollViewer(ConnListContainer);
+        double savedVerticalOffset = parentScrollViewer?.VerticalOffset ?? 0;
+
+        ConnListContainer.Children.Clear();
+
+        if (conns.Count == 0)
+        {
+            var emptyGrid = new Grid { Margin = new Thickness(0, 4, 0, 0) };
+            emptyGrid.Children.Add(new System.Windows.Shapes.Rectangle
+            {
+                Fill = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x1a)),
+                Stroke = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x30)),
+                StrokeThickness = 1,
+                RadiusX = 10,
+                RadiusY = 10
+            });
+            var emptyStack = new StackPanel
+            {
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                Margin = new Thickness(24, 28, 24, 28)
+            };
+            emptyStack.Children.Add(new TextBlock
+            {
+                Text = "Нет активных сетевых соединений",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 15,
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc)),
+                TextAlignment = TextAlignment.Center,
+                Margin = new Thickness(0, 0, 0, 6)
+            });
+            emptyStack.Children.Add(new TextBlock
+            {
+                Text = "Откройте страницу, чат или медиа в выбранном приложении для появления трафика.",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 12.5,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x77, 0x77, 0x7e)),
+                TextAlignment = TextAlignment.Center
+            });
+            emptyGrid.Children.Add(emptyStack);
+            ConnListContainer.Children.Add(emptyGrid);
+            return;
+        }
+
+        IEnumerable<ConnectionDetailModel> filtered = conns;
+        switch (_activeFilter)
+        {
+            case "VPN":
+                filtered = conns.Where(c => c.Routing.IsVpn);
+                break;
+            case "Direct":
+                filtered = conns.Where(c => !c.Routing.IsVpn);
+                break;
+            case "Hosts":
+                filtered = conns.Where(c => c.Dns.IsHosts);
+                break;
+            case "Proxy":
+                filtered = conns.Where(c => c.Proxy.HasProxy);
+                break;
+            case "Zapret":
+                filtered = conns.Where(c => c.PacketFilter.IsZapretActive);
+                break;
+        }
+
+        var filteredList = filtered.ToList();
+
+        if (filteredList.Count == 0)
+        {
+            var noFilterMatches = new Border
+            {
+                Background = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x1a)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x30)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(10),
+                Padding = new Thickness(20, 24, 20, 24),
+                Margin = new Thickness(0, 4, 0, 0)
+            };
+            noFilterMatches.Child = new TextBlock
+            {
+                Text = $"Нет соединений, подходящих под фильтр «{_activeFilter}»",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 13,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x90)),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+            };
+            ConnListContainer.Children.Add(noFilterMatches);
+            return;
+        }
+
+        var primaryConn = filteredList[0];
+        string primaryKey = $"{primaryConn.Protocol}_{primaryConn.LocalAddress}:{primaryConn.LocalPort}->{primaryConn.RemoteAddress}:{primaryConn.RemotePort}";
+        bool isPrimaryExpanded = _expandedConnKeys.Contains(primaryKey);
+
+        var primaryCard = new Grid { Margin = new Thickness(0, 0, 0, 10), Cursor = Cursors.Hand };
+        var primaryBg = new System.Windows.Shapes.Rectangle
+        {
+            Fill = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x1a)),
+            Stroke = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x30)),
+            StrokeThickness = 1,
+            RadiusX = 10,
+            RadiusY = 10
+        };
+        primaryCard.Children.Add(primaryBg);
+
+        var primaryStack = new StackPanel { Margin = new Thickness(16, 14, 16, 14) };
+
+        var primaryHeader = new Grid();
+        primaryHeader.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        primaryHeader.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        primaryHeader.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var primaryEndpointStack = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 12, 0) };
+        var primaryEndpointTitle = new TextBlock
+        {
+            Text = primaryConn.RemoteDisplay,
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 13.5,
+            FontWeight = FontWeights.Bold,
+            Foreground = System.Windows.Media.Brushes.White,
+            TextTrimming = TextTrimming.CharacterEllipsis
+        };
+        var primaryEndpointSub = new TextBlock
+        {
+            Text = $"Локальный: {primaryConn.LocalAddress}:{primaryConn.LocalPort}  •  PID: {primaryConn.ProcessId}",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 11,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x94)),
+            Margin = new Thickness(0, 2, 0, 0)
+        };
+        primaryEndpointStack.Children.Add(primaryEndpointTitle);
+        primaryEndpointStack.Children.Add(primaryEndpointSub);
+
+        Grid.SetColumn(primaryEndpointStack, 0);
+        primaryHeader.Children.Add(primaryEndpointStack);
+
+        var primaryBadges = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 14, 0) };
+
+        var mainTrafficBadge = CreateBadge("★ Основной", Color.FromRgb(0x22, 0x22, 0x2c), Color.FromRgb(0x94, 0xa3, 0xb8));
+        mainTrafficBadge.Margin = new Thickness(0, 0, 6, 0);
+        primaryBadges.Children.Add(mainTrafficBadge);
+
+        var primaryProtoBadge = CreateBadge(primaryConn.Protocol,
+            primaryConn.Protocol.StartsWith("TCP") ? Color.FromRgb(0x16, 0x24, 0x3d) : Color.FromRgb(0x2e, 0x1e, 0x10),
+            primaryConn.Protocol.StartsWith("TCP") ? Color.FromRgb(0x60, 0xa5, 0xfa) : Color.FromRgb(0xfb, 0x92, 0x3c));
+        primaryProtoBadge.Margin = new Thickness(0, 0, 6, 0);
+        primaryBadges.Children.Add(primaryProtoBadge);
+
+        Color primaryRouteColor = primaryConn.Routing.IsVpn ? Color.FromRgb(0xd8, 0xb4, 0xfe) : Color.FromRgb(0x86, 0xef, 0xac);
+        Color primaryRouteBg = primaryConn.Routing.IsVpn ? Color.FromRgb(0x22, 0x16, 0x38) : Color.FromRgb(0x11, 0x28, 0x1c);
+        var primaryRouteBadge = CreateBadge(primaryConn.PrimaryRoute, primaryRouteBg, primaryRouteColor);
+        primaryRouteBadge.Margin = new Thickness(0, 0, 6, 0);
+        primaryBadges.Children.Add(primaryRouteBadge);
+
+        foreach (var mod in primaryConn.RouteModifiers)
+        {
+            Color modColor = mod switch
+            {
+                "Zapret" => Color.FromRgb(0xfd, 0xba, 0x74),
+                "TgWsProxy" => Color.FromRgb(0x67, 0xe8, 0xf9),
+                "Hosts" => Color.FromRgb(0xfd, 0xe0, 0x47),
+                _ => Color.FromRgb(0x94, 0xa3, 0xb8)
+            };
+            Color modBg = mod switch
+            {
+                "Zapret" => Color.FromRgb(0x2e, 0x1a, 0x0c),
+                "TgWsProxy" => Color.FromRgb(0x0b, 0x24, 0x2e),
+                "Hosts" => Color.FromRgb(0x2b, 0x20, 0x0c),
+                _ => Color.FromRgb(0x1c, 0x1c, 0x22)
+            };
+            var modBadge = CreateBadge($"+{mod}", modBg, modColor);
+            modBadge.Margin = new Thickness(0, 0, 6, 0);
+            primaryBadges.Children.Add(modBadge);
+        }
+
+        Color primaryStateColor = primaryConn.State switch
+        {
+            "ESTABLISHED" => Color.FromRgb(0x4a, 0xde, 0x80),
+            "LISTENING" => Color.FromRgb(0xc0, 0x84, 0xfc),
+            "TIME_WAIT" or "CLOSE_WAIT" => Color.FromRgb(0xfa, 0xcc, 0x15),
+            _ => Color.FromRgb(0x9c, 0xa3, 0xaf)
+        };
+        Color primaryStateBg = primaryConn.State switch
+        {
+            "ESTABLISHED" => Color.FromRgb(0x11, 0x26, 0x17),
+            "LISTENING" => Color.FromRgb(0x22, 0x16, 0x33),
+            _ => Color.FromRgb(0x1c, 0x1c, 0x22)
+        };
+        var primaryStateBadge = CreateBadge(primaryConn.State, primaryStateBg, primaryStateColor);
+        primaryBadges.Children.Add(primaryStateBadge);
+
+        Grid.SetColumn(primaryBadges, 1);
+        primaryHeader.Children.Add(primaryBadges);
+
+        var primaryExpandText = new TextBlock
+        {
+            Text = isPrimaryExpanded ? "▲ Скрыть" : "▼ Раскрыть",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 11.5,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        Grid.SetColumn(primaryExpandText, 2);
+        primaryHeader.Children.Add(primaryExpandText);
+
+        primaryStack.Children.Add(primaryHeader);
+
+        var primaryDetailsDrawer = CreatePacketFlowDiagram(primaryConn);
+        primaryDetailsDrawer.Visibility = isPrimaryExpanded ? Visibility.Visible : Visibility.Collapsed;
+        primaryStack.Children.Add(primaryDetailsDrawer);
+
+        primaryCard.Children.Add(primaryStack);
+
+        primaryHeader.Cursor = Cursors.Hand;
+        primaryHeader.MouseLeftButtonUp += (_, e) =>
+        {
+            e.Handled = true;
+            if (_expandedConnKeys.Contains(primaryKey))
+            {
+                _expandedConnKeys.Remove(primaryKey);
+                AnimateCollapse(primaryDetailsDrawer);
+                primaryExpandText.Text = "▼ Раскрыть";
+                primaryExpandText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+            }
+            else
+            {
+                _expandedConnKeys.Add(primaryKey);
+                AnimateExpand(primaryDetailsDrawer);
+                primaryExpandText.Text = "▲ Скрыть";
+                primaryExpandText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+            }
+        };
+
+        if (primaryKey != _lastPrimaryConnKey)
+        {
+            var anim = new DoubleAnimation(0.4, 1.0, TimeSpan.FromMilliseconds(200))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            primaryCard.BeginAnimation(UIElement.OpacityProperty, anim);
+            _lastPrimaryConnKey = primaryKey;
+        }
+
+        ConnListContainer.Children.Add(primaryCard);
+
+        if (filteredList.Count > 1)
+        {
+            var secondaryList = filteredList.Skip(1).ToList();
+            int loopbackCount = secondaryList.Count(c => c.IsLoopback);
+            int listeningCount = secondaryList.Count(c => c.State == "LISTENING");
+
+            var subStats = new List<string>();
+            if (loopbackCount > 0) subStats.Add($"{loopbackCount} loopback");
+            if (listeningCount > 0) subStats.Add($"{listeningCount} listening");
+            string subText = subStats.Count > 0 ? $" ({string.Join(", ", subStats)})" : "";
+
+            var toggleCard = new Grid { Margin = new Thickness(0, 4, 0, 8), Cursor = Cursors.Hand, Height = 36 };
+            var toggleBg = new System.Windows.Shapes.Rectangle
+            {
+                Fill = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x1a)),
+                Stroke = new SolidColorBrush(Color.FromRgb(0x26, 0x26, 0x2e)),
+                StrokeThickness = 1,
+                RadiusX = 8,
+                RadiusY = 8
+            };
+            toggleCard.Children.Add(toggleBg);
+
+            var toggleText = new TextBlock
+            {
+                Text = _isSecondaryListExpanded
+                    ? $"▲ Скрыть остальные {secondaryList.Count} соединений"
+                    : $"Ещё {secondaryList.Count} соединений{subText} ▾",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 12,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = new SolidColorBrush(Color.FromRgb(0xaa, 0xaa, 0xb4)),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            toggleCard.Children.Add(toggleText);
+
+            var secondaryContainer = new StackPanel
+            {
+                Visibility = _isSecondaryListExpanded ? Visibility.Visible : Visibility.Collapsed
+            };
+
+            toggleCard.MouseLeftButtonUp += (_, _) =>
+            {
+                _isSecondaryListExpanded = !_isSecondaryListExpanded;
+                secondaryContainer.Visibility = _isSecondaryListExpanded ? Visibility.Visible : Visibility.Collapsed;
+                toggleText.Text = _isSecondaryListExpanded
+                    ? $"▲ Скрыть остальные {secondaryList.Count} соединений"
+                    : $"Ещё {secondaryList.Count} соединений{subText} ▾";
+                toggleBg.Stroke = _isSecondaryListExpanded
+                    ? new SolidColorBrush(Color.FromRgb(0x3a, 0x3a, 0x44))
+                    : new SolidColorBrush(Color.FromRgb(0x26, 0x26, 0x2e));
+            };
+
+            foreach (var conn in secondaryList)
+            {
+                string secKey = $"{conn.Protocol}_{conn.LocalAddress}:{conn.LocalPort}->{conn.RemoteAddress}:{conn.RemotePort}";
+                bool isSecExpanded = _expandedConnKeys.Contains(secKey);
+
+                var secCard = new Grid { Margin = new Thickness(0, 0, 0, 6), Cursor = Cursors.Hand };
+                var secBg = new System.Windows.Shapes.Rectangle
+                {
+                    Fill = new SolidColorBrush(Color.FromRgb(0x13, 0x13, 0x17)),
+                    Stroke = isSecExpanded ? new SolidColorBrush(Color.FromRgb(0x3a, 0x3a, 0x44)) : new SolidColorBrush(Color.FromRgb(0x22, 0x22, 0x28)),
+                    StrokeThickness = 1,
+                    RadiusX = 8,
+                    RadiusY = 8
+                };
+                secCard.Children.Add(secBg);
+
+                var secStack = new StackPanel { Margin = new Thickness(14, 9, 14, 9) };
+
+                var secRow = new Grid();
+                secRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                secRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                secRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(28) });
+
+                var secEndpointStack = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 0) };
+                var secEndpoint = new TextBlock
+                {
+                    Text = $"{conn.RemoteDisplay}   (PID: {conn.ProcessId})",
+                    FontFamily = new FontFamily("Segoe UI"),
+                    FontSize = 12.5,
+                    FontWeight = FontWeights.SemiBold,
+                    Foreground = new SolidColorBrush(Color.FromRgb(0xdd, 0xdd, 0xdd)),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    TextTrimming = TextTrimming.CharacterEllipsis
+                };
+                secEndpointStack.Children.Add(secEndpoint);
+
+                Grid.SetColumn(secEndpointStack, 0);
+                secRow.Children.Add(secEndpointStack);
+
+                var secBadges = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 12, 0) };
+                var secProtoBadge = CreateBadge(conn.Protocol,
+                    conn.Protocol.StartsWith("TCP") ? Color.FromRgb(0x16, 0x24, 0x3d) : Color.FromRgb(0x2e, 0x1e, 0x10),
+                    conn.Protocol.StartsWith("TCP") ? Color.FromRgb(0x60, 0xa5, 0xfa) : Color.FromRgb(0xfb, 0x92, 0x3c));
+                secProtoBadge.Margin = new Thickness(0, 0, 4, 0);
+                secBadges.Children.Add(secProtoBadge);
+
+                Color secRouteColor = conn.Routing.IsVpn ? Color.FromRgb(0xd8, 0xb4, 0xfe) : Color.FromRgb(0x86, 0xef, 0xac);
+                Color secRouteBg = conn.Routing.IsVpn ? Color.FromRgb(0x22, 0x16, 0x38) : Color.FromRgb(0x11, 0x28, 0x1c);
+                var secRouteBadge = CreateBadge(conn.PrimaryRoute, secRouteBg, secRouteColor);
+                secRouteBadge.Margin = new Thickness(0, 0, 4, 0);
+                secBadges.Children.Add(secRouteBadge);
+
+                foreach (var mod in conn.RouteModifiers)
+                {
+                    Color modColor = mod switch
+                    {
+                        "Zapret" => Color.FromRgb(0xfd, 0xba, 0x74),
+                        "TgWsProxy" => Color.FromRgb(0x67, 0xe8, 0xf9),
+                        "Hosts" => Color.FromRgb(0xfd, 0xe0, 0x47),
+                        _ => Color.FromRgb(0x94, 0xa3, 0xb8)
+                    };
+                    Color modBg = mod switch
+                    {
+                        "Zapret" => Color.FromRgb(0x2e, 0x1a, 0x0c),
+                        "TgWsProxy" => Color.FromRgb(0x0b, 0x24, 0x2e),
+                        "Hosts" => Color.FromRgb(0x2b, 0x20, 0x0c),
+                        _ => Color.FromRgb(0x1c, 0x1c, 0x22)
+                    };
+                    var modBadge = CreateBadge($"+{mod}", modBg, modColor);
+                    modBadge.Margin = new Thickness(0, 0, 4, 0);
+                    secBadges.Children.Add(modBadge);
+                }
+
+                Color secStateColor = conn.State switch
+                {
+                    "ESTABLISHED" => Color.FromRgb(0x4a, 0xde, 0x80),
+                    "LISTENING" => Color.FromRgb(0xc0, 0x84, 0xfc),
+                    "TIME_WAIT" or "CLOSE_WAIT" => Color.FromRgb(0xfa, 0xcc, 0x15),
+                    _ => Color.FromRgb(0x9c, 0xa3, 0xaf)
+                };
+                Color secStateBg = conn.State switch
+                {
+                    "ESTABLISHED" => Color.FromRgb(0x11, 0x26, 0x17),
+                    "LISTENING" => Color.FromRgb(0x22, 0x16, 0x33),
+                    _ => Color.FromRgb(0x1c, 0x1c, 0x22)
+                };
+                var secStateBadge = CreateBadge(conn.State, secStateBg, secStateColor);
+                secBadges.Children.Add(secStateBadge);
+
+                Grid.SetColumn(secBadges, 1);
+                secRow.Children.Add(secBadges);
+
+                var secArrow = new TextBlock
+                {
+                    Text = isSecExpanded ? "▲" : "▼",
+                    FontFamily = new FontFamily("Segoe UI"),
+                    FontSize = 11,
+                    Foreground = new SolidColorBrush(isSecExpanded ? Color.FromRgb(0xee, 0xee, 0xee) : Color.FromRgb(0x77, 0x77, 0x7e)),
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                Grid.SetColumn(secArrow, 2);
+                secRow.Children.Add(secArrow);
+
+                secStack.Children.Add(secRow);
+
+                var secDetailsDrawer = CreatePacketFlowDiagram(conn);
+                secDetailsDrawer.Visibility = isSecExpanded ? Visibility.Visible : Visibility.Collapsed;
+                secStack.Children.Add(secDetailsDrawer);
+
+                secCard.Children.Add(secStack);
+
+                secRow.Cursor = Cursors.Hand;
+                secRow.MouseLeftButtonUp += (_, e) =>
+                {
+                    e.Handled = true;
+                    if (_expandedConnKeys.Contains(secKey))
+                    {
+                        _expandedConnKeys.Remove(secKey);
+                        AnimateCollapse(secDetailsDrawer);
+                        secBg.Stroke = new SolidColorBrush(Color.FromRgb(0x22, 0x22, 0x28));
+                        secArrow.Text = "▼";
+                        secArrow.Foreground = new SolidColorBrush(Color.FromRgb(0x77, 0x77, 0x7e));
+                    }
+                    else
+                    {
+                        _expandedConnKeys.Add(secKey);
+                        AnimateExpand(secDetailsDrawer);
+                        secBg.Stroke = new SolidColorBrush(Color.FromRgb(0x3a, 0x3a, 0x44));
+                        secArrow.Text = "▲";
+                        secArrow.Foreground = new SolidColorBrush(Color.FromRgb(0xee, 0xee, 0xee));
+                    }
+                };
+
+                secondaryContainer.Children.Add(secCard);
+            }
+
+            ConnListContainer.Children.Add(toggleCard);
+            ConnListContainer.Children.Add(secondaryContainer);
+        }
+
+        if (parentScrollViewer != null && savedVerticalOffset > 0)
+        {
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
+            {
+                parentScrollViewer.ScrollToVerticalOffset(savedVerticalOffset);
+            }));
+        }
+    }
+
+    private static readonly Geometry DnsStageGeom = Geometry.Parse("M 20,20 H 30 V 22 H 20 Z M 20,24 H 26 V 26 H 20 Z M30,17V16A13.9871,13.9871,0,1,0,19.23,29.625l-.46-1.9463A12.0419,12.0419,0,0,1,16,28c-.19,0-.375-.0186-.563-.0273A20.3044,20.3044,0,0,1,12.0259,17Zm-2.0415-2H21.9751A24.2838,24.2838,0,0,0,19.2014,4.4414,12.0228,12.0228,0,0,1,27.9585,15ZM16.563,4.0273A20.3044,20.3044,0,0,1,19.9741,15H12.0259A20.3044,20.3044,0,0,1,15.437,4.0273C15.625,4.0186,15.81,4,16,4S16.375,4.0186,16.563,4.0273Zm-3.7644.4141A24.2838,24.2838,0,0,0,10.0249,15H4.0415A12.0228,12.0228,0,0,1,12.7986,4.4414Zm0,23.1172A12.0228,12.0228,0,0,1,4.0415,17h5.9834A24.2838,24.2838,0,0,0,12.7986,27.5586Z");
+    private static readonly Geometry RoutingStageGeom = Geometry.Parse("M48,60A12,12,0,1,0,60,72,12.0081,12.0081,0,0,0,48,60Z M22.6055,46.6289A5.9994,5.9994,0,1,0,31.1133,55.09a24.2258,24.2258,0,0,1,33.7734,0,5.9512,5.9512,0,0,0,4.2539,1.77,6,6,0,0,0,4.2539-10.23C59.7773,32.918,36.2227,32.918,22.6055,46.6289Z M90.27,29.7773a59.1412,59.1412,0,0,0-84.539,0,5.9994,5.9994,0,1,0,8.5312,8.4375c18.1172-18.3281,49.3594-18.3281,67.4766,0A5.9994,5.9994,0,1,0,90.27,29.7773Z");
+    private static readonly Geometry ShieldStageGeom = Geometry.Parse("M12 12.5C13.1046 12.5 14 11.6046 14 10.5C14 9.39542 13.1046 8.49999 12 8.49999C10.8954 8.49999 10 9.39542 10 10.5C10 11.6046 10.8954 12.5 12 12.5ZM12 12.5V15.5M20 12C20 16.4611 14.54 19.6937 12.6414 20.683C12.4361 20.79 12.3334 20.8435 12.191 20.8712C12.08 20.8928 11.92 20.8928 11.809 20.8712C11.6666 20.8435 11.5639 20.79 11.3586 20.683C9.45996 19.6937 4 16.4611 4 12V8.21759C4 7.41808 4 7.01833 4.13076 6.6747C4.24627 6.37113 4.43398 6.10027 4.67766 5.88552C4.9535 5.64243 5.3278 5.50207 6.0764 5.22134L11.4382 3.21067C11.6461 3.13271 11.75 3.09373 11.857 3.07827C11.9518 3.06457 12.0482 3.06457 12.143 3.07827C12.25 3.09373 12.3539 3.13271 12.5618 3.21067L17.9236 5.22134C18.6722 5.50207 19.0465 5.64243 19.3223 5.88552C19.566 6.10027 19.7537 6.37113 19.8692 6.6747C20 7.01833 20 7.41808 20 8.21759V12Z");
+    private static readonly Geometry ServerStageGeom = Geometry.Parse("M18 7H18.01M15 7H15.01M18 17H18.01M15 17H15.01M6 10H18C18.9319 10 19.3978 10 19.7654 9.84776C20.2554 9.64477 20.6448 9.25542 20.8478 8.76537C21 8.39782 21 7.93188 21 7C21 6.06812 21 5.60218 20.8478 5.23463C20.6448 4.74458 20.2554 4.35523 19.7654 4.15224C19.3978 4 18.9319 4 18 4H6C5.06812 4 4.60218 4 4.23463 4.15224C3.74458 4.35523 3.35523 4.74458 3.15224 5.23463C3 5.60218 3 6.06812 3 7C3 7.93188 3 8.39782 3.15224 8.76537C3.35523 9.25542 3.74458 9.64477 4.23463 9.84776C4.60218 10 5.06812 10 6 10ZM6 20H18C18.9319 20 19.3978 20 19.7654 19.8478C20.2554 19.6448 20.6448 19.2554 20.8478 18.7654C21 18.3978 21 17.9319 21 17C21 16.0681 21 15.6022 20.8478 15.2346C20.6448 14.7446 20.2554 14.3552 19.7654 14.1522C19.3978 14 18.9319 14 18 14H6C5.06812 14 4.60218 4 4.23463 14.1522C3.74458 14.3552 3.35523 14.7446 3.15224 15.2346C3 15.6022 3 16.0681 3 17C3 17.9319 3 18.3978 3.15224 18.7654C3.35523 19.2554 3.74458 19.6448 4.23463 19.8478C4.60218 20 5.06812 20 6 20Z");
+    private static readonly Geometry ArrowDownGeom = Geometry.Parse("M12,2 L12,14 M7,9 L12,14 L17,9");
+    private static readonly Geometry LockStageGeom = Geometry.Parse("M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z");
+    private static readonly Geometry DragGripGeom = Geometry.Parse("M8 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm8 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm-8 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm8 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm-8 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm8 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3z");
+    private static readonly Geometry AppStageGeom = Geometry.Parse("M10 20l4-16m4 16l4-16M6 9h14M4 15h14");
+    private static readonly Geometry CheckmarkStageGeom = Geometry.Parse("M5 13l4 4L19 7");
+    private static readonly Geometry WarningStageGeom = Geometry.Parse("M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z");
+    private static readonly Geometry InternetStageGeom = Geometry.Parse("M40.5,5.5H7.5a2,2,0,0,0-2,2v33a2,2,0,0,0,2,2h33a2,2,0,0,0,2-2V7.5A2,2,0,0,0,40.5,5.5Z M32.1645,32.9456V15.1479 M38,22.9637l-5.8355-7.9093-5.8356,7.9093 M15.8355,15.0544V32.8521 M21.6711,25.0363l-5.8356,7.9093L10,25.0363");
+
+    private static readonly Geometry SettingsStageGeom = Geometry.Parse("M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z");
+    private static readonly Geometry ChevronDownGeom = Geometry.Parse("M6 9l6 6 6-6");
+
+    static MainWindow()
+    {
+        ConnTabActiveFg.Freeze();
+        ConnTabInactiveFg.Freeze();
+        ConnTabHoverFg.Freeze();
+        DnsStageGeom.Freeze();
+        RoutingStageGeom.Freeze();
+        ShieldStageGeom.Freeze();
+        ServerStageGeom.Freeze();
+        ArrowDownGeom.Freeze();
+        LockStageGeom.Freeze();
+        DragGripGeom.Freeze();
+        AppStageGeom.Freeze();
+        CheckmarkStageGeom.Freeze();
+        WarningStageGeom.Freeze();
+        InternetStageGeom.Freeze();
+        SettingsStageGeom.Freeze();
+        ChevronDownGeom.Freeze();
+    }
+
+    private FrameworkElement CreatePacketFlowDiagram(ConnectionDetailModel conn)
+    {
+        string currentApp = _selectedConnApp?.AppName ?? "";
+        return CreateAppJourneyChainDiagram(currentApp, conn);
+    }
+
+    private FrameworkElement CreateAppJourneyChainDiagram(string appName, ConnectionDetailModel conn)
+    {
+        var outerContainer = new StackPanel
+        {
+            Margin = new Thickness(0, 10, 0, 4),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch
+        };
+
+        var headerGrid = new Grid { Margin = new Thickness(12, 0, 12, 10) };
+        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var headerTitle = new TextBlock
+        {
+            Text = "Путь соединения:",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 13,
+            FontWeight = FontWeights.Bold,
+            Foreground = System.Windows.Media.Brushes.White
+        };
+        Grid.SetColumn(headerTitle, 0);
+        headerGrid.Children.Add(headerTitle);
+
+        var headerHint = new TextBlock
+        {
+            Text = "Живой маршрут обработки пакетов",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 11,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x94)),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        Grid.SetColumn(headerHint, 1);
+        headerGrid.Children.Add(headerHint);
+
+        outerContainer.Children.Add(headerGrid);
+
+        string connKey = $"{conn.Protocol}_{conn.LocalAddress}:{conn.LocalPort}->{conn.RemoteAddress}:{conn.RemotePort}";
+
+        var scrollContainer = new ScrollViewer
+        {
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            Margin = new Thickness(0, 2, 0, 6),
+            Padding = new Thickness(12, 4, 12, 6),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch
+        };
+
+        scrollContainer.ScrollChanged += (_, e) =>
+        {
+            if (e.HorizontalOffset > 0 || e.HorizontalChange != 0)
+            {
+                _journeyScrollOffsets[connKey] = e.HorizontalOffset;
+            }
+        };
+
+        if (_journeyScrollOffsets.TryGetValue(connKey, out double savedHOffset) && savedHOffset > 0)
+        {
+            scrollContainer.Loaded += (_, _) =>
+            {
+                scrollContainer.ScrollToHorizontalOffset(savedHOffset);
+            };
+        }
+
+        Point _scrollStartPoint = new Point();
+        double _scrollStartOffset = 0;
+        bool _isMouseDown = false;
+
+        scrollContainer.PreviewMouseLeftButtonDown += (s, e) =>
+        {
+            _isMouseDown = true;
+            _scrollStartPoint = e.GetPosition(scrollContainer);
+            _scrollStartOffset = scrollContainer.HorizontalOffset;
+            scrollContainer.CaptureMouse();
+            scrollContainer.Cursor = System.Windows.Input.Cursors.Hand;
+        };
+
+        scrollContainer.PreviewMouseMove += (s, e) =>
+        {
+            if (_isMouseDown)
+            {
+                Point currentPoint = e.GetPosition(scrollContainer);
+                double deltaX = currentPoint.X - _scrollStartPoint.X;
+                scrollContainer.ScrollToHorizontalOffset(_scrollStartOffset - deltaX);
+            }
+        };
+
+        scrollContainer.PreviewMouseLeftButtonUp += (s, e) =>
+        {
+            if (_isMouseDown)
+            {
+                _isMouseDown = false;
+                scrollContainer.ReleaseMouseCapture();
+                scrollContainer.Cursor = System.Windows.Input.Cursors.Arrow;
+            }
+        };
+
+        scrollContainer.PreviewMouseWheel += (s, e) =>
+        {
+            if (!e.Handled)
+            {
+                e.Handled = true;
+                var eventArg = new MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta)
+                {
+                    RoutedEvent = UIElement.MouseWheelEvent,
+                    Source = s
+                };
+                var parent = (s as FrameworkElement)?.Parent as UIElement;
+                parent?.RaiseEvent(eventArg);
+            }
+        };
+
+        var journeyPanel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        scrollContainer.Content = journeyPanel;
+
+        void AddJourneyCard(string title, string subtitle, string detailInfo, Color color, Geometry iconGeom, ImageSource? iconImage = null, bool isStroke = false)
+        {
+            var cardBorder = new Border
+            {
+                Width = 196,
+                Height = 72,
+                Background = new SolidColorBrush(Color.FromRgb(0x13, 0x18, 0x22)),
+                BorderBrush = new SolidColorBrush(Color.FromArgb(140, color.R, color.G, color.B)),
+                BorderThickness = new Thickness(1.2),
+                CornerRadius = new CornerRadius(10),
+                Padding = new Thickness(10, 8, 10, 8),
+                Margin = new Thickness(0)
+            };
+
+            var cardGrid = new Grid();
+            cardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            cardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            if (iconImage != null)
+            {
+                var img = new System.Windows.Controls.Image
+                {
+                    Source = iconImage,
+                    Width = 22, Height = 22,
+                    Margin = new Thickness(0, 0, 8, 0),
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                Grid.SetColumn(img, 0);
+                cardGrid.Children.Add(img);
+            }
+            else
+            {
+                var pathIcon = new System.Windows.Shapes.Path
+                {
+                    Data = iconGeom,
+                    Width = 17, Height = 17,
+                    Margin = new Thickness(0, 0, 8, 0),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Stretch = Stretch.Uniform
+                };
+                if (isStroke)
+                {
+                    pathIcon.Stroke = new SolidColorBrush(color);
+                    pathIcon.StrokeThickness = 1.4;
+                }
+                else
+                {
+                    pathIcon.Fill = new SolidColorBrush(color);
+                }
+                Grid.SetColumn(pathIcon, 0);
+                cardGrid.Children.Add(pathIcon);
+            }
+
+            var textStack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+
+            var titleBlock = new TextBlock
+            {
+                Text = title,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 11.5,
+                FontWeight = FontWeights.Bold,
+                Foreground = System.Windows.Media.Brushes.White,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                ToolTip = title
+            };
+            textStack.Children.Add(titleBlock);
+
+            var subBlock = new TextBlock
+            {
+                Text = subtitle,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 10,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x94, 0xa3, 0xb8)),
+                Margin = new Thickness(0, 1, 0, 0),
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                ToolTip = subtitle
+            };
+            textStack.Children.Add(subBlock);
+
+            var detailBlock = new TextBlock
+            {
+                Text = detailInfo,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 9.5,
+                Foreground = new SolidColorBrush(Color.FromArgb(220, color.R, color.G, color.B)),
+                Margin = new Thickness(0, 2, 0, 0),
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                ToolTip = detailInfo
+            };
+            textStack.Children.Add(detailBlock);
+
+            Grid.SetColumn(textStack, 1);
+            cardGrid.Children.Add(textStack);
+            cardBorder.Child = cardGrid;
+            journeyPanel.Children.Add(cardBorder);
+        }
+
+        void AddArrow()
+        {
+            var connectorGrid = new Grid
+            {
+                Width = 32,
+                Height = 24,
+                Margin = new Thickness(5, 0, 5, 0),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+
+            var arrowLine = new System.Windows.Shapes.Path
+            {
+                Data = Geometry.Parse("M 2,12 L 26,12 M 20,7 L 27,12 L 20,17"),
+                Stroke = new SolidColorBrush(Color.FromRgb(0x47, 0x55, 0x69)),
+                StrokeThickness = 1.6,
+                StrokeLineJoin = PenLineJoin.Round,
+                StrokeEndLineCap = PenLineCap.Round,
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+            };
+            connectorGrid.Children.Add(arrowLine);
+            journeyPanel.Children.Add(connectorGrid);
+        }
+
+        string appDisplayName = _selectedConnApp?.DisplayName ?? appName;
+        if (string.IsNullOrWhiteSpace(appDisplayName)) appDisplayName = "Приложение";
+        AddJourneyCard(
+            appDisplayName,
+            $"Процесс PID {conn.ProcessId}",
+            $"Сокет: {conn.Protocol} ({conn.LocalPort})",
+            Color.FromRgb(0x38, 0xbd, 0xf8),
+            AppStageGeom,
+            _selectedConnApp?.Icon);
+
+        if (conn.Dns.IsHosts)
+        {
+            AddArrow();
+            AddJourneyCard(
+                "Hosts-файл",
+                string.IsNullOrEmpty(conn.Dns.Domain) ? "Локальная запись" : conn.Dns.Domain,
+                $"{conn.Dns.Domain} ➔ {conn.RemoteAddress}",
+                Color.FromRgb(0xea, 0xb3, 0x08),
+                LockStageGeom,
+                isStroke: true);
+        }
+
+        bool isVpn = conn.Routing.IsVpn;
+        bool isZapret = conn.PacketFilter.IsZapretActive;
+        bool isProxy = conn.Proxy.HasProxy;
+
+        if (isVpn)
+        {
+            AddArrow();
+            AddJourneyCard(
+                "VPN (happ-tun)",
+                "Трафик зашифрован",
+                $"Адаптер: {conn.Routing.AdapterName}",
+                Color.FromRgb(0xc0, 0x84, 0xfc),
+                RoutingStageGeom);
+        }
+
+        if (isZapret)
+        {
+            AddArrow();
+            AddJourneyCard(
+                "Zapret",
+                "Обходит DPI",
+                $"Конфиг: {(string.IsNullOrEmpty(conn.PacketFilter.ConfigName) ? "general" : conn.PacketFilter.ConfigName)}",
+                Color.FromRgb(0xf9, 0x73, 0x16),
+                ShieldStageGeom,
+                isStroke: true);
+        }
+
+        if (isProxy)
+        {
+            AddArrow();
+            AddJourneyCard(
+                "TgWsProxy",
+                "Прокси Telegram",
+                $"Порт: {conn.Proxy.ProxyPort} (SOCKS5)",
+                Color.FromRgb(0x06, 0xb6, 0xd4),
+                ServerStageGeom,
+                isStroke: true);
+        }
+
+        bool isFailed = conn.State is "CLOSED" or "CLOSE_WAIT" or "TIME_WAIT" or "RESET";
+        bool isDirect = !isVpn && !isZapret && !isProxy;
+
+        AddArrow();
+
+        if (!isFailed)
+        {
+            string destTitle = isDirect ? "Интернет напрямую" : "Интернет";
+            string destSub = string.IsNullOrEmpty(conn.Dns.Domain) ? $"IP: {conn.RemoteAddress}" : conn.Dns.Domain;
+            string destDetail = $"Статус: {conn.State} • RTT: <5мс";
+            AddJourneyCard(destTitle, destSub, destDetail, Color.FromRgb(0x22, 0xc5, 0x5e), InternetStageGeom, isStroke: true);
+        }
+        else
+        {
+            string destSub = $"Ошибка ({conn.State})";
+            string destDetail = $"Пакеты отклонены";
+            AddJourneyCard("Сбой подключения", destSub, destDetail, Color.FromRgb(0xef, 0x44, 0x44), WarningStageGeom, isStroke: true);
+        }
+
+        outerContainer.Children.Add(scrollContainer);
+
+        var detailsExpanderBorder = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x1a)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x30)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(10),
+            Margin = new Thickness(12, 8, 12, 4)
+        };
+
+        var detailsStack = new StackPanel();
+
+        string techKey = $"tech_{conn.Protocol}_{conn.LocalAddress}:{conn.LocalPort}->{conn.RemoteAddress}:{conn.RemotePort}";
+        bool isTechExpanded = _expandedTechDetailsKeys.Contains(techKey);
+
+        var headerBtnBorder = new Border
+        {
+            Height = 42,
+            Background = System.Windows.Media.Brushes.Transparent,
+            CornerRadius = new CornerRadius(9),
+            Cursor = System.Windows.Input.Cursors.Hand
+        };
+
+        var headerContentGrid = new Grid
+        {
+            Margin = new Thickness(14, 0, 14, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            Height = 42
+        };
+        headerContentGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(20) });
+        headerContentGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        headerContentGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(20) });
+
+        var settingsIcon = new System.Windows.Shapes.Path
+        {
+            Data = SettingsStageGeom,
+            Width = 14,
+            Height = 14,
+            Stretch = Stretch.Uniform,
+            Fill = new SolidColorBrush(isTechExpanded ? Color.FromRgb(0xdd, 0xdd, 0xdd) : Color.FromRgb(0x88, 0x88, 0x88)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        Grid.SetColumn(settingsIcon, 0);
+        headerContentGrid.Children.Add(settingsIcon);
+
+        var toggleBtnText = new TextBlock
+        {
+            Text = isTechExpanded ? "Скрыть технические детали" : "Показать технические детали",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 12,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(6, 0, 0, 0)
+        };
+        Grid.SetColumn(toggleBtnText, 1);
+        headerContentGrid.Children.Add(toggleBtnText);
+
+        var chevronIcon = new System.Windows.Shapes.Path
+        {
+            Data = ChevronDownGeom,
+            Width = 10,
+            Height = 10,
+            Stretch = Stretch.Uniform,
+            Stroke = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            StrokeThickness = 1.8,
+            StrokeLineJoin = PenLineJoin.Round,
+            StrokeEndLineCap = PenLineCap.Round,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center,
+            RenderTransformOrigin = new Point(0.5, 0.5),
+            RenderTransform = new RotateTransform(isTechExpanded ? 180 : 0)
+        };
+        Grid.SetColumn(chevronIcon, 2);
+        headerContentGrid.Children.Add(chevronIcon);
+
+        headerBtnBorder.Child = headerContentGrid;
+
+        headerBtnBorder.MouseEnter += (_, _) =>
+        {
+            headerBtnBorder.Background = new SolidColorBrush(Color.FromArgb(0x14, 0xff, 0xff, 0xff));
+        };
+        headerBtnBorder.MouseLeave += (_, _) =>
+        {
+            headerBtnBorder.Background = System.Windows.Media.Brushes.Transparent;
+        };
+
+        var separator = new Border
+        {
+            Height = 1,
+            Background = new SolidColorBrush(Color.FromRgb(0x24, 0x24, 0x2a)),
+            Margin = new Thickness(14, 0, 14, 10),
+            Visibility = isTechExpanded ? Visibility.Visible : Visibility.Collapsed
+        };
+
+        var detailsContentPanel = new StackPanel
+        {
+            Visibility = isTechExpanded ? Visibility.Visible : Visibility.Collapsed,
+            Margin = new Thickness(12, 0, 12, 12)
+        };
+
+        FrameworkElement CreateTechRow(string label, string val, Color? highlightColor = null, string? customTooltip = null, Action? onClick = null)
+        {
+            var rowBorder = new Border
+            {
+                Background = new SolidColorBrush(Color.FromRgb(0x1a, 0x1a, 0x1f)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(0x28, 0x28, 0x2e)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(6),
+                Padding = new Thickness(12, 7, 12, 7),
+                Margin = new Thickness(0, 0, 0, 6)
+            };
+
+            var rowGrid = new Grid();
+            rowGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(130) });
+            rowGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            var lbl = new TextBlock
+            {
+                Text = label,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 11.5,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x90)),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(lbl, 0);
+            rowGrid.Children.Add(lbl);
+
+            var valueColor = highlightColor ?? Color.FromRgb(0xdd, 0xdd, 0xdd);
+            var valBlock = new TextBlock
+            {
+                Text = val,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 11.5,
+                FontWeight = FontWeights.Normal,
+                Foreground = new SolidColorBrush(valueColor),
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                ToolTip = customTooltip ?? val,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(valBlock, 1);
+            rowGrid.Children.Add(valBlock);
+
+            if (onClick != null)
+            {
+                rowBorder.Cursor = Cursors.Hand;
+                rowBorder.ToolTip = customTooltip;
+                rowBorder.MouseEnter += (_, _) => rowBorder.Background = new SolidColorBrush(Color.FromRgb(0x22, 0x22, 0x2a));
+                rowBorder.MouseLeave += (_, _) => rowBorder.Background = new SolidColorBrush(Color.FromRgb(0x1a, 0x1a, 0x1f));
+                rowBorder.MouseLeftButtonUp += (s, e) =>
+                {
+                    e.Handled = true;
+                    onClick();
+                };
+            }
+
+            rowBorder.Child = rowGrid;
+            return rowBorder;
+        }
+
+        string exePathVal = string.IsNullOrEmpty(conn.ExecutablePath) ? "—" : conn.ExecutablePath;
+        Action? onExeClick = null;
+        string? exeTooltip = null;
+        if (!string.IsNullOrEmpty(conn.ExecutablePath))
+        {
+            exeTooltip = "Нажмите, чтобы открыть папку с файлом в Проводнике";
+            onExeClick = () =>
+            {
+                try
+                {
+                    if (File.Exists(conn.ExecutablePath))
+                    {
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = "explorer.exe",
+                            Arguments = $"/select,\"{conn.ExecutablePath}\"",
+                            UseShellExecute = true
+                        });
+                    }
+                    else
+                    {
+                        string? dir = Path.GetDirectoryName(conn.ExecutablePath);
+                        if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+                        {
+                            Process.Start(new ProcessStartInfo
+                            {
+                                FileName = "explorer.exe",
+                                Arguments = $"\"{dir}\"",
+                                UseShellExecute = true
+                            });
+                        }
+                    }
+                }
+                catch { }
+            };
+        }
+
+        string dnsValue = string.IsNullOrEmpty(conn.Dns.Domain) ? conn.Dns.Source : $"{conn.Dns.Domain} ({conn.Dns.Source})";
+        string routingValue = $"{conn.Routing.AdapterName} [{(conn.Routing.IsVpn ? "VPN туннель" : "Физический интерфейс")}]";
+        string zapretValue = isZapret ? $"Zapret активен ({conn.PacketFilter.ConfigName})" : "Прямой трафик (без Zapret)";
+        string proxyValue = isProxy ? $"TgWsProxy (порт {conn.Proxy.ProxyPort})" : "Прямой сокет (без прокси)";
+        string socketValue = $"{conn.LocalAddress}:{conn.LocalPort} ➔ {conn.RemoteAddress}:{conn.RemotePort} [{conn.State}]";
+
+        detailsContentPanel.Children.Add(CreateTechRow("Путь к файлу", exePathVal, string.IsNullOrEmpty(conn.ExecutablePath) ? Color.FromRgb(0x77, 0x77, 0x82) : null, exeTooltip, onExeClick));
+        detailsContentPanel.Children.Add(CreateTechRow("DNS резолвинг", dnsValue, conn.Dns.IsHosts ? Color.FromRgb(0xea, 0xb3, 0x08) : null));
+        detailsContentPanel.Children.Add(CreateTechRow("Маршрутизация", routingValue, conn.Routing.IsVpn ? Color.FromRgb(0xc0, 0x84, 0xfc) : null));
+        detailsContentPanel.Children.Add(CreateTechRow("Пакетный фильтр", zapretValue, isZapret ? Color.FromRgb(0xf9, 0x73, 0x16) : null));
+        detailsContentPanel.Children.Add(CreateTechRow("Проксирование", proxyValue, isProxy ? Color.FromRgb(0x06, 0xb6, 0xd4) : null));
+        detailsContentPanel.Children.Add(CreateTechRow("Сокет соединения", socketValue, isFailed ? Color.FromRgb(0xef, 0x44, 0x44) : Color.FromRgb(0x22, 0xc5, 0x5e)));
+
+        headerBtnBorder.MouseLeftButtonUp += (s, e) =>
+        {
+            e.Handled = true;
+            if (_expandedTechDetailsKeys.Contains(techKey))
+            {
+                _expandedTechDetailsKeys.Remove(techKey);
+                detailsContentPanel.Visibility = Visibility.Collapsed;
+                separator.Visibility = Visibility.Collapsed;
+                toggleBtnText.Text = "Показать технические детали";
+                toggleBtnText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+                settingsIcon.Fill = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+                chevronIcon.Stroke = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+                chevronIcon.RenderTransform = new RotateTransform(0);
+            }
+            else
+            {
+                _expandedTechDetailsKeys.Add(techKey);
+                separator.Visibility = Visibility.Visible;
+                detailsContentPanel.Visibility = Visibility.Visible;
+                toggleBtnText.Text = "Скрыть технические детали";
+                toggleBtnText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+                settingsIcon.Fill = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+                chevronIcon.Stroke = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+                chevronIcon.RenderTransform = new RotateTransform(180);
+            }
+        };
+
+        detailsStack.Children.Add(headerBtnBorder);
+        detailsStack.Children.Add(separator);
+        detailsStack.Children.Add(detailsContentPanel);
+        detailsExpanderBorder.Child = detailsStack;
+        outerContainer.Children.Add(detailsExpanderBorder);
+
+        return outerContainer;
+    }
+
+    private static void AnimateExpand(FrameworkElement element)
+    {
+        element.Visibility = Visibility.Visible;
+        var fade = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(200))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        element.BeginAnimation(UIElement.OpacityProperty, fade);
+
+        if (element.RenderTransform is TranslateTransform tt)
+        {
+            var slide = new DoubleAnimation(-8.0, 0.0, TimeSpan.FromMilliseconds(200))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            tt.BeginAnimation(TranslateTransform.YProperty, slide);
+        }
+    }
+
+    private static void AnimateCollapse(FrameworkElement element)
+    {
+        var fade = new DoubleAnimation(1.0, 0.0, TimeSpan.FromMilliseconds(150))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+        };
+        fade.Completed += (_, _) =>
+        {
+            element.Visibility = Visibility.Collapsed;
+        };
+        element.BeginAnimation(UIElement.OpacityProperty, fade);
+    }
+
+    private void RenderSystemOverview(SystemOverviewModel model)
+    {
+        SysZapretDot.Fill = model.WinDivertLoaded
+            ? new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e))
+            : new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
+        SysZapretStatus.Text = model.ZapretStatus;
+        SysZapretConfig.Text = $"Конфиг: {model.ZapretConfig}";
+
+        SysTgWsDot.Fill = model.TgWsProxyRunning
+            ? new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e))
+            : new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
+        SysTgWsStatus.Text = model.TgWsProxyRunning ? $"Прокси запущен (127.0.0.1:{model.TgWsProxyPort})" : "Прокси не запущен";
+        SysTgWsConns.Text = $"Активных клиентов: {model.TgWsProxyConnectionsCount}";
+
+        SysDefaultRoute.Text = $"Основной: {model.DefaultRouteAdapter}";
+        SysHostsCount.Text = $"Записей в hosts: {model.HostsCount}";
+        SysDnsCount.Text = $"DNS серверов: {model.DnsServers.Count}";
+
+        SysAdaptersContainer.Children.Clear();
+        foreach (var adapter in model.Adapters)
+        {
+            var cardGrid = new Grid { Margin = new Thickness(0, 0, 0, 8) };
+            cardGrid.Children.Add(new System.Windows.Shapes.Rectangle
+            {
+                Fill = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x1a)),
+                Stroke = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x30)),
+                StrokeThickness = 1,
+                RadiusX = 10,
+                RadiusY = 10
+            });
+
+            var stack = new StackPanel { Margin = new Thickness(14, 12, 14, 12) };
+
+            var topRow = new Grid();
+            topRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            topRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var titlePanel = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+            var nameBlock = new TextBlock
+            {
+                Text = adapter.Name,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 13.5,
+                FontWeight = FontWeights.Bold,
+                Foreground = System.Windows.Media.Brushes.White,
+                Margin = new Thickness(0, 0, 8, 0)
+            };
+            titlePanel.Children.Add(nameBlock);
+
+            Color typeBg = adapter.IsVpn ? Color.FromRgb(0x2d, 0x1f, 0x4a) : Color.FromRgb(0x14, 0x33, 0x22);
+            Color typeFg = adapter.IsVpn ? Color.FromRgb(0xc4, 0xb5, 0xfd) : Color.FromRgb(0x86, 0xef, 0xac);
+            titlePanel.Children.Add(CreateBadge(adapter.Type, typeBg, typeFg));
+
+            if (adapter.IsDefaultGateway)
+            {
+                var defBadge = (FrameworkElement)CreateBadge("Основной маршрут", Color.FromRgb(0x1a, 0x27, 0x44), Color.FromRgb(0x60, 0xa5, 0xfa));
+                defBadge.Margin = new Thickness(6, 0, 0, 0);
+                titlePanel.Children.Add(defBadge);
+            }
+
+            Grid.SetColumn(titlePanel, 0);
+            topRow.Children.Add(titlePanel);
+
+            var statusBlock = new TextBlock
+            {
+                Text = adapter.Status,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 11.5,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(statusBlock, 1);
+            topRow.Children.Add(statusBlock);
+
+            stack.Children.Add(topRow);
+
+            var descBlock = new TextBlock
+            {
+                Text = adapter.Description,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x6a)),
+                Margin = new Thickness(0, 4, 0, 6)
+            };
+            stack.Children.Add(descBlock);
+
+            var detailsText = new TextBlock
+            {
+                Text = $"IPv4: {adapter.IpAddresses}   |   Шлюз: {adapter.Gateways}   |   DNS: {adapter.DnsServers}",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 11.5,
+                Foreground = new SolidColorBrush(Color.FromRgb(0xaa, 0xaa, 0xaa))
+            };
+            stack.Children.Add(detailsText);
+
+            cardGrid.Children.Add(stack);
+            SysAdaptersContainer.Children.Add(cardGrid);
+        }
+
+        RenderSystemProcesses(model.ActiveProcesses);
+
+        SysHostsContainer.Children.Clear();
+        if (model.HostsEntries.Count == 0)
+        {
+            var noHosts = new TextBlock
+            {
+                Text = "В файле hosts нет активных записей.",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 12,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88))
+            };
+            SysHostsContainer.Children.Add(noHosts);
+        }
+        else
+        {
+            var hostsGrid = new Grid();
+            hostsGrid.Children.Add(new System.Windows.Shapes.Rectangle
+            {
+                Fill = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x1a)),
+                Stroke = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x30)),
+                StrokeThickness = 1,
+                RadiusX = 10,
+                RadiusY = 10
+            });
+            var hostsStack = new StackPanel { Margin = new Thickness(14, 10, 14, 10) };
+
+            foreach (var h in model.HostsEntries.Take(30))
+            {
+                var row = new Grid { Margin = new Thickness(0, 3, 0, 3) };
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(200) });
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                var hostText = new TextBlock { Text = h.Hostname, Foreground = System.Windows.Media.Brushes.White, FontSize = 12, FontWeight = FontWeights.SemiBold };
+                var ipText = new TextBlock { Text = h.Ip, Foreground = new SolidColorBrush(Color.FromRgb(0xaa, 0xaa, 0xaa)), FontSize = 12 };
+
+                Grid.SetColumn(hostText, 0);
+                Grid.SetColumn(ipText, 1);
+                row.Children.Add(hostText);
+                row.Children.Add(ipText);
+
+                if (h.IsNetFixManaged)
+                {
+                    var tag = CreateBadge("NetFix", Color.FromRgb(0x33, 0x28, 0x10), Color.FromRgb(0xfd, 0xe0, 0x47));
+                    Grid.SetColumn(tag, 2);
+                    row.Children.Add(tag);
+                }
+
+                hostsStack.Children.Add(row);
+            }
+
+            hostsGrid.Children.Add(hostsStack);
+            SysHostsContainer.Children.Add(hostsGrid);
+        }
+    }
+
+    private string _sysProcSortColumn = "Sockets";
+    private bool _sysProcSortAscending = false;
+    private bool _sysProcessesExpanded = false;
+    private List<SystemProcessActivityModel> _lastSysProcesses = [];
+
+    private void RenderSystemProcesses(List<SystemProcessActivityModel> processes)
+    {
+        _lastSysProcesses = processes;
+        SysProcessesContainer.Children.Clear();
+
+        if (processes.Count == 0)
+        {
+            var emptyText = new TextBlock
+            {
+                Text = "Нет активных процессов с открытыми сетевыми сокетами.",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 12,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88))
+            };
+            SysProcessesContainer.Children.Add(emptyText);
+            return;
+        }
+
+        int totalSockets = processes.Sum(p => p.SocketsCount);
+        var summaryText = new TextBlock
+        {
+            Text = $"{processes.Count} процессов · {totalSockets} сокетов активно",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 12,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x90)),
+            Margin = new Thickness(2, 0, 0, 8)
+        };
+        SysProcessesContainer.Children.Add(summaryText);
+
+        var sorted = _sysProcSortColumn switch
+        {
+            "Process" => _sysProcSortAscending ? processes.OrderBy(p => p.ProcessName).ToList() : processes.OrderByDescending(p => p.ProcessName).ToList(),
+            "Cpu" => _sysProcSortAscending ? processes.OrderBy(p => p.CpuPercent ?? -1).ToList() : processes.OrderByDescending(p => p.CpuPercent ?? -1).ToList(),
+            "Ram" => _sysProcSortAscending ? processes.OrderBy(p => p.RamBytes).ToList() : processes.OrderByDescending(p => p.RamBytes).ToList(),
+            "Network" => _sysProcSortAscending ? processes.OrderBy(p => p.BytesPerSec).ThenBy(p => p.TotalBytes).ToList() : processes.OrderByDescending(p => p.BytesPerSec).ThenByDescending(p => p.TotalBytes).ToList(),
+            "Sockets" => _sysProcSortAscending ? processes.OrderBy(p => p.SocketsCount).ToList() : processes.OrderByDescending(p => p.SocketsCount).ToList(),
+            "Route" => _sysProcSortAscending ? processes.OrderBy(p => p.PrimaryRoute).ToList() : processes.OrderByDescending(p => p.PrimaryRoute).ToList(),
+            _ => processes.OrderByDescending(p => p.SocketsCount).ToList()
+        };
+
+        var displayList = (!_sysProcessesExpanded && sorted.Count > 15) ? sorted.Take(15).ToList() : sorted;
+
+        var tableCard = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x1a)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x2a, 0x2a, 0x30)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(10),
+            Padding = new Thickness(0)
+        };
+
+        var tableStack = new StackPanel();
+
+        var headerGrid = new Grid
+        {
+            Height = 36,
+            Background = new SolidColorBrush(Color.FromRgb(0x1a, 0x1a, 0x20))
+        };
+        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(75) });
+        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(85) });
+        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(105) });
+        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(75) });
+        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(135) });
+
+        FrameworkElement CreateProcHeaderCell(string title, string sortKey, int colIdx, System.Windows.HorizontalAlignment align = System.Windows.HorizontalAlignment.Left)
+        {
+            var btn = new Border
+            {
+                Background = System.Windows.Media.Brushes.Transparent,
+                Cursor = Cursors.Hand,
+                Padding = new Thickness(10, 0, 6, 0)
+            };
+            var hStack = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = align, VerticalAlignment = VerticalAlignment.Center };
+            var hText = new TextBlock
+            {
+                Text = title,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 11,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = new SolidColorBrush(_sysProcSortColumn == sortKey ? Color.FromRgb(0xee, 0xee, 0xee) : Color.FromRgb(0x88, 0x88, 0x90)),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            hStack.Children.Add(hText);
+
+            if (_sysProcSortColumn == sortKey)
+            {
+                var sortArrow = new TextBlock
+                {
+                    Text = _sysProcSortAscending ? " ▲" : " ▼",
+                    FontSize = 9,
+                    Foreground = new SolidColorBrush(Color.FromRgb(0xaa, 0xaa, 0xb4)),
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                hStack.Children.Add(sortArrow);
+            }
+
+            btn.Child = hStack;
+            btn.MouseLeftButtonUp += (_, e) =>
+            {
+                e.Handled = true;
+                if (_sysProcSortColumn == sortKey)
+                {
+                    _sysProcSortAscending = !_sysProcSortAscending;
+                }
+                else
+                {
+                    _sysProcSortColumn = sortKey;
+                    _sysProcSortAscending = false;
+                }
+                RenderSystemProcesses(_lastSysProcesses);
+            };
+
+            Grid.SetColumn(btn, colIdx);
+            return btn;
+        }
+
+        headerGrid.Children.Add(CreateProcHeaderCell("Процесс", "Process", 0));
+        headerGrid.Children.Add(CreateProcHeaderCell("CPU", "Cpu", 1));
+        headerGrid.Children.Add(CreateProcHeaderCell("Память", "Ram", 2));
+        headerGrid.Children.Add(CreateProcHeaderCell("Сеть", "Network", 3));
+        headerGrid.Children.Add(CreateProcHeaderCell("Сокеты", "Sockets", 4));
+        headerGrid.Children.Add(CreateProcHeaderCell("Маршрут", "Route", 5));
+
+        tableStack.Children.Add(headerGrid);
+
+        tableStack.Children.Add(new Border
+        {
+            Height = 1,
+            Background = new SolidColorBrush(Color.FromRgb(0x28, 0x28, 0x30)),
+            SnapsToDevicePixels = true
+        });
+
+        var rowsStack = new StackPanel();
+
+        for (int i = 0; i < displayList.Count; i++)
+        {
+            var proc = displayList[i];
+            var rowBorder = new Border
+            {
+                Height = 36,
+                Background = i % 2 == 1 ? new SolidColorBrush(Color.FromArgb(0x14, 0xff, 0xff, 0xff)) : System.Windows.Media.Brushes.Transparent,
+                Cursor = Cursors.Hand
+            };
+
+            int rowIdx = i;
+            rowBorder.MouseEnter += (_, _) => rowBorder.Background = new SolidColorBrush(Color.FromArgb(0x24, 0xff, 0xff, 0xff));
+            rowBorder.MouseLeave += (_, _) => rowBorder.Background = rowIdx % 2 == 1 ? new SolidColorBrush(Color.FromArgb(0x14, 0xff, 0xff, 0xff)) : System.Windows.Media.Brushes.Transparent;
+
+            rowBorder.MouseLeftButtonUp += (_, e) =>
+            {
+                e.Handled = true;
+                NavigateToAppAnalysis(proc.ProcessId, proc.ProcessName);
+            };
+
+            var rowGrid = new Grid();
+            rowGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            rowGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(75) });
+            rowGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(85) });
+            rowGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(105) });
+            rowGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(75) });
+            rowGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(135) });
+
+            var procStack = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(10, 0, 6, 0)
+            };
+
+            if (proc.Icon != null)
+            {
+                var iconImg = new System.Windows.Controls.Image
+                {
+                    Source = proc.Icon,
+                    Width = 16,
+                    Height = 16,
+                    Margin = new Thickness(0, 0, 8, 0),
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                RenderOptions.SetBitmapScalingMode(iconImg, BitmapScalingMode.HighQuality);
+                procStack.Children.Add(iconImg);
+            }
+
+            var nameText = new TextBlock
+            {
+                Text = proc.ProcessName,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 12,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = System.Windows.Media.Brushes.White,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis
+            };
+            procStack.Children.Add(nameText);
+
+            var pidText = new TextBlock
+            {
+                Text = $" ({proc.ProcessId})",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x70)),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            procStack.Children.Add(pidText);
+
+            Grid.SetColumn(procStack, 0);
+            rowGrid.Children.Add(procStack);
+
+            var cpuText = new TextBlock
+            {
+                Text = proc.CpuDisplay,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 11.5,
+                Foreground = proc.CpuPercent > 5.0 ? new SolidColorBrush(Color.FromRgb(0xfd, 0xba, 0x74)) : new SolidColorBrush(Color.FromRgb(0xaa, 0xaa, 0xb4)),
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(10, 0, 0, 0)
+            };
+            Grid.SetColumn(cpuText, 1);
+            rowGrid.Children.Add(cpuText);
+
+            var ramText = new TextBlock
+            {
+                Text = proc.RamDisplay,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 11.5,
+                Foreground = new SolidColorBrush(Color.FromRgb(0xaa, 0xaa, 0xb4)),
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(10, 0, 0, 0)
+            };
+            Grid.SetColumn(ramText, 2);
+            rowGrid.Children.Add(ramText);
+
+            var speedText = new TextBlock
+            {
+                Text = proc.NetworkActivityDisplay,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 11.5,
+                FontWeight = proc.BytesPerSec >= 50 ? FontWeights.SemiBold : FontWeights.Normal,
+                Foreground = proc.BytesPerSec >= 50
+                    ? new SolidColorBrush(Color.FromRgb(0x4a, 0xde, 0x80))
+                    : (proc.TotalBytes > 0 ? new SolidColorBrush(Color.FromRgb(0xaa, 0xaa, 0xb4)) : new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x70))),
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(10, 0, 0, 0)
+            };
+            if (proc.NetworkActivityDisplay == "н/д")
+            {
+                speedText.ToolTip = "Сетевая статистика недоступна в этой версии Windows";
+                ToolTipService.SetInitialShowDelay(speedText, 50);
+            }
+            Grid.SetColumn(speedText, 3);
+            rowGrid.Children.Add(speedText);
+
+            var socketsText = new TextBlock
+            {
+                Text = $"{proc.SocketsCount}",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 11.5,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x4a, 0xde, 0x80)),
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(10, 0, 0, 0)
+            };
+            Grid.SetColumn(socketsText, 4);
+            rowGrid.Children.Add(socketsText);
+
+            var routeStack = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(6, 0, 6, 0)
+            };
+
+            Color routeColor = proc.PrimaryRoute == "VPN" ? Color.FromRgb(0xd8, 0xb4, 0xfe) : Color.FromRgb(0x86, 0xef, 0xac);
+            Color routeBg = proc.PrimaryRoute == "VPN" ? Color.FromRgb(0x22, 0x16, 0x38) : Color.FromRgb(0x11, 0x28, 0x1c);
+            var primaryRouteBadge = CreateBadge(proc.PrimaryRoute, routeBg, routeColor);
+            primaryRouteBadge.Margin = new Thickness(0, 0, 4, 0);
+            routeStack.Children.Add(primaryRouteBadge);
+
+            foreach (var mod in proc.RouteModifiers)
+            {
+                Color modColor = mod switch
+                {
+                    "Zapret" => Color.FromRgb(0xfd, 0xba, 0x74),
+                    "TgWsProxy" => Color.FromRgb(0x67, 0xe8, 0xf9),
+                    "Hosts" => Color.FromRgb(0xfd, 0xe0, 0x47),
+                    _ => Color.FromRgb(0x94, 0xa3, 0xb8)
+                };
+                Color modBg = mod switch
+                {
+                    "Zapret" => Color.FromRgb(0x2e, 0x1a, 0x0c),
+                    "TgWsProxy" => Color.FromRgb(0x0b, 0x24, 0x2e),
+                    "Hosts" => Color.FromRgb(0x2b, 0x20, 0x0c),
+                    _ => Color.FromRgb(0x1c, 0x1c, 0x22)
+                };
+                var modBadge = CreateBadge($"+{mod}", modBg, modColor);
+                modBadge.Margin = new Thickness(0, 0, 3, 0);
+                routeStack.Children.Add(modBadge);
+            }
+
+            Grid.SetColumn(routeStack, 5);
+            rowGrid.Children.Add(routeStack);
+
+            rowBorder.Child = rowGrid;
+            rowsStack.Children.Add(rowBorder);
+
+            if (i < displayList.Count - 1)
+            {
+                rowsStack.Children.Add(new Border
+                {
+                    Height = 1,
+                    Background = new SolidColorBrush(Color.FromRgb(0x22, 0x22, 0x28)),
+                    SnapsToDevicePixels = true
+                });
+            }
+        }
+
+        tableStack.Children.Add(rowsStack);
+
+        if (sorted.Count > 15)
+        {
+            var toggleBtn = new Border
+            {
+                Height = 34,
+                Background = new SolidColorBrush(Color.FromRgb(0x19, 0x19, 0x20)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(0x28, 0x28, 0x32)),
+                BorderThickness = new Thickness(0, 1, 0, 0),
+                Cursor = Cursors.Hand,
+                CornerRadius = new CornerRadius(0, 0, 10, 10)
+            };
+            var toggleText = new TextBlock
+            {
+                Text = _sysProcessesExpanded ? "Свернуть список (показать топ-15)" : $"Показать все процессы ({sorted.Count})",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 11.5,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            toggleBtn.Child = toggleText;
+            toggleBtn.MouseEnter += (_, _) => toggleBtn.Background = new SolidColorBrush(Color.FromRgb(0x22, 0x22, 0x2c));
+            toggleBtn.MouseLeave += (_, _) => toggleBtn.Background = new SolidColorBrush(Color.FromRgb(0x19, 0x19, 0x20));
+            toggleBtn.MouseLeftButtonUp += (_, _) =>
+            {
+                _sysProcessesExpanded = !_sysProcessesExpanded;
+                RenderSystemProcesses(_lastSysProcesses);
+            };
+            tableStack.Children.Add(toggleBtn);
+        }
+
+        tableCard.Child = tableStack;
+        SysProcessesContainer.Children.Add(tableCard);
+    }
+
+    private void NavigateToAppAnalysis(int pid, string processName)
+    {
+        if (_isSystemMode)
+        {
+            _isSystemMode = false;
+            AnimateConnModeSwitch(false);
+            ConnAppView.Visibility = Visibility.Visible;
+            ConnSystemView.Visibility = Visibility.Collapsed;
+        }
+
+        var foundApp = _allProcesses.FirstOrDefault(p => p.ProcessIds.Contains(pid))
+                    ?? _allProcesses.FirstOrDefault(p => p.AppName.Equals(processName, StringComparison.OrdinalIgnoreCase))
+                    ?? _allProcesses.FirstOrDefault(p => p.DisplayName.Equals(processName, StringComparison.OrdinalIgnoreCase));
+
+        if (foundApp != null)
+        {
+            SelectApplication(foundApp);
+        }
+        else
+        {
+            string exe = "";
+            try { exe = Process.GetProcessById(pid).MainModule?.FileName ?? ""; } catch { }
+            var newApp = new ProcessItemModel
+            {
+                AppName = processName,
+                DisplayName = processName,
+                ExePath = exe,
+                ProcessIds = [pid],
+                ConnectionCount = 1
+            };
+            SelectApplication(newApp);
+        }
+    }
+
+    private static FrameworkElement CreateBadge(string text, Color bg, Color fg)
+    {
+        var grid = new Grid();
+        grid.Children.Add(new System.Windows.Shapes.Rectangle
+        {
+            Fill = new SolidColorBrush(bg),
+            RadiusX = 4,
+            RadiusY = 4
+        });
+        grid.Children.Add(new TextBlock
+        {
+            Text = text,
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 10.5,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = new SolidColorBrush(fg),
+            Margin = new Thickness(6, 2, 6, 2)
+        });
+
+        if (text.Equals("VPN", StringComparison.OrdinalIgnoreCase))
+        {
+            grid.ToolTip = CreateVpnToolTip();
+            grid.Cursor = Cursors.Help;
+            ToolTipService.SetInitialShowDelay(grid, 50);
+            ToolTipService.SetBetweenShowDelay(grid, 0);
+            ToolTipService.SetShowDuration(grid, 30000);
+        }
+
+        return grid;
+    }
+
+    private static System.Windows.Controls.ToolTip CreateVpnToolTip()
+    {
+        var tip = new System.Windows.Controls.ToolTip
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x18, 0x18, 0x1b)),
+            Foreground = new SolidColorBrush(Color.FromRgb(0xf4, 0xf4, 0xf5)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x27, 0x27, 0x2a)),
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(10, 8, 10, 8),
+            MaxWidth = 340
+        };
+
+        var sp = new StackPanel();
+        sp.Children.Add(new TextBlock
+        {
+            Text = "Маршрут: VPN",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 12,
+            FontWeight = FontWeights.Bold,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xd8, 0xb4, 0xfe)),
+            Margin = new Thickness(0, 0, 0, 4)
+        });
+
+        sp.Children.Add(new TextBlock
+        {
+            Text = "В NetFix нет встроенного VPN.\n\nЭтот статус лишь показывает, что соединение идёт через сторонний VPN-клиент на вашем ПК (например Happ, Amnezia, WireGuard и др.).\n\nЕсли отключить сторонний VPN, маршрут сменится на «Прямой» (с защитой Zapret).",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 11.5,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xd4, 0xd4, 0xd8)),
+            TextWrapping = TextWrapping.Wrap
+        });
+
+        tip.Content = sp;
+        return tip;
+    }
+
+    private static FrameworkElement CreatePipelineChip(string text, Color bg, Color fg)
+    {
+        var grid = new Grid { Margin = new Thickness(0, 2, 0, 2) };
+        grid.Children.Add(new System.Windows.Shapes.Rectangle
+        {
+            Fill = new SolidColorBrush(bg),
+            Stroke = new SolidColorBrush(Color.FromArgb(80, fg.R, fg.G, fg.B)),
+            StrokeThickness = 1,
+            RadiusX = 6,
+            RadiusY = 6
+        });
+        grid.Children.Add(new TextBlock
+        {
+            Text = text,
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 11.5,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = new SolidColorBrush(fg),
+            Margin = new Thickness(8, 4, 8, 4)
+        });
+        return grid;
+    }
+
+    private static TextBlock CreateArrow()
+    {
+        return new TextBlock
+        {
+            Text = "➔",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 11,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x70)),
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(6, 0, 6, 0)
+        };
+    }
+
+    private static void AddDetailRow(Grid grid, int rowIdx, string title, string content, Color titleColor)
+    {
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
+        row.Children.Add(new TextBlock
+        {
+            Text = title,
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 12,
+            FontWeight = FontWeights.Bold,
+            Foreground = new SolidColorBrush(titleColor),
+            Width = 140
+        });
+        row.Children.Add(new TextBlock
+        {
+            Text = content,
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 12,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc)),
+            TextWrapping = TextWrapping.Wrap
+        });
+        Grid.SetRow(row, rowIdx);
+        grid.Children.Add(row);
+    }
+
+    #endregion
 
     private void DiagRunBtn_Click(object s, RoutedEventArgs e)
     {
@@ -6780,6 +9346,7 @@ public partial class MainWindow : Window
         AutoUpdatesCB.IsChecked     = _settings.AutoUpdates;
         UseZapretCB.IsChecked = _settings.EnableZapret;
         UseTgWsCB.IsChecked = _settings.EnableTgWsProxy;
+        AutoEacBypassCB.IsChecked = _settings.AutoEacBypass;
         ShowGameOfferCB.IsChecked   = _settings.ShowGameOfferDialog;
         ShowServiceReminderCB.IsChecked = _settings.ShowLongCheckDialog;
         UpdateFixModeVisual(_settings.Mode);
@@ -6808,10 +9375,33 @@ public partial class MainWindow : Window
         _settings.ShowLongCheckDialog  = ShowServiceReminderCB.IsChecked == true;
         _settings.EnableZapret = UseZapretCB.IsChecked == true;
         _settings.EnableTgWsProxy = UseTgWsCB.IsChecked == true;
+        _settings.AutoEacBypass = AutoEacBypassCB.IsChecked == true;
         _settings.RememberWindowSize = RememberSizeCB.IsChecked == true;
         _settings.ForceNetworkOk = ForceNetOkCB.IsChecked == true;
         SettingsService.Save(_settings);
         SetAutostart(_settings.AutostartApp);
+
+        if (_settings.AutoEacBypass)
+            AntiCheatBypassService.StartWatcher(OnAntiCheatDetected);
+        else
+            AntiCheatBypassService.StopWatcher();
+    }
+
+    private void OnAntiCheatDetected(string processName)
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            AppendLog($"🎮 Запуск игры ({processName}). Zapret перезапущен для обхода античита.", "info");
+        });
+    }
+
+    private void EacInfoBtn_Click(object sender, RoutedEventArgs e)
+    {
+        ShowNotification("Обход античитов (EAC / BattlEye)",
+            "При запуске игр вроде Rust или Apex античит намертво закрывает Zapret. Сама игра при этом запускается, но Discord и YouTube перестают работать.\n\n" +
+            "Включите эту функцию, и NetFix сделает всё за вас: автоматически перезапустит Zapret сразу после старта игры, и вы сможете пользоваться Discord как обычно.\n\n" +
+            "⚠️ Внимание: античиты следят за любыми сетевыми драйверами в системе. Если вы переживаете за свой аккаунт, включайте эту функцию на свой страх и риск!",
+            "#3b82f6");
     }
 
     private void SaveWindowPosition()
@@ -7152,16 +9742,38 @@ public partial class MainWindow : Window
         }
     }
 
+    private Border? _currentNotificationOverlay;
+    private Border? _currentNotificationCard;
+
+    private void CloseCurrentNotification()
+    {
+        if (_currentNotificationOverlay != null)
+        {
+            MainGrid.Children.Remove(_currentNotificationOverlay);
+            _currentNotificationOverlay = null;
+        }
+        if (_currentNotificationCard != null)
+        {
+            MainGrid.Children.Remove(_currentNotificationCard);
+            _currentNotificationCard = null;
+        }
+    }
+
     private void ShowNotification(string title, string message, string color)
     {
+        CloseCurrentNotification();
+
         var overlay = new Border
         {
             Background = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
             HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
-            VerticalAlignment = System.Windows.VerticalAlignment.Stretch
+            VerticalAlignment = System.Windows.VerticalAlignment.Stretch,
+            Cursor = Cursors.Hand
         };
         Grid.SetRowSpan(overlay, 3);
+        overlay.MouseLeftButtonUp += (_, _) => CloseCurrentNotification();
         MainGrid.Children.Add(overlay);
+        _currentNotificationOverlay = overlay;
 
         var card = new Border
         {
@@ -7173,14 +9785,18 @@ public partial class MainWindow : Window
             Margin = new Thickness(40),
             HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
             VerticalAlignment = System.Windows.VerticalAlignment.Center,
+            SnapsToDevicePixels = true,
+            UseLayoutRounding = true,
             Effect = new System.Windows.Media.Effects.DropShadowEffect
             {
                 Color = Colors.Black,
-                BlurRadius = 30,
+                BlurRadius = 24,
                 ShadowDepth = 0,
-                Opacity = 0.5
+                Opacity = 0.6
             }
         };
+        TextOptions.SetTextFormattingMode(card, TextFormattingMode.Ideal);
+        TextOptions.SetTextRenderingMode(card, TextRenderingMode.Grayscale);
         Grid.SetRowSpan(card, 3);
 
         var content = new StackPanel { Margin = new Thickness(28, 24, 28, 24) };
@@ -7192,7 +9808,8 @@ public partial class MainWindow : Window
             FontWeight = FontWeights.Bold,
             Foreground = Brushes.White,
             TextAlignment = TextAlignment.Center,
-            Margin = new Thickness(0, 0, 0, 12)
+            Margin = new Thickness(0, 0, 0, 12),
+            FontFamily = new FontFamily("Segoe UI")
         };
         content.Children.Add(titleText);
 
@@ -7200,11 +9817,12 @@ public partial class MainWindow : Window
         {
             Text = message,
             FontSize = 13,
-            Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc)),
+            Foreground = new SolidColorBrush(Color.FromRgb(0xd4, 0xd4, 0xd8)),
             TextAlignment = TextAlignment.Center,
             TextWrapping = TextWrapping.Wrap,
             LineHeight = 20,
-            Margin = new Thickness(0, 0, 0, 20)
+            Margin = new Thickness(0, 0, 0, 20),
+            FontFamily = new FontFamily("Segoe UI")
         };
         content.Children.Add(messageText);
 
@@ -7224,7 +9842,8 @@ public partial class MainWindow : Window
                 VerticalAlignment = System.Windows.VerticalAlignment.Center,
                 Foreground = Brushes.White,
                 FontSize = 13,
-                FontWeight = FontWeights.SemiBold
+                FontWeight = FontWeights.SemiBold,
+                FontFamily = new FontFamily("Segoe UI")
             }
         };
 
@@ -7232,9 +9851,9 @@ public partial class MainWindow : Window
         {
             okBorder.Background = new SolidColorBrush(Color.FromArgb(
                 baseColor.A,
-                (byte)(baseColor.R * 0.8),
-                (byte)(baseColor.G * 0.8),
-                (byte)(baseColor.B * 0.8)
+                (byte)(baseColor.R * 0.85),
+                (byte)(baseColor.G * 0.85),
+                (byte)(baseColor.B * 0.85)
             ));
         };
 
@@ -7243,16 +9862,17 @@ public partial class MainWindow : Window
             okBorder.Background = new SolidColorBrush(baseColor);
         };
 
-        okBorder.MouseLeftButtonUp += (_, _) =>
+        okBorder.MouseLeftButtonUp += (_, e) =>
         {
-            MainGrid.Children.Remove(overlay);
-            MainGrid.Children.Remove(card);
+            e.Handled = true;
+            CloseCurrentNotification();
         };
 
         content.Children.Add(okBorder);
         card.Child = content;
 
         MainGrid.Children.Add(card);
+        _currentNotificationCard = card;
     }
 
     private void DonateBtn_Click(object s, RoutedEventArgs e)
@@ -7269,6 +9889,8 @@ public partial class MainWindow : Window
         OpenUrl("https://github.com/Flowseal/tg-ws-proxy");
     private void LinkNetFix_Click(object s, RoutedEventArgs e) =>
         OpenUrl("https://github.com/rupleide/NetFix");
+    private void LinkNetFixMobile_Click(object s, RoutedEventArgs e) =>
+        OpenUrl("https://github.com/rupleide/NetFixMobile");
 
     private void OpenTelegramChannel_Click(object s, RoutedEventArgs e)
     {
@@ -11836,16 +14458,42 @@ public partial class MainWindow : Window
     }
 
 
+    private Grid? _onboardRootGrid;
+    private TextBlock? _onboardStepText;
+    private StackPanel? _onboardSignalPanel;
+    private ContentControl? _onboardContentHost;
+
     private void ShowOnboarding()
     {
         OnboardLayer.Visibility = Visibility.Visible;
         Opacity = 1;
+        _onboardRootGrid = null;
         ShowOnboardScreen(0);
     }
 
     private void ShowOnboardScreen(int n)
     {
-        var grid = new Grid { Background = Brushes.Transparent };
+        var (curStep, totalSteps) = GetOnboardStepInfo(n);
+
+        if (_onboardRootGrid == null || _onboardContentHost == null)
+        {
+            _onboardRootGrid = new Grid { Background = Brushes.Transparent };
+
+            _onboardContentHost = new ContentControl
+            {
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+                VerticalAlignment   = VerticalAlignment.Stretch
+            };
+            _onboardRootGrid.Children.Add(_onboardContentHost);
+
+            var header = CreateOnboardTopHeader();
+            _onboardRootGrid.Children.Add(header);
+            AnimateOnboardHeaderEntrance(header);
+
+            OnboardContent.Content = _onboardRootGrid;
+        }
+
+        UpdateOnboardHeader(curStep, totalSteps);
 
         var stack = new StackPanel
         {
@@ -11854,7 +14502,6 @@ public partial class MainWindow : Window
             MaxWidth            = 520,
             Margin              = new Thickness(32)
         };
-        grid.Children.Add(stack);
 
         switch (n)
         {
@@ -11877,59 +14524,557 @@ public partial class MainWindow : Window
             case 17: BuildOnboardManualStart(stack); break;
         }
 
-        OnboardContent.Content = grid;
-        FadeInElement(grid);
+        _onboardContentHost.Content = stack;
+        if (n != 0)
+        {
+            AnimateOnboardSlideCascade(stack);
+        }
     }
 
-    private static void FadeInElement(UIElement el)
+    private static void AnimateOnboardSlideCascade(StackPanel stack)
     {
-        el.Opacity = 0;
-        el.BeginAnimation(OpacityProperty,
-            new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(250)));
+        var easeQuintic = new QuinticEase { EasingMode = EasingMode.EaseOut };
+        var easeCubic   = new CubicEase   { EasingMode = EasingMode.EaseOut };
+
+        int contentIndex = 0;
+        int buttonIndex = 0;
+
+        for (int i = 0; i < stack.Children.Count; i++)
+        {
+            if (stack.Children[i] is FrameworkElement el)
+            {
+                TextOptions.SetTextFormattingMode(el, TextFormattingMode.Ideal);
+                TextOptions.SetTextRenderingMode(el, TextRenderingMode.Grayscale);
+
+                if (el is Viewbox || el.Tag as string == "custom_icon")
+                {
+                    el.Opacity = 0;
+                    var iconFade = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(700))
+                    {
+                        EasingFunction = easeCubic
+                    };
+                    el.BeginAnimation(OpacityProperty, iconFade);
+                    contentIndex++;
+                    continue;
+                }
+
+                el.Opacity = 0;
+
+                bool isButton = el is Button;
+                int delayMs;
+                double fromY;
+                int fadeDurationMs;
+                int moveDurationMs;
+
+                if (isButton)
+                {
+                    delayMs = 900 + (buttonIndex * 100);
+                    fromY = 20;
+                    fadeDurationMs = 1000;
+                    moveDurationMs = 1100;
+                    buttonIndex++;
+                }
+                else
+                {
+                    delayMs = contentIndex * 120;
+                    fromY = 24;
+                    fadeDurationMs = 1300;
+                    moveDurationMs = 1400;
+                    contentIndex++;
+                }
+
+                var tg = new TransformGroup();
+                var trans = new TranslateTransform(0, fromY);
+                var scale = new ScaleTransform(1.0, 1.0);
+                tg.Children.Add(trans);
+                tg.Children.Add(scale);
+                el.RenderTransformOrigin = new Point(0.5, 0.5);
+                el.RenderTransform = tg;
+
+                var fadeAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(fadeDurationMs))
+                {
+                    BeginTime = TimeSpan.FromMilliseconds(delayMs),
+                    EasingFunction = easeCubic
+                };
+
+                var moveAnim = new DoubleAnimation(fromY, 0, TimeSpan.FromMilliseconds(moveDurationMs))
+                {
+                    BeginTime = TimeSpan.FromMilliseconds(delayMs),
+                    EasingFunction = easeQuintic
+                };
+
+                el.BeginAnimation(OpacityProperty, fadeAnim);
+                trans.BeginAnimation(TranslateTransform.YProperty, moveAnim);
+            }
+        }
+    }
+
+    private static void AnimateOnboardHeaderEntrance(FrameworkElement header)
+    {
+        header.Opacity = 0;
+        var headerTrans = new TranslateTransform(0, -18);
+        header.RenderTransform = headerTrans;
+
+        var ease = new QuinticEase { EasingMode = EasingMode.EaseOut };
+        var fadeAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(1000))
+        {
+            BeginTime = TimeSpan.FromMilliseconds(200),
+            EasingFunction = ease
+        };
+        var moveAnim = new DoubleAnimation(-18, 0, TimeSpan.FromMilliseconds(1100))
+        {
+            BeginTime = TimeSpan.FromMilliseconds(200),
+            EasingFunction = ease
+        };
+        header.BeginAnimation(OpacityProperty, fadeAnim);
+        headerTrans.BeginAnimation(TranslateTransform.YProperty, moveAnim);
+    }
+
+    private (int currentStep, int totalSteps) GetOnboardStepInfo(int n)
+    {
+        if (!_onboardIsManual)
+        {
+            return n switch
+            {
+                0 => (1, 6),
+                1 => (2, 6),
+                2 => (3, 6),
+                3 => (4, 6),
+                16 => (5, 6),
+                15 => (6, 6),
+                _ => (1, 6)
+            };
+        }
+        else
+        {
+            return n switch
+            {
+                0 => (1, 8),
+                1 => (2, 8),
+                2 => (3, 8),
+                3 => (4, 8),
+                17 => (5, 8),
+                4 or 5 or 6 or 7 or 8 or 9 => (6, 8),
+                10 or 11 or 12 or 13 => (7, 8),
+                15 => (8, 8),
+                _ => (1, 8)
+            };
+        }
+    }
+
+    private FrameworkElement CreateOnboardTopHeader()
+    {
+        var badge = new Border
+        {
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment   = VerticalAlignment.Top,
+            Margin              = new Thickness(0, 24, 0, 0),
+            Background          = new SolidColorBrush(Color.FromRgb(0x18, 0x18, 0x1c)),
+            BorderBrush         = new SolidColorBrush(Color.FromRgb(0x28, 0x28, 0x2e)),
+            BorderThickness     = new Thickness(1),
+            CornerRadius        = new CornerRadius(14),
+            Padding             = new Thickness(12, 5, 12, 5)
+        };
+
+        var row = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        _onboardStepText = new TextBlock
+        {
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 12.5,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xa1, 0xa1, 0xaa)),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        row.Children.Add(_onboardStepText);
+
+        _onboardSignalPanel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            VerticalAlignment = VerticalAlignment.Center,
+            Height = 14,
+            Margin = new Thickness(10, 0, 0, 0)
+        };
+        row.Children.Add(_onboardSignalPanel);
+
+        badge.Child = row;
+        return badge;
+    }
+
+    private void UpdateOnboardHeader(int currentStep, int totalSteps)
+    {
+        if (_onboardStepText == null || _onboardSignalPanel == null) return;
+
+        bool isComplete = currentStep >= totalSteps;
+        _onboardStepText.Text = $"Шаг {currentStep} из {totalSteps}";
+        _onboardStepText.Foreground = isComplete
+            ? new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e))
+            : new SolidColorBrush(Color.FromRgb(0xa1, 0xa1, 0xaa));
+
+        if (_onboardSignalPanel.Children.Count != totalSteps)
+        {
+            _onboardSignalPanel.Children.Clear();
+            double minH = 4.5;
+            double maxH = 13.5;
+            for (int i = 1; i <= totalSteps; i++)
+            {
+                double h = totalSteps > 1
+                    ? minH + (maxH - minH) * (i - 1) / (totalSteps - 1)
+                    : maxH;
+
+                var bar = new Border
+                {
+                    Width = 3.5,
+                    Height = Math.Round(h, 1),
+                    CornerRadius = new CornerRadius(1.75),
+                    Margin = new Thickness(0, 0, i == totalSteps ? 0 : 2.5, 0),
+                    VerticalAlignment = VerticalAlignment.Bottom
+                };
+                _onboardSignalPanel.Children.Add(bar);
+            }
+        }
+
+        var activeBrush = isComplete
+            ? new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e))
+            : new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6));
+        var inactiveBrush = new SolidColorBrush(Color.FromRgb(0x28, 0x28, 0x2e));
+
+        for (int i = 0; i < _onboardSignalPanel.Children.Count; i++)
+        {
+            if (_onboardSignalPanel.Children[i] is Border bar)
+            {
+                bar.Background = (i + 1 <= currentStep) ? activeBrush : inactiveBrush;
+            }
+        }
     }
 
     private void BuildOnboard0(StackPanel p)
     {
-        AddOnboardTitle(p, "Привет!");
-        AddOnboardBtn(p, "Далее", "#3b82f6", () => ShowOnboardScreen(1));
+        _onboardIsManual = false;
+
+        var titleBlock = new TextBlock
+        {
+            Text = "Привет!",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 44,
+            FontWeight = FontWeights.Bold,
+            Foreground = Brushes.White,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            TextAlignment = TextAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 32),
+            Opacity = 0
+        };
+
+        TextOptions.SetTextFormattingMode(titleBlock, TextFormattingMode.Ideal);
+        TextOptions.SetTextRenderingMode(titleBlock, TextRenderingMode.Grayscale);
+
+        var titleTranslate = new TranslateTransform(0, 24);
+        titleBlock.RenderTransform = titleTranslate;
+        p.Children.Add(titleBlock);
+
+        var bgBrush = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6));
+        var hoverBrush = new SolidColorBrush(Color.FromRgb(
+            (byte)Math.Min(255, 0x3b * 1.07 + 8),
+            (byte)Math.Min(255, 0x82 * 1.07 + 8),
+            (byte)Math.Min(255, 0xf6 * 1.07 + 8)));
+
+        var btn = new Button
+        {
+            Content             = "Начать",
+            Background          = bgBrush,
+            Foreground          = Brushes.White,
+            FontFamily          = new FontFamily("Segoe UI"),
+            FontSize            = 16,
+            FontWeight          = FontWeights.SemiBold,
+            Height              = 46,
+            MinWidth            = 200,
+            Padding             = new Thickness(24, 0, 24, 0),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Cursor              = Cursors.Hand,
+            BorderThickness     = new Thickness(0),
+            Margin              = new Thickness(0, 0, 0, 0),
+            Opacity             = 0,
+            Template            = CreateSimpleBtnTemplate()
+        };
+
+        var tg = new TransformGroup();
+        var btnTranslate = new TranslateTransform(0, 20);
+        var btnScale = new ScaleTransform(1.0, 1.0);
+        tg.Children.Add(btnTranslate);
+        tg.Children.Add(btnScale);
+        btn.RenderTransformOrigin = new Point(0.5, 0.5);
+        btn.RenderTransform = tg;
+        AttachModernButtonHoverEffect(btn, bgBrush, hoverBrush, Color.FromRgb(0x3b, 0x82, 0xf6));
+        btn.Click += (_, _) => ShowOnboardScreen(1);
+        p.Children.Add(btn);
+
+        var easeQuintic = new QuinticEase { EasingMode = EasingMode.EaseOut };
+        var easeCubic   = new CubicEase   { EasingMode = EasingMode.EaseOut };
+
+        var titleFade = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(1300))
+        {
+            EasingFunction = easeCubic
+        };
+        var titleMove = new DoubleAnimation(24, 0, TimeSpan.FromMilliseconds(1400))
+        {
+            EasingFunction = easeQuintic
+        };
+
+        titleBlock.BeginAnimation(OpacityProperty, titleFade);
+        titleTranslate.BeginAnimation(TranslateTransform.YProperty, titleMove);
+
+        var btnFade = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(1000))
+        {
+            BeginTime = TimeSpan.FromMilliseconds(900),
+            EasingFunction = easeCubic
+        };
+        var btnMove = new DoubleAnimation(20, 0, TimeSpan.FromMilliseconds(1100))
+        {
+            BeginTime = TimeSpan.FromMilliseconds(900),
+            EasingFunction = easeQuintic
+        };
+
+        btn.BeginAnimation(OpacityProperty, btnFade);
+        btnTranslate.BeginAnimation(TranslateTransform.YProperty, btnMove);
     }
 
     private void BuildOnboard1(StackPanel p)
     {
-        AddOnboardSub(p, "Это программа создана для людей, у которых есть проблемы с интернетом в России!\nЕсли у вас есть ВПН, то вам это, скорее всего, не понадобится.\nПриложение предлагает решение всех проблем, а также полную автоматизацию.");
+        var viewBox = new Viewbox
+        {
+            Width = 48,
+            Height = 48,
+            Stretch = Stretch.Uniform,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 20),
+            RenderTransformOrigin = new Point(0.5, 0.5)
+        };
+        var canvas = new Canvas { Width = 24, Height = 24 };
+
+        var circlePath = new System.Windows.Shapes.Path
+        {
+            Data = Geometry.Parse("M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22Z"),
+            Stroke = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            StrokeThickness = 2.0,
+            StrokeStartLineCap = PenLineCap.Round,
+            StrokeEndLineCap = PenLineCap.Round,
+            StrokeLineJoin = PenLineJoin.Round
+        };
+
+        var questionGroup = new GeometryGroup();
+        questionGroup.Children.Add(Geometry.Parse("M12 8V13"));
+        questionGroup.Children.Add(Geometry.Parse("M11.9945 16H12.0035"));
+
+        var questionPath = new System.Windows.Shapes.Path
+        {
+            Data = questionGroup,
+            Stroke = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            StrokeThickness = 2.0,
+            StrokeStartLineCap = PenLineCap.Round,
+            StrokeEndLineCap = PenLineCap.Round,
+            StrokeLineJoin = PenLineJoin.Round
+        };
+
+        canvas.Children.Add(circlePath);
+        canvas.Children.Add(questionPath);
+        viewBox.Child = canvas;
+
+        var transGroup = new TransformGroup();
+        var scaleTrans = new ScaleTransform(1.0, 1.0);
+        var translateTrans = new TranslateTransform(0, 0);
+        transGroup.Children.Add(scaleTrans);
+        transGroup.Children.Add(translateTrans);
+        viewBox.RenderTransform = transGroup;
+
+        var popAnim = new DoubleAnimation(0.9, 1.0, TimeSpan.FromMilliseconds(500))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        scaleTrans.BeginAnimation(ScaleTransform.ScaleXProperty, popAnim);
+        scaleTrans.BeginAnimation(ScaleTransform.ScaleYProperty, popAnim);
+
+        var floatAnim = new DoubleAnimation(-1.5, 1.5, TimeSpan.FromMilliseconds(2400))
+        {
+            AutoReverse = true,
+            RepeatBehavior = RepeatBehavior.Forever,
+            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+        };
+        translateTrans.BeginAnimation(TranslateTransform.YProperty, floatAnim);
+
+        p.Children.Add(viewBox);
+
+        AddOnboardTitle(p, "Зачем нужен NetFix");
+        AddOnboardSub(p, "NetFix автоматически восстанавливает доступ к YouTube, Discord, Telegram, а также к заблокированным сайтам и нейросетям (ChatGPT, Gemini и другим) без сложных настроек и сторонних VPN.");
         AddOnboardBtn(p, "Далее", "#3b82f6", () => ShowOnboardScreen(2));
     }
 
     private void BuildOnboard2(StackPanel p)
     {
-        AddOnboardSub(p, "Приложение НЕ СОБИРАЕТ ВАШИ ДАННЫЕ.\n\nКак разработчик заявляю: они мне абсолютно не нужны. Если вы всё же беспокоитесь о конфиденциальности и безопасности, напоминаю, что исходный код проекта полностью открыт и доступен на GitHub - вы всегда можете проверить его лично.");
-        AddOnboardBtn(p, "Далее", "#3b82f6", () => ShowOnboardScreen(3));
+        var viewBox = new Viewbox
+        {
+            Width = 48,
+            Height = 48,
+            Stretch = Stretch.Uniform,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 20),
+            RenderTransformOrigin = new Point(0.5, 0.5)
+        };
+        var canvas = new Canvas { Width = 24, Height = 24 };
+
+        var shieldPath = new System.Windows.Shapes.Path
+        {
+            Data = Geometry.Parse("M20.91 11.12C20.91 16.01 17.36 20.59 12.51 21.93C12.18 22.02 11.82 22.02 11.49 21.93C6.63996 20.59 3.08997 16.01 3.08997 11.12V6.72997C3.08997 5.90997 3.70998 4.97998 4.47998 4.66998L10.05 2.39001C11.3 1.88001 12.71 1.88001 13.96 2.39001L19.53 4.66998C20.29 4.97998 20.92 5.90997 20.92 6.72997L20.91 11.12Z"),
+            Stroke = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            StrokeThickness = 2.0,
+            StrokeStartLineCap = PenLineCap.Round,
+            StrokeEndLineCap = PenLineCap.Round,
+            StrokeLineJoin = PenLineJoin.Round
+        };
+
+        var lockGroup = new GeometryGroup();
+        lockGroup.Children.Add(Geometry.Parse("M12 12.5C13.1046 12.5 14 11.6046 14 10.5C14 9.39543 13.1046 8.5 12 8.5C10.8954 8.5 10 9.39543 10 10.5C10 11.6046 10.8954 12.5 12 12.5Z"));
+        lockGroup.Children.Add(Geometry.Parse("M12 12.5V15.5"));
+
+        var lockPath = new System.Windows.Shapes.Path
+        {
+            Data = lockGroup,
+            Stroke = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            StrokeThickness = 2.0,
+            StrokeStartLineCap = PenLineCap.Round,
+            StrokeEndLineCap = PenLineCap.Round,
+            StrokeLineJoin = PenLineJoin.Round
+        };
+
+        canvas.Children.Add(shieldPath);
+        canvas.Children.Add(lockPath);
+        viewBox.Child = canvas;
+
+        var transGroup = new TransformGroup();
+        var scaleTrans = new ScaleTransform(1.0, 1.0);
+        var translateTrans = new TranslateTransform(0, 0);
+        transGroup.Children.Add(scaleTrans);
+        transGroup.Children.Add(translateTrans);
+        viewBox.RenderTransform = transGroup;
+
+        var popAnim = new DoubleAnimation(0.9, 1.0, TimeSpan.FromMilliseconds(500))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        scaleTrans.BeginAnimation(ScaleTransform.ScaleXProperty, popAnim);
+        scaleTrans.BeginAnimation(ScaleTransform.ScaleYProperty, popAnim);
+
+        var floatAnim = new DoubleAnimation(-1.5, 1.5, TimeSpan.FromMilliseconds(2400))
+        {
+            AutoReverse = true,
+            RepeatBehavior = RepeatBehavior.Forever,
+            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+        };
+        translateTrans.BeginAnimation(TranslateTransform.YProperty, floatAnim);
+
+        p.Children.Add(viewBox);
+
+        AddOnboardTitle(p, "Безопасность и приватность");
+
+        var subText = new TextBlock
+        {
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 16.5,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            TextAlignment = TextAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 24)
+        };
+
+        subText.Inlines.Add(new System.Windows.Documents.Run("Приложение не собирает данные, не перехватывает личный трафик и не отправляет аналитику. Исходный код полностью открыт на "));
+
+        var link = new System.Windows.Documents.Hyperlink(new System.Windows.Documents.Run("GitHub"))
+        {
+            NavigateUri = new Uri("https://github.com/rupleide/NetFix"),
+            Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            TextDecorations = null,
+            Cursor = Cursors.Hand
+        };
+        link.RequestNavigate += Hyperlink_RequestNavigate;
+
+        subText.Inlines.Add(link);
+        subText.Inlines.Add(new System.Windows.Documents.Run(", вы можете проверить каждую строчку."));
+        p.Children.Add(subText);
+
+        AddOnboardBtn(p, "Понятно", "#3b82f6", () => ShowOnboardScreen(3));
     }
 
     private void BuildOnboard3(StackPanel p)
     {
-        AddOnboardTitle(p, "Способ установки");
-        AddOnboardSub(p, "Как вы хотите установить компоненты для обхода блокировок?\nПрограмма может сделать всё автоматически примерно за 15 секунд.");
+        var viewBox = new Viewbox
+        {
+            Width = 48,
+            Height = 48,
+            Stretch = Stretch.Uniform,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 20)
+        };
+        var canvas = new Canvas { Width = 24, Height = 24 };
 
-        AddOnboardBtn(p, "Автоматическая установка (15 сек)", "#22c55e", () =>
+        var trayPath = new System.Windows.Shapes.Path
+        {
+            Data = Geometry.Parse("M17 17H17.01M17.4 14H18C18.9319 14 19.3978 14 19.7654 14.1522C20.2554 14.3552 20.6448 14.7446 20.8478 15.2346C21 15.6022 21 16.0681 21 17C21 17.9319 21 18.3978 20.8478 18.7654C20.6448 19.2554 20.2554 19.6448 19.7654 19.8478C19.3978 20 18.9319 20 18 20H6C5.06812 20 4.60218 20 4.23463 19.8478C3.74458 19.6448 3.35523 19.2554 3.15224 18.7654C3 18.3978 3 17.9319 3 17C3 16.0681 3 15.6022 3.15224 15.2346C3.35523 14.7446 3.74458 14.3552 4.23463 14.1522C4.60218 14 5.06812 14 6 14H6.6"),
+            Stroke = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            StrokeThickness = 2.0,
+            StrokeStartLineCap = PenLineCap.Round,
+            StrokeEndLineCap = PenLineCap.Round,
+            StrokeLineJoin = PenLineJoin.Round
+        };
+
+        var arrowPath = new System.Windows.Shapes.Path
+        {
+            Data = Geometry.Parse("M12 15V4M12 15L9 12M12 15L15 12"),
+            Stroke = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            StrokeThickness = 2.0,
+            StrokeStartLineCap = PenLineCap.Round,
+            StrokeEndLineCap = PenLineCap.Round,
+            StrokeLineJoin = PenLineJoin.Round
+        };
+
+        canvas.Children.Add(trayPath);
+        canvas.Children.Add(arrowPath);
+        viewBox.Child = canvas;
+
+        p.Children.Add(viewBox);
+
+        AddOnboardTitle(p, "Способ установки");
+        AddOnboardSub(p, "Программа может скачать и настроить все зависимости сама или дать вам указать файлы вручную.");
+
+        AddOnboardBtn(p, "Автоматически (рекомендуется)", "#22c55e", () =>
         {
             _onboardForceReserve = false;
+            _onboardIsManual = false;
             ShowOnboardScreen(16);
-        });
+        }, stretch: true);
 
-        AddOnboardBtn(p, "Автоматическая (Резерв)", "#3b82f6", () =>
+        AddOnboardBtn(p, "Автоматически (зеркало)", "#3b82f6", () =>
         {
             _onboardForceReserve = true;
+            _onboardIsManual = false;
             ShowOnboardScreen(16);
-        });
+        }, stretch: true);
 
-        AddOnboardBtn(p, "Ручная установка", "#2e2e2e", () => ShowOnboardScreen(17), foreground: "#888888");
+        AddOnboardBtn(p, "Вручную", "#2e2e2e", () =>
+        {
+            _onboardIsManual = true;
+            ShowOnboardScreen(17);
+        }, foreground: "#888888", stretch: true);
     }
 
     private void BuildOnboardZapretChoice(StackPanel p)
     {
-        AddOnboardTitle(p, "У вас установлен zapret-discord-youtube?");
-        AddOnboardBtn(p, "Да, выбрать файл", "#22c55e", () =>
+        AddOnboardTitle(p, "Компонент Zapret");
+        AddOnboardSub(p, "У вас уже скачан архив zapret-discord-youtube?");
+        AddOnboardBtn(p, "Указать папку с файлами", "#22c55e", () =>
         {
             var dlg = new OpenFileDialog { Title = "Выберите service.bat", Filter = "service.bat|service.bat|Все файлы|*.*" };
             if (dlg.ShowDialog() == true)
@@ -11940,14 +15085,14 @@ public partial class MainWindow : Window
                 ShowOnboardScreen(9);
             }
         });
-        AddOnboardBtn(p, "Нет, давай скачаю", "#2e2e2e", () => ShowOnboardScreen(5), foreground: "#888888");
+        AddOnboardBtn(p, "Скачать архив", "#2e2e2e", () => ShowOnboardScreen(5), foreground: "#888888");
     }
 
     private void BuildOnboardLetsDoIt(StackPanel p)
     {
-        AddOnboardTitle(p, "Давай всё сделаем");
-        AddOnboardSub(p, "Давай всё настроим за пару минут.\nНажми кнопку ниже, чтобы получить нужные компоненты.");
-        AddOnboardBtn(p, "Скачать Zapret", "#3b82f6", () =>
+        AddOnboardTitle(p, "Скачивание Zapret");
+        AddOnboardSub(p, "Откройте страницу релиза на GitHub и скачайте свежий архив из блока Assets.");
+        AddOnboardBtn(p, "Открыть страницу загрузки", "#3b82f6", () =>
         {
             OpenUrl("https://github.com/Flowseal/zapret-discord-youtube/releases/latest");
             ShowOnboardScreen(6);
@@ -11956,8 +15101,9 @@ public partial class MainWindow : Window
 
     private void BuildOnboardDownloadArchive(StackPanel p)
     {
-        AddOnboardSub(p, "Опустите на сайте ниже и найдите вкладку с файлами называется Assets.\nТам есть несколько файлов zapret-discord-youtube-1.9.7b.rar или .zip.\nКачай какую хочешь.");
-        AddOnboardBtn(p, "Я скачал архив", "#3b82f6", () => ShowOnboardScreen(7));
+        AddOnboardTitle(p, "Загрузка архива");
+        AddOnboardSub(p, "Скачайте файл .zip или .rar в блоке Assets внизу страницы.");
+        AddOnboardBtn(p, "Архив скачан", "#3b82f6", () => ShowOnboardScreen(7));
     }
 
     private void BuildOnboardExtract(StackPanel p)
@@ -11971,14 +15117,15 @@ public partial class MainWindow : Window
         {
         }
 
-        AddOnboardSub(p, "Я открыл тебе папку C:\\Zapret.\nОткрой Архив который ты скачал, нажми CTRL + A, чтобы выделить всё,\nи перекинь все файлы в эту папку.");
-        AddOnboardBtn(p, "Я перекинул файлы", "#3b82f6", () => ShowOnboardScreen(8));
+        AddOnboardTitle(p, "Распаковка файлов");
+        AddOnboardSub(p, "Мы открыли папку C:\\Zapret. Распакуйте всё содержимое скачанного архива прямо в неё.");
+        AddOnboardBtn(p, "Файлы на месте", "#3b82f6", () => ShowOnboardScreen(8));
     }
 
     private void BuildOnboardZapretSelectBat(StackPanel p)
     {
-        AddOnboardTitle(p, "Выбор service.bat");
-        AddOnboardSub(p, "Теперь выбери файл service.bat в папке, куда ты только что перекинул файлы.");
+        AddOnboardTitle(p, "Привязка компонента");
+        AddOnboardSub(p, "Выберите файл service.bat внутри папки C:\\Zapret.");
         AddOnboardBtn(p, "Выбрать service.bat", "#22c55e", () =>
         {
             var dlg = new OpenFileDialog { Title = "Выберите service.bat", Filter = "service.bat|service.bat|Все файлы|*.*", InitialDirectory = @"C:\Zapret" };
@@ -11996,25 +15143,66 @@ public partial class MainWindow : Window
     {
         var likeIcon = new System.Windows.Shapes.Path
         {
+            Tag = "custom_icon",
             Data = Geometry.Parse("M8,11.47A18.74,18.74,0,0,0,10.69,8.9a18.74,18.74,0,0,0,1.76-2.42A6.42,6.42,0,0,0,13,5.41l1.74-4.57a4.45,4.45,0,0,1,2.83,2A4,4,0,0,1,18,4.77a2.67,2.67,0,0,1-.09.55L16.72,9.05h5.22a2,2,0,0,1,2,1.85,19.32,19.32,0,0,1-.32,5.44,33.83,33.83,0,0,1-1.23,4.34,3.78,3.78,0,0,1-3.58,2.49,25.54,25.54,0,0,1-6.28-.66A45.85,45.85,0,0,1,8,21.26V11.47Z M5,9H1a1,1,0,0,0-1,1V22a1,1,0,0,0,1,1H5a1,1,0,0,0,1-1V10A1,1,0,0,0,5,9ZM3,21a1,1,0,1,1,1-1A1,1,0,0,1,3,21Z"),
             Fill = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
             Width = 48,
             Height = 48,
             Stretch = Stretch.Uniform,
             HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
-            Margin = new Thickness(0, 0, 0, 20)
+            Margin = new Thickness(0, 0, 0, 20),
+            RenderTransformOrigin = new Point(0.5, 0.5)
         };
+
+        var tg = new TransformGroup();
+        var sc = new ScaleTransform(1, 1);
+        var rot = new RotateTransform(0);
+        var tt = new TranslateTransform(0, 0);
+        tg.Children.Add(sc);
+        tg.Children.Add(rot);
+        tg.Children.Add(tt);
+        likeIcon.RenderTransform = tg;
+
+        var popAnim = new DoubleAnimation(0.1, 1.0, TimeSpan.FromMilliseconds(700))
+        {
+            EasingFunction = new ElasticEase { Oscillations = 1, Springiness = 4, EasingMode = EasingMode.EaseOut }
+        };
+        var rotIntro = new DoubleAnimation(-18, 0, TimeSpan.FromMilliseconds(600))
+        {
+            EasingFunction = new BackEase { Amplitude = 0.5, EasingMode = EasingMode.EaseOut }
+        };
+        sc.BeginAnimation(ScaleTransform.ScaleXProperty, popAnim);
+        sc.BeginAnimation(ScaleTransform.ScaleYProperty, popAnim);
+        rot.BeginAnimation(RotateTransform.AngleProperty, rotIntro);
+
+        var wobbleAnim = new DoubleAnimation(-3, 3, TimeSpan.FromMilliseconds(1500))
+        {
+            AutoReverse = true,
+            RepeatBehavior = RepeatBehavior.Forever,
+            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+        };
+        rot.BeginAnimation(RotateTransform.AngleProperty, wobbleAnim);
+
+        var floatAnim = new DoubleAnimation(-2.5, 2.5, TimeSpan.FromMilliseconds(1500))
+        {
+            AutoReverse = true,
+            RepeatBehavior = RepeatBehavior.Forever,
+            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+        };
+        tt.BeginAnimation(TranslateTransform.YProperty, floatAnim);
+
         p.Children.Add(likeIcon);
 
-        AddOnboardTitle(p, "Ты молодец!");
-        AddOnboardSub(p, "Надеюсь, ты сделал всё правильно.");
+        AddOnboardTitle(p, "Zapret подключен");
+        AddOnboardSub(p, "Файлы проверены, переходим ко второму компоненту.");
         AddOnboardBtn(p, "Далее", "#3b82f6", () => ShowOnboardScreen(10));
     }
 
     private void BuildOnboardTgWsChoice(StackPanel p)
     {
-        AddOnboardTitle(p, "У вас установлен tg-ws-proxy?");
-        AddOnboardBtn(p, "Да, выбрать файл", "#22c55e", () =>
+        AddOnboardTitle(p, "Компонент TgWsProxy");
+        AddOnboardSub(p, "У вас уже скачан файл TgWsProxy.exe?");
+        AddOnboardBtn(p, "Выбрать файл", "#22c55e", () =>
         {
             var dlg = new OpenFileDialog { Title = "Выберите файл TgWsProxy.exe", Filter = "TgWsProxy.exe|*TgWsProxy*.exe|Исполняемые файлы (*.exe)|*.exe|Все файлы|*.*" };
             if (dlg.ShowDialog() == true)
@@ -12025,13 +15213,14 @@ public partial class MainWindow : Window
                 ShowOnboardScreen(15);
             }
         });
-        AddOnboardBtn(p, "Нет, давай скачаю", "#2e2e2e", () => ShowOnboardScreen(11), foreground: "#888888");
+        AddOnboardBtn(p, "Скачать", "#2e2e2e", () => ShowOnboardScreen(11), foreground: "#888888");
     }
 
     private void BuildOnboardTgWsDownload(StackPanel p)
     {
-        AddOnboardSub(p, "Опустите на сайте ниже и найдите вкладку с файлами называется Assets.\nТам нужно скачать не архив, а сам файл TgWsProxy.exe.");
-        AddOnboardBtn(p, "Скачать TgWsProxy.exe", "#3b82f6", () =>
+        AddOnboardTitle(p, "Скачивание TgWsProxy");
+        AddOnboardSub(p, "В блоке Assets на GitHub скачайте исполняемый файл TgWsProxy.exe (не архив).");
+        AddOnboardBtn(p, "Скачать с GitHub", "#3b82f6", () =>
         {
             OpenUrl("https://github.com/Flowseal/tg-ws-proxy/releases/latest");
             ShowOnboardScreen(12);
@@ -12042,14 +15231,15 @@ public partial class MainWindow : Window
     {
         try { Process.Start("explorer.exe", @"C:\Zapret"); } catch {}
 
-        AddOnboardSub(p, "Я снова открыл тебе папку C:\\Zapret.\nТеперь перекинь скачанный файл TgWsProxy.exe в эту папку.");
-        AddOnboardBtn(p, "Я перекинул", "#3b82f6", () => ShowOnboardScreen(13));
+        AddOnboardTitle(p, "Размещение файла");
+        AddOnboardSub(p, "Переместите скачанный TgWsProxy.exe в открытую папку C:\\Zapret.");
+        AddOnboardBtn(p, "Файл перемещен", "#3b82f6", () => ShowOnboardScreen(13));
     }
 
     private void BuildOnboardTgWsSelectExe(StackPanel p)
     {
-        AddOnboardTitle(p, "Выбор TgWsProxy.exe");
-        AddOnboardSub(p, "Теперь выбери файл TgWsProxy.exe, который ты только что перекинул в папку.");
+        AddOnboardTitle(p, "Привязка TgWsProxy");
+        AddOnboardSub(p, "Укажите путь к TgWsProxy.exe в папке C:\\Zapret.");
         AddOnboardBtn(p, "Выбрать TgWsProxy.exe", "#22c55e", () =>
         {
             var dlg = new OpenFileDialog { Title = "Выберите TgWsProxy.exe", Filter = "TgWsProxy.exe|*TgWsProxy*.exe|Исполняемые файлы (*.exe)|*.exe|Все файлы|*.*", InitialDirectory = @"C:\Zapret" };
@@ -12067,28 +15257,77 @@ public partial class MainWindow : Window
     {
         var likeIcon = new System.Windows.Shapes.Path
         {
+            Tag = "custom_icon",
             Data = Geometry.Parse("M8,11.47A18.74,18.74,0,0,0,10.69,8.9a18.74,18.74,0,0,0,1.76-2.42A6.42,6.42,0,0,0,13,5.41l1.74-4.57a4.45,4.45,0,0,1,2.83,2A4,4,0,0,1,18,4.77a2.67,2.67,0,0,1-.09.55L16.72,9.05h5.22a2,2,0,0,1,2,1.85,19.32,19.32,0,0,1-.32,5.44,33.83,33.83,0,0,1-1.23,4.34,3.78,3.78,0,0,1-3.58,2.49,25.54,25.54,0,0,1-6.28-.66A45.85,45.85,0,0,1,8,21.26V11.47Z M5,9H1a1,1,0,0,0-1,1V22a1,1,0,0,0,1,1H5a1,1,0,0,0,1-1V10A1,1,0,0,0,5,9ZM3,21a1,1,0,1,1,1-1A1,1,0,0,1,3,21Z"),
-            Fill = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            Fill = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)),
             Width = 48,
             Height = 48,
             Stretch = Stretch.Uniform,
             HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
-            Margin = new Thickness(0, 0, 0, 20)
+            Margin = new Thickness(0, 0, 0, 20),
+            RenderTransformOrigin = new Point(0.5, 0.5)
         };
+
+        var tg = new TransformGroup();
+        var sc = new ScaleTransform(1, 1);
+        var rot = new RotateTransform(0);
+        var tt = new TranslateTransform(0, 0);
+        tg.Children.Add(sc);
+        tg.Children.Add(rot);
+        tg.Children.Add(tt);
+        likeIcon.RenderTransform = tg;
+
+        var popAnim = new DoubleAnimation(0.1, 1.0, TimeSpan.FromMilliseconds(700))
+        {
+            EasingFunction = new ElasticEase { Oscillations = 1, Springiness = 4, EasingMode = EasingMode.EaseOut }
+        };
+        var rotIntro = new DoubleAnimation(-18, 0, TimeSpan.FromMilliseconds(600))
+        {
+            EasingFunction = new BackEase { Amplitude = 0.5, EasingMode = EasingMode.EaseOut }
+        };
+        sc.BeginAnimation(ScaleTransform.ScaleXProperty, popAnim);
+        sc.BeginAnimation(ScaleTransform.ScaleYProperty, popAnim);
+        rot.BeginAnimation(RotateTransform.AngleProperty, rotIntro);
+
+        var wobbleAnim = new DoubleAnimation(-3, 3, TimeSpan.FromMilliseconds(1500))
+        {
+            AutoReverse = true,
+            RepeatBehavior = RepeatBehavior.Forever,
+            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+        };
+        rot.BeginAnimation(RotateTransform.AngleProperty, wobbleAnim);
+
+        var floatAnim = new DoubleAnimation(-2.5, 2.5, TimeSpan.FromMilliseconds(1500))
+        {
+            AutoReverse = true,
+            RepeatBehavior = RepeatBehavior.Forever,
+            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+        };
+        tt.BeginAnimation(TranslateTransform.YProperty, floatAnim);
+
         p.Children.Add(likeIcon);
 
-        AddOnboardTitle(p, "Всё готово!");
+        AddOnboardTitle(p, "Всё готово к работе");
 
-        var subText = new TextBlock();
-        subText.FontFamily = new FontFamily("Segoe UI");
-        subText.FontSize = 15;
-        subText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
-        subText.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
-        subText.TextAlignment = TextAlignment.Center;
-        subText.TextWrapping = TextWrapping.Wrap;
-        subText.Margin = new Thickness(0, 0, 0, 24);
+        var subText = new TextBlock
+        {
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 16.5,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            TextAlignment = TextAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 16)
+        };
 
-        subText.Inlines.Add(new System.Windows.Documents.Run("Пути сохранены. Можно запускать.\n\nНастройки можно изменить в любое время через "));
+        if (_onboardIsManual)
+        {
+            subText.Inlines.Add(new System.Windows.Documents.Run("Все пути сохранены. Конфигурацию можно скорректировать в любое время в меню настроек "));
+        }
+        else
+        {
+            subText.Inlines.Add(new System.Windows.Documents.Run("Компоненты настроены. Изменить параметры или проверить статус всегда можно через настройки "));
+        }
 
         var pathIcon = new System.Windows.Shapes.Path();
         pathIcon.Width = 14;
@@ -12100,29 +15339,604 @@ public partial class MainWindow : Window
 
         var inlineIcon = new System.Windows.Documents.InlineUIContainer(pathIcon);
         inlineIcon.BaselineAlignment = System.Windows.BaselineAlignment.Center;
-
         subText.Inlines.Add(inlineIcon);
+
         p.Children.Add(subText);
 
-        AddOnboardBtn(p, "Открыть приложение →", "#3b82f6", () =>
+        var footnote = new TextBlock
+        {
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 13,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x66)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            TextAlignment = TextAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 24)
+        };
+        footnote.Inlines.Add(new System.Windows.Documents.Run("Мобильная версия NetFix Mobile для Android уже доступна на "));
+        var mobileLink = new System.Windows.Documents.Hyperlink(new System.Windows.Documents.Run("GitHub"))
+        {
+            NavigateUri = new Uri("https://github.com/rupleide/NetFixMobile"),
+            Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            TextDecorations = null,
+            Cursor = Cursors.Hand
+        };
+        mobileLink.RequestNavigate += Hyperlink_RequestNavigate;
+        footnote.Inlines.Add(mobileLink);
+        p.Children.Add(footnote);
+
+        AddOnboardBtn(p, "Открыть NetFix", "#22c55e", () =>
         {
             SettingsService.MarkOnboarded();
             OnboardLayer.Visibility = Visibility.Collapsed;
-            CheckInternetOnStart();
-            StartActiveAppsMonitor();
+            OnboardLayer.Opacity = 1;
+            OnboardContent.Content = null;
+            _onboardRootGrid = null;
+            _onboardContentHost = null;
+            _isEntranceAnimating = false;
+            PlayEpicMainEntranceAnimation(0);
         });
+    }
+
+    private void PlayEpicOnboardFinishAnimation()
+    {
+        var easeCubicIn = new CubicEase { EasingMode = EasingMode.EaseIn };
+        var easeCubicOut = new CubicEase { EasingMode = EasingMode.EaseOut };
+
+        if (_onboardRootGrid != null)
+        {
+            var contentTrans = new TranslateTransform(0, 0);
+            _onboardRootGrid.RenderTransform = contentTrans;
+
+            var fadeOutRoot = new DoubleAnimation(1.0, 0.0, TimeSpan.FromMilliseconds(250))
+            {
+                EasingFunction = easeCubicIn
+            };
+            var moveOutRoot = new DoubleAnimation(0, 16, TimeSpan.FromMilliseconds(250))
+            {
+                EasingFunction = easeCubicIn
+            };
+
+            _onboardRootGrid.BeginAnimation(OpacityProperty, fadeOutRoot);
+            contentTrans.BeginAnimation(TranslateTransform.YProperty, moveOutRoot);
+        }
+
+        var fadeOutLayer = new DoubleAnimation(1.0, 0.0, TimeSpan.FromMilliseconds(280))
+        {
+            BeginTime = TimeSpan.FromMilliseconds(130),
+            EasingFunction = easeCubicOut
+        };
+
+        fadeOutLayer.Completed += (_, _) =>
+        {
+            OnboardLayer.Visibility = Visibility.Collapsed;
+            OnboardLayer.Opacity = 1;
+            OnboardLayer.RenderTransform = null;
+            OnboardContent.Content = null;
+            _onboardRootGrid = null;
+            _onboardContentHost = null;
+
+            PlayEpicMainEntranceAnimation(20);
+        };
+
+        OnboardLayer.BeginAnimation(OpacityProperty, fadeOutLayer);
+    }
+
+    private void PrepareMainEntranceState()
+    {
+        if (AuroraLayer != null)
+        {
+            AuroraLayer.BeginAnimation(OpacityProperty, null);
+            AuroraLayer.Opacity = 0;
+        }
+        if (MainPageContainer != null)
+        {
+            MainPageContainer.BeginAnimation(OpacityProperty, null);
+            MainPageContainer.Opacity = 1;
+            MainPageContainer.RenderTransform = null;
+        }
+        if (AppHeaderBar != null)
+        {
+            AppHeaderBar.BeginAnimation(OpacityProperty, null);
+            AppHeaderBar.Opacity = 1;
+            AppHeaderBar.RenderTransform = null;
+        }
+        if (AppBottomBar != null)
+        {
+            AppBottomBar.BeginAnimation(OpacityProperty, null);
+            AppBottomBar.Opacity = 1;
+            AppBottomBar.RenderTransform = null;
+        }
+        if (AppBottomContent != null)
+        {
+            AppBottomContent.BeginAnimation(OpacityProperty, null);
+            AppBottomContent.Opacity = 0;
+            AppBottomContent.RenderTransform = new TranslateTransform(0, 12);
+        }
+        if (AppLogoTitle != null)
+        {
+            AppLogoTitle.BeginAnimation(OpacityProperty, null);
+            AppLogoTitle.Opacity = 0;
+            AppLogoTitle.RenderTransform = new TranslateTransform(-10, 0);
+        }
+        if (AppAuthorTitle != null)
+        {
+            AppAuthorTitle.BeginAnimation(OpacityProperty, null);
+            AppAuthorTitle.Opacity = 0;
+            AppAuthorTitle.RenderTransform = new TranslateTransform(-8, 0);
+        }
+        if (MainTitleBlock != null)
+        {
+            MainTitleBlock.BeginAnimation(OpacityProperty, null);
+            MainTitleBlock.Opacity = 0;
+            MainTitleBlock.RenderTransform = new TranslateTransform(0, 20);
+        }
+        if (MainCoreBlock != null)
+        {
+            MainCoreBlock.BeginAnimation(OpacityProperty, null);
+            MainCoreBlock.Opacity = 0;
+            MainCoreBlock.RenderTransform = new TranslateTransform(0, 22);
+        }
+        if (MainLogBlock != null)
+        {
+            MainLogBlock.BeginAnimation(OpacityProperty, null);
+            MainLogBlock.Opacity = 1.0;
+            MainLogBlock.Clip = null;
+            MainLogBlock.RenderTransform = null;
+        }
+        if (SetupProgContainer != null)
+        {
+            SetupProgContainer.BeginAnimation(OpacityProperty, null);
+            SetupProgContainer.Opacity = 0;
+            SetupProgContainer.RenderTransform = new TranslateTransform(0, 18);
+        }
+        if (LogHeaderContainer != null)
+        {
+            LogHeaderContainer.BeginAnimation(OpacityProperty, null);
+            LogHeaderContainer.Opacity = 0;
+            LogHeaderContainer.RenderTransform = new TranslateTransform(0, 14);
+        }
+        if (LogBoxClipGeom != null)
+        {
+            LogBoxClipGeom.BeginAnimation(RectangleGeometry.RectProperty, null);
+            LogBoxClipGeom.Rect = new Rect(0, 0, 1200, 0);
+        }
+        if (LogBoxWrapper != null)
+        {
+            LogBoxWrapper.BeginAnimation(OpacityProperty, null);
+            LogBoxWrapper.Opacity = 1.0;
+            LogBoxWrapper.RenderTransform = new TranslateTransform(0, 14);
+        }
+
+        UIElement?[] navButtons = [ServicesBtn, ModsNavBtn, FaqNavBtn, DiagNavBtn, GameNavBtn, SettingsBtn, MinBtn, CloseBtn];
+        foreach (var btn in navButtons)
+        {
+            if (btn == null) continue;
+            btn.BeginAnimation(OpacityProperty, null);
+            btn.Opacity = 0;
+            btn.RenderTransform = new TranslateTransform(14, 0);
+        }
+
+        UIElement?[] statusBeads = [NetDot, NetLbl, VpnStatusPanel, ZapretDot, ZapretLbl, TgWsDot, TgWsLbl];
+        foreach (var bead in statusBeads)
+        {
+            if (bead == null) continue;
+            bead.BeginAnimation(OpacityProperty, null);
+            bead.Opacity = 0;
+            bead.RenderTransform = new TranslateTransform(-8, 0);
+        }
+
+        if (IdleRingOuter != null)
+        {
+            IdleRingOuter.BeginAnimation(OpacityProperty, null);
+            IdleRingOuter.Opacity = 0;
+            IdleRingOuter.RenderTransform = new ScaleTransform(0.92, 0.92);
+        }
+        if (IdleRingInner != null)
+        {
+            IdleRingInner.BeginAnimation(OpacityProperty, null);
+            IdleRingInner.Opacity = 0;
+            IdleRingInner.RenderTransform = new ScaleTransform(0.94, 0.94);
+        }
+
+        UIElement?[] speedElements = [DownloadLbl, UploadLbl, PingLbl, RescanBtn];
+        foreach (var elem in speedElements)
+        {
+            if (elem == null) continue;
+            elem.BeginAnimation(OpacityProperty, null);
+            elem.Opacity = 0;
+            elem.RenderTransform = new TranslateTransform(12, 0);
+        }
+    }
+
+    private void PlayEpicMainEntranceAnimation(int baseDelayMs = 0)
+    {
+        PrepareMainEntranceState();
+        _isEntranceAnimating = true;
+
+        var easeQuint = new QuinticEase { EasingMode = EasingMode.EaseOut };
+        var easeCubicOut = new CubicEase { EasingMode = EasingMode.EaseOut };
+
+        if (EntranceCurtain != null && EntranceCurtain.Visibility == Visibility.Visible)
+        {
+            var curtainFade = new DoubleAnimation(1.0, 0.0, TimeSpan.FromMilliseconds(220))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(baseDelayMs),
+                EasingFunction = easeCubicOut
+            };
+            curtainFade.Completed += (_, _) =>
+            {
+                EntranceCurtain.Visibility = Visibility.Collapsed;
+                EntranceCurtain.Opacity = 0;
+            };
+            EntranceCurtain.BeginAnimation(OpacityProperty, curtainFade);
+        }
+
+        if (AuroraLayer != null)
+        {
+            var auroraFade = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(1400))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(baseDelayMs),
+                EasingFunction = easeCubicOut
+            };
+            AuroraLayer.BeginAnimation(OpacityProperty, auroraFade);
+        }
+
+        if (AppLogoTitle != null)
+        {
+            var logoTrans = new TranslateTransform(-10, 0);
+            AppLogoTitle.RenderTransform = logoTrans;
+
+            var logoFade = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(850))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(baseDelayMs + 40),
+                EasingFunction = easeCubicOut
+            };
+            var logoSlide = new DoubleAnimation(-10, 0, TimeSpan.FromMilliseconds(950))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(baseDelayMs + 40),
+                EasingFunction = easeQuint
+            };
+
+            AppLogoTitle.BeginAnimation(OpacityProperty, logoFade);
+            logoTrans.BeginAnimation(TranslateTransform.XProperty, logoSlide);
+        }
+
+        if (AppAuthorTitle != null)
+        {
+            var authorTrans = new TranslateTransform(-8, 0);
+            AppAuthorTitle.RenderTransform = authorTrans;
+
+            var authorFade = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(850))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(baseDelayMs + 80),
+                EasingFunction = easeCubicOut
+            };
+            var authorSlide = new DoubleAnimation(-8, 0, TimeSpan.FromMilliseconds(950))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(baseDelayMs + 80),
+                EasingFunction = easeQuint
+            };
+
+            AppAuthorTitle.BeginAnimation(OpacityProperty, authorFade);
+            authorTrans.BeginAnimation(TranslateTransform.XProperty, authorSlide);
+        }
+
+        UIElement?[] statusBeads = [NetDot, NetLbl, VpnStatusPanel, ZapretDot, ZapretLbl, TgWsDot, TgWsLbl];
+        int statusDelay = baseDelayMs + 120;
+        foreach (var bead in statusBeads)
+        {
+            if (bead == null) continue;
+            bead.Opacity = 0;
+            var beadTrans = new TranslateTransform(-8, 0);
+            bead.RenderTransform = beadTrans;
+
+            var beadFade = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(750))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(statusDelay),
+                EasingFunction = easeCubicOut
+            };
+            var beadSlide = new DoubleAnimation(-8, 0, TimeSpan.FromMilliseconds(850))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(statusDelay),
+                EasingFunction = easeQuint
+            };
+
+            bead.BeginAnimation(OpacityProperty, beadFade);
+            beadTrans.BeginAnimation(TranslateTransform.XProperty, beadSlide);
+            statusDelay += 45;
+        }
+
+        UIElement?[] navButtons = [ServicesBtn, ModsNavBtn, FaqNavBtn, DiagNavBtn, GameNavBtn, SettingsBtn, MinBtn, CloseBtn];
+        int navDelay = baseDelayMs + 140;
+        foreach (var btn in navButtons)
+        {
+            if (btn == null) continue;
+            btn.Opacity = 0;
+            var btnTrans = new TranslateTransform(14, 0);
+            btn.RenderTransform = btnTrans;
+
+            var btnFade = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(950))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(navDelay),
+                EasingFunction = easeCubicOut
+            };
+            var btnSlide = new DoubleAnimation(14, 0, TimeSpan.FromMilliseconds(1050))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(navDelay),
+                EasingFunction = easeQuint
+            };
+
+            btn.BeginAnimation(OpacityProperty, btnFade);
+            btnTrans.BeginAnimation(TranslateTransform.XProperty, btnSlide);
+            navDelay += 35;
+        }
+
+        if (MainTitleBlock != null)
+        {
+            var titleTrans = new TranslateTransform(0, 20);
+            MainTitleBlock.RenderTransform = titleTrans;
+
+            var titleFadeIn = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(1300))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(baseDelayMs + 180),
+                EasingFunction = easeCubicOut
+            };
+            var titleMoveUp = new DoubleAnimation(20, 0, TimeSpan.FromMilliseconds(1400))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(baseDelayMs + 180),
+                EasingFunction = easeQuint
+            };
+
+            MainTitleBlock.BeginAnimation(OpacityProperty, titleFadeIn);
+            titleTrans.BeginAnimation(TranslateTransform.YProperty, titleMoveUp);
+        }
+
+        if (MainCoreBlock != null)
+        {
+            var coreTrans = new TranslateTransform(0, 22);
+            MainCoreBlock.RenderTransform = coreTrans;
+
+            var coreFadeIn = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(1350))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(baseDelayMs + 320),
+                EasingFunction = easeCubicOut
+            };
+            var coreMoveUp = new DoubleAnimation(22, 0, TimeSpan.FromMilliseconds(1450))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(baseDelayMs + 320),
+                EasingFunction = easeQuint
+            };
+
+            MainCoreBlock.BeginAnimation(OpacityProperty, coreFadeIn);
+            coreTrans.BeginAnimation(TranslateTransform.YProperty, coreMoveUp);
+        }
+
+        if (IdleRingOuter != null)
+        {
+            var ringScale = new ScaleTransform(0.92, 0.92);
+            IdleRingOuter.RenderTransformOrigin = new Point(0.5, 0.5);
+            IdleRingOuter.RenderTransform = ringScale;
+            IdleRingOuter.Opacity = 0;
+
+            var ringFade = new DoubleAnimation(0.0, 0.5, TimeSpan.FromMilliseconds(1300))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(baseDelayMs + 360),
+                EasingFunction = easeCubicOut
+            };
+            var ringPop = new DoubleAnimation(0.92, 1.0, TimeSpan.FromMilliseconds(1400))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(baseDelayMs + 360),
+                EasingFunction = easeQuint
+            };
+
+            IdleRingOuter.BeginAnimation(OpacityProperty, ringFade);
+            ringScale.BeginAnimation(ScaleTransform.ScaleXProperty, ringPop);
+            ringScale.BeginAnimation(ScaleTransform.ScaleYProperty, ringPop);
+        }
+
+        if (IdleRingInner != null)
+        {
+            var ringScale = new ScaleTransform(0.94, 0.94);
+            IdleRingInner.RenderTransformOrigin = new Point(0.5, 0.5);
+            IdleRingInner.RenderTransform = ringScale;
+            IdleRingInner.Opacity = 0;
+
+            var ringFade = new DoubleAnimation(0.0, 0.2, TimeSpan.FromMilliseconds(1400))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(baseDelayMs + 400),
+                EasingFunction = easeCubicOut
+            };
+            var ringPop = new DoubleAnimation(0.94, 1.0, TimeSpan.FromMilliseconds(1500))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(baseDelayMs + 400),
+                EasingFunction = easeQuint
+            };
+
+            IdleRingInner.BeginAnimation(OpacityProperty, ringFade);
+            ringScale.BeginAnimation(ScaleTransform.ScaleXProperty, ringPop);
+            ringScale.BeginAnimation(ScaleTransform.ScaleYProperty, ringPop);
+        }
+
+        UIElement?[] speedElements = [DownloadLbl, UploadLbl, PingLbl, RescanBtn];
+        int speedDelay = baseDelayMs + 420;
+        foreach (var elem in speedElements)
+        {
+            if (elem == null) continue;
+            elem.Opacity = 0;
+            var elemTrans = new TranslateTransform(12, 0);
+            elem.RenderTransform = elemTrans;
+
+            var elemFade = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(900))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(speedDelay),
+                EasingFunction = easeCubicOut
+            };
+            var elemSlide = new DoubleAnimation(12, 0, TimeSpan.FromMilliseconds(1000))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(speedDelay),
+                EasingFunction = easeQuint
+            };
+
+            elem.BeginAnimation(OpacityProperty, elemFade);
+            elemTrans.BeginAnimation(TranslateTransform.XProperty, elemSlide);
+            speedDelay += 50;
+        }
+
+        if (SetupProgContainer != null)
+        {
+            var progTrans = new TranslateTransform(0, 18);
+            SetupProgContainer.RenderTransform = progTrans;
+
+            var progFadeIn = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(1300))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(baseDelayMs + 480),
+                EasingFunction = easeCubicOut
+            };
+            var progMoveUp = new DoubleAnimation(18, 0, TimeSpan.FromMilliseconds(1400))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(baseDelayMs + 480),
+                EasingFunction = easeQuint
+            };
+
+            SetupProgContainer.BeginAnimation(OpacityProperty, progFadeIn);
+            progTrans.BeginAnimation(TranslateTransform.YProperty, progMoveUp);
+        }
+
+        if (LogHeaderContainer != null)
+        {
+            var headTrans = new TranslateTransform(0, 14);
+            LogHeaderContainer.RenderTransform = headTrans;
+
+            var headFadeIn = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(1100))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(baseDelayMs + 520),
+                EasingFunction = easeCubicOut
+            };
+            var headMoveUp = new DoubleAnimation(14, 0, TimeSpan.FromMilliseconds(1200))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(baseDelayMs + 520),
+                EasingFunction = easeQuint
+            };
+
+            LogHeaderContainer.BeginAnimation(OpacityProperty, headFadeIn);
+            headTrans.BeginAnimation(TranslateTransform.YProperty, headMoveUp);
+        }
+
+        if (LogBoxClipGeom != null && LogBoxWrapper != null)
+        {
+            var boxTrans = new TranslateTransform(0, 14);
+            LogBoxWrapper.RenderTransform = boxTrans;
+
+            LogBoxClipGeom.BeginAnimation(RectangleGeometry.RectProperty,
+                new RectAnimation(new Rect(0, 0, 1200, 0), new Rect(0, 0, 1200, 270), TimeSpan.FromMilliseconds(800))
+                {
+                    BeginTime = TimeSpan.FromMilliseconds(baseDelayMs + 560),
+                    EasingFunction = easeQuint
+                });
+            boxTrans.BeginAnimation(TranslateTransform.YProperty,
+                new DoubleAnimation(14, 0, TimeSpan.FromMilliseconds(850))
+                {
+                    BeginTime = TimeSpan.FromMilliseconds(baseDelayMs + 560),
+                    EasingFunction = easeQuint
+                });
+        }
+
+        if (AppBottomContent != null)
+        {
+            var footerTrans = new TranslateTransform(0, 12);
+            AppBottomContent.RenderTransform = footerTrans;
+
+            var footerFadeIn = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(1100))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(baseDelayMs + 550),
+                EasingFunction = easeCubicOut
+            };
+            var footerSlideUp = new DoubleAnimation(12, 0, TimeSpan.FromMilliseconds(1200))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(baseDelayMs + 550),
+                EasingFunction = easeQuint
+            };
+
+            footerFadeIn.Completed += (_, _) =>
+            {
+                _isEntranceAnimating = false;
+
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(120);
+                    Dispatcher.Invoke(() =>
+                    {
+                        CheckInternetOnStart();
+                        StartActiveAppsMonitor();
+                    });
+                });
+            };
+
+            AppBottomContent.BeginAnimation(OpacityProperty, footerFadeIn);
+            footerTrans.BeginAnimation(TranslateTransform.YProperty, footerSlideUp);
+        }
     }
 
     private void BuildOnboardManualStart(StackPanel p)
     {
-        AddOnboardSub(p, "Для работы приложения вам нужно скачать следующие компоненты:");
-        AddOnboardBtn(p, "Погнали", "#3b82f6", () => ShowOnboardScreen(4));
+        AddOnboardTitle(p, "Ручная настройка");
+        AddOnboardSub(p, "Потребуется скачать два компонента (Zapret и TgWsProxy) и указать к ним путь.");
+        AddOnboardBtn(p, "Начать", "#3b82f6", () => ShowOnboardScreen(4));
     }
 
     private void BuildOnboardAutoDownload(StackPanel p)
     {
-        AddOnboardTitle(p, "Автоматическая установка");
-        AddOnboardSub(p, "Подождите, скачиваем и настраиваем нужные компоненты.\nЭто займет не больше минуты.");
+        var viewBox = new Viewbox
+        {
+            Width = 48,
+            Height = 48,
+            Stretch = Stretch.Uniform,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 20),
+            RenderTransformOrigin = new Point(0.5, 0.5)
+        };
+        var iconCanvas = new Canvas
+        {
+            Width = 24,
+            Height = 24
+        };
+        var trayPath = new System.Windows.Shapes.Path
+        {
+            Data = Geometry.Parse("M17 17H17.01M17.4 14H18C18.9319 14 19.3978 14 19.7654 14.1522C20.2554 14.3552 20.6448 14.7446 20.8478 15.2346C21 15.6022 21 16.0681 21 17C21 17.9319 21 18.3978 20.8478 18.7654C20.6448 19.2554 20.2554 19.6448 19.7654 19.8478C19.3978 20 18.9319 20 18 20H6C5.06812 20 4.60218 20 4.23463 19.8478C3.74458 19.6448 3.35523 19.2554 3.15224 18.7654C3 18.3978 3 17.9319 3 17C3 16.0681 3 15.6022 3.15224 15.2346C3.35523 14.7446 3.74458 14.3552 4.23463 14.1522C4.60218 14 5.06812 14 6 14H6.6"),
+            Stroke = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            StrokeThickness = 2.0,
+            StrokeStartLineCap = PenLineCap.Round,
+            StrokeEndLineCap = PenLineCap.Round,
+            StrokeLineJoin = PenLineJoin.Round
+        };
+        var arrowTrans = new TranslateTransform(0, 0);
+        var arrowPath = new System.Windows.Shapes.Path
+        {
+            Data = Geometry.Parse("M12 15V4M12 15L9 12M12 15L15 12"),
+            Stroke = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+            StrokeThickness = 2.0,
+            StrokeStartLineCap = PenLineCap.Round,
+            StrokeEndLineCap = PenLineCap.Round,
+            StrokeLineJoin = PenLineJoin.Round,
+            RenderTransform = arrowTrans
+        };
+        iconCanvas.Children.Add(trayPath);
+        iconCanvas.Children.Add(arrowPath);
+        viewBox.Child = iconCanvas;
+
+        var arrowAnim = new DoubleAnimation(-4.5, 2.5, TimeSpan.FromMilliseconds(750))
+        {
+            AutoReverse = true,
+            RepeatBehavior = RepeatBehavior.Forever,
+            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+        };
+        arrowTrans.BeginAnimation(TranslateTransform.YProperty, arrowAnim);
+
+        p.Children.Add(viewBox);
+
+        AddOnboardTitle(p, "Установка компонентов");
+        AddOnboardSub(p, "Загружаем и настраиваем компоненты. Обычно это занимает не больше минуты.");
 
         var logCard = new Border
         {
@@ -12168,7 +15982,7 @@ public partial class MainWindow : Window
             Foreground = Brushes.White,
             HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
             FontFamily = new FontFamily("Segoe UI"),
-            FontSize = 13,
+            FontSize = 14,
             FontWeight = FontWeights.Medium,
             Margin = new Thickness(0, 0, 0, 20)
         };
@@ -12242,7 +16056,7 @@ public partial class MainWindow : Window
 
                     progBar.Value = 100;
                     progBar.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
-                    progText.Text = "Всё готово!";
+                    progText.Text = "Компоненты успешно установлены";
                     progText.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
 
                     AddOnboardBtn(actionsPanel, "Далее", "#3b82f6", () => ShowOnboardScreen(15));
@@ -12250,28 +16064,23 @@ public partial class MainWindow : Window
                 else
                 {
                     progBar.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
-                    progText.Text = "Ошибка установки";
+                    progText.Text = "Не удалось загрузить файлы";
                     progText.Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
 
-                    AddOnboardBtn(actionsPanel, "Попробовать вручную", "#ef4444", () => ShowOnboardScreen(17));
+                    AddOnboardBtn(actionsPanel, "Настроить вручную", "#ef4444", () =>
+                    {
+                        _onboardIsManual = true;
+                        ShowOnboardScreen(17);
+                    });
                 }
             });
         });
     }
 
-    private static void AddOnboardEmoji(StackPanel p, string emoji) =>
-        p.Children.Add(new TextBlock
-        {
-            Text = emoji, FontSize = 54, HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
-            FontFamily = new FontFamily("Segoe UI Emoji"),
-            Margin = new Thickness(0, 0, 0, 12)
-        });
-
     private static void AddOnboardTitle(StackPanel p, string text) =>
         p.Children.Add(new TextBlock
         {
-            Text = text, FontFamily = new FontFamily("Segoe UI"), FontSize = 22,
+            Text = text, FontFamily = new FontFamily("Segoe UI"), FontSize = 24,
             FontWeight = FontWeights.Bold, Foreground = Brushes.White,
             HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
             TextAlignment = TextAlignment.Center,
@@ -12281,7 +16090,7 @@ public partial class MainWindow : Window
     private static void AddOnboardSub(StackPanel p, string text) =>
         p.Children.Add(new TextBlock
         {
-            Text = text, FontFamily = new FontFamily("Segoe UI"), FontSize = 15,
+            Text = text, FontFamily = new FontFamily("Segoe UI"), FontSize = 16.5,
             Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
             HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
             TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap,
@@ -12289,14 +16098,14 @@ public partial class MainWindow : Window
         });
 
     private void AddOnboardBtn(StackPanel p, string text, string bgHex, Action action,
-        string foreground = "#ffffff")
+        string foreground = "#ffffff", bool stretch = false)
     {
         var bgBrush = (SolidColorBrush)new BrushConverter().ConvertFrom(bgHex)!;
         var c = bgBrush.Color;
         var hoverBrush = new SolidColorBrush(Color.FromRgb(
-            (byte)(c.R * 0.75),
-            (byte)(c.G * 0.75),
-            (byte)(c.B * 0.75)));
+            (byte)Math.Min(255, c.R * 1.07 + 8),
+            (byte)Math.Min(255, c.G * 1.07 + 8),
+            (byte)Math.Min(255, c.B * 1.07 + 8)));
 
         var btn = new Button
         {
@@ -12304,34 +16113,182 @@ public partial class MainWindow : Window
             Background          = bgBrush,
             Foreground          = (SolidColorBrush)new BrushConverter().ConvertFrom(foreground)!,
             FontFamily          = new FontFamily("Segoe UI"),
-            FontSize            = 14,
-            Height              = 44,
+            FontSize            = 16,
+            FontWeight          = FontWeights.SemiBold,
+            Height              = 48,
+            MinWidth            = stretch ? 0 : 200,
+            Padding             = new Thickness(24, 0, 24, 0),
             Cursor              = Cursors.Hand,
             BorderThickness     = new Thickness(0),
-            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
-            Margin              = new Thickness(0, 0, 0, 10),
+            HorizontalAlignment = stretch ? System.Windows.HorizontalAlignment.Stretch : System.Windows.HorizontalAlignment.Center,
+            Margin              = new Thickness(0, 0, 0, 12),
         };
 
         btn.Template = CreateSimpleBtnTemplate();
-        btn.MouseEnter += (_, _) => btn.Background = hoverBrush;
-        btn.MouseLeave += (_, _) => btn.Background = bgBrush;
+        AttachModernButtonHoverEffect(btn, bgBrush, hoverBrush, c);
         btn.Click += (_, _) => action();
         p.Children.Add(btn);
+    }
+
+    private static void AttachModernButtonHoverEffect(Button btn, Brush defaultBg, Brush hoverBg, Color glowColor)
+    {
+        TextOptions.SetTextFormattingMode(btn, TextFormattingMode.Ideal);
+        TextOptions.SetTextRenderingMode(btn, TextRenderingMode.Grayscale);
+        btn.SnapsToDevicePixels = true;
+        btn.UseLayoutRounding = true;
+
+        var glow = new System.Windows.Media.Effects.DropShadowEffect
+        {
+            BlurRadius = 0,
+            ShadowDepth = 0,
+            Color = glowColor,
+            Opacity = 0
+        };
+        btn.Effect = glow;
+
+        TranslateTransform GetOrCreateTranslate()
+        {
+            if (btn.RenderTransform is TransformGroup tg)
+            {
+                var tt = tg.Children.OfType<TranslateTransform>().FirstOrDefault();
+                if (tt == null)
+                {
+                    tt = new TranslateTransform(0, 0);
+                    tg.Children.Add(tt);
+                }
+                return tt;
+            }
+            else if (btn.RenderTransform is TranslateTransform directTt)
+            {
+                return directTt;
+            }
+            else
+            {
+                var newTg = new TransformGroup();
+                if (btn.RenderTransform != null) newTg.Children.Add(btn.RenderTransform);
+                var tt = new TranslateTransform(0, 0);
+                newTg.Children.Add(tt);
+                btn.RenderTransform = newTg;
+                return tt;
+            }
+        }
+
+        var easeOut = new CubicEase { EasingMode = EasingMode.EaseOut };
+        var easeQuintic = new QuinticEase { EasingMode = EasingMode.EaseOut };
+
+        btn.MouseEnter += (_, _) =>
+        {
+            btn.Background = hoverBg;
+
+            glow.BeginAnimation(System.Windows.Media.Effects.DropShadowEffect.OpacityProperty,
+                new DoubleAnimation(0.12, TimeSpan.FromMilliseconds(200)) { EasingFunction = easeOut });
+            glow.BeginAnimation(System.Windows.Media.Effects.DropShadowEffect.BlurRadiusProperty,
+                new DoubleAnimation(6, TimeSpan.FromMilliseconds(200)) { EasingFunction = easeOut });
+
+            var tt = GetOrCreateTranslate();
+            tt.BeginAnimation(TranslateTransform.YProperty,
+                new DoubleAnimation(-2, TimeSpan.FromMilliseconds(180)) { EasingFunction = easeOut });
+
+            if (btn.Template.FindName("Sheen", btn) is System.Windows.Shapes.Rectangle sheen)
+            {
+                double startX = -120;
+                double endX = btn.ActualWidth > 0 ? btn.ActualWidth + 70 : 260;
+
+                var sheenTg = new TransformGroup();
+                sheenTg.Children.Add(new SkewTransform(22, 0));
+                var sheenTrans = new TranslateTransform(startX, 0);
+                sheenTg.Children.Add(sheenTrans);
+                sheen.RenderTransform = sheenTg;
+
+                sheen.Opacity = 0.85;
+                var sheenAnim = new DoubleAnimation(startX, endX, TimeSpan.FromMilliseconds(480))
+                {
+                    EasingFunction = easeQuintic
+                };
+                sheenTrans.BeginAnimation(TranslateTransform.XProperty, sheenAnim);
+
+                var fadeAnim = new DoubleAnimation(0.85, 0, TimeSpan.FromMilliseconds(480))
+                {
+                    EasingFunction = easeOut
+                };
+                sheen.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
+            }
+        };
+
+        btn.MouseLeave += (_, _) =>
+        {
+            btn.Background = defaultBg;
+
+            glow.BeginAnimation(System.Windows.Media.Effects.DropShadowEffect.OpacityProperty,
+                new DoubleAnimation(0, TimeSpan.FromMilliseconds(250)) { EasingFunction = easeOut });
+            glow.BeginAnimation(System.Windows.Media.Effects.DropShadowEffect.BlurRadiusProperty,
+                new DoubleAnimation(0, TimeSpan.FromMilliseconds(250)) { EasingFunction = easeOut });
+
+            var tt = GetOrCreateTranslate();
+            tt.BeginAnimation(TranslateTransform.YProperty,
+                new DoubleAnimation(0, TimeSpan.FromMilliseconds(220)) { EasingFunction = easeOut });
+        };
+
+        btn.PreviewMouseDown += (_, _) =>
+        {
+            var tt = GetOrCreateTranslate();
+            tt.BeginAnimation(TranslateTransform.YProperty,
+                new DoubleAnimation(1, TimeSpan.FromMilliseconds(80)) { EasingFunction = easeOut });
+        };
+
+        btn.PreviewMouseUp += (_, _) =>
+        {
+            var tt = GetOrCreateTranslate();
+            double targetY = btn.IsMouseOver ? -2 : 0;
+            tt.BeginAnimation(TranslateTransform.YProperty,
+                new DoubleAnimation(targetY, TimeSpan.FromMilliseconds(120)) { EasingFunction = easeOut });
+        };
     }
 
     private static ControlTemplate CreateSimpleBtnTemplate()
     {
         var tmpl = new ControlTemplate(typeof(Button));
+        var rootGrid = new FrameworkElementFactory(typeof(Grid));
+        rootGrid.SetValue(Grid.ClipToBoundsProperty, true);
+
         var bd = new FrameworkElementFactory(typeof(Border));
+        bd.Name = "BgBorder";
         bd.SetValue(Border.BackgroundProperty, new TemplateBindingExtension(Button.BackgroundProperty));
         bd.SetValue(Border.BorderBrushProperty, new TemplateBindingExtension(Button.BorderBrushProperty));
         bd.SetValue(Border.BorderThicknessProperty, new TemplateBindingExtension(Button.BorderThicknessProperty));
         bd.SetValue(Border.CornerRadiusProperty, new CornerRadius(8));
+        rootGrid.AppendChild(bd);
+
+        var sheen = new FrameworkElementFactory(typeof(System.Windows.Shapes.Rectangle));
+        sheen.Name = "Sheen";
+        sheen.SetValue(UIElement.IsHitTestVisibleProperty, false);
+        sheen.SetValue(UIElement.OpacityProperty, 0.0);
+        sheen.SetValue(FrameworkElement.WidthProperty, 60.0);
+        sheen.SetValue(FrameworkElement.HorizontalAlignmentProperty, System.Windows.HorizontalAlignment.Left);
+        sheen.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Stretch);
+
+        var sheenBrush = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(1, 0),
+            GradientStops = new GradientStopCollection
+            {
+                new GradientStop(Color.FromArgb(0x00, 0xFF, 0xFF, 0xFF), 0.0),
+                new GradientStop(Color.FromArgb(0x60, 0xFF, 0xFF, 0xFF), 0.5),
+                new GradientStop(Color.FromArgb(0x00, 0xFF, 0xFF, 0xFF), 1.0)
+            }
+        };
+        sheenBrush.Freeze();
+        sheen.SetValue(System.Windows.Shapes.Shape.FillProperty, sheenBrush);
+
+        rootGrid.AppendChild(sheen);
+
         var cp = new FrameworkElementFactory(typeof(ContentPresenter));
         cp.SetValue(ContentPresenter.HorizontalAlignmentProperty, System.Windows.HorizontalAlignment.Center);
         cp.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
-        bd.AppendChild(cp);
-        tmpl.VisualTree = bd;
+        rootGrid.AppendChild(cp);
+
+        tmpl.VisualTree = rootGrid;
         return tmpl;
     }
 
@@ -12476,9 +16433,22 @@ public partial class MainWindow : Window
         this.StateChanged += (s, e) =>
         {
             if (this.WindowState == WindowState.Minimized)
-            { _monitorTimer?.Stop(); _netTimer?.Stop(); _pingTimer?.Stop(); }
+            {
+                StopConnectionAnalysis();
+                _monitorTimer?.Stop();
+                _netTimer?.Stop();
+                _pingTimer?.Stop();
+            }
             else
-            { _monitorTimer?.Start(); _netTimer?.Start(); _pingTimer?.Start(); }
+            {
+                _monitorTimer?.Start();
+                _netTimer?.Start();
+                _pingTimer?.Start();
+                if (DiagPage.Visibility == Visibility.Visible && DiagConnectionScreen.Visibility == Visibility.Visible)
+                {
+                    StartConnectionAnalysis();
+                }
+            }
         };
 
         Task.Run(async () => await RunSpeedTestAsync());

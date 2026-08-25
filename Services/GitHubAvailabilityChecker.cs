@@ -21,17 +21,19 @@ public static class GitHubAvailabilityChecker
 
     public static async Task<GitHubAvailabilityResult> CheckAvailabilityAsync(CancellationToken cancellationToken = default)
     {
-        Task<GitHubAvailabilityResult> mainTask = CheckUrlAsync(GitHubMainUrl, cancellationToken);
         Task<GitHubAvailabilityResult> apiTask = CheckUrlAsync(GitHubApiUrl, cancellationToken);
+        Task<GitHubAvailabilityResult> mainTask = CheckUrlAsync(GitHubMainUrl, cancellationToken);
 
-        GitHubAvailabilityResult[] results = await Task.WhenAll(mainTask, apiTask);
+        GitHubAvailabilityResult[] results = await Task.WhenAll(apiTask, mainTask);
+        var apiResult = results[0];
+        var mainResult = results[1];
 
-        if (results[0] == GitHubAvailabilityResult.Available && results[1] == GitHubAvailabilityResult.Available)
+        if (apiResult == GitHubAvailabilityResult.Available)
         {
             return GitHubAvailabilityResult.Available;
         }
 
-        if (results[0] == GitHubAvailabilityResult.Timeout || results[1] == GitHubAvailabilityResult.Timeout)
+        if (apiResult == GitHubAvailabilityResult.Timeout || mainResult == GitHubAvailabilityResult.Timeout)
         {
             return GitHubAvailabilityResult.Timeout;
         }
@@ -48,7 +50,7 @@ public static class GitHubAvailabilityChecker
             try
             {
                 using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                cts.CancelAfter(TimeSpan.FromSeconds(4));
+                cts.CancelAfter(TimeSpan.FromSeconds(6));
 
                 using HttpClient http = new HttpClient();
                 http.DefaultRequestHeaders.UserAgent.ParseAdd("NetFix/1.0");
