@@ -4,9 +4,49 @@
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <Style TargetType="ToolTip">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="#18181b"/>
+            <Setter Property="BorderBrush" Value="#2e2e33"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="#d4d4d8"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="HasDropShadow" Value="False"/>
+            <Setter Property="Placement" Value="Bottom"/>
+            <Setter Property="VerticalOffset" Value="5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToolTip">
+                        <Border x:Name="ToolTipBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="8,5"
+                                SnapsToDevicePixels="True"
+                                UseLayoutRounding="True">
+                            <ContentPresenter Content="{TemplateBinding Content}"
+                                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                                              TextBlock.Foreground="{TemplateBinding Foreground}"
+                                              TextBlock.FontSize="{TemplateBinding FontSize}"
+                                              TextBlock.FontFamily="{TemplateBinding FontFamily}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsOpen" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="ToolTipBorder"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             From="0" To="1"
+                                                             Duration="0:0:0.12"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Application.Resources>
 </Application>

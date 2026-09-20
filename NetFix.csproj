@@ -12,9 +12,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
     <RollForward>LatestMajor</RollForward>
-    <Version>1.1.9</Version>
-    <AssemblyVersion>1.1.9.0</AssemblyVersion>
-    <FileVersion>1.1.9.0</FileVersion>
+    <Version>1.2.0</Version>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <FileVersion>1.2.0.0</FileVersion>
     <Copyright>© 2024-2026 rupleide</Copyright>
     <Product>NetFix</Product>
     <Description>NetFix - GUI приложение для обхода блокировок Telegram и Discord</Description>
@@ -54,8 +54,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Assets\Fallback\zapret-fallback.zip" />
-    <EmbeddedResource Include="Assets\Fallback\tgwsproxy-fallback.exe" />
-    <EmbeddedResource Include="Assets\Fallback\metadata.json" />
+    <EmbeddedResource Include="Assets\Fallback\zapret-fallback.zip" Condition="Exists('Assets\Fallback\zapret-fallback.zip')" />
+    <EmbeddedResource Include="Assets\Fallback\tgwsproxy-fallback.exe" Condition="Exists('Assets\Fallback\tgwsproxy-fallback.exe')" />
+    <EmbeddedResource Include="Assets\Fallback\metadata.json" Condition="Exists('Assets\Fallback\metadata.json')" />
   </ItemGroup>
 </Project>

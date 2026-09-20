@@ -113,14 +113,29 @@ public static class ComponentVersionService
     {
         try
         {
-            var fileInfo = new FileInfo(exePath);
-
-            var versionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(exePath);
-            if (!string.IsNullOrEmpty(versionInfo.FileVersion))
+            var dir = Path.GetDirectoryName(exePath);
+            if (!string.IsNullOrEmpty(dir))
             {
-                return versionInfo.FileVersion;
+                var versionFile = Path.Combine(dir, "tgwsproxy_version.txt");
+                if (File.Exists(versionFile))
+                {
+                    var version = File.ReadAllText(versionFile).Trim();
+                    if (!string.IsNullOrEmpty(version))
+                        return version;
+                }
             }
 
+            var versionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(exePath);
+            if (!string.IsNullOrEmpty(versionInfo.ProductVersion))
+            {
+                return versionInfo.ProductVersion.Trim();
+            }
+            if (!string.IsNullOrEmpty(versionInfo.FileVersion))
+            {
+                return versionInfo.FileVersion.Trim();
+            }
+
+            var fileInfo = new FileInfo(exePath);
             return fileInfo.LastWriteTime.ToString("yyyy.MM.dd");
         }
         catch

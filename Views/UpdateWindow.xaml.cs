@@ -26,8 +26,7 @@ public partial class UpdateWindow : Window
         SetStatusIcon("WarningIcon", "#eab308", true);
         StatusText.Foreground = Brush("#888888");
         StatusText.Text = "Перед проверкой убедитесь что:\n\n• VPN отключён\n• Zapret / tg-ws-proxy остановлены";
-        PrimaryBtn.Content = "Проверить обновления";
-        PrimaryBtn.Background = Brush("#3b82f6");
+        SetPrimaryButton("Проверить обновления", "#3b82f6");
         PrimaryBtn.Visibility = Visibility.Visible;
         SecondaryBtn.Content = "Закрыть";
     }
@@ -48,8 +47,7 @@ public partial class UpdateWindow : Window
         StatusText.Text = "Не удалось подключиться к GitHub.\n\nПожалуйста, выключите VPN и Zapret, затем попробуйте снова.";
         StatusText.Foreground = Brush("#ef4444");
         SetProgressBar(BarWidth, "#ef4444");
-        PrimaryBtn.Content = "Попробовать снова";
-        PrimaryBtn.Background = Brush("#ef4444");
+        SetPrimaryButton("Попробовать снова", "#ef4444");
         PrimaryBtn.Visibility = Visibility.Visible;
         SecondaryBtn.Content = "Закрыть";
     }
@@ -75,11 +73,10 @@ public partial class UpdateWindow : Window
         StopIndeterminateAnimation();
         _downloadUrl = downloadUrl;
         SetStatusIcon("RocketIcon", "#3b82f6", false);
-        StatusText.Text = $"Доступна новая версия, {newVersion}";
+        StatusText.Text = $"Доступна новая версия: {newVersion}";
         StatusText.Foreground = Brush("#f0f0f0");
         SetProgressBar(BarWidth, "#3b82f6");
-        PrimaryBtn.Content = "Установить";
-        PrimaryBtn.Background = Brush("#3b82f6");
+        SetPrimaryButton("Установить", "#3b82f6");
         PrimaryBtn.Visibility = Visibility.Visible;
         SecondaryBtn.Content = "Закрыть";
     }
@@ -90,9 +87,12 @@ public partial class UpdateWindow : Window
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            StatusText.Text = $"Подключение к GitHub... (попытка {attempt}/{maxAttempts})";
+            bool isFallback = attempt == maxAttempts;
+            StatusText.Text = isFallback
+                ? $"Подключение к GitHub... (попытка {attempt}/{maxAttempts} - прямой веб-канал)"
+                : $"Подключение к GitHub... (попытка {attempt}/{maxAttempts})";
 
-            var (hasUpdate, newVersion, downloadUrl, error) = await UpdateService.CheckAsync();
+            var (hasUpdate, newVersion, downloadUrl, error) = await UpdateService.CheckAsync(useWebFallback: isFallback);
 
             if (!string.IsNullOrEmpty(error))
             {
@@ -180,8 +180,7 @@ public partial class UpdateWindow : Window
             StatusText.Text = "Ты точно не хочешь обновить приложение?\n\nВ обновлении куча нового! То, что могло не работать раньше, теперь может работать стабильнее, а также добавлены полезные фишки и улучшения.";
             StatusText.Foreground = Brush("#eab308");
 
-            PrimaryBtn.Content = "Обновить";
-            PrimaryBtn.Background = Brush("#22c55e");
+            SetPrimaryButton("Обновить", "#22c55e");
 
             SecondaryBtn.Content = "Закрыть!";
             SecondaryBtn.Width = 100;
@@ -218,6 +217,14 @@ public partial class UpdateWindow : Window
         ProgressFill.Width = width;
         ProgressFill.Background = Brush(hex);
         ((DropShadowEffect)ProgressFill.Effect).Color = ToColor(hex);
+    }
+
+    private void SetPrimaryButton(string content, string hex)
+    {
+        PrimaryBtn.Content = content;
+        PrimaryBtn.Background = Brush(hex);
+        if (PrimaryBtnGlow is not null)
+            PrimaryBtnGlow.Color = ToColor(hex);
     }
 
     private static SolidColorBrush Brush(string hex) =>

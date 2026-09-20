@@ -268,6 +268,8 @@ public partial class MainWindow : Window
     private bool _wasClosedToTray = false;
 
     private bool _settingsLoaded;
+    private bool? _lastZapretActive = null;
+    private bool? _lastTgWsActive = null;
 
     private List<ModEntry> _allMods = [];
     private ModType _currentModsTab = ModType.Strategy;
@@ -388,6 +390,7 @@ public partial class MainWindow : Window
             _discord.Initialize();
         UpdateMainGridClip();
         LoadSettingsToPanel();
+        UpdateSelectedConfigDisplay();
         _settingsLoaded = true;
 
         AutoAppCB.Checked += (_, _) =>
@@ -729,6 +732,8 @@ public partial class MainWindow : Window
         StopGame();
         StopEditorRecording();
 
+        UpdateSelectedConfigDisplay();
+
         ServicesLayer.Visibility = Visibility.Visible;
         var anim = new DoubleAnimation(50, 0, TimeSpan.FromMilliseconds(280));
         anim.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut };
@@ -744,7 +749,19 @@ public partial class MainWindow : Window
         var anim = new DoubleAnimation(0, 50, TimeSpan.FromMilliseconds(220));
         anim.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn };
         var opacityAnim = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(220));
-        anim.Completed += (_, _) => ServicesLayer.Visibility = Visibility.Collapsed;
+        anim.Completed += (_, _) =>
+        {
+            ServicesLayer.Visibility = Visibility.Collapsed;
+            HeaderDnsView.Visibility = Visibility.Collapsed;
+            HeaderExtraFeaturesView.Visibility = Visibility.Collapsed;
+            HeaderMainView.Visibility = Visibility.Visible;
+            MainViewTrans.BeginAnimation(TranslateTransform.XProperty, null);
+            MainViewTrans.X = 0;
+            DnsViewTrans.BeginAnimation(TranslateTransform.XProperty, null);
+            DnsViewTrans.X = 300;
+            ExtraFeaturesViewTrans.BeginAnimation(TranslateTransform.XProperty, null);
+            ExtraFeaturesViewTrans.X = 300;
+        };
         ServicesTrans.BeginAnimation(TranslateTransform.XProperty, anim);
         ServicesPanel.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
     }
@@ -1893,7 +1910,15 @@ public partial class MainWindow : Window
     private void OnModCardSizeChanged(object sender, SizeChangedEventArgs e)
     {
         if (sender is Grid grid)
-            grid.Clip = new RectangleGeometry(new Rect(0, 0, e.NewSize.Width, e.NewSize.Height), 10, 10);
+        {
+            double radius = 9;
+            if (grid.Parent is Border parentBorder && parentBorder.CornerRadius.TopLeft > 10)
+                radius = Math.Max(0, parentBorder.CornerRadius.TopLeft - 1);
+
+            double w = Math.Max(0, e.NewSize.Width - 2);
+            double h = Math.Max(0, e.NewSize.Height - 2);
+            grid.Clip = new RectangleGeometry(new Rect(1, 1, w, h), radius, radius);
+        }
     }
 
     private string? _modsEditorFilePath;
@@ -2986,7 +3011,7 @@ public partial class MainWindow : Window
         {
             SelectedConfigText.Inlines.Clear();
             SelectedConfigText.Inlines.Add(new Run("Выбранный конфиг: ") { Foreground = new SolidColorBrush(Color.FromRgb(0xf0, 0xf0, 0xf0)) });
-            SelectedConfigText.Inlines.Add(new Run(cache.CurrentConfig) { Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)) });
+            SelectedConfigText.Inlines.Add(new Run(cache.GetDisplayName(cache.CurrentConfig)) { Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e)) });
         }
         else
         {
@@ -3003,7 +3028,7 @@ public partial class MainWindow : Window
         {
             ActiveConfigText.Visibility = Visibility.Visible;
 
-            string configName = cache.CurrentConfig;
+            string configName = cache.GetDisplayName(cache.CurrentConfig);
             if (configName.Length > 25)
             {
                 configName = configName.Substring(0, 22) + "...";
@@ -4490,88 +4515,201 @@ public partial class MainWindow : Window
         var helpCard = new Border {
             Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
             CornerRadius = new CornerRadius(12),
-            Padding = new Thickness(20, 18, 20, 18),
+            Padding = new Thickness(18, 16, 18, 12),
             BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
             BorderThickness = new Thickness(1),
-            Margin = new Thickness(0, 12, 0, 0)
+            Margin = new Thickness(0, 14, 0, 0)
         };
 
         var helpStack = new StackPanel();
         helpStack.Children.Add(new TextBlock {
             Text = "Не нашли решение своей проблемы?",
-            FontSize = 16,
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 15.5,
             FontWeight = FontWeights.Bold,
             Foreground = Brushes.White,
+            Margin = new Thickness(0, 0, 0, 4)
+        });
+
+        helpStack.Children.Add(new TextBlock {
+            Text = "Если готовые ответы и инструкции не помогли, выберите подходящий способ получить помощь или найти решение проблемы:",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 12.5,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 0, 0, 12)
         });
 
-        helpStack.Children.Add(new TextBlock {
-            Text = "Самостоятельный поиск: Лучший способ, вбить текст ошибки в поисковик. Скорее всего, кто-то уже сталкивался с этим и нашёл решение.",
-            FontSize = 13,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 0, 0, 8)
-        });
+        var ghIconGeom = Geometry.Parse("M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z");
 
-        helpStack.Children.Add(new TextBlock {
-            Text = "Обращение ко мне: Если ничего не помогло, вы можете описать свою проблему в разделе Issues на моём GitHub-репозитории или написать мне напрямую в Telegram @sofirka_hanabi - я постараюсь помочь всем по мере возможности!",
-            FontSize = 13,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 0, 0, 8)
-        });
+        helpStack.Children.Add(CreateFaqSupportCard(
+            title: "Написать в Telegram",
+            desc: "Если вам нужна оперативная помощь в решении проблемы, пишите напрямую в Telegram и сразу указывайте, что у вас случилось и с чем нужна помощь. Вам помогут при первой же возможности, не стесняйтесь писать! (@sofirka_hanabi)",
+            iconGeometry: (Geometry)FindResource("TelegramLogoIcon"),
+            accentColor: Color.FromRgb(0x38, 0xbd, 0xf8),
+            onClick: () => {
+                try {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo {
+                        FileName = "tg://resolve?domain=sofirka_hanabi",
+                        UseShellExecute = true
+                    });
+                } catch {
+                    OpenUrl("https://t.me/sofirka_hanabi");
+                }
+            }
+        ));
 
-        var devLinkStack = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 4) };
+        helpStack.Children.Add(CreateFaqSupportCard(
+            title: "Создать обращение в репозитории NetFix",
+            desc: "Опишите найденный баг или сбой в разделе Issues на моём GitHub. Прикрепите скриншот или текст ошибки - это поможет быстрее исправить проблему в коде программы, а решение сохранится для других пользователей.",
+            iconGeometry: ghIconGeom,
+            accentColor: Color.FromRgb(0xa8, 0x55, 0xf7),
+            onClick: () => OpenUrl("https://github.com/rupleide/NetFix/issues")
+        ));
 
-        var linkText = new TextBlock {
-            Text = "Поиск у разработчика: Также рекомендую поискать решение в репозитории Flowseal, который является автором сборки Zapret и TgProxy:",
-            FontSize = 13,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
-            TextWrapping = TextWrapping.Wrap,
-            VerticalAlignment = VerticalAlignment.Center
-        };
-
-        var repoLink = new Button {
-            Content = "репозитории",
-            Style = (Style)FindResource("FlatBtn"),
-            Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
-            FontSize = 13,
-            Padding = new Thickness(0),
-            Margin = new Thickness(2, 0, 2, 0),
-            VerticalAlignment = VerticalAlignment.Center,
-            Background = Brushes.Transparent
-        };
-        repoLink.Click += (s, e) => {
-            try {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo {
-                    FileName = "https://github.com/Flowseal/zapret-discord-youtube",
-                    UseShellExecute = true
-                });
-            } catch { }
-        };
-
-        var inlineText = new Run(" Flowseal, который является автором сборки Zapret и TgProxy:");
-
-        var textPanel = new StackPanel { Orientation = Orientation.Horizontal };
-        textPanel.Children.Add(new TextBlock {
-            Text = "Поиск у разработчика: Также рекомендую поискать решение в ",
-            FontSize = 13,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
-            VerticalAlignment = VerticalAlignment.Center
-        });
-        textPanel.Children.Add(repoLink);
-        textPanel.Children.Add(new TextBlock {
-            Text = " Flowseal, который является автором сборки Zapret и TgProxy:",
-            FontSize = 13,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
-            VerticalAlignment = VerticalAlignment.Center
-        });
-
-        devLinkStack.Children.Add(textPanel);
-        helpStack.Children.Add(devLinkStack);
+        helpStack.Children.Add(CreateFaqSupportCard(
+            title: "База решений у разработчика Flowseal",
+            desc: "GitHub автора базовой сборки Zapret и TgWsProxy. В разделе Issues собраны сотни подробных обсуждений и готовых решений для обхода блокировок под разных провайдеров со всей России.",
+            iconGeometry: (Geometry)FindResource("SearchIcon"),
+            accentColor: Color.FromRgb(0xf5, 0x9e, 0x0b),
+            onClick: () => OpenUrl("https://github.com/Flowseal/zapret-discord-youtube/issues"),
+            isStrokeIcon: true
+        ));
 
         helpCard.Child = helpStack;
         FaqContainer.Children.Add(helpCard);
+    }
+
+    private UIElement CreateFaqSupportCard(string title, string desc, Geometry? iconGeometry, Color accentColor, Action onClick, bool isStrokeIcon = false)
+    {
+        var btn = new Button
+        {
+            Style = (Style)FindResource("FlatBtn"),
+            Padding = new Thickness(0),
+            Height = double.NaN,
+            HorizontalContentAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Stretch,
+            Cursor = Cursors.Hand,
+            Margin = new Thickness(0, 0, 0, 8)
+        };
+
+        var cardBorder = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x25, 0x25, 0x25)),
+            CornerRadius = new CornerRadius(10),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x38, 0x38, 0x38)),
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(14, 12, 14, 12)
+        };
+
+        var grid = new Grid();
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition());
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var iconBox = new Border
+        {
+            Width = 36,
+            Height = 36,
+            CornerRadius = new CornerRadius(8),
+            Background = new SolidColorBrush(accentColor) { Opacity = 0.15 },
+            Margin = new Thickness(0, 0, 12, 0),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        if (iconGeometry != null)
+        {
+            var path = new System.Windows.Shapes.Path
+            {
+                Data = iconGeometry,
+                Width = 17,
+                Height = 17,
+                Stretch = Stretch.Uniform,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+
+            if (isStrokeIcon)
+            {
+                path.Stroke = new SolidColorBrush(accentColor);
+                path.StrokeThickness = 2.0;
+                path.StrokeStartLineCap = PenLineCap.Round;
+                path.StrokeEndLineCap = PenLineCap.Round;
+            }
+            else
+            {
+                path.Fill = new SolidColorBrush(accentColor);
+            }
+
+            iconBox.Child = path;
+        }
+
+        var textStack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+
+        textStack.Children.Add(new TextBlock
+        {
+            Text = title,
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 13.5,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = Brushes.White,
+            VerticalAlignment = VerticalAlignment.Center
+        });
+
+        textStack.Children.Add(new TextBlock
+        {
+            Text = desc,
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 11.5,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x99, 0x99, 0x99)),
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 2, 0, 0)
+        });
+
+        var arrow = new System.Windows.Shapes.Path
+        {
+            Data = (Geometry)FindResource("ArrowUpRightIcon"),
+            Stroke = new SolidColorBrush(Color.FromRgb(0x77, 0x77, 0x77)),
+            StrokeThickness = 1.8,
+            Width = 11,
+            Height = 11,
+            Stretch = Stretch.Uniform,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(8, 0, 0, 0)
+        };
+
+        Grid.SetColumn(iconBox, 0);
+        Grid.SetColumn(textStack, 1);
+        Grid.SetColumn(arrow, 2);
+
+        grid.Children.Add(iconBox);
+        grid.Children.Add(textStack);
+        grid.Children.Add(arrow);
+
+        cardBorder.Child = grid;
+        btn.Content = cardBorder;
+
+        var defaultBg = new SolidColorBrush(Color.FromRgb(0x25, 0x25, 0x25));
+        var hoverBg = new SolidColorBrush(Color.FromRgb(0x2c, 0x2c, 0x30));
+        var defaultBorder = new SolidColorBrush(Color.FromRgb(0x38, 0x38, 0x38));
+        var hoverBorder = new SolidColorBrush(accentColor) { Opacity = 0.55 };
+
+        btn.MouseEnter += (_, _) =>
+        {
+            cardBorder.Background = hoverBg;
+            cardBorder.BorderBrush = hoverBorder;
+            arrow.Stroke = new SolidColorBrush(accentColor);
+        };
+        btn.MouseLeave += (_, _) =>
+        {
+            cardBorder.Background = defaultBg;
+            cardBorder.BorderBrush = defaultBorder;
+            arrow.Stroke = new SolidColorBrush(Color.FromRgb(0x77, 0x77, 0x77));
+        };
+
+        btn.Click += (_, _) => onClick();
+
+        return btn;
     }
 
     private void AddCategoryCard(string title, string desc, string iconKey, Color accent)
@@ -5329,14 +5467,17 @@ public partial class MainWindow : Window
                 {
                     ZapretToggleBtn.Style = (Style)FindResource("RedAccentBtn");
                     ZapretToggleBtn.Content = "■  Закрыть";
+                    AnimateServiceIconState(ZapretIconColor, !_settings.EffectiveAlwaysGrayscaleIcons, ref _lastZapretActive);
                 }
                 else
                 {
                     ZapretToggleBtn.Style = (Style)FindResource("AccentBtn");
                     ZapretToggleBtn.Content = CreateButtonContentWithIcon("PlayIcon", "Запустить", Brushes.White);
+                    AnimateServiceIconState(ZapretIconColor, false, ref _lastZapretActive);
                 }
 
                 UpdateActiveConfigDisplay(st.ZapretRunning);
+                UpdateSelectedConfigDisplay();
 
                 TgWsDot2.Fill = st.TgWsProxyRunning ? greenBrush : grayBrush;
                 TgWsStatusLbl.Text = st.TgWsProxyRunning ? "Запущен" : "Не запущен";
@@ -5345,11 +5486,13 @@ public partial class MainWindow : Window
                 {
                     TgWsToggleBtn.Style = (Style)FindResource("RedAccentBtn");
                     TgWsToggleBtn.Content = "■  Закрыть";
+                    AnimateServiceIconState(TgWsIconColor, !_settings.EffectiveAlwaysGrayscaleIcons, ref _lastTgWsActive);
                 }
                 else
                 {
                     TgWsToggleBtn.Style = (Style)FindResource("AccentBtn");
                     TgWsToggleBtn.Content = CreateButtonContentWithIcon("PlayIcon", "Запустить", Brushes.White);
+                    AnimateServiceIconState(TgWsIconColor, false, ref _lastTgWsActive);
                 }
 
                 if (netOk)
@@ -5382,6 +5525,40 @@ public partial class MainWindow : Window
                     SetConnectedFromStatus();
             });
         });
+    }
+
+    private static void AnimateServiceIconState(UIElement? iconColorBorder, bool active, ref bool? lastState)
+    {
+        if (iconColorBorder is null) return;
+        if (lastState == active) return;
+
+        bool isFirstTime = lastState == null;
+        lastState = active;
+        double targetOpacity = active ? 1.0 : 0.0;
+
+        if (isFirstTime)
+        {
+            iconColorBorder.BeginAnimation(UIElement.OpacityProperty, null);
+            iconColorBorder.Opacity = targetOpacity;
+            return;
+        }
+
+        var anim = new DoubleAnimation
+        {
+            To = targetOpacity,
+            Duration = TimeSpan.FromMilliseconds(250),
+            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseInOut }
+        };
+        iconColorBorder.BeginAnimation(UIElement.OpacityProperty, anim);
+    }
+
+    private void ApplyServiceIconsState()
+    {
+        var st = DiagnosticsEngine.CheckAppStatus();
+        bool zapretColor = st.ZapretRunning && !_settings.EffectiveAlwaysGrayscaleIcons;
+        bool tgWsColor = st.TgWsProxyRunning && !_settings.EffectiveAlwaysGrayscaleIcons;
+        AnimateServiceIconState(ZapretIconColor, zapretColor, ref _lastZapretActive);
+        AnimateServiceIconState(TgWsIconColor, tgWsColor, ref _lastTgWsActive);
     }
 
     private static bool DetectVpn(out string info)
@@ -5851,6 +6028,13 @@ public partial class MainWindow : Window
         FixBtn.IsEnabled = false;
         _checkInProgress = true;
         StartLongCheckTimer();
+
+        if (_settings.Mode == FixMode.Fast)
+        {
+            RunFastFix();
+            return;
+        }
+
         var (needsUpdate, reason) = await ComponentVersionService.CheckIfUpdateNeededAsync(_settings);
 
         if (needsUpdate)
@@ -5858,12 +6042,6 @@ public partial class MainWindow : Window
             StopLongCheckTimer();
             _checkInProgress = false;
             await RunAutoInstallAsync();
-            return;
-        }
-
-        if (_settings.Mode == FixMode.Fast)
-        {
-            RunFastFix();
             return;
         }
 
@@ -7733,6 +7911,7 @@ public partial class MainWindow : Window
 
     private static readonly Geometry SettingsStageGeom = Geometry.Parse("M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z");
     private static readonly Geometry ChevronDownGeom = Geometry.Parse("M6 9l6 6 6-6");
+    private static readonly Geometry ChevronUpGeom = Geometry.Parse("M6 15l6-6 6 6");
 
     static MainWindow()
     {
@@ -7752,6 +7931,7 @@ public partial class MainWindow : Window
         InternetStageGeom.Freeze();
         SettingsStageGeom.Freeze();
         ChevronDownGeom.Freeze();
+        ChevronUpGeom.Freeze();
     }
 
     private FrameworkElement CreatePacketFlowDiagram(ConnectionDetailModel conn)
@@ -9359,6 +9539,10 @@ public partial class MainWindow : Window
             VolumePercent.Text = $"{(int)(_settings.GameVolume * 100)}%";
         RememberSizeCB.IsChecked = _settings.RememberWindowSize;
         ForceNetOkCB.IsChecked = _settings.ForceNetworkOk;
+        AdvancedSettingsCB.IsChecked = _settings.ShowAdvancedSettings;
+        AdvancedSettingsPanel.Visibility = _settings.ShowAdvancedSettings ? Visibility.Visible : Visibility.Collapsed;
+        AlwaysGrayscaleIconsCB.IsChecked = _settings.AlwaysGrayscaleServiceIcons;
+        QuickDnsTrayCB.IsChecked = _settings.QuickDnsInTray;
         LoadKeyLabels();
         _settingsLoaded = true;
     }
@@ -9378,13 +9562,25 @@ public partial class MainWindow : Window
         _settings.AutoEacBypass = AutoEacBypassCB.IsChecked == true;
         _settings.RememberWindowSize = RememberSizeCB.IsChecked == true;
         _settings.ForceNetworkOk = ForceNetOkCB.IsChecked == true;
+        _settings.ShowAdvancedSettings = AdvancedSettingsCB.IsChecked == true;
+        _settings.AlwaysGrayscaleServiceIcons = AlwaysGrayscaleIconsCB.IsChecked == true;
+        _settings.QuickDnsInTray = QuickDnsTrayCB.IsChecked == true;
         SettingsService.Save(_settings);
+        LoadDnsServers();
         SetAutostart(_settings.AutostartApp);
 
         if (_settings.AutoEacBypass)
             AntiCheatBypassService.StartWatcher(OnAntiCheatDetected);
         else
             AntiCheatBypassService.StopWatcher();
+    }
+
+    private void QuickDnsTrayCB_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!_settingsLoaded) return;
+        _settings.QuickDnsInTray = QuickDnsTrayCB.IsChecked == true;
+        SettingsService.Save(_settings);
+        LoadDnsServers();
     }
 
     private void OnAntiCheatDetected(string processName)
@@ -9401,6 +9597,31 @@ public partial class MainWindow : Window
             "При запуске игр вроде Rust или Apex античит намертво закрывает Zapret. Сама игра при этом запускается, но Discord и YouTube перестают работать.\n\n" +
             "Включите эту функцию, и NetFix сделает всё за вас: автоматически перезапустит Zapret сразу после старта игры, и вы сможете пользоваться Discord как обычно.\n\n" +
             "⚠️ Внимание: античиты следят за любыми сетевыми драйверами в системе. Если вы переживаете за свой аккаунт, включайте эту функцию на свой страх и риск!",
+            "#3b82f6");
+    }
+
+    private void AdvancedSettingsInfoBtn_Click(object sender, RoutedEventArgs e)
+    {
+        ShowNotification("Дополнительные параметры",
+            "Функции из этого раздела не являются основными для работы приложения, вы используете их на своё личное усмотрение.\n\n" +
+            "Если вам нравятся опции из этого раздела или вы хотите предложить свои идеи, пожалуйста, напишите об этом в нашем Telegram-чате. Благодаря вашим отзывам популярные функции могут перейти в основной раздел приложения и быть включены по умолчанию!",
+            "#3b82f6");
+    }
+
+    private void AlwaysGrayscaleIconsInfoBtn_Click(object sender, RoutedEventArgs e)
+    {
+        ShowNotification("Всегда серые иконки в Сервисах",
+            "По умолчанию иконки сервисов на главном экране становятся цветными, когда службы обхода запущены.\n\n" +
+            "Включение этого параметра оставляет все иконки серыми независимо от статуса служб для более строгого и минималистичного вида интерфейса.",
+            "#3b82f6");
+    }
+
+    private void QuickDnsTrayInfoBtn_Click(object sender, RoutedEventArgs e)
+    {
+        ShowNotification("Свои DNS и управление из трея",
+            "Этот параметр активирует дополнительные возможности работы с DNS:\n\n" +
+            "1. Быстрое переключение DNS прямо из контекстного меню в трее без открытия главного окна.\n" +
+            "2. Добавление и управление собственными DNS-серверами (IPv4, IPv6 и DoH) во вкладке DNS.",
             "#3b82f6");
     }
 
@@ -9477,6 +9698,28 @@ public partial class MainWindow : Window
 
     private void SettingCB_Checked(object sender, RoutedEventArgs e) { if (_settingsLoaded) AutoSaveSettings(); }
     private void SettingCB_Unchecked(object sender, RoutedEventArgs e) { if (_settingsLoaded) AutoSaveSettings(); }
+
+    private void AdvancedSettingsCB_Changed(object sender, RoutedEventArgs e)
+    {
+        bool isAdv = AdvancedSettingsCB.IsChecked == true;
+        AdvancedSettingsPanel.Visibility = isAdv ? Visibility.Visible : Visibility.Collapsed;
+
+        if (_settingsLoaded)
+        {
+            AutoSaveSettings();
+            ApplyServiceIconsState();
+            LoadDnsServers();
+        }
+    }
+
+    private void AlwaysGrayscaleIconsCB_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_settingsLoaded)
+        {
+            AutoSaveSettings();
+            ApplyServiceIconsState();
+        }
+    }
 
     private void TgWsSetting_Checked(object sender, RoutedEventArgs e)
     {
@@ -17303,7 +17546,7 @@ public partial class MainWindow : Window
         particle.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
     }
 
-    public record DnsServerInfo(string Name, string Description, string Primary, string Secondary, string DohTemplate = "");
+    public record DnsServerInfo(string Name, string Description, string Primary, string Secondary, string DohTemplate = "", bool IsCustom = false);
 
     private static readonly IReadOnlyList<DnsServerInfo> PredefinedDnsServers = [
         new DnsServerInfo("Системный (DHCP)", "Использовать DNS-серверы, полученные от роутера или провайдера", "dhcp", "", ""),
@@ -17334,6 +17577,496 @@ public partial class MainWindow : Window
         DnsViewTrans.BeginAnimation(TranslateTransform.XProperty, slideIn);
     }
 
+    private string? _cachedRemoteHostsContent;
+    private GameFilterMode? _savedGameFilterMode;
+    private IPSetMode? _savedIPSetMode;
+
+    private string GetZapretDirectoryPath()
+    {
+        if (!string.IsNullOrEmpty(_settings.ZapretPath))
+        {
+            if (File.Exists(_settings.ZapretPath))
+                return System.IO.Path.GetDirectoryName(_settings.ZapretPath) ?? @"C:\Zapret";
+            if (Directory.Exists(_settings.ZapretPath))
+                return _settings.ZapretPath;
+        }
+        return @"C:\Zapret";
+    }
+
+    private static readonly Brush SegmentNormalBorder = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33));
+    private static readonly Brush SegmentHoverBorder = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x66));
+    private static readonly Brush SegmentSelectedBorder = new SolidColorBrush(Color.FromArgb(0x40, 0xff, 0xff, 0xff));
+
+    private static void UpdateSegmentButton(Button btn, bool isSelected)
+    {
+        btn.Background = Brushes.Transparent;
+        btn.BorderThickness = new Thickness(1.0);
+
+        btn.MouseEnter -= SegmentButton_MouseEnter;
+        btn.MouseLeave -= SegmentButton_MouseLeave;
+
+        if (isSelected)
+        {
+            btn.BorderBrush = SegmentSelectedBorder;
+            btn.Foreground = Brushes.White;
+            btn.FontWeight = FontWeights.SemiBold;
+        }
+        else
+        {
+            btn.BorderBrush = SegmentNormalBorder;
+            btn.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+            btn.FontWeight = FontWeights.Normal;
+
+            btn.MouseEnter += SegmentButton_MouseEnter;
+            btn.MouseLeave += SegmentButton_MouseLeave;
+        }
+    }
+
+    private static void SegmentButton_MouseEnter(object sender, MouseEventArgs e)
+    {
+        if (sender is Button btn && btn.BorderBrush != SegmentSelectedBorder)
+        {
+            btn.BorderBrush = SegmentHoverBorder;
+        }
+    }
+
+    private static void SegmentButton_MouseLeave(object sender, MouseEventArgs e)
+    {
+        if (sender is Button btn && btn.BorderBrush != SegmentSelectedBorder)
+        {
+            btn.BorderBrush = SegmentNormalBorder;
+        }
+    }
+
+    private void UpdateGameFilterUi(GameFilterMode mode)
+    {
+        UpdateSegmentButton(GfModeOffBtn, mode == GameFilterMode.Disabled);
+        UpdateSegmentButton(GfModeAllBtn, mode == GameFilterMode.All);
+        UpdateSegmentButton(GfModeTcpBtn, mode == GameFilterMode.TcpOnly);
+        UpdateSegmentButton(GfModeUdpBtn, mode == GameFilterMode.UdpOnly);
+
+        switch (mode)
+        {
+            case GameFilterMode.Disabled:
+                GameFilterBadge.Background = new SolidColorBrush(Color.FromRgb(0x1c, 0x1c, 0x20));
+                GameFilterStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+                GameFilterStatusText.Text = "disabled";
+                break;
+            case GameFilterMode.All:
+                GameFilterBadge.Background = new SolidColorBrush(Color.FromRgb(0x17, 0x25, 0x54));
+                GameFilterStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x60, 0xa5, 0xfa));
+                GameFilterStatusText.Text = "enabled (TCP and UDP)";
+                break;
+            case GameFilterMode.TcpOnly:
+                GameFilterBadge.Background = new SolidColorBrush(Color.FromRgb(0x17, 0x25, 0x54));
+                GameFilterStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x60, 0xa5, 0xfa));
+                GameFilterStatusText.Text = "enabled (TCP)";
+                break;
+            case GameFilterMode.UdpOnly:
+                GameFilterBadge.Background = new SolidColorBrush(Color.FromRgb(0x17, 0x25, 0x54));
+                GameFilterStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x60, 0xa5, 0xfa));
+                GameFilterStatusText.Text = "enabled (UDP)";
+                break;
+        }
+    }
+
+    private void UpdateIPSetUi(IPSetMode mode, int lineCount)
+    {
+        UpdateSegmentButton(IpsetModeNoneBtn, mode == IPSetMode.None);
+        UpdateSegmentButton(IpsetModeLoadedBtn, mode == IPSetMode.Loaded);
+        UpdateSegmentButton(IpsetModeAnyBtn, mode == IPSetMode.Any);
+
+        switch (mode)
+        {
+            case IPSetMode.None:
+                IPSetBadge.Background = new SolidColorBrush(Color.FromRgb(0x1c, 0x1c, 0x20));
+                IPSetStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+                IPSetStatusText.Text = "none";
+                break;
+            case IPSetMode.Loaded:
+                IPSetBadge.Background = new SolidColorBrush(Color.FromRgb(0x2e, 0x10, 0x65));
+                IPSetStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xc0, 0x84, 0xfc));
+                IPSetStatusText.Text = lineCount > 0 ? $"loaded ({lineCount:N0})" : "loaded";
+                break;
+            case IPSetMode.Any:
+                IPSetBadge.Background = new SolidColorBrush(Color.FromRgb(0x3b, 0x07, 0x64));
+                IPSetStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xe8, 0x79, 0xf9));
+                IPSetStatusText.Text = "any";
+                break;
+        }
+    }
+
+    private async Task LoadExtraFeaturesStateAsync()
+    {
+        var zapretDir = GetZapretDirectoryPath();
+
+        var gfMode = ZapretOptionsService.GetGameFilterMode(zapretDir);
+        UpdateGameFilterUi(gfMode);
+
+        var ipsetMode = ZapretOptionsService.GetIPSetMode(zapretDir, out int lineCount);
+        UpdateIPSetUi(ipsetMode, lineCount);
+
+        if (ExtraRestartNoticeBorder.Visibility != Visibility.Visible)
+        {
+            _savedGameFilterMode = null;
+            _savedIPSetMode = null;
+        }
+
+        var ipsetFile = System.IO.Path.Combine(zapretDir, "lists", "ipset-all.txt");
+        if (File.Exists(ipsetFile))
+        {
+            var fi = new FileInfo(ipsetFile);
+            var kb = fi.Length / 1024.0;
+            IPSetDetailsText.Text = $"lists\\ipset-all.txt • {lineCount:N0} записей ({kb:F1} КБ) • Изменен: {fi.LastWriteTime:dd.MM.yyyy HH:mm}";
+        }
+        else
+        {
+            IPSetDetailsText.Text = "Файл lists\\ipset-all.txt отсутствует. Нажмите кнопку ниже для загрузки с GitHub.";
+        }
+
+        ExtraHostsStatusBadge.Background = new SolidColorBrush(Color.FromRgb(0x1c, 0x1c, 0x20));
+        ExtraHostsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+        ExtraHostsStatusText.Text = "Проверка...";
+        ExtraUpdateHostsBtnText.Text = "Update Hosts File";
+
+        var (needsUpdate, remoteContent, statusMsg) = await ZapretOptionsService.CheckHostsStatusAsync();
+        _cachedRemoteHostsContent = remoteContent;
+
+        if (needsUpdate)
+        {
+            ExtraHostsStatusBadge.Background = new SolidColorBrush(Color.FromRgb(0x45, 0x1a, 0x03));
+            ExtraHostsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xfb, 0xbf, 0x24));
+            ExtraHostsStatusText.Text = "ОБНОВЛЕНИЕ!";
+            ExtraUpdateHostsBtnText.Text = "Update Hosts File";
+            ExtraUpdateHostsBtn.BorderBrush = new SolidColorBrush(Color.FromRgb(0x38, 0xbd, 0xf8));
+        }
+        else
+        {
+            ExtraHostsStatusBadge.Background = new SolidColorBrush(Color.FromRgb(0x05, 0x2e, 0x16));
+            ExtraHostsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x4a, 0xde, 0x80));
+            ExtraHostsStatusText.Text = "актуален";
+            ExtraUpdateHostsBtnText.Text = "Hosts актуален";
+            ExtraUpdateHostsBtn.BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33));
+        }
+    }
+
+    private void ExtraFeaturesBtn_Click(object s, RoutedEventArgs e)
+    {
+        HeaderMainView.Visibility = Visibility.Collapsed;
+        HeaderExtraFeaturesView.Visibility = Visibility.Visible;
+
+        _ = LoadExtraFeaturesStateAsync();
+
+        var slideOut = new DoubleAnimation(0, -300, TimeSpan.FromMilliseconds(200))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        var slideIn = new DoubleAnimation(300, 0, TimeSpan.FromMilliseconds(200))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+
+        MainViewTrans.BeginAnimation(TranslateTransform.XProperty, slideOut);
+        ExtraFeaturesViewTrans.BeginAnimation(TranslateTransform.XProperty, slideIn);
+    }
+
+    private void GfMode_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not string tag) return;
+
+        var zapretDir = GetZapretDirectoryPath();
+        var currentGfMode = ZapretOptionsService.GetGameFilterMode(zapretDir);
+
+        var mode = tag switch
+        {
+            "All" => GameFilterMode.All,
+            "TcpOnly" => GameFilterMode.TcpOnly,
+            "UdpOnly" => GameFilterMode.UdpOnly,
+            _ => GameFilterMode.Disabled
+        };
+
+        if (mode == currentGfMode) return;
+
+        if (ExtraRestartNoticeBorder.Visibility != Visibility.Visible)
+        {
+            _savedGameFilterMode = currentGfMode;
+            _savedIPSetMode = ZapretOptionsService.GetIPSetMode(zapretDir, out _);
+        }
+
+        ZapretOptionsService.SetGameFilterMode(zapretDir, mode);
+        UpdateGameFilterUi(mode);
+
+        var currentIpsetMode = ZapretOptionsService.GetIPSetMode(zapretDir, out _);
+        bool hasChanges = (_savedGameFilterMode.HasValue && mode != _savedGameFilterMode.Value) ||
+                          (_savedIPSetMode.HasValue && currentIpsetMode != _savedIPSetMode.Value);
+
+        var st = DiagnosticsEngine.CheckAppStatus();
+        if (st.ZapretRunning && hasChanges)
+        {
+            ExtraRestartNoticeBorder.Visibility = Visibility.Visible;
+        }
+        else if (!hasChanges)
+        {
+            ExtraRestartNoticeBorder.Visibility = Visibility.Collapsed;
+            _savedGameFilterMode = null;
+            _savedIPSetMode = null;
+        }
+    }
+
+    private async void IpsetMode_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not string tag) return;
+
+        var zapretDir = GetZapretDirectoryPath();
+        var currentIpsetMode = ZapretOptionsService.GetIPSetMode(zapretDir, out int oldLineCount);
+
+        var mode = tag switch
+        {
+            "Loaded" => IPSetMode.Loaded,
+            "Any" => IPSetMode.Any,
+            _ => IPSetMode.None
+        };
+
+        if (mode == currentIpsetMode) return;
+
+        if (ExtraRestartNoticeBorder.Visibility != Visibility.Visible)
+        {
+            _savedGameFilterMode = ZapretOptionsService.GetGameFilterMode(zapretDir);
+            _savedIPSetMode = currentIpsetMode;
+        }
+
+        btn.IsEnabled = false;
+        try
+        {
+            await ZapretOptionsService.SetIPSetModeAsync(zapretDir, mode);
+            var newMode = ZapretOptionsService.GetIPSetMode(zapretDir, out int lineCount);
+            UpdateIPSetUi(newMode, lineCount);
+
+            var ipsetFile = System.IO.Path.Combine(zapretDir, "lists", "ipset-all.txt");
+            if (File.Exists(ipsetFile))
+            {
+                var fi = new FileInfo(ipsetFile);
+                var kb = fi.Length / 1024.0;
+                IPSetDetailsText.Text = $"Файл: ipset-all.txt • {lineCount:N0} записей ({kb:F1} КБ) • Изменен: {fi.LastWriteTime:dd.MM.yyyy HH:mm}";
+            }
+
+            var currentGf = ZapretOptionsService.GetGameFilterMode(zapretDir);
+            bool hasChanges = (_savedIPSetMode.HasValue && newMode != _savedIPSetMode.Value) ||
+                              (_savedGameFilterMode.HasValue && currentGf != _savedGameFilterMode.Value);
+
+            var st = DiagnosticsEngine.CheckAppStatus();
+            if (st.ZapretRunning && hasChanges)
+            {
+                ExtraRestartNoticeBorder.Visibility = Visibility.Visible;
+            }
+            else if (!hasChanges)
+            {
+                ExtraRestartNoticeBorder.Visibility = Visibility.Collapsed;
+                _savedGameFilterMode = null;
+                _savedIPSetMode = null;
+            }
+        }
+        finally
+        {
+            btn.IsEnabled = true;
+        }
+    }
+
+    private async void UpdateIPSetBtn_Click(object sender, RoutedEventArgs e)
+    {
+        var zapretDir = GetZapretDirectoryPath();
+
+        if (ExtraRestartNoticeBorder.Visibility != Visibility.Visible)
+        {
+            _savedGameFilterMode = ZapretOptionsService.GetGameFilterMode(zapretDir);
+            _savedIPSetMode = ZapretOptionsService.GetIPSetMode(zapretDir, out _);
+        }
+
+        UpdateIPSetBtn.IsEnabled = false;
+        UpdateIPSetProgress.Visibility = Visibility.Visible;
+
+        try
+        {
+            bool ok = await ZapretOptionsService.DownloadLatestIPSetAsync(zapretDir);
+            if (ok)
+            {
+                var mode = ZapretOptionsService.GetIPSetMode(zapretDir, out int lineCount);
+                UpdateIPSetUi(mode, lineCount);
+
+                var ipsetFile = System.IO.Path.Combine(zapretDir, "lists", "ipset-all.txt");
+                if (File.Exists(ipsetFile))
+                {
+                    var fi = new FileInfo(ipsetFile);
+                    var kb = fi.Length / 1024.0;
+                    IPSetDetailsText.Text = $"Успешно обновлено! {lineCount:N0} записей ({kb:F1} КБ) • {DateTime.Now:HH:mm:ss}";
+                }
+
+                var st = DiagnosticsEngine.CheckAppStatus();
+                if (st.ZapretRunning)
+                {
+                    ExtraRestartNoticeBorder.Visibility = Visibility.Visible;
+                }
+            }
+            else
+            {
+                IPSetDetailsText.Text = "Не удалось загрузить список IPSet с GitHub. Проверьте сеть.";
+            }
+        }
+        finally
+        {
+            UpdateIPSetProgress.Visibility = Visibility.Collapsed;
+            UpdateIPSetBtn.IsEnabled = true;
+        }
+    }
+
+    private async void UpdateHostsBtn_Click(object sender, RoutedEventArgs e)
+    {
+        ExtraUpdateHostsBtn.IsEnabled = false;
+        ExtraUpdateHostsProgress.Visibility = Visibility.Visible;
+
+        try
+        {
+            string content = _cachedRemoteHostsContent ?? "";
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                var check = await ZapretOptionsService.CheckHostsStatusAsync();
+                content = check.remoteContent;
+            }
+
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                ExtraHostsStatusBadge.Background = new SolidColorBrush(Color.FromRgb(0x45, 0x1a, 0x03));
+                ExtraHostsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xfb, 0xbf, 0x24));
+                ExtraHostsStatusText.Text = "Ошибка загрузки";
+                return;
+            }
+
+            var (ok, error) = await ZapretOptionsService.ApplyHostsUpdateAsync(content);
+            if (ok)
+            {
+                ExtraHostsStatusBadge.Background = new SolidColorBrush(Color.FromRgb(0x05, 0x2e, 0x16));
+                ExtraHostsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x4a, 0xde, 0x80));
+                ExtraHostsStatusText.Text = "актуален";
+                ExtraUpdateHostsBtnText.Text = "Hosts актуален";
+                ExtraUpdateHostsBtn.BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33));
+            }
+            else
+            {
+                ExtraHostsStatusBadge.Background = new SolidColorBrush(Color.FromRgb(0x45, 0x1a, 0x03));
+                ExtraHostsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xfb, 0xbf, 0x24));
+                ExtraHostsStatusText.Text = "Ошибка записи";
+            }
+        }
+        finally
+        {
+            ExtraUpdateHostsProgress.Visibility = Visibility.Collapsed;
+            ExtraUpdateHostsBtn.IsEnabled = true;
+        }
+    }
+
+    private async void ExtraRestartServiceBtn_Click(object sender, RoutedEventArgs e)
+    {
+        ExtraRestartServiceBtn.IsEnabled = false;
+        ExtraRestartServiceBtn.Content = "Перезапуск службы...";
+
+        try
+        {
+            foreach (var p in Process.GetProcessesByName("winws"))
+                try { p.Kill(); } catch { }
+            foreach (var p in Process.GetProcessesByName("winws.exe"))
+                try { p.Kill(); } catch { }
+
+            try
+            {
+                var stopPsi = new ProcessStartInfo
+                {
+                    FileName = "net.exe",
+                    Arguments = "stop zapret",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                using var stopProc = Process.Start(stopPsi);
+                if (stopProc != null) await stopProc.WaitForExitAsync();
+            }
+            catch { }
+
+            await Task.Delay(500);
+
+            var cache = ZapretConfigService.LoadCache();
+            if (cache is not null && !string.IsNullOrEmpty(cache.CurrentConfig) && !string.IsNullOrEmpty(_settings.ZapretPath))
+            {
+                await ZapretConfigService.ApplyConfigAsync(_settings.ZapretPath, cache.CurrentConfig);
+            }
+
+            await Task.Delay(1500);
+            UpdateActiveApps();
+            _savedGameFilterMode = null;
+            _savedIPSetMode = null;
+            ExtraRestartNoticeBorder.Visibility = Visibility.Collapsed;
+        }
+        finally
+        {
+            ExtraRestartServiceBtn.IsEnabled = true;
+            ExtraRestartServiceBtn.Content = "Перезапустить Zapret";
+        }
+    }
+
+    private async void ExtraRestartCancelBtn_Click(object sender, RoutedEventArgs e)
+    {
+        ExtraRestartCancelBtn.IsEnabled = false;
+        try
+        {
+            var zapretDir = GetZapretDirectoryPath();
+
+            if (_savedGameFilterMode.HasValue)
+            {
+                ZapretOptionsService.SetGameFilterMode(zapretDir, _savedGameFilterMode.Value);
+                UpdateGameFilterUi(_savedGameFilterMode.Value);
+            }
+
+            if (_savedIPSetMode.HasValue)
+            {
+                await ZapretOptionsService.SetIPSetModeAsync(zapretDir, _savedIPSetMode.Value);
+                var currentMode = ZapretOptionsService.GetIPSetMode(zapretDir, out int lineCount);
+                UpdateIPSetUi(currentMode, lineCount);
+
+                var ipsetFile = System.IO.Path.Combine(zapretDir, "lists", "ipset-all.txt");
+                if (File.Exists(ipsetFile))
+                {
+                    var fi = new FileInfo(ipsetFile);
+                    var kb = fi.Length / 1024.0;
+                    IPSetDetailsText.Text = $"lists\\ipset-all.txt • {lineCount:N0} записей ({kb:F1} КБ) • Изменен: {fi.LastWriteTime:dd.MM.yyyy HH:mm}";
+                }
+            }
+
+            _savedGameFilterMode = null;
+            _savedIPSetMode = null;
+            ExtraRestartNoticeBorder.Visibility = Visibility.Collapsed;
+        }
+        finally
+        {
+            ExtraRestartCancelBtn.IsEnabled = true;
+        }
+    }
+
+    private void ExtraFeaturesBackBtn_Click(object s, RoutedEventArgs e)
+    {
+        HeaderExtraFeaturesView.Visibility = Visibility.Collapsed;
+        HeaderMainView.Visibility = Visibility.Visible;
+
+        var slideIn = new DoubleAnimation(-300, 0, TimeSpan.FromMilliseconds(200))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        var slideOut = new DoubleAnimation(0, 300, TimeSpan.FromMilliseconds(200))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+
+        MainViewTrans.BeginAnimation(TranslateTransform.XProperty, slideIn);
+        ExtraFeaturesViewTrans.BeginAnimation(TranslateTransform.XProperty, slideOut);
+    }
+
     private void DnsBackBtn_Click(object s, RoutedEventArgs e)
     {
         HeaderDnsView.Visibility = Visibility.Collapsed;
@@ -17352,43 +18085,102 @@ public partial class MainWindow : Window
         DnsViewTrans.BeginAnimation(TranslateTransform.XProperty, slideOut);
     }
 
-    private static List<string> GetCurrentDnsAddresses()
-    {
-        try
-        {
-            var activeInterface = NetworkInterface.GetAllNetworkInterfaces()
-                .FirstOrDefault(ni =>
-                    ni.OperationalStatus == OperationalStatus.Up &&
-                    (ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet || ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211) &&
-                    ni.GetIPProperties().GatewayAddresses.Any());
+    private static NetworkInterface? GetActivePhysicalInterface() => DnsManagerService.GetActivePhysicalInterface();
 
-            if (activeInterface is not null)
-            {
-                var props = activeInterface.GetIPProperties();
-                return props.DnsAddresses.Select(addr => addr.ToString()).ToList();
-            }
-        }
-        catch { }
-        return [];
-    }
+    private static List<string> GetCurrentDnsAddresses() => DnsManagerService.GetCurrentDnsAddresses();
+
+    internal void RefreshDnsServersList() => LoadDnsServers();
 
     private void LoadDnsServers()
     {
         DnsListContainer.Children.Clear();
 
-        var currentDnsList = GetCurrentDnsAddresses();
+        var (isDhcp, configuredDns) = DnsManagerService.GetPhysicalDnsSettings();
 
-        foreach (var dns in PredefinedDnsServers)
+        var allServers = new List<DnsServerInfo>(PredefinedDnsServers);
+        if (_settings.EffectiveQuickDnsInTray && _settings.CustomDnsServers is { Count: > 0 } customList)
         {
-            bool isActive = false;
-            if (dns.Primary == "dhcp")
+            foreach (var c in customList)
             {
-                isActive = !PredefinedDnsServers.Any(x => x.Primary != "dhcp" && currentDnsList.Contains(x.Primary));
+                allServers.Add(new DnsServerInfo(
+                    c.Name,
+                    string.IsNullOrEmpty(c.DohTemplate) ? "Пользовательский DNS-сервер" : $"DoH: {c.DohTemplate}",
+                    c.Primary,
+                    c.Secondary,
+                    c.DohTemplate ?? "",
+                    true));
             }
-            else
+        }
+
+        if (_settings.EffectiveQuickDnsInTray)
+        {
+            var addCard = new Border
             {
-                isActive = currentDnsList.Contains(dns.Primary);
-            }
+                Background = new SolidColorBrush(Color.FromRgb(0x25, 0x25, 0x25)),
+                CornerRadius = new CornerRadius(10),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+                BorderThickness = new Thickness(1.0),
+                Padding = new Thickness(12, 7, 12, 7),
+                Margin = new Thickness(0, 0, 0, 6),
+                Cursor = Cursors.Hand,
+                Height = 52
+            };
+            var addGrid = new Grid();
+            addGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(34) });
+            addGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            var addIconBorder = new Border
+            {
+                Width = 24, Height = 24,
+                CornerRadius = new CornerRadius(6),
+                Background = new SolidColorBrush(Color.FromRgb(0x1a, 0x2a, 0x3a)),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            addIconBorder.Child = new TextBlock
+            {
+                Text = "+",
+                FontSize = 14,
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, -1, 0, 0)
+            };
+            var addInfo = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+            addInfo.Children.Add(new TextBlock
+            {
+                Text = "Добавить свой DNS",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 12.5,
+                Foreground = Brushes.White,
+                FontWeight = FontWeights.SemiBold
+            });
+            addInfo.Children.Add(new TextBlock
+            {
+                Text = "Свой IPv4 или DoH-адрес",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 10,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+                Margin = new Thickness(0, 1, 0, 0)
+            });
+            Grid.SetColumn(addIconBorder, 0);
+            Grid.SetColumn(addInfo, 1);
+            addGrid.Children.Add(addIconBorder);
+            addGrid.Children.Add(addInfo);
+            addCard.Child = addGrid;
+
+            addCard.MouseLeftButtonUp += (_, _) => ShowAddCustomDnsDialog();
+            addCard.MouseEnter += (_, _) => addCard.Background = new SolidColorBrush(Color.FromRgb(0x2d, 0x2d, 0x2d));
+            addCard.MouseLeave += (_, _) => addCard.Background = new SolidColorBrush(Color.FromRgb(0x25, 0x25, 0x25));
+            DnsListContainer.Children.Add(addCard);
+        }
+
+        foreach (var dns in allServers)
+        {
+            bool isActive = dns.Primary == "dhcp"
+                ? (isDhcp || configuredDns.Count == 0)
+                : (!isDhcp && configuredDns.Contains(dns.Primary));
 
             var card = new Border
             {
@@ -17418,7 +18210,7 @@ public partial class MainWindow : Window
             };
             iconBorder.Child = new TextBlock
             {
-                Text = dns.Name.Substring(0, 1).ToUpper(),
+                Text = dns.Name.Length > 0 ? dns.Name.Substring(0, 1).ToUpper() : "D",
                 FontFamily = new FontFamily("Segoe UI"),
                 FontSize = 12,
                 FontWeight = FontWeights.Bold,
@@ -17476,9 +18268,10 @@ public partial class MainWindow : Window
 
             if (dns.Primary != "dhcp")
             {
+                string ipDisplay = string.IsNullOrEmpty(dns.Secondary) ? dns.Primary : $"{dns.Primary} | {dns.Secondary}";
                 info.Children.Add(new TextBlock
                 {
-                    Text = $"{dns.Primary} | {dns.Secondary}",
+                    Text = ipDisplay,
                     FontFamily = new FontFamily("Consolas"),
                     FontSize = 9.5,
                     Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x58)),
@@ -17490,6 +18283,37 @@ public partial class MainWindow : Window
             Grid.SetColumn(info, 1);
             grid.Children.Add(iconBorder);
             grid.Children.Add(info);
+
+            if (dns.IsCustom)
+            {
+                var deleteBtn = new Border
+                {
+                    Width = 26, Height = 26,
+                    CornerRadius = new CornerRadius(6),
+                    Background = new SolidColorBrush(Color.FromArgb(20, 239, 68, 68)),
+                    Margin = new Thickness(8, 0, 0, 0),
+                    Cursor = Cursors.Hand,
+                    ToolTip = "Удалить этот DNS"
+                };
+                deleteBtn.Child = new TextBlock
+                {
+                    Text = "✕",
+                    FontSize = 11,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44)),
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                deleteBtn.MouseEnter += (_, _) => deleteBtn.Background = new SolidColorBrush(Color.FromArgb(50, 239, 68, 68));
+                deleteBtn.MouseLeave += (_, _) => deleteBtn.Background = new SolidColorBrush(Color.FromArgb(20, 239, 68, 68));
+                deleteBtn.MouseLeftButtonUp += (s, e) =>
+                {
+                    e.Handled = true;
+                    ShowDeleteCustomDnsConfirmDialog(dns);
+                };
+                Grid.SetColumn(deleteBtn, 2);
+                grid.Children.Add(deleteBtn);
+            }
 
             card.Child = grid;
 
@@ -17584,6 +18408,402 @@ public partial class MainWindow : Window
         };
 
         DnsListContainer.Children.Add(resetCard);
+    }
+
+    private void ShowAddCustomDnsDialog()
+    {
+        if (_isDialogOpen) return;
+        _isDialogOpen = true;
+
+        var overlay = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(160, 0, 0, 0)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+        Grid.SetRowSpan(overlay, 3);
+
+        var dialogCard = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(12),
+            Padding = new Thickness(24),
+            Width = 440,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = Colors.Black,
+                BlurRadius = 30,
+                ShadowDepth = 0,
+                Opacity = 0.5
+            }
+        };
+        TextOptions.SetTextRenderingMode(dialogCard, TextRenderingMode.Grayscale);
+        TextOptions.SetTextFormattingMode(dialogCard, TextFormattingMode.Ideal);
+
+        var cardContent = new StackPanel();
+
+        var titleText = new TextBlock
+        {
+            Text = "Добавить свой DNS-сервер",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 16,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = Brushes.White,
+            Margin = new Thickness(0, 0, 0, 4)
+        };
+        cardContent.Children.Add(titleText);
+
+        var descText = new TextBlock
+        {
+            Text = "Укажите параметры собственного или корпоративного DNS",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 12,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            Margin = new Thickness(0, 0, 0, 16)
+        };
+        cardContent.Children.Add(descText);
+
+        UIElement CreateField(string labelText, string hintText, bool isMono, out TextBox box)
+        {
+            var panel = new StackPanel { Margin = new Thickness(0, 0, 0, 12) };
+
+            var labelPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 6) };
+            labelPanel.Children.Add(new TextBlock
+            {
+                Text = labelText,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 12,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = Brushes.White
+            });
+            if (!string.IsNullOrEmpty(hintText))
+            {
+                labelPanel.Children.Add(new TextBlock
+                {
+                    Text = $"  ({hintText})",
+                    FontFamily = new FontFamily("Segoe UI"),
+                    FontSize = 11,
+                    Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+                    VerticalAlignment = VerticalAlignment.Center
+                });
+            }
+            panel.Children.Add(labelPanel);
+
+            var textBox = new TextBox
+            {
+                FontSize = 12.5,
+                Foreground = Brushes.White,
+                Background = new SolidColorBrush(Color.FromRgb(0x25, 0x25, 0x25)),
+                CaretBrush = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+                BorderThickness = new Thickness(1),
+                Padding = new Thickness(10, 8, 10, 8),
+                FontFamily = isMono ? new FontFamily("Consolas") : new FontFamily("Segoe UI"),
+                VerticalContentAlignment = VerticalAlignment.Center
+            };
+
+            var tbTpl = new ControlTemplate(typeof(TextBox));
+            var tbFac = new FrameworkElementFactory(typeof(Border));
+            tbFac.SetValue(Border.BackgroundProperty, new TemplateBindingExtension(TextBox.BackgroundProperty));
+            tbFac.SetValue(Border.BorderBrushProperty, new TemplateBindingExtension(TextBox.BorderBrushProperty));
+            tbFac.SetValue(Border.BorderThicknessProperty, new TemplateBindingExtension(TextBox.BorderThicknessProperty));
+            tbFac.SetValue(Border.CornerRadiusProperty, new CornerRadius(8));
+            var scrollViewerFac = new FrameworkElementFactory(typeof(ScrollViewer));
+            scrollViewerFac.Name = "PART_ContentHost";
+            scrollViewerFac.SetValue(ScrollViewer.MarginProperty, new Thickness(0));
+            tbFac.AppendChild(scrollViewerFac);
+            tbTpl.VisualTree = tbFac;
+            textBox.Template = tbTpl;
+
+            textBox.GotFocus += (_, _) => textBox.BorderBrush = new SolidColorBrush(Color.FromRgb(0x3b, 0x82, 0xf6));
+            textBox.LostFocus += (_, _) => textBox.BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33));
+
+            panel.Children.Add(textBox);
+
+            box = textBox;
+            return panel;
+        }
+
+        cardContent.Children.Add(CreateField("Название DNS-сервера *", "например: Мой AdGuard DNS", false, out var nameBox));
+        cardContent.Children.Add(CreateField("Основной DNS IPv4 *", "например: 94.140.14.14", true, out var primaryBox));
+        cardContent.Children.Add(CreateField("Дополнительный DNS IPv4", "опционально, например: 94.140.15.15", true, out var secondaryBox));
+        cardContent.Children.Add(CreateField("DoH-шаблон", "опционально: https://.../dns-query", true, out var dohBox));
+
+        var errorText = new TextBlock
+        {
+            FontSize = 11.5,
+            Foreground = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44)),
+            TextAlignment = TextAlignment.Center,
+            Margin = new Thickness(0, 4, 0, 10),
+            TextWrapping = TextWrapping.Wrap,
+            Visibility = Visibility.Collapsed
+        };
+        cardContent.Children.Add(errorText);
+
+        var btnPanel = new Grid { Margin = new Thickness(0, 8, 0, 0) };
+        btnPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        btnPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(12) });
+        btnPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+        var addBtn = new Button
+        {
+            Content = "Добавить",
+            Height = 36,
+            Style = (Style)FindResource("AccentBtn")
+        };
+        Grid.SetColumn(addBtn, 0);
+
+        var cancelBtn = new Button
+        {
+            Content = "Отмена",
+            Height = 36,
+            Style = (Style)FindResource("OutlineBtn")
+        };
+        Grid.SetColumn(cancelBtn, 2);
+
+        btnPanel.Children.Add(addBtn);
+        btnPanel.Children.Add(cancelBtn);
+        cardContent.Children.Add(btnPanel);
+
+        dialogCard.Child = cardContent;
+        overlay.Child = dialogCard;
+        MainGrid.Children.Add(overlay);
+
+        overlay.Opacity = 0;
+        dialogCard.RenderTransform = new ScaleTransform(0.95, 0.95);
+        dialogCard.RenderTransformOrigin = new Point(0.5, 0.5);
+
+        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150));
+        var scaleIn = new DoubleAnimation(0.95, 1, TimeSpan.FromMilliseconds(150))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        overlay.BeginAnimation(OpacityProperty, fadeIn);
+        ((ScaleTransform)dialogCard.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleIn);
+        ((ScaleTransform)dialogCard.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty, scaleIn);
+
+        void Close()
+        {
+            if (!_isDialogOpen) return;
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(120));
+            fadeOut.Completed += (_, _) =>
+            {
+                MainGrid.Children.Remove(overlay);
+                _isDialogOpen = false;
+            };
+            overlay.BeginAnimation(OpacityProperty, fadeOut);
+        }
+
+        cancelBtn.Click += (_, _) => Close();
+        overlay.MouseLeftButtonDown += (_, e) => { if (e.Source == overlay) Close(); };
+
+        addBtn.Click += (_, _) =>
+        {
+            string name = nameBox.Text.Trim();
+            string primary = primaryBox.Text.Trim();
+            string secondary = secondaryBox.Text.Trim();
+            string doh = dohBox.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                errorText.Text = "Введите название DNS-сервера.";
+                errorText.Visibility = Visibility.Visible;
+                nameBox.Focus();
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(primary) || !System.Net.IPAddress.TryParse(primary, out _))
+            {
+                errorText.Text = "Введите корректный основной IPv4-адрес.";
+                errorText.Visibility = Visibility.Visible;
+                primaryBox.Focus();
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(secondary) && !System.Net.IPAddress.TryParse(secondary, out _))
+            {
+                errorText.Text = "Введен некорректный дополнительный IPv4-адрес.";
+                errorText.Visibility = Visibility.Visible;
+                secondaryBox.Focus();
+                return;
+            }
+
+            if (PredefinedDnsServers.Any(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) ||
+                _settings.CustomDnsServers.Any(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+            {
+                errorText.Text = "Сервер с таким названием уже существует.";
+                errorText.Visibility = Visibility.Visible;
+                nameBox.Focus();
+                return;
+            }
+
+            _settings.CustomDnsServers.Add(new CustomDnsEntry
+            {
+                Name = name,
+                Primary = primary,
+                Secondary = secondary,
+                DohTemplate = doh
+            });
+
+            SettingsService.Save(_settings);
+            Close();
+            LoadDnsServers();
+            ShowNotification("DNS добавлен", $"Сервер «{name}» успешно добавлен в список.", false);
+        };
+
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
+        {
+            nameBox.Focus();
+        }));
+    }
+
+    private void ShowDeleteCustomDnsConfirmDialog(DnsServerInfo dns)
+    {
+        if (_isDialogOpen) return;
+        _isDialogOpen = true;
+
+        var overlay = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(160, 0, 0, 0)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+        Grid.SetRowSpan(overlay, 3);
+
+        var dialog = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(12),
+            Padding = new Thickness(24),
+            Width = 400,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = Colors.Black,
+                BlurRadius = 30,
+                ShadowDepth = 0,
+                Opacity = 0.5
+            }
+        };
+        TextOptions.SetTextRenderingMode(dialog, TextRenderingMode.Grayscale);
+        TextOptions.SetTextFormattingMode(dialog, TextFormattingMode.Ideal);
+
+        var stack = new StackPanel();
+
+        var titleBlock = new TextBlock
+        {
+            Text = "Удалить DNS-сервер?",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 16,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = Brushes.White,
+            Margin = new Thickness(0, 0, 0, 12)
+        };
+        stack.Children.Add(titleBlock);
+
+        var messageBlock = new TextBlock
+        {
+            Text = $"DNS-сервер «{dns.Name}» ({dns.Primary}) будет удален из списка.",
+            FontFamily = new FontFamily("Segoe UI"),
+            FontSize = 13,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 20)
+        };
+        stack.Children.Add(messageBlock);
+
+        var btnPanel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Right
+        };
+
+        void CloseDialog()
+        {
+            if (!_isDialogOpen) return;
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(120));
+            fadeOut.Completed += (_, _) =>
+            {
+                MainGrid.Children.Remove(overlay);
+                _isDialogOpen = false;
+            };
+            overlay.BeginAnimation(OpacityProperty, fadeOut);
+        }
+
+        var confirmBg = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
+        var confirmBgHover = new SolidColorBrush(Color.FromRgb(0xdc, 0x26, 0x26));
+        var confirmBtn = new Button
+        {
+            Content = "Удалить",
+            Padding = new Thickness(16, 8, 16, 8),
+            Background = confirmBg,
+            Foreground = Brushes.White,
+            BorderThickness = new Thickness(0),
+            Cursor = Cursors.Hand,
+            FontSize = 13,
+            FontFamily = new FontFamily("Segoe UI"),
+            Margin = new Thickness(0, 0, 8, 0)
+        };
+        var btnTpl = new ControlTemplate(typeof(Button));
+        var btnFac = new FrameworkElementFactory(typeof(Border));
+        btnFac.SetValue(Border.BackgroundProperty, new TemplateBindingExtension(Button.BackgroundProperty));
+        btnFac.SetValue(Border.CornerRadiusProperty, new CornerRadius(8));
+        btnFac.SetValue(Border.PaddingProperty, new TemplateBindingExtension(Button.PaddingProperty));
+        var btnPres = new FrameworkElementFactory(typeof(ContentPresenter));
+        btnPres.SetValue(ContentPresenter.HorizontalAlignmentProperty, System.Windows.HorizontalAlignment.Center);
+        btnPres.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
+        btnFac.AppendChild(btnPres);
+        btnTpl.VisualTree = btnFac;
+        confirmBtn.Template = btnTpl;
+        confirmBtn.MouseEnter += (_, _) => confirmBtn.Background = confirmBgHover;
+        confirmBtn.MouseLeave += (_, _) => confirmBtn.Background = confirmBg;
+        confirmBtn.Click += (_, _) =>
+        {
+            CloseDialog();
+            _settings.CustomDnsServers.RemoveAll(x => x.Name == dns.Name && x.Primary == dns.Primary);
+            SettingsService.Save(_settings);
+            LoadDnsServers();
+            ShowNotification("DNS удален", $"Сервер «{dns.Name}» удален из списка.", false);
+        };
+
+        var cancelBtn = new Button
+        {
+            Content = "Отмена",
+            Style = (Style)FindResource("OutlineBtn"),
+            Padding = new Thickness(16, 8, 16, 8)
+        };
+        cancelBtn.Click += (_, _) => CloseDialog();
+
+        btnPanel.Children.Add(confirmBtn);
+        btnPanel.Children.Add(cancelBtn);
+
+        stack.Children.Add(btnPanel);
+        dialog.Child = stack;
+        overlay.Child = dialog;
+
+        MainGrid.Children.Add(overlay);
+
+        overlay.Opacity = 0;
+        dialog.RenderTransform = new ScaleTransform(0.95, 0.95);
+        dialog.RenderTransformOrigin = new Point(0.5, 0.5);
+
+        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150));
+        var scaleIn = new DoubleAnimation(0.95, 1, TimeSpan.FromMilliseconds(150))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        overlay.BeginAnimation(OpacityProperty, fadeIn);
+        ((ScaleTransform)dialog.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleIn);
+        ((ScaleTransform)dialog.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty, scaleIn);
+
+        overlay.MouseLeftButtonDown += (_, e) => { if (e.Source == overlay) CloseDialog(); };
     }
 
     private async void RunDnsTestInApp(DnsServerInfo dns)
@@ -18045,8 +19265,12 @@ public partial class MainWindow : Window
         e.Handled = true;
         if ((s as Border)?.Tag is not DnsServerInfo dns) return;
 
-        var currentDnsList = GetCurrentDnsAddresses();
-        if (dns.Primary != "dhcp" && currentDnsList.Contains(dns.Primary))
+        var (isDhcp, configuredDns) = DnsManagerService.GetPhysicalDnsSettings();
+        if (dns.Primary == "dhcp" && (isDhcp || configuredDns.Count == 0))
+        {
+            return;
+        }
+        if (dns.Primary != "dhcp" && !isDhcp && configuredDns.Contains(dns.Primary))
         {
             return;
         }
@@ -18630,11 +19854,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            var activeInterface = NetworkInterface.GetAllNetworkInterfaces()
-                .FirstOrDefault(ni =>
-                    ni.OperationalStatus == OperationalStatus.Up &&
-                    (ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet || ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211) &&
-                    ni.GetIPProperties().GatewayAddresses.Any());
+            var activeInterface = GetActivePhysicalInterface();
 
             if (activeInterface is null)
             {

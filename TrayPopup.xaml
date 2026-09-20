@@ -16,6 +16,36 @@
             <Setter Property="Padding" Value="10,8"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
+        <Style TargetType="ScrollBar">
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="Width" Value="6"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Grid Background="{TemplateBinding Background}">
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border Background="#3F3F46" CornerRadius="3" Width="4" HorizontalAlignment="Right" Margin="0,2,1,2"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0" Focusable="False"/>
+                                </Track.IncreaseRepeatButton>
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" Focusable="False"/>
+                                </Track.DecreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
     <Border Margin="12" Background="#18181B" CornerRadius="14"
             BorderBrush="#27272A" BorderThickness="1">
@@ -105,6 +135,44 @@
                                FontFamily="Segoe UI" FontSize="11" FontWeight="Medium"/>
                 </StackPanel>
             </StackPanel>
+            <Border x:Name="DnsSectionBorder" Visibility="Collapsed">
+                <StackPanel>
+                    <Border Height="1" Background="#27272A" Margin="0"/>
+                    <Border x:Name="DnsMenuToggleBtn" Style="{StaticResource MenuItemStyle}"
+                            MouseEnter="DnsMenuToggleBtn_Enter" MouseLeave="DnsMenuToggleBtn_Leave"
+                            MouseLeftButtonUp="DnsMenuToggleBtn_Click">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Viewbox Width="14" Height="14" Margin="0,0,10,0" VerticalAlignment="Center">
+                                <Canvas Width="24" Height="24">
+                                    <Path Fill="#71717A"
+                                          Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,19.93C7.05,19.44 4,16.08 4,12C4,11.38 4.08,10.79 4.21,10.21L9,15V16A2,2 0 0,0 11,18V19.93M17.9,17.39C17.64,16.58 16.9,16 16,16H15V13A1,1 0 0,0 14,12H8V10H10A1,1 0 0,0 11,9V7H13A2,2 0 0,0 15,5V4.59C17.93,5.78 20,8.65 20,12C20,14.08 19.2,15.97 17.9,17.39Z"/>
+                                </Canvas>
+                            </Viewbox>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="DNS-сервер" Foreground="#71717A" FontFamily="Segoe UI" FontSize="10"/>
+                                <TextBlock x:Name="CurrentDnsLabel" Text="Системный (DHCP)" Foreground="#D4D4D8"
+                                           FontFamily="Segoe UI" FontSize="11.5" FontWeight="SemiBold"
+                                           TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="2" x:Name="DnsExpandArrow" Text="▼"
+                                       Foreground="#71717A" FontSize="9" VerticalAlignment="Center" Margin="4,0,2,0"/>
+                        </Grid>
+                    </Border>
+                    <ScrollViewer x:Name="DnsServersScroll" Visibility="Collapsed"
+                                  MaxHeight="160"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  Padding="0,0,3,0"
+                                  Margin="6,0,2,6">
+                        <StackPanel x:Name="DnsServersList"/>
+                    </ScrollViewer>
+                </StackPanel>
+            </Border>
             <Border Height="1" Background="#27272A" Margin="0"/>
             <StackPanel Margin="0,6,0,6">
                 <Border x:Name="ConfigBtn" Style="{StaticResource MenuItemStyle}"

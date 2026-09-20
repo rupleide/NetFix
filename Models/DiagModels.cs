@@ -136,6 +136,25 @@ public class AppSettings
     public List<string> PreviousDnsAddresses { get; set; } = [];
     public bool PreviousDnsWasDhcp { get; set; } = true;
     public bool AutoEacBypass { get; set; } = false;
+    public bool ShowAdvancedSettings { get; set; } = false;
+    public bool AlwaysGrayscaleServiceIcons { get; set; } = false;
+    public bool QuickDnsInTray { get; set; } = false;
+    public List<CustomDnsEntry> CustomDnsServers { get; set; } = [];
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool EffectiveAlwaysGrayscaleIcons => ShowAdvancedSettings && AlwaysGrayscaleServiceIcons;
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool EffectiveQuickDnsInTray => ShowAdvancedSettings && QuickDnsInTray;
+}
+
+public class CustomDnsEntry
+{
+    public string Name { get; set; } = "";
+    public string Description { get; set; } = "";
+    public string Primary { get; set; } = "";
+    public string Secondary { get; set; } = "";
+    public string DohTemplate { get; set; } = "";
 }
 
 public record GameTrackStats

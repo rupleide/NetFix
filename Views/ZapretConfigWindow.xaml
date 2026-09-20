@@ -13,6 +13,102 @@
         <PathGeometry x:Key="CheckmarkIcon">M2,12 L8,18 L22,4</PathGeometry>
         <PathGeometry x:Key="WarningIcon">M12,2 L22,20 L2,20 Z M12,9 L12,13 M12,15 L12,17</PathGeometry>
         <PathGeometry x:Key="CloseIcon">M6,6 L18,18 M18,6 L6,18</PathGeometry>
+        <PathGeometry x:Key="ArrowRightIcon">M5,12 L19,12 M13,6 L19,12 L13,18</PathGeometry>
+        <PathGeometry x:Key="PencilIcon">M17,3 C17.3,2.7 17.7,2.5 18.2,2.5 C18.7,2.5 19.1,2.7 19.4,3 L21,4.6 C21.3,4.9 21.5,5.3 21.5,5.8 C21.5,6.3 21.3,6.7 21,7 L7.5,20.5 L2,22 L3.5,16.5 Z</PathGeometry>
+        <PathGeometry x:Key="TrashIcon">M3,6 L21,6 M8,6 L8,4 Q8,3 9,3 L15,3 Q16,3 16,4 L16,6 M10,11 L10,17 M14,11 L14,17 M5,6 L6,20 Q6,21 7,21 L17,21 Q18,21 18,20 L19,6</PathGeometry>
+        <PathGeometry x:Key="StarIcon">M12,17.27l6.18,3.73 -1.64,-7.03L22,9.24l-7.19,-0.61L12,2 9.19,8.63 2,9.24l5.46,4.73L5.82,21z</PathGeometry>
+        <Style x:Key="HoverActionBtn" TargetType="Button">
+            <Setter Property="Background" Value="#1c1c1e"/>
+            <Setter Property="BorderBrush" Value="#22666666"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="34"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="ToolTipService.Placement" Value="Bottom"/>
+            <Setter Property="ToolTipService.VerticalOffset" Value="6"/>
+            <Setter Property="ToolTipService.InitialShowDelay" Value="150"/>
+            <Setter Property="ToolTipService.BetweenShowDelay" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#2a2a2e"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#44888888"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#1e1e22"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.55"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="HoverActionDestructiveBtn" TargetType="Button" BasedOn="{StaticResource HoverActionBtn}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#2e1414"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#55ef4444"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#200d0d"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.55"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="HoverActionSuccessBtn" TargetType="Button" BasedOn="{StaticResource HoverActionBtn}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#142e1a"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#5522c55e"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#0d2012"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.55"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style x:Key="FlatBtn" TargetType="Button">
             <Setter Property="Background"   Value="Transparent"/>
             <Setter Property="BorderBrush"  Value="Transparent"/>
@@ -162,8 +258,12 @@
             </Setter>
         </Style>
     </Window.Resources>
-    <Border Background="#161618" CornerRadius="14" BorderBrush="#2a2a2d" BorderThickness="1" ClipToBounds="True">
-        <Grid x:Name="RootGrid" Margin="1,1,-1,-1">
+    <Border Background="#161618" CornerRadius="14" BorderBrush="#2a2a2d" BorderThickness="1" ClipToBounds="True"
+            TextOptions.TextRenderingMode="Grayscale"
+            TextOptions.TextFormattingMode="Ideal"
+            SnapsToDevicePixels="True"
+            UseLayoutRounding="True">
+        <Grid x:Name="RootGrid">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" MinHeight="71"/>
                 <RowDefinition Height="Auto"/>
@@ -255,7 +355,7 @@
                           VerticalAlignment="Stretch" Height="Auto">
                 <StackPanel x:Name="ConfigListPanel"/>
             </ScrollViewer>
-            <Border Grid.Row="3" Background="#111113" CornerRadius="0,0,14,14"
+            <Border Grid.Row="3" Background="#111113" CornerRadius="0,0,13,13"
                         BorderBrush="#22222a" BorderThickness="0,1,0,0"
                         Margin="0,16,0,0" Padding="28,12,28,12">
                 <StackPanel>

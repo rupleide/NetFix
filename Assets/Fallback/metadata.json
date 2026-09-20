@@ -1,12 +1,12 @@
 {
   "Zapret": {
-    "Version": "1.10.2",
-    "ReleaseDate": "2026-08-25",
-    "Sha256": "5eaac9fb2e4b1abd693487452a3ff3f4dfe9578a45f9ddddfa4bc1f5a6bb62d5"
+    "Version": "1.10.3",
+    "ReleaseDate": "2026-09-20",
+    "Sha256": "271eb29707ed9764cedd468b16b3690e1ac303577c402bdd870b9d587d0f9793"
   },
   "TgWsProxy": {
-    "Version": "1.10.0",
-    "ReleaseDate": "2026-08-25",
-    "Sha256": "1b864ba0954c26b129683520d1e836f1e87b93e224b6383430e98de59b467f7a"
+    "Version": "1.10.4",
+    "ReleaseDate": "2026-09-20",
+    "Sha256": "b51436e8960307316135e64ac14753b1f3b0e7a46afe1bd6081353b82de20f09"
   }
 }

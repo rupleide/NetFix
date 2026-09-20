@@ -412,5 +412,5 @@ git clone https://github.com/rupleide/NetFix.git
 
 <div align="center">
   <sub>Разработано с ❤️ для тех, кто хочет просто нажать на кнопку</sub><br/>
-  <sub>v1.1.9 · 2026</sub>
+  <sub>v1.2.0 · 2026</sub>
 </div>

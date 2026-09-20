@@ -604,9 +604,10 @@ public class ZapretConfigService
 
             fullText = fullText.Replace("%BIN%", binPath + "\\");
             fullText = fullText.Replace("%LISTS%", listsPath + "\\");
-            fullText = fullText.Replace("%GameFilter%", "12");
-            fullText = fullText.Replace("%GameFilterTCP%", "12");
-            fullText = fullText.Replace("%GameFilterUDP%", "12");
+            var (gameTcp, gameUdp) = ZapretOptionsService.GetGameFilterPorts(zapretDir);
+            fullText = fullText.Replace("%GameFilter%", gameTcp);
+            fullText = fullText.Replace("%GameFilterTCP%", gameTcp);
+            fullText = fullText.Replace("%GameFilterUDP%", gameUdp);
 
             fullText = fullText.Replace("\"", "");
 

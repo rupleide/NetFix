@@ -5,12 +5,15 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Net.NetworkInformation;
 using NetFix.Services;
 
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using Application    = System.Windows.Application;
 using Color          = System.Windows.Media.Color;
+using Cursors        = System.Windows.Input.Cursors;
+using FontFamily     = System.Windows.Media.FontFamily;
 
 namespace NetFix;
 
@@ -48,6 +51,7 @@ public partial class TrayPopup : Window
     {
         UpdateStatus();
         await UpdatePingAsync();
+        await UpdateDnsSectionAsync();
     }
 
     private void SafeClose()
@@ -144,6 +148,206 @@ public partial class TrayPopup : Window
         TgWsBtn.Background = st.TgWsProxyRunning ? _brushRunning : _brushStopped;
     }
 
+
+    private async Task UpdateDnsSectionAsync()
+    {
+        try
+        {
+            var settings = SettingsService.Load();
+            if (!settings.EffectiveQuickDnsInTray)
+            {
+                DnsSectionBorder.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            DnsSectionBorder.Visibility = Visibility.Visible;
+            var (activeName, isDhcp, configuredDns) = await Task.Run(() =>
+            {
+                var dnsSettings = DnsManagerService.GetPhysicalDnsSettings();
+                var name = DnsManagerService.DetectActiveDnsName(settings);
+                return (name, dnsSettings.IsDhcp, dnsSettings.ConfiguredDns);
+            });
+
+            CurrentDnsLabel.Text = activeName;
+            PopulateDnsServersList(isDhcp, configuredDns, settings);
+        }
+        catch
+        {
+            DnsSectionBorder.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void PopulateDnsServersList(bool isDhcp, List<string> configuredDns, Models.AppSettings settings)
+    {
+        DnsServersList.Children.Clear();
+        var allServers = DnsManagerService.GetAllServers(settings);
+
+        foreach (var server in allServers)
+        {
+            bool isActive = server.Primary == "dhcp"
+                ? (isDhcp || configuredDns.Count == 0)
+                : (!isDhcp && configuredDns.Contains(server.Primary));
+
+            var itemBorder = new Border
+            {
+                Background = isActive ? new SolidColorBrush(Color.FromArgb(20, 0x22, 0xC5, 0x5E)) : _brushTransparent,
+                CornerRadius = new CornerRadius(6),
+                Padding = new Thickness(8, 6, 8, 6),
+                Margin = new Thickness(0, 1, 0, 1),
+                Cursor = Cursors.Hand,
+                Tag = server
+            };
+
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var titleBlock = new TextBlock
+            {
+                Text = server.Name,
+                Foreground = isActive ? _brushGreen : new SolidColorBrush(Color.FromRgb(0xD4, 0xD4, 0xD8)),
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 11.5,
+                FontWeight = isActive ? FontWeights.SemiBold : FontWeights.Normal,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis
+            };
+
+            var mark = new TextBlock
+            {
+                Text = isActive ? "✔" : "",
+                Foreground = _brushGreen,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 11,
+                FontWeight = FontWeights.Bold,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(4, 0, 0, 0)
+            };
+
+            Grid.SetColumn(titleBlock, 0);
+            Grid.SetColumn(mark, 1);
+            grid.Children.Add(titleBlock);
+            grid.Children.Add(mark);
+            itemBorder.Child = grid;
+
+            itemBorder.MouseEnter += (_, _) =>
+            {
+                if (!isActive) itemBorder.Background = new SolidColorBrush(Color.FromArgb(0x0D, 0xFF, 0xFF, 0xFF));
+            };
+            itemBorder.MouseLeave += (_, _) =>
+            {
+                if (!isActive) itemBorder.Background = _brushTransparent;
+            };
+
+            itemBorder.MouseLeftButtonUp += async (s, e) =>
+            {
+                e.Handled = true;
+                itemBorder.IsHitTestVisible = false;
+                titleBlock.Text = "Применение...";
+
+                bool ok = await DnsManagerService.SetDnsServerAsync(server.Primary, server.Secondary, server.DohTemplate);
+                await Task.Delay(300);
+
+                await UpdateDnsSectionAsync();
+                AnimateDnsList(false);
+
+                if (Application.Current.MainWindow is MainWindow mainWin)
+                {
+                    mainWin.Dispatcher.Invoke(() => mainWin.RefreshDnsServersList());
+                }
+            };
+
+            DnsServersList.Children.Add(itemBorder);
+        }
+    }
+
+    private void DnsMenuToggleBtn_Enter(object s, MouseEventArgs e) =>
+        DnsMenuToggleBtn.Background = new SolidColorBrush(Color.FromArgb(0x0D, 0xFF, 0xFF, 0xFF));
+
+    private void DnsMenuToggleBtn_Leave(object s, MouseEventArgs e) =>
+        DnsMenuToggleBtn.Background = _brushTransparent;
+
+    private bool _isDnsAnimating;
+
+    private void AnimateDnsList(bool expand)
+    {
+        if (_isDnsAnimating) return;
+        _isDnsAnimating = true;
+
+        double bottom = Top + ActualHeight;
+
+        if (expand)
+        {
+            DnsServersScroll.Visibility = Visibility.Visible;
+            DnsServersScroll.Height = 0;
+            DnsExpandArrow.Text = "▲";
+
+            DnsServersList.Measure(new System.Windows.Size(230, double.PositiveInfinity));
+            double targetH = Math.Min(Math.Max(DnsServersList.DesiredSize.Height + 4, 36), 160);
+
+            var anim = new DoubleAnimation(0, targetH, new Duration(TimeSpan.FromMilliseconds(200)))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+
+            EventHandler? renderHandler = null;
+            renderHandler = (s, e) =>
+            {
+                Top = bottom - ActualHeight;
+            };
+            CompositionTarget.Rendering += renderHandler;
+
+            anim.Completed += (s, e) =>
+            {
+                CompositionTarget.Rendering -= renderHandler;
+                DnsServersScroll.BeginAnimation(HeightProperty, null);
+                DnsServersScroll.Height = double.NaN;
+                DnsServersScroll.MaxHeight = 160;
+                UpdateLayout();
+                Top = bottom - ActualHeight;
+                _isDnsAnimating = false;
+            };
+
+            DnsServersScroll.BeginAnimation(HeightProperty, anim);
+        }
+        else
+        {
+            DnsExpandArrow.Text = "▼";
+            double currentH = DnsServersScroll.ActualHeight;
+
+            var anim = new DoubleAnimation(currentH, 0, new Duration(TimeSpan.FromMilliseconds(160)))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+            };
+
+            EventHandler? renderHandler = null;
+            renderHandler = (s, e) =>
+            {
+                Top = bottom - ActualHeight;
+            };
+            CompositionTarget.Rendering += renderHandler;
+
+            anim.Completed += (s, e) =>
+            {
+                CompositionTarget.Rendering -= renderHandler;
+                DnsServersScroll.BeginAnimation(HeightProperty, null);
+                DnsServersScroll.Visibility = Visibility.Collapsed;
+                DnsServersScroll.Height = double.NaN;
+                UpdateLayout();
+                Top = bottom - ActualHeight;
+                _isDnsAnimating = false;
+            };
+
+            DnsServersScroll.BeginAnimation(HeightProperty, anim);
+        }
+    }
+
+    private void DnsMenuToggleBtn_Click(object s, MouseButtonEventArgs e)
+    {
+        e.Handled = true;
+        bool isShown = DnsServersScroll.Visibility == Visibility.Visible && DnsServersScroll.ActualHeight > 5;
+        AnimateDnsList(!isShown);
+    }
 
     private void ConfigBtn_Enter(object s, MouseEventArgs e) =>
         ConfigBtn.Background = new SolidColorBrush(Color.FromArgb(0x0D, 0xFF, 0xFF, 0xFF));
