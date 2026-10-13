@@ -1,0 +1,1311 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NetFix - обход блокировок в одну кнопку</title>
+<meta name="description" content="NetFix - бесплатное приложение для Windows с открытым кодом. Возвращает YouTube, Discord, Telegram, ChatGPT и Gemini. Не VPN: работает локально, через Zapret и tg-ws-proxy.">
+<meta name="theme-color" content="#0b0c0b">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="img/logo-32.png" type="image/png">
+<link rel="apple-touch-icon" href="img/logo-180.png">
+<meta property="og:image" content="https://rupleide.github.io/NetFix/img/logo-512.png">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="app-window.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-github" viewBox="0 0 16 16"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></symbol>
+  <symbol id="i-telegram" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M21.2 4.2 2.9 11.3c-.8.3-.8 1.4 0 1.7l4.6 1.6 1.7 5.3c.2.7 1.1.9 1.6.4l2.6-2.5 4.6 3.4c.6.4 1.4.1 1.6-.6l3.3-15.2c.2-.8-.6-1.5-1.3-1.2ZM7.6 14.6l9.6-6.4"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M7 17 17 7M8 7h9v9"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="m12 2.8 2.8 5.7 6.3.9-4.5 4.4 1 6.2L12 17l-5.6 3 1.1-6.2L3 9.4l6.2-.9L12 2.8Z"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="m8 7-5 5 5 5m8-10 5 5-5 5M14 4l-4 16"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M3 10.5 12 3l9 7.5M5 9v11h14V9M10 20v-6h4v6"/></symbol>
+  <symbol id="i-feather" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M20.2 4.8a6 6 0 0 0-8.5 0L5 11.5V19h7.5l6.7-6.7a6 6 0 0 0 1-7.5ZM16 8 2 22M17.5 15H9"/></symbol>
+  <symbol id="i-sparkle" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 3v4m0 10v4M3 12h4m10 0h4M6 6l2.5 2.5m7 7L18 18M6 18l2.5-2.5m7-7L18 6"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6L12 3Zm-3.2 9 2.2 2.2 4.2-4.4"/></symbol>
+  <symbol id="i-eye-off" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.4 5.2A9.9 9.9 0 0 1 12 5c5 0 8.5 4.5 9.5 7a13 13 0 0 1-2.6 3.8M6.2 6.6C4.3 7.9 3 9.8 2.5 12c1 2.5 4.5 7 9.5 7 1.7 0 3.2-.5 4.5-1.2"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M3 6h18v12H3zM3 10h18M7 15h3"/></symbol>
+  <symbol id="i-headset" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 14v-2a8 8 0 0 1 16 0v2M4 14h3v6H5a1 1 0 0 1-1-1v-5Zm16 0h-3v6h2a1 1 0 0 0 1-1v-5Zm0 5c0 1.7-2 3-5 3h-2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-pc" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M3 4h18v12H3zM8 20h8M12 16v4"/></symbol>
+  <symbol id="i-plane" viewBox="0 0 24 24"><path fill="currentColor" d="M2.3 11.2 20.6 4.1c.9-.3 1.6.2 1.4 1.4l-3.1 14.6c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.8 14.1l-4.6-1.4c-1-.3-1-1 .1-1.5z"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M7 2.5h10a1.5 1.5 0 0 1 1.5 1.5v16a1.5 1.5 0 0 1-1.5 1.5H7A1.5 1.5 0 0 1 5.5 20V4A1.5 1.5 0 0 1 7 2.5ZM10.5 18.5h3"/></symbol>
+  <symbol id="i-tv" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 7h18v11H3zM8 3l4 4 4-4M8 21h8"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 4h16v6H4zM4 14h16v6H4zM8 7h.01M8 17h.01"/></symbol>
+  <symbol id="i-yt" viewBox="0 0 24 24"><path fill="currentColor" d="M21.6 7.2a2.6 2.6 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.6 2.6 0 0 0 2.4 7.2C2 8.8 2 12 2 12s0 3.2.4 4.8a2.6 2.6 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.6 2.6 0 0 0 1.8-1.8c.4-1.6.4-4.8.4-4.8s0-3.2-.4-4.8Z"/><path fill="var(--yt-play, #fff)" d="m10 15 5.2-3L10 9v6Z"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M3 5h18l-7 8v6l-4 2v-8L3 5Z"/></symbol>
+  <symbol id="b-youtube" viewBox="0 0 24 24"><path fill="currentColor" d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></symbol>
+  <symbol id="b-discord" viewBox="0 0 24 24"><path fill="currentColor" d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></symbol>
+  <symbol id="b-telegram" viewBox="0 0 24 24"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></symbol>
+  <symbol id="b-openai" viewBox="0 0 24 24"><path fill="currentColor" d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></symbol>
+  <symbol id="b-googlegemini" viewBox="0 0 24 24"><path fill="currentColor" d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"/></symbol>
+  <symbol id="b-x" viewBox="0 0 24 24"><path fill="currentColor" d="M14.234 10.162 22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299-.929-1.329L3.076 1.56h3.182l5.965 8.532.929 1.329 7.754 11.09h-3.182z"/></symbol>
+  <symbol id="a-zap" viewBox="0 0 24 24"><path fill="currentColor" d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></symbol>
+  <symbol id="a-gear" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></symbol>
+  <symbol id="a-power" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M12 3v8M7.4 6.6a7.5 7.5 0 1 0 9.2 0"/></symbol>
+  <symbol id="a-down" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m0 0-6-6m6 6 6-6"/></symbol>
+  <symbol id="a-up" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 20V4m0 0-6 6m6-6 6 6"/></symbol>
+  <symbol id="a-hourglass" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9m10-18c0 5-5 6-5 9s5 4 5 9"/></symbol>
+  <symbol id="a-refresh" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></symbol>
+</svg>
+
+<div class="top-sentinel" aria-hidden="true"></div>
+<header class="nav" id="nav">
+  <div class="nav__in">
+    <a class="nav__logo" href="#top" aria-label="NetFix, наверх">
+      <img src="img/logo-64.webp" width="32" height="32" alt="">
+      <span>NetFix</span>
+    </a>
+    <nav class="nav__links" aria-label="Разделы">
+      <a href="#demo" data-for="pc">Попробовать</a>
+      <a href="#how" data-for="pc">Как работает</a>
+      <a href="#features" data-for="pc">Возможности</a>
+      <a href="#catch" data-for="pc">В чём подвох</a>
+      <a href="#faq" data-for="pc">Вопросы</a>
+      <a href="#and-story" data-for="mob">Как работает</a>
+      <a href="#and-features" data-for="mob">Возможности</a>
+      <a href="#and-start" data-for="mob">Как начать</a>
+      <a href="#and-faq" data-for="mob">Вопросы</a>
+    </nav>
+    <div class="switch" data-mode="pc" role="tablist" aria-label="Версия приложения">
+      <button role="tab" aria-selected="true" aria-controls="page-pc" data-target="pc">Windows</button>
+      <button role="tab" aria-selected="false" aria-controls="page-mob" data-target="mob">Android</button>
+      <span class="switch__thumb" aria-hidden="true"></span>
+    </div>
+    <a class="pill js-dl" data-for="pc" href="https://github.com/rupleide/NetFix/releases/download/v1.2.0/NetFix_Setup_v1.2.0.exe">
+      <svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span>Скачать</span><svg class="ic chev" aria-hidden="true"><use href="#i-chevron"/></svg>
+    </a>
+    <a class="pill js-apk" data-for="mob" href="https://github.com/rupleide/NetFixMobile/releases/download/v1.0.3/NetFix-Mobile-v1.0.3-release.apk">
+      <svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span>Скачать APK</span><svg class="ic chev" aria-hidden="true"><use href="#i-chevron"/></svg>
+    </a>
+    <button class="nav__burger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="nav-sheet">
+      <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+    </button>
+  </div>
+
+  <div class="nav__sheet" id="nav-sheet" hidden>
+    <nav class="nav__sheet-links" aria-label="Разделы сайта">
+      <a href="#demo" data-for="pc">Попробовать</a>
+      <a href="#how" data-for="pc">Как работает</a>
+      <a href="#features" data-for="pc">Возможности</a>
+      <a href="#catch" data-for="pc">В чём подвох</a>
+      <a href="#faq" data-for="pc">Вопросы</a>
+      <a href="#and-story" data-for="mob">Как работает</a>
+      <a href="#and-features" data-for="mob">Возможности</a>
+      <a href="#and-start" data-for="mob">Как начать</a>
+      <a href="#and-faq" data-for="mob">Вопросы</a>
+    </nav>
+    <div class="nav__sheet-slot"></div>
+    <div class="nav__sheet-foot">
+      <a href="https://t.me/NetFixRuBi" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-telegram"/></svg>Telegram</a>
+      <a href="https://github.com/rupleide/NetFix" data-for="pc" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-github"/></svg>GitHub</a>
+      <a href="https://github.com/rupleide/NetFixMobile" data-for="mob" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-github"/></svg>GitHub</a>
+    </div>
+  </div>
+</header>
+
+<canvas class="bg" aria-hidden="true"></canvas>
+
+<main id="top">
+  <div class="page" id="page-pc" role="tabpanel" aria-label="NetFix для Windows">
+
+  <section class="hero and-intro and-intro--pc" id="hero" data-mode="pc" data-pin="intro">
+    <div class="and-intro__sticky">
+      <span class="and-intro__sky" aria-hidden="true"></span>
+      <canvas class="and-stars" data-stars aria-hidden="true"></canvas>
+      <canvas class="and-dots" data-dots="intro" aria-hidden="true"></canvas>
+      <span class="and-intro__bloom" aria-hidden="true"></span>
+
+      <div class="and-intro__copy">
+        <h1 class="and-word" aria-label="NetFix"><span style="--i:0">N</span><span style="--i:1">e</span><span style="--i:2">t</span><span style="--i:3">F</span><span style="--i:4">i</span><span style="--i:5">x</span></h1>
+        <p class="and-intro__tag">Обход блокировок в&nbsp;одну кнопку</p>
+      </div>
+
+      <div class="and-intro__stage" data-parallax>
+        <div class="and-intro__phone and-intro__phone--pc" data-pc-window>
+          <span class="pc-glow" aria-hidden="true"></span>
+          <div class="pc-win pc-win--off" aria-hidden="true"></div>
+          <div class="pc-win pc-win--on and-intro__on" aria-hidden="true"></div>
+          <span class="and-intro__wave" aria-hidden="true"><i></i><i></i><i></i></span>
+        </div>
+        <div class="and-widget and-widget--ping" style="--x:calc(var(--w) * -.5 - 110px); --y:-190px; --z:1.6" aria-hidden="true">
+          <small>Пинг</small><b>11 <i>мс</i></b>
+          <span class="and-spark"><i style="--h:.5"></i><i style="--h:.8"></i><i style="--h:.4"></i><i style="--h:.65"></i><i style="--h:.35"></i><i style="--h:.55"></i><i style="--h:.3"></i></span>
+        </div>
+        <div class="and-widget and-widget--tg" style="--x:calc(var(--w) * .5 + 140px); --y:-210px; --z:1.2" aria-hidden="true">
+          <span class="and-widget__ic and-widget__ic--tg"><svg><use href="#b-telegram"/></svg></span>
+          <span><b>Telegram</b><small><i class="and-dot"></i>TgWsProxy запущен</small></span>
+        </div>
+        <div class="and-widget and-widget--method" style="--x:calc(var(--w) * -.5 - 130px); --y:150px; --z:2" aria-hidden="true">
+          <small>Zapret</small><b>general (ALT9)</b>
+          <span class="and-widget__meter"><i style="--w:.92"></i></span>
+          <small class="and-widget__note">стратегия подобрана</small>
+        </div>
+        <div class="and-widget and-widget--yt" style="--x:calc(var(--w) * .5 + 130px); --y:130px; --z:1.4" aria-hidden="true">
+          <span class="and-widget__ic and-widget__ic--yt"><svg><use href="#b-youtube"/></svg></span>
+          <span><b>YouTube</b><small>4K снова грузится</small></span>
+          <span class="and-eq"><i></i><i></i><i></i><i></i></span>
+        </div>
+      </div>
+
+      <div class="and-intro__card">
+        <span><b>NetFix для Windows <span class="js-ver">v1.2.0</span></b><small>Бесплатно · Windows 10/11 · Open Source</small></span>
+        <a class="pill js-dl" href="https://github.com/rupleide/NetFix/releases/download/v1.2.0/NetFix_Setup_v1.2.0.exe"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span>Скачать</span></a>
+      </div>
+      <a class="and-intro__hint" href="#pc-words"><span aria-hidden="true"></span>Листай вниз</a>
+    </div>
+  </section>
+
+  <section class="and-words" id="pc-words" data-pin="words">
+    <div class="and-words__sticky">
+      <span class="and-words__glow" aria-hidden="true"></span>
+      <h2 class="and-words__head">
+        <span class="and-words__line">
+          <span class="and-words__w" data-side="-1">Видео</span>
+          <span class="and-chip and-chip--yt" aria-hidden="true"><svg class="and-chip__ic"><use href="#b-youtube"/></svg><span class="and-chip__bar"><i></i></span></span>
+          <span class="and-words__w" data-side="1">грузится</span>
+        </span>
+        <span class="and-words__line">
+          <span class="and-words__w" data-side="-1">Discord</span>
+          <span class="and-chip and-chip--ds" aria-hidden="true"><svg class="and-chip__ic"><use href="#b-discord"/></svg><span class="and-chip__waves"><i></i><i></i><i></i></span></span>
+          <span class="and-words__w and-words__w--serif" data-side="1">звучит</span>
+        </span>
+        <span class="and-words__line">
+          <span class="and-words__w" data-side="-1">ChatGPT</span>
+          <span class="and-chip and-chip--ai" aria-hidden="true"><svg class="and-chip__ic"><use href="#b-openai"/></svg></span>
+          <span class="and-words__w" data-side="1">отвечает</span>
+        </span>
+      </h2>
+      <p class="and-words__p" data-assemble>Провайдер замедляет YouTube, глушит Discord и&nbsp;закрывает ChatGPT. <b>NetFix</b> сам скачает и&nbsp;запустит Zapret и&nbsp;tg-ws-proxy прямо на&nbsp;компьютере: без&nbsp;батников, консоли и&nbsp;VPN. Нажал одну кнопку, и&nbsp;<b>всё работает как&nbsp;раньше.</b></p>
+    </div>
+  </section>
+
+  <section class="sec and-numbers" aria-label="NetFix в цифрах">
+    <div class="wrap">
+      <div class="and-start__grid">
+        <div class="and-start__item and-num">
+          <span class="and-num__ic"><svg aria-hidden="true"><use href="#i-star"/></svg></span>
+          <b class="and-num__v"><span data-count="500">500</span>+</b>
+          <h3 data-reveal="blur">звёзд на GitHub</h3>
+          <span class="and-start__blur" aria-hidden="true"></span>
+        </div>
+        <span class="and-start__line" aria-hidden="true"></span>
+        <div class="and-start__item and-num">
+          <span class="and-num__ic"><svg aria-hidden="true"><use href="#i-download"/></svg></span>
+          <b class="and-num__v"><span data-count="50000">50&nbsp;000</span>+</b>
+          <h3 data-reveal="blur">скачиваний</h3>
+          <span class="and-start__blur" aria-hidden="true"></span>
+        </div>
+        <span class="and-start__line" aria-hidden="true"></span>
+        <div class="and-start__item and-num">
+          <span class="and-num__ic"><svg aria-hidden="true"><use href="#i-shield"/></svg></span>
+          <b class="and-num__v">Проверено</b>
+          <h3 data-reveal="blur">VirusTotal, каждый релиз</h3>
+          <span class="and-start__blur" aria-hidden="true"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec sec--demo" id="demo">
+    <div class="wrap">
+      <div class="head head--center">
+        <p class="kicker" data-reveal>Попробуй сам</p>
+        <h2 data-split>Видео не&nbsp;грузится?</h2>
+        <p class="sub" data-reveal>Так выглядит YouTube у многих провайдеров. Опустись чуть ниже, там живой NetFix.</p>
+      </div>
+
+      <div class="demo">
+        <div class="yt" data-reveal="img">
+          <div class="yt__glow" aria-hidden="true"></div>
+          <div class="yt__screen">
+            <div class="yt__ph" aria-hidden="true"></div>
+            <video class="yt__video" loop muted playsinline preload="none" aria-label="YouTube после включения NetFix"></video>
+
+            <div class="yt__spinner" aria-hidden="true">
+              <svg viewBox="25 25 50 50"><circle cx="50" cy="50" r="20" fill="none" stroke-width="5" stroke-miterlimit="10"/></svg>
+            </div>
+
+            <div class="yt__badge" aria-hidden="true">
+              <span class="yt__eq"><i></i><i></i><i></i><i></i><i></i></span>
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path fill="currentColor" d="m10 8 6 4-6 4V8Z"/></svg>
+              <span>Воспроизведение 4K60FPS</span>
+            </div>
+
+            <div class="yt__chrome" aria-hidden="true">
+              <div class="yt__bar"><span class="yt__played"></span></div>
+              <div class="yt__controls">
+                <div class="yt__side">
+                  <svg class="yt__btn" viewBox="0 0 36 36"><path fill="#fff" d="M12 26h4V10h-4zm8 0h4V10h-4z"/></svg>
+                  <svg class="yt__btn" viewBox="0 0 36 36"><path fill="#fff" d="M8 21h4l5 5V10l-5 5H8v6Zm11-7v8a4.6 4.6 0 0 0 0-8Z"/></svg>
+                  <span class="yt__time"><span class="yt__now"></span> / 0:17</span>
+                </div>
+                <div class="yt__side">
+                  <svg class="yt__btn" viewBox="0 0 36 36"><path fill="#fff" d="M11 11h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2V13a2 2 0 0 1 2-2Zm0 6h4v-2h-4v2Zm0 4h10v-2H11v2Zm6-4h8v-2h-8v2Zm6 4h2v-2h-2v2Z"/></svg>
+                  <span class="yt__gear"><svg class="yt__btn yt__btn--sm" viewBox="0 0 24 24"><use href="#a-gear"/></svg><b>HD</b></span>
+                  <svg class="yt__btn yt__btn--sm" viewBox="0 0 24 24"><path fill="none" stroke="#fff" stroke-width="2" d="M3 5h18v10H3zM3 19h18"/></svg>
+                  <svg class="yt__btn yt__btn--sm" viewBox="0 0 24 24"><path fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" d="M4 10V4h6M20 14v6h-6M4 4l6 6M20 20l-6-6"/></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo__hint"><h3 data-split>Нажми на&nbsp;кнопку</h3><span class="demo__sub">Круглая кнопка «Починить» находится в окне NetFix ниже. А результат появится в плеере выше.</span><svg aria-hidden="true" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0-6-6m6 6 6-6"/></svg></div>
+
+        <div class="live" data-reveal="rise">
+          <div class="live__scale">
+            <div class="xw" id="app" data-state="off">
+              <div class="xw__head">
+                <div class="xw__left">
+                  <span class="xw__logo">NETFIX</span><span class="xw__by">by rupleide</span>
+                  <div class="xw__dots">
+                    <span><i class="dot on"></i>Сеть</span>
+                    <span><i class="dot" data-dot="vpn"></i>VPN</span>
+                    <span><i class="dot" data-dot="zapret"></i>Zapret</span>
+                    <span><i class="dot" data-dot="tg"></i>TgWsProxy</span>
+                  </div>
+                </div>
+                <div class="xw__right" aria-hidden="true">
+                  <div class="xw__nav">
+                    <span class="is-active"><svg><use href="#a-zap"/></svg>Сервисы</span>
+                    <span>Моды</span><span>FAQ</span><span>Диагностика</span><span>Игра</span>
+                    <span class="xw__gear"><svg><use href="#a-gear"/></svg></span>
+                  </div>
+                  <div class="xw__win"><svg viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M5 12h14"/></svg><svg viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg></div>
+                </div>
+              </div>
+
+              <div class="xw__content">
+                <div class="xw__center">
+                  <div class="xw__aurora" aria-hidden="true"></div>
+                  <h3 class="xw__title"><svg aria-hidden="true"><use href="#a-zap"/></svg><span>Починить Telegram и Discord</span></h3>
+                  <p class="xw__subtitle">Одна кнопка - скачает, настроит и запустит всё необходимое.</p>
+                  <button class="xw__power" type="button" aria-pressed="false" aria-label="Починить: включить демонстрацию NetFix">
+                    <span class="xw__ring" aria-hidden="true"></span>
+                    <span class="xw__inner">
+                      <svg class="xw__picon" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M7.5 7.638A7 7 0 1 0 16.5 7.638M12 4v7"/></svg>
+                      <span class="xw__pstatus">Починить</span>
+                      <span class="xw__ptimer">00:00</span>
+                    </span>
+                  </button>
+                </div>
+                <div class="xw__stats">
+                  <div class="xw__stat"><svg aria-hidden="true"><use href="#a-down"/></svg><span><small>Входящий</small><b data-stat="down">- <i>Мбит/с</i></b></span></div>
+                  <div class="xw__stat"><svg aria-hidden="true"><use href="#a-up"/></svg><span><small>Исходящий</small><b data-stat="up">- <i>Мбит/с</i></b></span></div>
+                  <div class="xw__stat"><svg aria-hidden="true"><use href="#a-hourglass"/></svg><span><small>Пинг</small><b data-stat="ping">- <i>мс</i></b></span><svg class="xw__refresh" aria-hidden="true"><use href="#a-refresh"/></svg></div>
+                </div>
+              </div>
+
+              <div class="xw__status">
+                <div class="xw__progress"><span></span></div>
+                <div class="xw__line">Байпас отключен</div>
+              </div>
+
+              <div class="xw__log">
+                <div class="xw__loghead"><b>Лог</b><span aria-hidden="true"><span>Скопировать</span><span>Очистить</span></span></div>
+                <div class="xw__view"><div class="xw__lines"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec and-stack" id="why" aria-label="Для кого NetFix">
+    <div class="wrap">
+      <div class="head head--center">
+        <p class="kicker" data-reveal>Для кого</p>
+        <h2 data-split>Для тех, кто ценит удобство</h2>
+      </div>
+      <div class="and-stack__list">
+        <article class="and-stack__card and-stack__card--old" style="--i:0">
+          <div class="and-stack__in">
+            <canvas class="and-stars" data-stars="90" aria-hidden="true"></canvas>
+            <span class="and-stack__aurora" aria-hidden="true"></span>
+            <div class="and-stack__text">
+              <span class="and-stack__tag">По старинке</span>
+              <h3>Батники, консоль и&nbsp;догадки</h3>
+              <p>Можно и дальше открывать bat-файлы и разбираться, что в них и где. Стратегии перебираешь вручную, а когда что-то ломается, непонятно почему.</p>
+              <ul class="and-stack__list-mini and-stack__list-mini--x"><li>Архив и пачка bat-файлов</li><li>Стратегии вручную</li><li>Непонятно, что сломалось</li></ul>
+            </div>
+            <div class="and-stack__art and-stack__art--shot" aria-hidden="true">
+              <div class="and-stack__shot"><picture><source srcset="img/before.avif" type="image/avif"><img src="img/before.webp" width="1100" height="512" alt="" loading="lazy" decoding="async"></picture></div>
+            </div>
+          </div>
+        </article>
+        <article class="and-stack__card" style="--i:1">
+          <div class="and-stack__in">
+            <canvas class="and-stars" data-stars="90" aria-hidden="true"></canvas>
+            <span class="and-stack__aurora" aria-hidden="true"></span>
+            <div class="and-stack__text">
+              <span class="and-stack__tag">С NetFix</span>
+              <h3>Одна кнопка вместо всего этого</h3>
+              <p>NetFix сам скачает Zapret и tg-ws-proxy, подберёт настройки и запустит. Статус, скорость, пинг и лог видно сразу в одном окне.</p>
+              <ul class="and-stack__list-mini"><li>Всё скачается само</li><li>Настройки подбираются</li><li>Статус и лог на виду</li></ul>
+            </div>
+            <div class="and-stack__art and-stack__art--shot" aria-hidden="true">
+              <div class="and-stack__shot"><picture><source srcset="img/services.avif" type="image/avif"><img src="img/services.webp" width="880" height="680" alt="" loading="lazy" decoding="async"></picture></div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec and-how" id="how">
+    <div class="wrap">
+      <p class="and-say" data-say>NetFix это не&nbsp;VPN. Он запускает <span class="and-pill"><svg aria-hidden="true"><use href="#i-pc"/></svg>Zapret и&nbsp;tg-ws-proxy</span> прямо на&nbsp;компьютере, и&nbsp;трафик идёт напрямую, мимо фильтра провайдера.</p>
+
+      <div class="and-vs">
+        <article class="and-route and-route--vpn" data-reveal="rise" style="--d:0">
+          <div class="and-route__in">
+            <span class="and-hw__blur" aria-hidden="true"></span>
+            <header><span class="and-route__tag">Обычный VPN</span><h3>Через чужой сервер</h3><p>Весь трафик сначала летит в&nbsp;другую страну, и&nbsp;только потом в&nbsp;YouTube.</p></header>
+            <div class="and-route__stage">
+            <svg class="and-route__map" viewBox="0 0 520 230" aria-hidden="true">
+              <defs><path id="rt-vpn-pc" d="M70 170 C 150 170, 170 50, 260 50 S 370 170, 450 170"/></defs>
+              <use href="#rt-vpn-pc" class="and-route__track"/>
+              <use href="#rt-vpn-pc" class="and-route__flow and-route__flow--slow"/>
+              <circle class="and-route__pkt" r="5"><animateMotion dur="3.6s" repeatCount="indefinite"><mpath href="#rt-vpn-pc"/></animateMotion></circle>
+              <circle class="and-route__pkt" r="5"><animateMotion dur="3.6s" begin="1.2s" repeatCount="indefinite"><mpath href="#rt-vpn-pc"/></animateMotion></circle>
+              <circle class="and-route__pkt" r="5"><animateMotion dur="3.6s" begin="2.4s" repeatCount="indefinite"><mpath href="#rt-vpn-pc"/></animateMotion></circle>
+              <g class="and-route__far" transform="translate(260 50)">
+                <circle r="34" class="and-route__halo"/>
+                <circle r="24"/>
+                <path d="M-24 0h48M0-24c-9 8-9 40 0 48M0-24c9 8 9 40 0 48M-20-12h40M-20 12h40"/>
+              </g>
+            </svg>
+              <span class="and-route__node" style="--l:13.5%; --t:73.9%"><svg aria-hidden="true"><use href="#i-pc"/></svg><small>Твой ПК</small></span>
+              <span class="and-route__node and-route__node--label" style="--l:50%; --t:40%"><small>Сервер VPN<br>в другой стране</small></span>
+              <span class="and-route__node and-route__node--dim" style="--l:86.5%; --t:73.9%"><svg aria-hidden="true"><use href="#b-youtube"/></svg><small>YouTube</small></span>
+            </div>
+            <ul class="and-route__facts"><li>Чужой сервер видит, куда ты ходишь</li><li>Лишний круг через другую страну</li></ul>
+          </div>
+        </article>
+
+        <article class="and-route and-route--nf" data-reveal="rise" style="--d:1">
+          <div class="and-route__in">
+            <span class="and-hw__blur" aria-hidden="true"></span>
+            <header><span class="and-route__tag">NetFix</span><h3>Напрямую, мимо фильтра</h3><p>Zapret обходит фильтр провайдера прямо на&nbsp;компьютере. Трафик идёт сразу в&nbsp;YouTube.</p></header>
+            <div class="and-route__stage">
+            <svg class="and-route__map" viewBox="0 0 520 230" aria-hidden="true">
+              <defs>
+                <path id="rt-nf-pc" d="M70 140 C 160 140, 200 140, 260 140 S 360 140, 450 140"/>
+                <linearGradient id="rt-wall-pc" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#f87171" stop-opacity="0"/><stop offset=".5" stop-color="#f87171" stop-opacity=".7"/><stop offset="1" stop-color="#f87171" stop-opacity="0"/></linearGradient>
+              </defs>
+              <g class="and-route__wall" transform="translate(260 0)">
+                <rect x="-10" y="40" width="20" height="200" rx="4" fill="url(#rt-wall-pc)"/>
+                <path d="M-10 60h20M-10 80h20M-10 100h20M-10 180h20M-10 200h20"/>
+                <rect class="and-route__gap" x="-14" y="122" width="28" height="36" rx="8"/>
+              </g>
+              <use href="#rt-nf-pc" class="and-route__track"/>
+              <use href="#rt-nf-pc" class="and-route__flow"/>
+              <circle class="and-route__pkt" r="5"><animateMotion dur="1.6s" repeatCount="indefinite"><mpath href="#rt-nf-pc"/></animateMotion></circle>
+              <circle class="and-route__pkt" r="5"><animateMotion dur="1.6s" begin=".53s" repeatCount="indefinite"><mpath href="#rt-nf-pc"/></animateMotion></circle>
+              <circle class="and-route__pkt" r="5"><animateMotion dur="1.6s" begin="1.06s" repeatCount="indefinite"><mpath href="#rt-nf-pc"/></animateMotion></circle>
+            </svg>
+              <span class="and-route__node and-route__node--nf" style="--l:13.5%; --t:60.9%"><img src="img/logo-64.webp" width="26" height="26" alt=""><small>Твой ПК + NetFix</small></span>
+              <span class="and-route__node and-route__node--label" style="--l:50%; --t:2%"><small>Фильтр провайдера</small></span>
+              <span class="and-route__node and-route__node--on" style="--l:86.5%; --t:60.9%"><svg aria-hidden="true"><use href="#b-youtube"/></svg><small>YouTube</small></span>
+            </div>
+            <ul class="and-route__facts"><li>Трафик не уходит на чужие серверы</li><li>Серверов NetFix просто нет</li></ul>
+          </div>
+        </article>
+      </div>
+
+      <div class="and-cards3">
+        <div class="and-cards__cell" data-reveal="rise" style="--d:0">
+        <article class="and-hw and-hw--static">
+          <div class="and-hw__in">
+            <span class="and-hw__blur" aria-hidden="true"></span>
+            <span class="and-hw__tag">Без серверов</span><span class="and-hw__ic"><svg aria-hidden="true"><use href="#i-home"/></svg></span>
+            <h3>Локально</h3>
+            <p>Обход работает прямо на&nbsp;компьютере. Трафик не&nbsp;уходит на&nbsp;серверы NetFix, их&nbsp;просто нет.</p>
+            <svg class="and-hw__lines" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="39"/><path d="M100.0 8.0L131.5 186.5L40.9 29.5L179.7 146.0L9.4 84.0L190.6 84.0L20.3 146.0L159.1 29.5L68.5 186.5L100.0 8.0"/></svg>
+          </div>
+        </article>
+        </div>
+        <div class="and-cards__cell" data-reveal="rise" style="--d:1">
+        <article class="and-hw and-hw--static">
+          <div class="and-hw__in">
+            <span class="and-hw__blur" aria-hidden="true"></span>
+            <span class="and-hw__tag">~20 МБ</span><span class="and-hw__ic"><svg aria-hidden="true"><use href="#i-feather"/></svg></span>
+            <h3>Почти незаметен</h3>
+            <p>Включил и&nbsp;забыл: в&nbsp;фоне он почти ничего не&nbsp;потребляет.</p>
+            <svg class="and-hw__lines" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="39"/><path d="M100.0 8.0L139.9 182.9L28.1 42.6L189.7 120.5L10.3 120.5L171.9 42.6L60.1 182.9L100.0 8.0"/></svg>
+          </div>
+        </article>
+        </div>
+        <div class="and-cards__cell" data-reveal="rise" style="--d:2">
+        <article class="and-hw and-hw--static">
+          <div class="and-hw__in">
+            <span class="and-hw__blur" aria-hidden="true"></span>
+            <span class="and-hw__tag">Без консоли</span><span class="and-hw__ic"><svg aria-hidden="true"><use href="#i-sparkle"/></svg></span>
+            <h3>Приятно открыть</h3>
+            <p>Аккуратный интерфейс вместо консоли: статус, скорость, пинг и&nbsp;лог видно сразу.</p>
+            <svg class="and-hw__lines" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="39"/><path d="M100.0 8.0L169.5 160.2L8.9 113.1L149.7 22.6L125.9 188.3L16.3 61.8L183.7 61.8L74.1 188.3L50.3 22.6L191.1 113.1L30.5 160.2L100.0 8.0"/></svg>
+          </div>
+        </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec and-story and-story--pc" id="features" aria-label="Что ещё умеет NetFix">
+    <div class="wrap">
+      <div class="head head--center">
+        <p class="kicker" data-reveal>Возможности</p>
+        <h2 data-split>Что ещё умеет</h2>
+      </div>
+    </div>
+    <div class="wrap and-story__in">
+      <div class="and-story__steps">
+        <div class="and-story__step" data-step="0">
+          <span class="and-story__n">01 · Модификации</span>
+          <h3>Не только Telegram и&nbsp;Discord</h3>
+          <p>NetFix открывает и ChatGPT, Gemini и другие сервисы. Во вкладке «Модификации» hosts-моды, листы доменов, bat-стратегии под игры и свои правила.</p>
+          <picture><source srcset="img/mods.avif" type="image/avif"><img class="and-story__shot" src="img/mods.webp" width="880" height="678" alt="Вкладка «Модификации»: bat-стратегии, листы доменов, свои моды и редактор" loading="lazy" decoding="async"></picture>
+        </div>
+        <div class="and-story__step" data-step="1">
+          <span class="and-story__n">02 · Листы доменов</span>
+          <h3>Нужные сайты одной галочкой</h3>
+          <p>Включаешь лист, и сайты из него идут в обход: Cloudflare Full, X/Twitter и другие. Можно добавить свой.</p>
+          <picture><source srcset="img/domains.avif" type="image/avif"><img class="and-story__shot" src="img/domains.webp" width="880" height="680" alt="Листы доменов: включено 11 модов, среди них Cloudflare Full и обход X/Twitter" loading="lazy" decoding="async"></picture>
+        </div>
+        <div class="and-story__step" data-step="2">
+          <span class="and-story__n">03 · Сервисы</span>
+          <h3>Видно, что работает</h3>
+          <p>Zapret и tg-ws-proxy показаны отдельно: запущены ли они, какой конфиг выбран и какие версии стоят. Если Zapret не запускается, есть кнопка «Исправить».</p>
+          <picture><source srcset="img/services.avif" type="image/avif"><img class="and-story__shot" src="img/services.webp" width="880" height="680" alt="Панель «Управление сервисами»: Zapret и tg-ws-proxy запущены, выбран конфиг general (ALT9)" loading="lazy" decoding="async"></picture>
+        </div>
+        <div class="and-story__step" data-step="3">
+          <span class="and-story__n">04 · DNS и Zapret</span>
+          <h3>DNS и&nbsp;тонкая настройка в&nbsp;пару кликов</h3>
+          <p>Xbox-DNS, Cloudflare, Google и другие плюс DNS-over-HTTPS. Game Filter, IPSet и hosts меняются прямо в приложении, без правки bat-файлов.</p>
+          <span class="and-story__pair"><picture><source srcset="img/dns-panel.avif" type="image/avif"><img src="img/dns-panel.webp" width="300" height="680" alt="Панель «Настройка DNS»: Системный, Xbox-DNS, Cloudflare, Google, Yandex и AdGuard" loading="lazy" decoding="async"></picture><picture><source srcset="img/zapret-panel.avif" type="image/avif"><img src="img/zapret-panel.webp" width="300" height="680" alt="Доп. опции Zapret: Game Filter, IPSet Filter, обновление списка IPSet и hosts-файла" loading="lazy" decoding="async"></picture></span>
+        </div>
+        <div class="and-story__step" data-step="4">
+          <span class="and-story__n">05 · Настройки</span>
+          <h3>Под себя</h3>
+          <p>Автозапуск с Windows, работа из трея, выбор компонентов и обход античитов EAC и BattlEye. У главной кнопки быстрый и полный режим.</p>
+          <picture><source srcset="img/settings.avif" type="image/avif"><img class="and-story__shot" src="img/settings.webp" width="880" height="680" alt="Панель настроек: автозапуск, используемые компоненты, обход античита и режим главной кнопки" loading="lazy" decoding="async"></picture>
+        </div>
+      </div>
+      <div class="and-story__pin" aria-hidden="true">
+        <div class="and-story__phone">
+          <span class="and-halo and-halo--story"><i></i><i></i><i></i></span>
+          <div class="and-story__tilt and-story__tilt--pc">
+            <div class="and-story__screen" data-steps="0"><picture><source srcset="img/mods.avif" type="image/avif"><img src="img/mods.webp" width="880" height="678" alt="" loading="lazy" decoding="async"></picture></div>
+            <div class="and-story__screen" data-steps="1"><picture><source srcset="img/domains.avif" type="image/avif"><img src="img/domains.webp" width="880" height="680" alt="" loading="lazy" decoding="async"></picture></div>
+            <div class="and-story__screen" data-steps="2"><picture><source srcset="img/services.avif" type="image/avif"><img src="img/services.webp" width="880" height="680" alt="" loading="lazy" decoding="async"></picture></div>
+            <div class="and-story__screen and-story__screen--pair" data-steps="3"><picture><source srcset="img/dns-panel.avif" type="image/avif"><img src="img/dns-panel.webp" width="300" height="680" alt="" loading="lazy" decoding="async"></picture><picture><source srcset="img/zapret-panel.avif" type="image/avif"><img src="img/zapret-panel.webp" width="300" height="680" alt="" loading="lazy" decoding="async"></picture></div>
+            <div class="and-story__screen" data-steps="4"><picture><source srcset="img/settings.avif" type="image/avif"><img src="img/settings.webp" width="880" height="680" alt="" loading="lazy" decoding="async"></picture></div>
+            <span class="and-glare"></span>
+          </div>
+          <span class="and-note" data-step="0" style="--x:1; --t:120px"><i class="and-dot"></i>Модификации<small>моды и&nbsp;стратегии</small></span>
+          <span class="and-note and-note--l" data-step="1" style="--x:-1; --t:300px"><i class="and-dot"></i>11 модов включено</span>
+          <span class="and-note" data-step="2" style="--x:1; --t:200px"><i class="and-dot"></i>general (ALT9)<small>запущен</small></span>
+          <span class="and-note and-note--l" data-step="3" style="--x:-1; --t:140px"><i class="and-dot"></i>DNS-over-HTTPS</span>
+          <span class="and-note" data-step="4" style="--x:1; --t:320px"><i class="and-dot"></i>Автозапуск с&nbsp;Windows</span>
+          <div class="and-story__bar"><span></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="and-float" data-pin="float" aria-label="Как NetFix чинит интернет">
+    <div class="and-float__sticky">
+      <span class="and-float__glow" aria-hidden="true"></span>
+      <h2 class="and-float__title"><span class="and-float__l1">Весь интернет.</span><span class="and-float__l2">Как&nbsp;раньше.</span></h2>
+
+      <div class="and-fw and-fw--ring" style="--s:1.5; --o:-.18; --x:9%" aria-hidden="true">
+        <span class="and-fw__ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42"/><circle class="is-v" cx="50" cy="50" r="42"/></svg><i><svg><use href="#i-check"/></svg></i><b>195</b><small>Мбит/с</small></span>
+      </div>
+      <div class="and-fw and-fw--chip" style="--s:2.2; --o:-.02; --x:46%" aria-hidden="true">
+        <span class="and-fw__chipic"><svg><use href="#a-power"/></svg></span><small>ALT9</small>
+      </div>
+      <div class="and-fw and-fw--chart" style="--s:1.9; --o:.5; --x:35%" aria-hidden="true">
+        <span class="and-fw__up"><svg><use href="#i-arrow"/></svg></span>
+        <svg class="and-fw__line" viewBox="0 0 200 90" preserveAspectRatio="none"><path d="M0 70 C 20 70, 30 40, 50 46 S 80 80, 100 60 S 130 10, 150 22 S 180 60, 200 30"/><circle cx="150" cy="22" r="7"/></svg>
+        <b>11 мс</b><span class="and-fw__pill"><i class="and-dot"></i>Пинг</span>
+      </div>
+      <img class="and-fw and-fw--shot" src="img/settings.webp" width="880" height="680" alt="" style="--s:1.7; --o:.32; --x:70%" loading="lazy" decoding="async">
+      <img class="and-fw and-fw--shot and-fw--shot2" src="img/mods.webp" width="880" height="678" alt="" style="--s:1.6; --o:.72; --x:20%" loading="lazy" decoding="async">
+
+<article class="and-hw" style="--s:2.4; --o:0.04; --x:18%">
+          <div class="and-hw__in">
+            <span class="and-hw__blur" aria-hidden="true"></span>
+            <span class="and-hw__ic"><svg aria-hidden="true"><use href="#a-power"/></svg></span>
+            <h3>Нажимаешь «Починить»</h3>
+            <p>NetFix проверит сеть и&nbsp;права администратора.</p>
+            <svg class="and-hw__lines" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="39"/><path d="M100.0 8.0L131.5 186.5L40.9 29.5L179.7 146.0L9.4 84.0L190.6 84.0L20.3 146.0L159.1 29.5L68.5 186.5L100.0 8.0"/></svg>
+          </div>
+        </article>
+<article class="and-hw" style="--s:2.6; --o:0.3; --x:56%">
+          <div class="and-hw__in">
+            <span class="and-hw__blur" aria-hidden="true"></span>
+            <span class="and-hw__ic"><svg aria-hidden="true"><use href="#i-download"/></svg></span>
+            <h3>Он скачивает Zapret и&nbsp;tg-ws-proxy</h3>
+            <p>Сам, нужных версий, и&nbsp;сразу запускает.</p>
+            <svg class="and-hw__lines" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="39"/><path d="M100.0 8.0L139.9 182.9L28.1 42.6L189.7 120.5L10.3 120.5L171.9 42.6L60.1 182.9L100.0 8.0"/></svg>
+          </div>
+        </article>
+<article class="and-hw" style="--s:2.5; --o:0.58; --x:14%">
+          <div class="and-hw__in">
+            <span class="and-hw__blur" aria-hidden="true"></span>
+            <span class="and-hw__ic"><svg aria-hidden="true"><use href="#i-sparkle"/></svg></span>
+            <h3>Подбирает стратегию</h3>
+            <p>Перебирает конфиги Zapret и&nbsp;оставляет рабочий.</p>
+            <svg class="and-hw__lines" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="39"/><path d="M100.0 8.0L169.5 160.2L8.9 113.1L149.7 22.6L125.9 188.3L16.3 61.8L183.7 61.8L74.1 188.3L50.3 22.6L191.1 113.1L30.5 160.2L100.0 8.0"/></svg>
+          </div>
+        </article>
+<article class="and-hw" style="--s:2.7; --o:0.86; --x:60%">
+          <div class="and-hw__in">
+            <span class="and-hw__blur" aria-hidden="true"></span>
+            <span class="and-hw__ic"><svg aria-hidden="true"><use href="#b-youtube"/></svg></span>
+            <h3>YouTube и&nbsp;Discord снова работают</h3>
+            <p>И&nbsp;Telegram тоже: прокси уже поднят.</p>
+            <svg class="and-hw__lines" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="39"/><path d="M100.0 8.0L165.1 165.1L8.0 100.0L165.1 34.9L100.0 192.0L34.9 34.9L192.0 100.0L34.9 165.1L100.0 8.0"/></svg>
+          </div>
+        </article>
+    </div>
+  </section>
+
+  <section class="sec and-reviews" id="reviews">
+    <div class="wrap">
+      <div class="head head--center">
+        <p class="kicker" data-reveal>Отзывы</p>
+        <h2 data-split>Что пишут люди</h2>
+        <p class="sub" data-reveal>Комментарии с Хабра и из Telegram-канала, как есть.</p>
+      </div>
+      <div class="and-revs">
+        <figure class="and-rev" data-reveal="rise" style="--d:0"><span class="and-rev__src">Хабр</span><picture><source srcset="img/r-habr1.avif" type="image/avif"><img src="img/r-habr1.webp" width="900" height="285" loading="lazy" decoding="async" alt="Комментарий с Хабра: приложение просто скачал и сразу работает, друзья тоже разобрались"></picture></figure>
+        <figure class="and-rev" data-reveal="rise" style="--d:1"><span class="and-rev__src and-rev__src--tg"><svg aria-hidden="true"><use href="#i-telegram"/></svg>Telegram</span><picture><source srcset="img/r-tg2.avif" type="image/avif"><img src="img/r-tg2.webp" width="488" height="277" loading="lazy" decoding="async" alt="Сообщение в Telegram: благодарность за удобный и простой софт"></picture></figure>
+        <figure class="and-rev" data-reveal="rise" style="--d:2"><span class="and-rev__src">Хабр</span><picture><source srcset="img/r-habr2.avif" type="image/avif"><img src="img/r-habr2.webp" width="483" height="176" loading="lazy" decoding="async" alt="Комментарий с Хабра: большое спасибо за проделанный труд"></picture></figure>
+        <figure class="and-rev" data-reveal="rise" style="--d:3"><span class="and-rev__src and-rev__src--tg"><svg aria-hidden="true"><use href="#i-telegram"/></svg>Telegram</span><picture><source srcset="img/r-tg1.avif" type="image/avif"><img src="img/r-tg1.webp" width="449" height="158" loading="lazy" decoding="async" alt="Сообщение в Telegram: спасибо за DNS, всё в одной программе"></picture></figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="catch">
+    <div class="wrap">
+      <div class="head head--center">
+        <p class="kicker" data-reveal>В чём подвох?</p>
+        <h2 class="h2--xl" data-split>Подвоха нет</h2>
+        <p class="sub" data-reveal>Бесплатно, без рекламы и регистрации. Open Source: исходники можно прочитать и собрать самому.</p>
+      </div>
+      <div class="and-cards4">
+        <div class="and-cards__cell" data-reveal="rise" style="--d:0">
+        <article class="and-hw and-hw--static">
+          <div class="and-hw__in">
+            <span class="and-hw__blur" aria-hidden="true"></span>
+            <span class="and-hw__tag">Приватность</span><span class="and-hw__ic"><svg aria-hidden="true"><use href="#i-eye-off"/></svg></span>
+            <h3>Не собирает данные</h3>
+            <p>Ни аналитики, ни слежки. NetFix работает у&nbsp;тебя на&nbsp;компьютере и&nbsp;никуда ничего не&nbsp;отправляет.</p>
+            <svg class="and-hw__lines" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="39"/><path d="M100.0 8.0L131.5 186.5L40.9 29.5L179.7 146.0L9.4 84.0L190.6 84.0L20.3 146.0L159.1 29.5L68.5 186.5L100.0 8.0"/></svg>
+          </div>
+        </article>
+        </div>
+        <div class="and-cards__cell" data-reveal="rise" style="--d:1">
+        <article class="and-hw and-hw--static">
+          <div class="and-hw__in">
+            <span class="and-hw__blur" aria-hidden="true"></span>
+            <span class="and-hw__tag">Безопасность</span><span class="and-hw__ic"><svg aria-hidden="true"><use href="#i-card"/></svg></span>
+            <h3>Не трогает карты и&nbsp;пароли</h3>
+            <p>Ему это просто не&nbsp;нужно. Ни регистрации, ни входа, ни оплаты.</p>
+            <svg class="and-hw__lines" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="39"/><path d="M100.0 8.0L139.9 182.9L28.1 42.6L189.7 120.5L10.3 120.5L171.9 42.6L60.1 182.9L100.0 8.0"/></svg>
+          </div>
+        </article>
+        </div>
+        <div class="and-cards__cell" data-reveal="rise" style="--d:2">
+        <article class="and-hw and-hw--static">
+          <div class="and-hw__in">
+            <span class="and-hw__blur" aria-hidden="true"></span>
+            <span class="and-hw__tag">GitHub</span><span class="and-hw__ic"><svg aria-hidden="true"><use href="#i-code"/></svg></span>
+            <h3>Open Source</h3>
+            <p>Весь код лежит на&nbsp;GitHub. Его можно прочитать и&nbsp;собрать самому.</p>
+            <svg class="and-hw__lines" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="39"/><path d="M100.0 8.0L169.5 160.2L8.9 113.1L149.7 22.6L125.9 188.3L16.3 61.8L183.7 61.8L74.1 188.3L50.3 22.6L191.1 113.1L30.5 160.2L100.0 8.0"/></svg>
+          </div>
+        </article>
+        </div>
+        <div class="and-cards__cell" data-reveal="rise" style="--d:3">
+        <article class="and-hw and-hw--static">
+          <div class="and-hw__in">
+            <span class="and-hw__blur" aria-hidden="true"></span>
+            <span class="and-hw__tag">Проверено</span><span class="and-hw__ic"><svg aria-hidden="true"><use href="#i-shield"/></svg></span>
+            <h3>Проверка VirusTotal</h3>
+            <p>Каждый релиз проверяется перед тем, как попасть на&nbsp;GitHub.</p>
+            <svg class="and-hw__lines" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="39"/><path d="M100.0 8.0L165.1 165.1L8.0 100.0L165.1 34.9L100.0 192.0L34.9 34.9L192.0 100.0L34.9 165.1L100.0 8.0"/></svg>
+          </div>
+        </article>
+        </div>
+      </div>
+
+      <figure class="and-quote" data-reveal="rise">
+        <canvas class="and-stars" data-stars="80" aria-hidden="true"></canvas>
+        <span class="and-stack__aurora" aria-hidden="true"></span>
+        <blockquote>
+          <p class="and-quote__lead">Я делаю NetFix <span>и&nbsp;сам же отвечаю в&nbsp;поддержке.</span></p>
+          <p>Я сам помогаю людям разобраться, хотя мог бы этого и не делать. NetFix я делаю в удовольствие: у меня нет инвесторов, зато есть люди, которым приложение нравится.</p>
+          <p>Я очень ценю вашу поддержку. Именно она мотивирует меня выпускать обновления и делать NetFix лучше.</p>
+        </blockquote>
+        <figcaption>
+          <img src="img/logo-64.webp" width="44" height="44" alt="" loading="lazy">
+          <span><b>Разработчик NetFix</b><small>пишите мне в Telegram: <a href="https://t.me/sofirka_hanabi" target="_blank" rel="noopener">@sofirka_hanabi</a></small></span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="sec" id="support">
+    <div class="wrap">
+      <div class="head head--center">
+        <p class="kicker" data-reveal>На связи</p>
+        <h2 data-split>Если что-то не&nbsp;так, пиши</h2>
+        <p class="sub" data-reveal>Отвечаю сам. Новости и обходы в канале, код и релизы на GitHub.</p>
+      </div>
+      <div class="and-cards3">
+        <div class="and-cards__cell" data-reveal="rise" style="--d:0">
+        <a class="and-hw and-hw--static and-hw--link" href="https://t.me/NetFixRuBi" target="_blank" rel="noopener">
+          <div class="and-hw__in">
+            <span class="and-hw__blur" aria-hidden="true"></span>
+            <span class="and-hw__tag">Канал</span><span class="and-hw__ic"><svg aria-hidden="true"><use href="#i-telegram"/></svg></span>
+            <h3>Telegram-канал</h3>
+            <p>Новости, обходы и&nbsp;гайды.<span class="and-hw__go">Подписаться<svg aria-hidden="true"><use href="#i-arrow"/></svg></span></p>
+            <svg class="and-hw__lines" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="39"/><path d="M100.0 8.0L165.1 165.1L8.0 100.0L165.1 34.9L100.0 192.0L34.9 34.9L192.0 100.0L34.9 165.1L100.0 8.0"/></svg>
+          </div>
+        </a>
+        </div>
+        <div class="and-cards__cell" data-reveal="rise" style="--d:1">
+        <a class="and-hw and-hw--static and-hw--link" href="https://github.com/rupleide/NetFix" target="_blank" rel="noopener">
+          <div class="and-hw__in">
+            <span class="and-hw__blur" aria-hidden="true"></span>
+            <span class="and-hw__tag">Open Source</span><span class="and-hw__ic"><svg aria-hidden="true"><use href="#i-github"/></svg></span>
+            <h3>GitHub</h3>
+            <p>Код, релизы и&nbsp;Issues.<span class="and-hw__go">Открыть<svg aria-hidden="true"><use href="#i-arrow"/></svg></span></p>
+            <svg class="and-hw__lines" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="39"/><path d="M100.0 8.0L187.5 128.4L45.9 174.4L45.9 25.6L187.5 71.6L100.0 192.0L12.5 71.6L154.1 25.6L154.1 174.4L12.5 128.4L100.0 8.0"/></svg>
+          </div>
+        </a>
+        </div>
+        <div class="and-cards__cell" data-reveal="rise" style="--d:2">
+        <a class="and-hw and-hw--static and-hw--link and-hw--live" href="https://t.me/sofirka_hanabi" target="_blank" rel="noopener">
+          <div class="and-hw__in">
+            <span class="and-hw__blur" aria-hidden="true"></span>
+            <span class="and-hw__tag"><i></i>24/7</span><span class="and-hw__ic"><svg aria-hidden="true"><use href="#i-headset"/></svg></span>
+            <h3>Техподдержка</h3>
+            <p>@sofirka_hanabi, отвечаю сам.<span class="and-hw__go">Написать<svg aria-hidden="true"><use href="#i-arrow"/></svg></span></p>
+            <svg class="and-hw__lines" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="39"/><path d="M100.0 8.0L146.0 179.7L20.3 54.0L192.0 100.0L20.3 146.0L146.0 20.3L100.0 192.0L54.0 20.3L179.7 146.0L8.0 100.0L179.7 54.0L54.0 179.7L100.0 8.0"/></svg>
+          </div>
+        </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="faq">
+    <div class="wrap faq">
+      <div class="faq__head">
+        <p class="kicker" data-reveal>Вопросы</p>
+        <h2 data-split>Коротко о&nbsp;главном</h2>
+        <p class="faq__sub" data-reveal>Самое частое, что спрашивают перед установкой.</p>
+        <a class="faq__help" href="https://t.me/sofirka_hanabi" target="_blank" rel="noopener" data-reveal>
+          <span class="faq__help-ic"><svg aria-hidden="true"><use href="#i-headset"/></svg></span>
+          <span><b>Не нашёл ответ?</b><small>Напиши мне в Telegram, отвечаю сам</small></span>
+          <svg class="faq__help-go" aria-hidden="true"><use href="#i-arrow"/></svg>
+        </a>
+      </div>
+      <div class="faq__list">
+        <details data-reveal style="--d:0" open><summary><span class="faq__n">01</span><span class="faq__q">Это бесплатно?</span><span class="faq__x" aria-hidden="true"></span></summary><p>Да. Без рекламы, без подписок и без регистрации.</p></details>
+        <details data-reveal style="--d:1"><summary><span class="faq__n">02</span><span class="faq__q">Это VPN?</span><span class="faq__x" aria-hidden="true"></span></summary><p>Нет. NetFix не гонит трафик через чужие серверы. Он запускает Zapret и tg-ws-proxy у тебя на компьютере и делает работу с ними удобной.</p></details>
+        <details data-reveal style="--d:2"><summary><span class="faq__n">03</span><span class="faq__q">Зачем права администратора?</span><span class="faq__x" aria-hidden="true"></span></summary><p>Обход работает через драйвер WinDivert, который управляет сетевыми фильтрами системы. Без прав администратора он не запустится.</p></details>
+        <details data-reveal style="--d:3"><summary><span class="faq__n">04</span><span class="faq__q">Он не будет тормозить компьютер?</span><span class="faq__x" aria-hidden="true"></span></summary><p>Нет. В фоне NetFix занимает около 20&nbsp;МБ памяти, а процессор в простое не нагружает вообще, 0%.</p></details>
+        <details data-reveal style="--d:4"><summary><span class="faq__n">05</span><span class="faq__q">Что нужно для запуска?</span><span class="faq__x" aria-hidden="true"></span></summary><p>Только Windows 10 или 11 (x64). Всё остальное, что нужно для работы, NetFix скачает сам.</p></details>
+        <details data-reveal style="--d:5"><summary><span class="faq__n">06</span><span class="faq__q">Что делать, если не заработало?</span><span class="faq__x" aria-hidden="true"></span></summary><p>Загляни во вкладку FAQ в самом приложении, а если не помогло, напиши в техподдержку <a href="https://t.me/sofirka_hanabi" target="_blank" rel="noopener">@sofirka_hanabi</a>, там отвечают круглосуточно.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="and-name" aria-label="NetFix">
+    <canvas class="and-waves" data-waves aria-hidden="true"></canvas>
+    <div class="and-name__in">
+      <p class="and-name__tag" data-reveal="blur">Обход блокировок для Windows</p>
+      <p class="and-name__word" aria-hidden="true">NetFix</p>
+    </div>
+  </section>
+
+  <section class="sec sec--last" id="download">
+    <div class="wrap">
+      <div class="and-final and-final--pc" data-reveal="rise">
+        <canvas class="and-dots" data-dots="final" aria-hidden="true"></canvas>
+        <div class="and-final__text">
+          <h2>Меньше настроек.<br><span>Больше интернета.</span></h2>
+          <p>Скачай, запусти от имени администратора и&nbsp;нажми одну кнопку. Остальное NetFix сделает сам.</p>
+          <div class="and-cta">
+            <a class="pill pill--lg js-dl" href="https://github.com/rupleide/NetFix/releases/download/v1.2.0/NetFix_Setup_v1.2.0.exe">
+              <svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span>Скачать для Windows</span><svg class="ic chev" aria-hidden="true"><use href="#i-chevron"/></svg>
+            </a>
+            <a class="pill pill--ghost pill--lg" href="https://github.com/rupleide/NetFix" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-github"/></svg><span>Исходный код</span></a>
+          </div>
+          <p class="final__note"><span class="js-ver">v1.2.0</span> · Windows 10/11 x64 · Open Source</p>
+          <a class="and-final__alt" href="#android" data-target="mob"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg>Нужна версия для Android<svg class="ic chev" aria-hidden="true"><use href="#i-chevron"/></svg></a>
+        </div>
+        <div class="and-final__win" aria-hidden="true"><picture><source srcset="img/services.avif" type="image/avif"><img src="img/services.webp" width="880" height="680" alt="" loading="lazy" decoding="async"></picture></div>
+      </div>
+    </div>
+  </section>
+  </div>
+
+  <div class="page" id="page-mob" role="tabpanel" aria-label="NetFix для Android" hidden>
+
+  <section class="and-intro" id="android" data-pin="intro">
+    <div class="and-intro__sticky">
+      <span class="and-intro__sky" aria-hidden="true"></span>
+      <canvas class="and-stars" data-stars aria-hidden="true"></canvas>
+      <canvas class="and-dots" data-dots="intro" aria-hidden="true"></canvas>
+      <span class="and-intro__bloom" aria-hidden="true"></span>
+
+      <div class="and-intro__copy">
+        <h1 class="and-word" aria-label="NetFix"><span style="--i:0">N</span><span style="--i:1">e</span><span style="--i:2">t</span><span style="--i:3">F</span><span style="--i:4">i</span><span style="--i:5">x</span></h1>
+        <p class="and-intro__tag">Весь интернет в&nbsp;одно касание</p>
+      </div>
+
+      <div class="and-intro__stage" data-parallax>
+        <div class="and-intro__phone">
+          <img class="and-intro__off" src="img/mock/flat-off.webp" width="620" height="1280" alt="NetFix на Android: главный экран с кнопкой «Включить»" decoding="async" fetchpriority="high">
+          <img class="and-intro__on" src="img/mock/flat-on.webp" width="620" height="1280" alt="" decoding="async">
+          <span class="and-intro__wave" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="and-glare" aria-hidden="true"></span>
+        </div>
+        <div class="and-widget and-widget--ping" style="--x:-340px; --y:-170px; --z:1.6" aria-hidden="true">
+          <small>Задержка</small><b>45 <i>мс</i></b>
+          <span class="and-spark"><i style="--h:.5"></i><i style="--h:.8"></i><i style="--h:.4"></i><i style="--h:.65"></i><i style="--h:.35"></i><i style="--h:.55"></i><i style="--h:.3"></i></span>
+        </div>
+        <div class="and-widget and-widget--tg" style="--x:340px; --y:-200px; --z:1.2" aria-hidden="true">
+          <span class="and-widget__ic and-widget__ic--tg"><svg><use href="#b-telegram"/></svg></span>
+          <span><b>Telegram</b><small><i class="and-dot"></i>Прокси работает</small></span>
+        </div>
+        <div class="and-widget and-widget--method" style="--x:-320px; --y:150px; --z:2" aria-hidden="true">
+          <small>Стратегия</small><b>Способ 20 · Wi-Fi</b>
+          <span class="and-widget__meter"><i style="--w:.92"></i></span>
+          <small class="and-widget__note">открыто 11 из 12 адресов</small>
+        </div>
+        <div class="and-widget and-widget--yt" style="--x:345px; --y:110px; --z:1.4" aria-hidden="true">
+          <span class="and-widget__ic and-widget__ic--yt"><svg><use href="#b-youtube"/></svg></span>
+          <span><b>YouTube</b><small>4K снова грузится</small></span>
+          <span class="and-eq"><i></i><i></i><i></i><i></i></span>
+        </div>
+      </div>
+
+      <div class="and-intro__card">
+        <span><b>NetFix для Android <span class="js-apk-ver">v1.0.3</span></b><small>Бесплатно · Android 8.0+ и Smart TV</small></span>
+        <a class="pill js-apk" href="https://github.com/rupleide/NetFixMobile/releases/download/v1.0.3/NetFix-Mobile-v1.0.3-release.apk"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span>Скачать APK</span></a>
+      </div>
+      <a class="and-intro__hint" href="#and-words"><span aria-hidden="true"></span>Листай вниз</a>
+    </div>
+  </section>
+
+  <section class="and-words" id="and-words" data-pin="words">
+    <div class="and-words__sticky">
+      <span class="and-words__glow" aria-hidden="true"></span>
+      <h2 class="and-words__head">
+        <span class="and-words__line">
+          <span class="and-words__w" data-side="-1">Видео</span>
+          <span class="and-chip and-chip--yt" aria-hidden="true"><svg class="and-chip__ic"><use href="#b-youtube"/></svg><span class="and-chip__bar"><i></i></span></span>
+          <span class="and-words__w" data-side="1">грузится</span>
+        </span>
+        <span class="and-words__line">
+          <span class="and-words__w" data-side="-1">Telegram</span>
+          <span class="and-chip and-chip--tg" aria-hidden="true"><span class="and-chip__fly"><svg class="and-chip__ic"><use href="#i-plane"/></svg></span></span>
+          <span class="and-words__w and-words__w--serif" data-side="1">летает</span>
+        </span>
+        <span class="and-words__line">
+          <span class="and-words__w" data-side="-1">Discord</span>
+          <span class="and-chip and-chip--ds" aria-hidden="true"><svg class="and-chip__ic"><use href="#b-discord"/></svg><span class="and-chip__waves"><i></i><i></i><i></i></span></span>
+          <span class="and-words__w" data-side="1">звучит</span>
+        </span>
+      </h2>
+      <p class="and-words__p" data-assemble>Провайдер замедляет YouTube, глушит Discord и&nbsp;ломает Telegram. <b>NetFix Mobile</b> обходит это прямо на&nbsp;телефоне: без&nbsp;чужих серверов, без&nbsp;root и&nbsp;без&nbsp;регистрации. Нажал одну кнопку, и&nbsp;<b>всё работает как&nbsp;раньше.</b></p>
+    </div>
+  </section>
+
+  <section class="sec and-story" id="and-story" aria-label="Как NetFix чинит интернет">
+    <div class="wrap and-story__in">
+      <div class="and-story__steps">
+        <div class="and-story__step" data-step="0">
+          <span class="and-story__n">01 · Без NetFix</span>
+          <h3>YouTube крутится, Telegram молчит</h3>
+          <p>Провайдер режет трафик к нужным сервисам. Видео бесконечно грузится, сообщения висят на «Соединение…».</p>
+          <img src="img/mock/flat-off.webp" width="620" height="1280" alt="Главный экран NetFix: кнопка «Включить», нет соединения" loading="lazy" decoding="async">
+        </div>
+        <div class="and-story__step" data-step="1">
+          <span class="and-story__n">02 · Одна кнопка</span>
+          <h3>Нажимаешь «Включить»</h3>
+          <p>NetFix сам запускает туннель на телефоне, подбирает способ обхода и поднимает прокси для Telegram.</p>
+          <img src="img/mock/flat-off.webp" width="620" height="1280" alt="Главный экран NetFix: кнопка «Включить», нет соединения" loading="lazy" decoding="async">
+        </div>
+        <div class="and-story__step" data-step="2">
+          <span class="and-story__n">03 · Пара секунд</span>
+          <h3>И всё снова работает</h3>
+          <p>На главном экране видно задержку и текущий способ. Telegram и YouTube открываются прямо отсюда.</p>
+          <img src="img/mock/flat-on.webp" width="620" height="1280" alt="Главный экран NetFix: подключено, задержка 45 мс" loading="lazy" decoding="async">
+        </div>
+        <div class="and-story__step" data-step="3">
+          <span class="and-story__n">04 · Telegram</span>
+          <h3>Прокси уже настроен</h3>
+          <p>Прокси работает прямо на телефоне. Нажимаешь «Открыть», и Telegram подключён: ни адресов, ни ключей.</p>
+          <img src="img/mock/flat-proxy.webp" width="620" height="1280" alt="Экран «Прокси Telegram»: прокси работает, 127.0.0.1:1443" loading="lazy" decoding="async">
+        </div>
+        <div class="and-story__step" data-step="4">
+          <span class="and-story__n">05 · YouTube и Discord</span>
+          <h3>Свой способ для каждой сети</h3>
+          <p>Приложение проверяет способы обхода и запоминает, какой работает на Wi-Fi, а какой на мобильном интернете.</p>
+          <img src="img/mock/flat-methods.webp" width="620" height="1280" alt="Экран «YouTube и Discord»: способ 20 работает на Wi-Fi" loading="lazy" decoding="async">
+        </div>
+      </div>
+      <div class="and-story__pin" aria-hidden="true">
+        <div class="and-story__phone">
+          <span class="and-halo and-halo--story"><i></i><i></i><i></i></span>
+          <div class="and-story__tilt">
+            <img src="img/mock/flat-off.webp" width="620" height="1280" alt="" data-steps="0 1" loading="lazy" decoding="async">
+            <img src="img/mock/flat-on.webp" width="620" height="1280" alt="" data-steps="2" data-reveal-from="button" loading="lazy" decoding="async">
+            <img src="img/mock/flat-proxy.webp" width="620" height="1280" alt="" data-steps="3" loading="lazy" decoding="async">
+            <img src="img/mock/flat-methods.webp" width="620" height="1280" alt="" data-steps="4" loading="lazy" decoding="async">
+            <span class="and-spin"></span>
+            <span class="and-glare"></span>
+          </div>
+          <span class="and-note and-note--bad and-note--l" data-step="0" style="--x:-1; --t:150px"><i class="and-dot"></i>Нет соединения<small>— мс</small></span>
+          <span class="and-note" data-step="1" style="--x:1; --t:260px"><span class="and-note__spin"></span>Подбираю способ…</span>
+          <span class="and-note and-note--l" data-step="2" style="--x:-1; --t:420px"><i class="and-dot"></i>Подключено<small>45 мс · отличная</small></span>
+          <span class="and-note" data-step="3" style="--x:1; --t:110px"><i class="and-dot"></i>Прокси работает<small>1 мс</small></span>
+          <span class="and-note and-note--l" data-step="4" style="--x:-1; --t:200px">Способ 20 · Wi-Fi<small>11 из 12 адресов</small></span>
+          <div class="and-story__bar"><span></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="and-float" data-pin="float" aria-label="Что делает NetFix Mobile">
+    <div class="and-float__sticky">
+      <span class="and-float__glow" aria-hidden="true"></span>
+      <h2 class="and-float__title"><span class="and-float__l1">Весь интернет.</span><span class="and-float__l2">Как&nbsp;раньше.</span></h2>
+
+      <div class="and-fw and-fw--ring" style="--s:1.5; --o:-.18; --x:9%" aria-hidden="true">
+        <span class="and-fw__ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42"/><circle class="is-v" cx="50" cy="50" r="42"/></svg><i><svg><use href="#i-check"/></svg></i><b>11/12</b><small>адресов</small></span>
+      </div>
+      <div class="and-fw and-fw--chip" style="--s:2.2; --o:-.02; --x:46%" aria-hidden="true">
+        <span class="and-fw__chipic"><svg><use href="#a-power"/></svg></span><small>Способ 20</small>
+      </div>
+      <div class="and-fw and-fw--chart" style="--s:1.9; --o:.5; --x:35%" aria-hidden="true">
+        <span class="and-fw__up"><svg><use href="#i-arrow"/></svg></span>
+        <svg class="and-fw__line" viewBox="0 0 200 90" preserveAspectRatio="none"><path d="M0 70 C 20 70, 30 40, 50 46 S 80 80, 100 60 S 130 10, 150 22 S 180 60, 200 30"/><circle cx="150" cy="22" r="7"/></svg>
+        <b>45 мс</b><span class="and-fw__pill"><i class="and-dot"></i>Отличная</span>
+      </div>
+      <img class="and-fw and-fw--ph1" src="img/mock/left-on.webp" width="760" height="1197" alt="" style="--s:1.7; --o:.32; --x:74%" loading="lazy" decoding="async">
+      <img class="and-fw and-fw--ph2" src="img/mock/right-methods.webp" width="760" height="1198" alt="" style="--s:1.6; --o:.72; --x:24%" loading="lazy" decoding="async">
+
+      <article class="and-hw" style="--s:2.4; --o:.04; --x:18%">
+        <div class="and-hw__in">
+          <span class="and-hw__blur" aria-hidden="true"></span>
+          <span class="and-hw__ic"><svg aria-hidden="true"><use href="#a-power"/></svg></span>
+          <h3>Нажимаешь «Включить»</h3>
+          <p>Туннель запускается прямо на&nbsp;телефоне.</p>
+          <svg class="and-hw__lines" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="39"/><path d="M100.0 8.0L131.5 186.5L40.9 29.5L179.7 146.0L9.4 84.0L190.6 84.0L20.3 146.0L159.1 29.5L68.5 186.5L100.0 8.0"/></svg>
+        </div>
+      </article>
+      <article class="and-hw" style="--s:2.6; --o:.3; --x:56%">
+        <div class="and-hw__in">
+          <span class="and-hw__blur" aria-hidden="true"></span>
+          <span class="and-hw__ic"><svg aria-hidden="true"><use href="#i-sparkle"/></svg></span>
+          <h3>NetFix подбирает способ обхода</h3>
+          <p>Проверяет способы и&nbsp;оставляет тот, что открывает больше всего.</p>
+          <svg class="and-hw__lines" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="39"/><path d="M100.0 8.0L139.9 182.9L28.1 42.6L189.7 120.5L10.3 120.5L171.9 42.6L60.1 182.9L100.0 8.0"/></svg>
+        </div>
+      </article>
+      <article class="and-hw" style="--s:2.5; --o:.58; --x:14%">
+        <div class="and-hw__in">
+          <span class="and-hw__blur" aria-hidden="true"></span>
+          <span class="and-hw__ic"><svg aria-hidden="true"><use href="#i-plane"/></svg></span>
+          <h3>Telegram получает свой прокси</h3>
+          <p>Нажал «Открыть», и&nbsp;он уже подключён.</p>
+          <svg class="and-hw__lines" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="39"/><path d="M100.0 8.0L169.5 160.2L8.9 113.1L149.7 22.6L125.9 188.3L16.3 61.8L183.7 61.8L74.1 188.3L50.3 22.6L191.1 113.1L30.5 160.2L100.0 8.0"/></svg>
+        </div>
+      </article>
+      <article class="and-hw" style="--s:2.7; --o:.86; --x:60%">
+        <div class="and-hw__in">
+          <span class="and-hw__blur" aria-hidden="true"></span>
+          <span class="and-hw__ic"><svg aria-hidden="true"><use href="#b-youtube"/></svg></span>
+          <h3>YouTube и&nbsp;Discord снова работают</h3>
+          <p>Как раньше: видео грузится, голос не&nbsp;рвётся.</p>
+          <svg class="and-hw__lines" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="39"/><path d="M100.0 8.0L165.1 165.1L8.0 100.0L165.1 34.9L100.0 192.0L34.9 34.9L192.0 100.0L34.9 165.1L100.0 8.0"/></svg>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="sec and-stack" id="and-where" aria-label="Где работает NetFix Mobile">
+    <div class="wrap">
+      <div class="head head--center">
+        <p class="kicker" data-reveal>Где работает</p>
+        <h2 data-split>В кармане и&nbsp;на&nbsp;диване</h2>
+      </div>
+      <div class="and-stack__list">
+        <article class="and-stack__card" style="--i:0">
+          <div class="and-stack__in">
+            <canvas class="and-stars" data-stars="110" aria-hidden="true"></canvas>
+            <span class="and-stack__aurora" aria-hidden="true"></span>
+            <div class="and-stack__text">
+              <span class="and-stack__tag">Для телефона</span>
+              <h3>Одна кнопка, и&nbsp;всё снова грузится</h3>
+              <p>Android 8.0 и новее, без root и регистрации. Работает и на Wi-Fi, и на мобильном интернете: для каждой сети NetFix помнит свой способ обхода.</p>
+              <ul class="and-stack__list-mini"><li>YouTube и Discord</li><li>Прокси для Telegram</li><li>Только выбранные приложения</li></ul>
+            </div>
+            <div class="and-stack__art and-stack__art--phone" aria-hidden="true">
+              <span class="and-halo"><i></i><i></i><i></i></span>
+              <img src="img/mock/flat-on.webp" width="620" height="1280" alt="" loading="lazy" decoding="async">
+            </div>
+          </div>
+        </article>
+        <article class="and-stack__card" style="--i:1">
+          <div class="and-stack__in">
+            <canvas class="and-stars" data-stars="110" aria-hidden="true"></canvas>
+            <span class="and-stack__aurora" aria-hidden="true"></span>
+            <div class="and-stack__text">
+              <span class="and-stack__tag">Для Smart TV</span>
+              <h3>YouTube на&nbsp;большом экране</h3>
+              <p>Тот же APK ставится на телевизоры и приставки с Android. При первом запуске выбери «На Smart TV», и NetFix покажет экран под пульт: крупная кнопка и всё видно с дивана.</p>
+              <ul class="and-stack__list-mini"><li>Управление пультом</li><li>Тот же APK</li><li>Свой способ для сети дома</li></ul>
+            </div>
+            <div class="and-stack__art and-stack__art--tv" aria-hidden="true">
+              <div class="and-stack__tv"><img src="img/mock/tv.webp" width="1280" height="590" alt="" loading="lazy" decoding="async"></div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec and-how" id="and-how">
+    <div class="wrap">
+      <p class="and-say" data-say>Android назовёт это VPN. Но&nbsp;трафик <span class="and-pill"><svg aria-hidden="true"><use href="#i-phone"/></svg>не&nbsp;покидает телефон</span>: NetFix обходит фильтр провайдера прямо на&nbsp;устройстве, без&nbsp;чужих серверов.</p>
+
+      <div class="and-vs">
+        <article class="and-route and-route--vpn" data-reveal="rise" style="--d:0">
+          <div class="and-route__in">
+            <span class="and-hw__blur" aria-hidden="true"></span>
+            <header><span class="and-route__tag">Обычный VPN</span><h3>Через чужой сервер</h3><p>Весь трафик сначала летит в&nbsp;другую страну, и&nbsp;только потом в&nbsp;YouTube.</p></header>
+            <div class="and-route__stage">
+            <svg class="and-route__map" viewBox="0 0 520 230" aria-hidden="true">
+              <defs>
+                <path id="rt-vpn" d="M70 170 C 150 170, 170 50, 260 50 S 370 170, 450 170"/>
+              </defs>
+              <use href="#rt-vpn" class="and-route__track"/>
+              <use href="#rt-vpn" class="and-route__flow and-route__flow--slow"/>
+              <circle class="and-route__pkt" r="5"><animateMotion dur="3.6s" repeatCount="indefinite"><mpath href="#rt-vpn"/></animateMotion></circle>
+              <circle class="and-route__pkt" r="5"><animateMotion dur="3.6s" begin="1.2s" repeatCount="indefinite"><mpath href="#rt-vpn"/></animateMotion></circle>
+              <circle class="and-route__pkt" r="5"><animateMotion dur="3.6s" begin="2.4s" repeatCount="indefinite"><mpath href="#rt-vpn"/></animateMotion></circle>
+              <g class="and-route__far" transform="translate(260 50)">
+                <circle r="34" class="and-route__halo"/>
+                <circle r="24"/>
+                <path d="M-24 0h48M0-24c-9 8-9 40 0 48M0-24c9 8 9 40 0 48M-20-12h40M-20 12h40"/>
+              </g>
+            </svg>
+              <span class="and-route__node" style="--l:13.5%; --t:73.9%"><svg aria-hidden="true"><use href="#i-phone"/></svg><small>Телефон</small></span>
+              <span class="and-route__node and-route__node--label" style="--l:50%; --t:40%"><small>Сервер VPN<br>в другой стране</small></span>
+              <span class="and-route__node and-route__node--dim" style="--l:86.5%; --t:73.9%"><svg aria-hidden="true"><use href="#b-youtube"/></svg><small>YouTube</small></span>
+            </div>
+            <ul class="and-route__facts"><li>Чужой сервер видит, куда ты ходишь</li><li>Лишний круг через другую страну</li></ul>
+          </div>
+        </article>
+
+        <article class="and-route and-route--nf" data-reveal="rise" style="--d:1">
+          <div class="and-route__in">
+            <span class="and-hw__blur" aria-hidden="true"></span>
+            <header><span class="and-route__tag">NetFix Mobile</span><h3>Напрямую, мимо фильтра</h3><p>NetFix обходит фильтр провайдера на&nbsp;самом телефоне. Трафик идёт прямо в&nbsp;YouTube.</p></header>
+            <div class="and-route__stage">
+            <svg class="and-route__map" viewBox="0 0 520 230" aria-hidden="true">
+              <defs>
+                <path id="rt-nf" d="M70 140 C 160 140, 200 140, 260 140 S 360 140, 450 140"/>
+                <linearGradient id="rt-wall" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#f87171" stop-opacity="0"/><stop offset=".5" stop-color="#f87171" stop-opacity=".7"/><stop offset="1" stop-color="#f87171" stop-opacity="0"/></linearGradient>
+              </defs>
+              <g class="and-route__wall" transform="translate(260 0)">
+                <rect x="-10" y="40" width="20" height="200" rx="4" fill="url(#rt-wall)"/>
+                <path d="M-10 60h20M-10 80h20M-10 100h20M-10 180h20M-10 200h20"/>
+                <rect class="and-route__gap" x="-14" y="122" width="28" height="36" rx="8"/>
+              </g>
+              <use href="#rt-nf" class="and-route__track"/>
+              <use href="#rt-nf" class="and-route__flow"/>
+              <circle class="and-route__pkt" r="5"><animateMotion dur="1.6s" repeatCount="indefinite"><mpath href="#rt-nf"/></animateMotion></circle>
+              <circle class="and-route__pkt" r="5"><animateMotion dur="1.6s" begin=".53s" repeatCount="indefinite"><mpath href="#rt-nf"/></animateMotion></circle>
+              <circle class="and-route__pkt" r="5"><animateMotion dur="1.6s" begin="1.06s" repeatCount="indefinite"><mpath href="#rt-nf"/></animateMotion></circle>
+            </svg>
+              <span class="and-route__node and-route__node--nf" style="--l:13.5%; --t:60.9%"><img src="img/logo-64.webp" width="26" height="26" alt=""><small>Телефон + NetFix</small></span>
+              <span class="and-route__node and-route__node--label" style="--l:50%; --t:2%"><small>Фильтр провайдера</small></span>
+              <span class="and-route__node and-route__node--on" style="--l:86.5%; --t:60.9%"><svg aria-hidden="true"><use href="#b-youtube"/></svg><small>YouTube</small></span>
+            </div>
+            <ul class="and-route__facts"><li>Трафик не покидает телефон</li><li>Никаких чужих серверов и&nbsp;подписок</li></ul>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="and-features">
+    <div class="wrap">
+      <div class="head head--center">
+        <p class="kicker" data-reveal>Возможности</p>
+        <h2 data-split>Всё, что нужно. Ничего лишнего</h2>
+      </div>
+
+      <div class="and-bento">
+        <article class="and-tile and-tile--tg" data-reveal style="--d:0">
+          <img class="and-tile__peek" src="img/mock/left-proxy.webp" width="760" height="1197" alt="" loading="lazy" decoding="async">
+          <div class="and-tile__ui and-proxy" aria-hidden="true">
+            <div class="and-proxy__head"><i class="and-dot"></i>Прокси работает<span>1 мс</span></div>
+            <code>127.0.0.1:1443</code>
+            <small>Отличная задержка · пул: 4 соединения</small>
+            <div class="and-proxy__btns"><span class="is-main"><svg><use href="#b-telegram"/></svg>Открыть</span><span>Ссылка</span></div>
+          </div>
+          <h3>Свой прокси для Telegram</h3>
+          <p>Работает прямо на телефоне. Нажимаешь «Открыть», и Telegram уже подключён: ни адресов, ни ключей.</p>
+        </article>
+
+        <article class="and-tile and-tile--apps" data-reveal style="--d:1">
+          <ul class="and-tile__ui and-apps" aria-hidden="true">
+            <li><span class="and-apps__ic" style="--c:#ff0033"><svg><use href="#b-youtube"/></svg></span>YouTube<i class="and-toggle is-on"></i></li>
+            <li><span class="and-apps__ic" style="--c:#5865f2"><svg><use href="#b-discord"/></svg></span>Discord<i class="and-toggle is-on"></i></li>
+            <li><span class="and-apps__ic and-apps__ic--bank">₽</span>Банк<i class="and-toggle"></i></li>
+            <li><span class="and-apps__ic and-apps__ic--game"><svg><use href="#i-sparkle"/></svg></span>Игры<i class="and-toggle"></i></li>
+          </ul>
+          <h3>Только нужные приложения</h3>
+          <p>Через туннель идёт то, что ты отметил. Банки и игры его не замечают.</p>
+        </article>
+
+        <article class="and-tile and-tile--scan" data-reveal style="--d:0">
+          <div class="and-tile__ui and-scan" aria-hidden="true">
+            <div class="and-scan__head"><span class="and-scan__spin"></span>Проверка способов<em>Wi-Fi</em></div>
+            <div class="and-scan__row" style="--i:0"><span>Способ 3</span><em style="--w:0.17"></em><b>2/12</b></div>
+            <div class="and-scan__row" style="--i:1"><span>Способ 7</span><em style="--w:0.25"></em><b>3/12</b></div>
+            <div class="and-scan__row" style="--i:2"><span>Способ 12</span><em style="--w:0.42"></em><b>5/12</b></div>
+            <div class="and-scan__row" style="--i:3"><span>Способ 41</span><em style="--w:0.58"></em><b>7/12</b></div>
+            <div class="and-scan__row" style="--i:4"><span>Способ 55</span><em style="--w:0.33"></em><b>4/12</b></div>
+            <div class="and-scan__row is-best" style="--i:5"><span>Способ 20</span><em style="--w:0.92"></em><b>11/12</b></div>
+            <div class="and-scan__found"><i class="and-dot"></i>Выбран способ 20<small>открыто 11 из 12 адресов</small></div>
+          </div>
+          <h3>Сам находит рабочий способ</h3>
+          <p>Проверяет способы и оставляет тот, что открывает больше всего. Для Wi-Fi и мобильной сети отдельно.</p>
+        </article>
+
+        <article class="and-tile and-tile--tv" data-reveal style="--d:1">
+          <div class="and-tile__ui and-tv">
+            <div class="and-tv__screen"><img src="img/mock/tv.webp" width="1280" height="590" alt="NetFix на Smart TV: обход работает, задержка 44 мс, способ 20" loading="lazy" decoding="async"><span class="and-tv__shine" aria-hidden="true"></span></div>
+            <span class="and-tv__stand" aria-hidden="true"></span>
+          </div>
+          <h3>И на телевизоре</h3>
+          <p>Тот же APK ставится на Smart TV с Android: свой экран под пульт, YouTube на большом экране снова грузится.</p>
+        </article>
+
+        <article class="and-tile and-tile--hold" data-reveal style="--d:2">
+          <div class="and-tile__ui and-hold" aria-hidden="true">
+            <span class="and-hold__ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44"/></svg><svg class="and-hold__ic"><use href="#a-power"/></svg></span>
+            <small>Зажми, чтобы работать в фоне</small>
+          </div>
+          <h3>Включил и&nbsp;забыл</h3>
+          <p>Зажми кнопку: обход запустится, а приложение закроется и не будет есть память.</p>
+        </article>
+
+        <article class="and-tile and-tile--dns" data-reveal style="--d:0">
+          <div class="and-tile__ui and-chips" aria-hidden="true">
+            <span class="is-on"><i class="and-dot"></i>Xbox DNS</span><span>Cloudflare</span><span>Google</span><span>AdGuard</span><span>Yandex</span>
+          </div>
+          <h3>DNS для сайтов и игр</h3>
+          <p>Открывает ChatGPT и мобильные игры вроде Brawl Stars.</p>
+        </article>
+
+        <article class="and-tile and-tile--open" data-reveal style="--d:1">
+          <div class="and-tile__ui and-code" aria-hidden="true"><span>// NetFix Mobile</span><span><b>license</b> = "GPL-3.0"</span><span><b>analytics</b> = <em>null</em></span><span><b>servers</b> = <em>null</em></span></div>
+          <h3>Ничего не собирает</h3>
+          <p>Без регистрации, аналитики и рекламы. Весь код открыт на GitHub.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec and-start" id="and-start">
+    <div class="wrap">
+      <div class="and-start__grid">
+        <div class="and-start__item and-start__item--a">
+          <div class="and-sw and-sw--apk" aria-hidden="true">
+            <span class="and-sw__badge"><svg><use href="#i-download"/></svg></span>
+            <div class="and-sw__file"><span class="and-sw__apk">APK</span><span><b>NetFix-Mobile-v1.0.3.apk</b><small>GitHub · релиз</small></span></div>
+            <span class="and-sw__bar"><i></i></span>
+            <span class="and-sw__done"><svg><use href="#i-check"/></svg>Скачано</span>
+          </div>
+          <span class="and-start__blur" aria-hidden="true"></span>
+          <div class="and-start__text">
+            <span class="and-start__n">01</span>
+            <h3 data-reveal="blur">Скачай APK</h3>
+            <p data-reveal="blur" style="--d:1">Последний релиз на&nbsp;GitHub. Если Android спросит, разреши установку из&nbsp;этого источника.</p>
+          </div>
+        </div>
+        <span class="and-start__line" aria-hidden="true"></span>
+        <div class="and-start__item and-start__item--b">
+          <div class="and-start__text">
+            <span class="and-start__n">02</span>
+            <h3 data-reveal="blur">Разреши туннель</h3>
+            <p data-reveal="blur" style="--d:1">Android спросит про VPN. Это туннель внутри телефона: трафик не&nbsp;уходит на&nbsp;чужие серверы.</p>
+          </div>
+          <div class="and-sw and-sw--ask" aria-hidden="true">
+            <span class="and-sw__key"><svg><use href="#i-shield"/></svg></span>
+            <b>Запрос на подключение</b>
+            <small>NetFix хочет настроить VPN-подключение для обхода блокировок.</small>
+            <span class="and-sw__btns"><i>Отмена</i><i class="is-ok">OK</i></span>
+            <span class="and-sw__tap"></span>
+          </div>
+          <span class="and-start__blur" aria-hidden="true"></span>
+        </div>
+        <span class="and-start__line" aria-hidden="true"></span>
+        <div class="and-start__item and-start__item--c">
+          <div class="and-sw and-sw--power" aria-hidden="true">
+            <span class="and-sw__rings"><i></i><i></i><i></i></span>
+            <span class="and-sw__btn"><svg><use href="#a-power"/></svg></span>
+            <span class="and-sw__pill"><i class="and-dot"></i>Подключено <em>00:00:05</em></span>
+          </div>
+          <span class="and-start__blur" aria-hidden="true"></span>
+          <div class="and-start__text">
+            <span class="and-start__n">03</span>
+            <h3 data-reveal="blur">Нажми «Включить»</h3>
+            <p data-reveal="blur" style="--d:1">Ответь на&nbsp;пару вопросов при первом запуске, остальное приложение сделает само.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="and-faq">
+    <div class="wrap faq">
+      <div class="faq__head">
+        <p class="kicker" data-reveal>Вопросы</p>
+        <h2 data-split>Коротко о&nbsp;главном</h2>
+        <p class="faq__sub" data-reveal>Что спрашивают перед установкой на телефон.</p>
+        <a class="faq__help" href="https://t.me/sofirka_hanabi" target="_blank" rel="noopener" data-reveal>
+          <span class="faq__help-ic"><svg aria-hidden="true"><use href="#i-headset"/></svg></span>
+          <span><b>Не нашёл ответ?</b><small>Напиши мне в Telegram, отвечаю сам</small></span>
+          <svg class="faq__help-go" aria-hidden="true"><use href="#i-arrow"/></svg>
+        </a>
+      </div>
+      <div class="faq__list">
+        <details data-reveal style="--d:0" open><summary><span class="faq__n">01</span><span class="faq__q">Это бесплатно?</span><span class="faq__x" aria-hidden="true"></span></summary><p>Да. Без рекламы, без подписок и без регистрации.</p></details>
+        <details data-reveal style="--d:1"><summary><span class="faq__n">02</span><span class="faq__q">Почему Android просит разрешение на VPN?</span><span class="faq__x" aria-hidden="true"></span></summary><p>Только так приложение может пропускать трафик через себя. NetFix использует это как туннель внутри телефона: трафик не уходит на чужие серверы, а значок ключа в строке состояния просто показывает, что обход включён.</p></details>
+        <details data-reveal style="--d:2"><summary><span class="faq__n">03</span><span class="faq__q">Нужен root?</span><span class="faq__x" aria-hidden="true"></span></summary><p>Нет. Это обычное приложение: поставил APK и пользуешься. Нужен Android 8.0 или новее.</p></details>
+        <details data-reveal style="--d:3"><summary><span class="faq__n">04</span><span class="faq__q">Почему APK, а не Google Play?</span><span class="faq__x" aria-hidden="true"></span></summary><p>NetFix Mobile выходит на GitHub, там лежит каждый релиз и весь исходный код. При установке Android попросит разрешить установку из этого источника, это нормально.</p></details>
+        <details data-reveal style="--d:4"><summary><span class="faq__n">05</span><span class="faq__q">А на телевизоре работает?</span><span class="faq__x" aria-hidden="true"></span></summary><p>Да, на телевизорах и приставках с Android. Поставь тот же APK и при первом запуске выбери «На Smart TV».</p></details>
+        <details data-reveal style="--d:5"><summary><span class="faq__n">06</span><span class="faq__q">Что делать, если не заработало?</span><span class="faq__x" aria-hidden="true"></span></summary><p>Открой вкладку «Ютуб» и нажми «Проверить»: приложение заново подберёт способ для твоей сети. Если не помогло, напиши в поддержку <a href="https://t.me/sofirka_hanabi" target="_blank" rel="noopener">@sofirka_hanabi</a>.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="and-name" data-pin="name" aria-label="NetFix">
+    <canvas class="and-waves" data-waves aria-hidden="true"></canvas>
+    <div class="and-name__in">
+      <p class="and-name__tag" data-reveal="blur">Обход блокировок для Android</p>
+      <p class="and-name__word" aria-hidden="true">NetFix</p>
+    </div>
+  </section>
+
+  <section class="sec sec--last" id="and-download">
+    <div class="wrap">
+      <div class="and-final" data-reveal="rise">
+        <canvas class="and-dots" data-dots="final" aria-hidden="true"></canvas>
+        <div class="and-final__text">
+          <h2>Одна кнопка.<br><span>Теперь в&nbsp;кармане.</span></h2>
+          <p>Скачай APK, разреши туннель и&nbsp;нажми «Включить». Остальное NetFix сделает сам.</p>
+          <div class="and-cta">
+            <a class="pill pill--lg js-apk" href="https://github.com/rupleide/NetFixMobile/releases/download/v1.0.3/NetFix-Mobile-v1.0.3-release.apk">
+              <svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span>Скачать для Android</span><svg class="ic chev" aria-hidden="true"><use href="#i-chevron"/></svg>
+            </a>
+            <a class="pill pill--ghost pill--lg" href="https://github.com/rupleide/NetFixMobile" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-github"/></svg><span>Исходный код</span></a>
+          </div>
+          <p class="final__note"><span class="js-apk-ver">v1.0.3</span> · Android 8.0+ и Smart TV · Open Source</p>
+          <a class="and-final__alt" href="#top" data-target="pc"><svg class="ic" aria-hidden="true"><use href="#i-pc"/></svg>Нужна версия для Windows<svg class="ic chev" aria-hidden="true"><use href="#i-chevron"/></svg></a>
+        </div>
+        <img class="and-final__ph" src="img/mock/left-on.webp" width="760" height="1197" alt="" loading="lazy" decoding="async">
+      </div>
+    </div>
+  </section>
+
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot__top">
+      <div class="foot__col">
+        <span class="foot__brand"><img src="img/logo-64.webp" width="32" height="32" alt="" loading="lazy">NetFix <small>by rupleide</small></span>
+        <p class="foot__about">Обход блокировок в одну кнопку. Бесплатно, без регистрации, Open Source.</p>
+        <p class="foot__note" data-for="pc">Этот сайт не предоставляет никаких услуг: он только рассказывает о бесплатном приложении NetFix. Обход в NetFix построен на разработках <a href="https://github.com/Flowseal" target="_blank" rel="noopener">Flowseal</a>: сборке Zapret <a href="https://github.com/Flowseal/zapret-discord-youtube" target="_blank" rel="noopener">zapret-discord-youtube</a> и прокси для Telegram <a href="https://github.com/Flowseal/tg-ws-proxy" target="_blank" rel="noopener">tg-ws-proxy</a>. Спасибо автору!</p>
+        <p class="foot__note" data-for="mob">Этот сайт не предоставляет никаких услуг: он только рассказывает о бесплатном приложении NetFix. В NetFix Mobile работают <a href="https://github.com/romanvht/ByeByeDPI" target="_blank" rel="noopener">ByeByeDPI</a> и прокси для Telegram <a href="https://github.com/amurcanov/tg-ws-proxy-android" target="_blank" rel="noopener">tg-ws-proxy</a> от <a href="https://github.com/amurcanov" target="_blank" rel="noopener">amurcanov</a>. Спасибо авторам!</p>
+      </div>
+      <nav class="foot__nav" aria-label="Разделы">
+        <b>Сайт</b>
+        <a href="#demo" data-for="pc">Попробовать</a>
+        <a href="#how" data-for="pc">Как работает</a>
+        <a href="#features" data-for="pc">Возможности</a>
+        <a href="#faq" data-for="pc">Вопросы</a>
+        <a href="#and-story" data-for="mob">Как работает</a>
+        <a href="#and-features" data-for="mob">Возможности</a>
+        <a href="#and-start" data-for="mob">Как начать</a>
+        <a href="#and-faq" data-for="mob">Вопросы</a>
+      </nav>
+      <nav class="foot__nav" aria-label="Контакты">
+        <b>На связи</b>
+        <a href="https://t.me/NetFixRuBi" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-telegram"/></svg>Telegram-канал</a>
+        <a href="https://github.com/rupleide/NetFix" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-github"/></svg>GitHub</a>
+        <a href="https://t.me/sofirka_hanabi" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-headset"/></svg>Техподдержка</a>
+      </nav>
+    </div>
+    <p class="foot__word" aria-hidden="true">NetFix</p>
+    <div class="foot__bottom">
+      <span>© 2026 NetFix · Open Source</span>
+      <a class="foot__up" href="#top">Наверх<svg aria-hidden="true"><use href="#i-chevron"/></svg></a>
+    </div>
+  </div>
+</footer>
+
+<div class="zoom" id="zoom" hidden>
+  <div class="zoom__bar">
+    <span class="zoom__cap"></span>
+    <button class="zoom__x" type="button" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="zoom__pan"><img alt=""></div>
+  <p class="zoom__tip">Листай вбок, чтобы рассмотреть</p>
+</div>
+
+<div class="ask" id="ask" hidden>
+  <div class="ask__backdrop"></div>
+  <div class="ask__sheet" role="dialog" aria-modal="true" aria-labelledby="ask-t" aria-describedby="ask-p">
+    <span class="ask__grab" aria-hidden="true"></span>
+    <div class="ask__art" aria-hidden="true">
+      <span class="ask__ring"></span><span class="ask__ring"></span>
+      <span class="ask__phone"><img src="img/logo-64.webp" width="34" height="34" alt=""></span>
+    </div>
+    <h2 class="ask__t" id="ask-t">Ты с телефона?</h2>
+    <p class="ask__p" id="ask-p">NetFix уже есть на Android: одна кнопка, и YouTube, Discord и Telegram работают прямо на телефоне.</p>
+    <div class="ask__btns">
+      <button class="pill pill--lg" type="button" data-ask="android"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg><span>Смотреть Android-версию</span><svg class="ic chev" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+      <button class="pill pill--ghost pill--lg" type="button" data-ask="close">Мне нужна версия для ПК</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js" defer></script>
+<script src="app-window.js" defer></script>
+</body>
+</html>

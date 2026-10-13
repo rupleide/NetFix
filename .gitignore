@@ -1,0 +1,14 @@
+Thumbs.db
+desktop.ini
+.DS_Store
+
+.vscode/
+.idea/
+
+*.pfx
+*.p12
+*.key
+*.pem
+
+*.bak
+*_backup*
