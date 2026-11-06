@@ -562,7 +562,7 @@ h3 { font-size: 20px; line-height: 1.3; letter-spacing: -.012em; }
   content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
   background: conic-gradient(from var(--ang, 0deg), transparent 0 62%, rgba(255, 255, 255, .15) 72%, rgba(255, 255, 255, .85) 80%, rgba(255, 255, 255, .15) 88%, transparent 96%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
-  filter: blur(.4px); animation: spin-border 10s linear infinite;
+  filter: blur(.4px); animation: spin-border 10s steps(200) infinite;
 }
 @property --ang { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
 @keyframes spin-border { to { --ang: 360deg; } }
@@ -1577,7 +1577,7 @@ html.zoom-lock { overflow: hidden; }
   box-shadow: 0 50px 90px -30px rgba(0, 0, 0, .95), 0 0 0 1px rgba(255, 255, 255, .02);
   transform: translateY(-50%) perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
   transition: transform .6s var(--ease);
-  animation: and-edge 7s linear infinite; animation-delay: calc(var(--o) * -9s);
+  animation: and-edge 7s steps(140) infinite; animation-delay: calc(var(--o) * -9s);
 }
 @keyframes and-edge { to { --edge: 360deg; } }
 .and-hw:hover { transition-duration: .15s; }
@@ -2092,6 +2092,7 @@ html.zoom-lock { overflow: hidden; }
   box-shadow: 0 40px 80px -40px rgba(0, 0, 0, .9);
 }
 .and-hw--static .and-hw__in { height: 100%; padding: 34px 28px 32px; }
+.and-hw.and-hw--static:nth-of-type(n) { left: auto; right: auto; margin: 0; }
 .and-hw--static h3 { max-width: none; }
 .and-hw--static p { max-width: none; }
 .and-hw__tag {
@@ -2235,3 +2236,31 @@ html.zoom-lock { overflow: hidden; }
   .and-quote .and-quote__lead { font-size: clamp(26px, 7.4vw, 32px); }
   .and-hw--static .and-hw__in { padding: 28px 22px 26px; }
 }
+
+.is-phone .nav.is-island .nav__in { background: rgba(20, 21, 20, .92); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.is-phone .nav__sheet { background: rgba(18, 19, 18, .97); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.is-phone .ask__backdrop { background: rgba(4, 5, 4, .8); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.is-phone .stat, .is-phone .final, .is-phone .and-intro__card, .is-phone .and-note,
+.is-phone .feat picture::after, .is-phone .pair picture::after, .is-phone .rev::after { backdrop-filter: none; -webkit-backdrop-filter: none; }
+.is-phone .and-intro__card, .is-phone .and-note { background: rgba(24, 26, 25, .92); }
+.is-phone .hero__title::before, .is-phone .hero__title::after,
+.is-phone .and-words__glow, .is-phone .and-float__glow, .is-phone .foot::after,
+.is-phone .final__logo-wrap::before { filter: none; }
+.is-phone .and-stack__aurora { filter: none; animation: none; opacity: .5; }
+.is-phone .and-hw__blur { filter: none; background: radial-gradient(closest-side, rgba(167, 243, 196, .3), transparent); }
+.is-phone .and-start__blur { filter: none; background: radial-gradient(closest-side, rgba(34, 197, 94, .16), transparent); }
+.is-phone .and-route .and-hw__blur { filter: none; background: radial-gradient(closest-side, var(--tone), transparent); opacity: .2; }
+.is-phone .and-story__step { filter: none; }
+.is-phone .and-intro__copy, .is-phone .and-float__title > span, .is-phone .and-widget,
+.is-phone .and-word span, .is-phone .and-intro__tag, .is-phone .and-note { filter: none; }
+.is-phone [data-reveal="blur"] { filter: none; }
+.is-phone .and-fw--ph2, .is-phone .and-fw--shot2 { filter: brightness(.55); }
+.is-phone .and-widget, .is-phone .and-intro__card, .is-phone .and-note, .is-phone .and-hw { box-shadow: none; }
+.is-off, .is-off *, .is-off *::before, .is-off *::after { animation-play-state: paused !important; }
+.is-phone .and-intro__bloom { width: 560px; height: 560px; margin: -280px 0 0 -280px; will-change: auto; }
+.is-phone .and-intro--pc .and-intro__on { clip-path: none; opacity: 0; transition: opacity .5s var(--ease); will-change: auto; }
+.is-phone .and-intro--pc.is-on .and-intro__on { clip-path: none; opacity: 1; }
+.is-phone .pc-win { box-shadow: 0 0 0 1px rgba(255, 255, 255, .08); }
+.is-phone .pc-glow { box-shadow: 0 0 36px 2px rgba(34, 197, 94, .4); will-change: auto; }
+.is-phone .pc-win *, .is-phone .pc-win *::before, .is-phone .pc-win *::after { animation: none !important; will-change: auto !important; }
+.is-phone .pc-win .xw .xw__progress span { will-change: auto !important; }

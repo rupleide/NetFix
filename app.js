@@ -1,5 +1,14 @@
 (() => {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const phone = matchMedia('(pointer: coarse)').matches && matchMedia('(max-width: 900px)').matches;
+  document.documentElement.classList.toggle('is-phone', phone);
+  const maxDpr = (cap) => (phone ? 1 : cap);
+  const lessOnPhone = (n) => (phone ? Math.round(n * .5) : n);
+
+  if (!reduced) {
+    const parkIO = new IntersectionObserver((entries) => entries.forEach((e) => e.target.classList.toggle('is-off', !e.isIntersecting)), { rootMargin: '150px 0px' });
+    document.querySelectorAll('.page > section, .foot, footer').forEach((s) => parkIO.observe(s));
+  }
 
   const nav = document.getElementById('nav');
   new IntersectionObserver(([e]) => nav.classList.toggle('is-island', !e.isIntersecting))
@@ -449,6 +458,10 @@
     }
     document.querySelectorAll(linkSel).forEach((el) => { el.href = data.url; });
     document.querySelectorAll(verSel).forEach((el) => { el.textContent = data.tag; });
+    if (repo === 'NetFixMobile') {
+      const file = `NetFix-Mobile-${data.tag}.apk`;
+      document.querySelectorAll('.js-apk-file').forEach((el) => { el.textContent = file; });
+    }
   }
   (window.requestIdleCallback || setTimeout)(() => {
     latestRelease('NetFix', /\.exe$/i, '.js-dl', '.js-ver').catch(() => {});
@@ -465,7 +478,7 @@
   const globes = [];
   function globe(canvas, opts) {
     const ctx = canvas.getContext('2d');
-    const N = opts.n || 1100;
+    const N = lessOnPhone(opts.n || 1100);
     const pts = [];
     const ga = Math.PI * (3 - Math.sqrt(5));
     for (let i = 0; i < N; i++) {
@@ -481,10 +494,10 @@
       const v = [n[1] * u[2] - n[2] * u[1], n[2] * u[0] - n[0] * u[2], n[0] * u[1] - n[1] * u[0]];
       return { u, v, rad, sp, a0: rnd(rad * 10) * 6.28 };
     });
-    const stars = Array.from({ length: opts.stars || 0 }, (_, i) => [rnd(i * 3.1), rnd(i * 7.7 + 1), .4 + rnd(i + 5) * 1.1, rnd(i + 9) * 6.28, .5 + rnd(i + 2) * 1.5]);
+    const stars = Array.from({ length: lessOnPhone(opts.stars || 0) }, (_, i) => [rnd(i * 3.1), rnd(i * 7.7 + 1), .4 + rnd(i + 5) * 1.1, rnd(i + 9) * 6.28, .5 + rnd(i + 2) * 1.5]);
     const g = { canvas, on: opts.on || 0, target: opts.on || 0, ripple: -1, visible: false, raf: 0, last: 0, rot: 0, w: 0, h: 0 };
     const size = () => {
-      const dpr = Math.min(devicePixelRatio || 1, 2);
+      const dpr = Math.min(devicePixelRatio || 1, maxDpr(1.5));
       g.w = canvas.clientWidth; g.h = canvas.clientHeight;
       canvas.width = Math.round(g.w * dpr); canvas.height = Math.round(g.h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -492,7 +505,7 @@
     const tiltC = Math.cos(.42), tiltS = Math.sin(.42);
     function draw(now) {
       g.raf = 0;
-      if (g.last && now - g.last < 6) { if (g.visible && !reduced) g.raf = requestAnimationFrame(draw); return; }
+      if (g.last && now - g.last < 20) { if (g.visible && !reduced) g.raf = requestAnimationFrame(draw); return; }
       const dt = Math.min(64, now - (g.last || now)); g.last = now;
       g.on += (g.target - g.on) * Math.min(1, dt / 500);
       g.rot += dt * .00007;
@@ -584,21 +597,21 @@
   const starfields = [];
   function starfield(canvas, opts = {}) {
     const ctx = canvas.getContext('2d');
-    const N = opts.n || 220;
+    const N = lessOnPhone(opts.n || 220);
     const stars = Array.from({ length: N }, (_, i) => {
       const z = rnd(i * 5.3 + 2);
       return { x: rnd(i * 3.1), y: rnd(i * 7.7 + 1), z, r: .35 + z * z * 1.5, ph: rnd(i + 9) * 6.28, sp: .4 + rnd(i + 2) * 1.6 };
     });
     const f = { canvas, visible: false, raf: 0, last: 0, w: 0, h: 0, mx: 0, my: 0, tx: 0, ty: 0, meteor: null, next: 2500 };
     const size = () => {
-      const dpr = Math.min(devicePixelRatio || 1, 2);
+      const dpr = Math.min(devicePixelRatio || 1, maxDpr(1.5));
       f.w = canvas.clientWidth; f.h = canvas.clientHeight;
       canvas.width = Math.round(f.w * dpr); canvas.height = Math.round(f.h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     const draw = (now) => {
       f.raf = 0;
-      if (f.last && now - f.last < 6) { if (f.visible && !reduced) f.raf = requestAnimationFrame(draw); return; }
+      if (f.last && now - f.last < 30) { if (f.visible && !reduced) f.raf = requestAnimationFrame(draw); return; }
       const dt = Math.min(64, now - (f.last || now)); f.last = now;
       f.mx += (f.tx - f.mx) * Math.min(1, dt / 400);
       f.my += (f.ty - f.my) * Math.min(1, dt / 400);
@@ -893,7 +906,7 @@
     const set = (el, x, y, s, rot, o, b) => {
       el.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) scale(${s.toFixed(3)}) rotate(${rot.toFixed(1)}deg)`;
       el.style.opacity = o.toFixed(3);
-      el.style.filter = b > .2 ? `blur(${b.toFixed(1)}px)` : 'none';
+      el.style.filter = b > .2 && !phone ? `blur(${b.toFixed(1)}px)` : 'none';
     };
     if (!reduced) scrollers.push({
       el: wordsSec,
@@ -1038,7 +1051,7 @@
     const ctx = canvas.getContext('2d');
     let w = 0, h = 0, visible = false, raf = 0, drawn = 0, grad = null;
     const size = () => {
-      const dpr = Math.min(devicePixelRatio || 1, 1.5);
+      const dpr = Math.min(devicePixelRatio || 1, maxDpr(1.5));
       w = canvas.clientWidth; h = canvas.clientHeight;
       canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -1136,6 +1149,7 @@
   const gl = canvas.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'low-power' });
   if (!gl) return;
 
+  const ITER = phone ? 12 : 24;
   const FRAG = `
     precision mediump float;
     uniform vec2 r;
@@ -1145,8 +1159,8 @@
 
     vec3 silk(vec2 p, float tt, vec3 lo, vec3 hi) {
       vec3 col = vec3(0.0);
-      for (int i = 0; i < 24; i++) {
-        float f = float(i) / 23.0;
+      for (int i = 0; i < ${ITER}; i++) {
+        float f = float(i) / ${ITER - 1}.0;
         float tw = sin(p.x * 0.9 + tt * 0.23);
         float y = 0.30 * sin(p.x * 1.35 + tt * 0.31)
                 + 0.10 * sin(p.x * 2.70 - tt * 0.19 + f * 1.4)
@@ -1197,7 +1211,8 @@
   const uK = gl.getUniformLocation(prog, 'k');
   const uE = gl.getUniformLocation(prog, 'e');
 
-  const SCALE = innerWidth < 760 ? 0.34 : 0.45;
+  const SCALE = phone ? 0.22 : innerWidth < 760 ? 0.34 : 0.45;
+  const FRAME_MS = phone ? 66 : 33;
   function resize() {
     const w = Math.max(1, Math.round(innerWidth * SCALE));
     const h = Math.max(1, Math.round(innerHeight * SCALE));
@@ -1236,7 +1251,7 @@
   let last = 0;
   function loop(now) {
     raf = requestAnimationFrame(loop);
-    if (now - last < 33) return;
+    if (now - last < FRAME_MS) return;
     last = now;
     draw(now);
   }

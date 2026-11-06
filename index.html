@@ -12,7 +12,7 @@
 <meta property="og:image" content="https://rupleide.github.io/NetFix/img/logo-512.png">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="app-window.css">
-<script>document.documentElement.classList.add('js')</script>
+<script>document.documentElement.classList.add('js');if(matchMedia('(pointer: coarse)').matches&&matchMedia('(max-width: 900px)').matches)document.documentElement.classList.add('is-phone')</script>
 </head>
 <body>
 
@@ -81,7 +81,7 @@
     <a class="pill js-dl" data-for="pc" href="https://github.com/rupleide/NetFix/releases/download/v1.2.0/NetFix_Setup_v1.2.0.exe">
       <svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span>Скачать</span><svg class="ic chev" aria-hidden="true"><use href="#i-chevron"/></svg>
     </a>
-    <a class="pill js-apk" data-for="mob" href="https://github.com/rupleide/NetFixMobile/releases/download/v1.0.3/NetFix-Mobile-v1.0.3-release.apk">
+    <a class="pill js-apk" data-for="mob" href="https://github.com/rupleide/NetFixMobile/releases/download/v1.0.4/NetFix-Mobile-v1.0.4-release.apk">
       <svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span>Скачать APK</span><svg class="ic chev" aria-hidden="true"><use href="#i-chevron"/></svg>
     </a>
     <button class="nav__burger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="nav-sheet">
@@ -805,8 +805,8 @@
       </div>
 
       <div class="and-intro__card">
-        <span><b>NetFix для Android <span class="js-apk-ver">v1.0.3</span></b><small>Бесплатно · Android 8.0+ и Smart TV</small></span>
-        <a class="pill js-apk" href="https://github.com/rupleide/NetFixMobile/releases/download/v1.0.3/NetFix-Mobile-v1.0.3-release.apk"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span>Скачать APK</span></a>
+        <span><b>NetFix для Android <span class="js-apk-ver">v1.0.4</span></b><small>Бесплатно · Android 8.0+ и Smart TV</small></span>
+        <a class="pill js-apk" href="https://github.com/rupleide/NetFixMobile/releases/download/v1.0.4/NetFix-Mobile-v1.0.4-release.apk"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span>Скачать APK</span></a>
       </div>
       <a class="and-intro__hint" href="#and-words"><span aria-hidden="true"></span>Листай вниз</a>
     </div>
@@ -1144,7 +1144,7 @@
         <div class="and-start__item and-start__item--a">
           <div class="and-sw and-sw--apk" aria-hidden="true">
             <span class="and-sw__badge"><svg><use href="#i-download"/></svg></span>
-            <div class="and-sw__file"><span class="and-sw__apk">APK</span><span><b>NetFix-Mobile-v1.0.3.apk</b><small>GitHub · релиз</small></span></div>
+            <div class="and-sw__file"><span class="and-sw__apk">APK</span><span><b class="js-apk-file">NetFix-Mobile-v1.0.4.apk</b><small>GitHub · релиз</small></span></div>
             <span class="and-sw__bar"><i></i></span>
             <span class="and-sw__done"><svg><use href="#i-check"/></svg>Скачано</span>
           </div>
@@ -1228,12 +1228,12 @@
           <h2>Одна кнопка.<br><span>Теперь в&nbsp;кармане.</span></h2>
           <p>Скачай APK, разреши туннель и&nbsp;нажми «Включить». Остальное NetFix сделает сам.</p>
           <div class="and-cta">
-            <a class="pill pill--lg js-apk" href="https://github.com/rupleide/NetFixMobile/releases/download/v1.0.3/NetFix-Mobile-v1.0.3-release.apk">
+            <a class="pill pill--lg js-apk" href="https://github.com/rupleide/NetFixMobile/releases/download/v1.0.4/NetFix-Mobile-v1.0.4-release.apk">
               <svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span>Скачать для Android</span><svg class="ic chev" aria-hidden="true"><use href="#i-chevron"/></svg>
             </a>
             <a class="pill pill--ghost pill--lg" href="https://github.com/rupleide/NetFixMobile" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-github"/></svg><span>Исходный код</span></a>
           </div>
-          <p class="final__note"><span class="js-apk-ver">v1.0.3</span> · Android 8.0+ и Smart TV · Open Source</p>
+          <p class="final__note"><span class="js-apk-ver">v1.0.4</span> · Android 8.0+ и Smart TV · Open Source</p>
           <a class="and-final__alt" href="#top" data-target="pc"><svg class="ic" aria-hidden="true"><use href="#i-pc"/></svg>Нужна версия для Windows<svg class="ic chev" aria-hidden="true"><use href="#i-chevron"/></svg></a>
         </div>
         <img class="and-final__ph" src="img/mock/left-on.webp" width="760" height="1197" alt="" loading="lazy" decoding="async">
