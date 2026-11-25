@@ -8,7 +8,7 @@
         Background="Transparent"
         ResizeMode="CanResize"
         ShowInTaskbar="True"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="Manual">
     <WindowChrome.WindowChrome>
         <WindowChrome ResizeBorderThickness="5" CaptionHeight="0"
                       CornerRadius="0" GlassFrameThickness="0"

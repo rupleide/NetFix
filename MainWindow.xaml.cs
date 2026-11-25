@@ -268,6 +268,7 @@ public partial class MainWindow : Window
     private bool _wasClosedToTray = false;
 
     private bool _settingsLoaded;
+    private bool _placeOnPrimary;
     private bool? _lastZapretActive = null;
     private bool? _lastTgWsActive = null;
 
@@ -317,6 +318,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        ApplyInitialPlacement();
 
         Loaded += OnLoaded;
         SizeChanged += OnSizeChanged;
@@ -345,6 +347,46 @@ public partial class MainWindow : Window
                 _auroraTimer.Start();
         };
     }
+
+    private void ApplyInitialPlacement()
+    {
+        if (_settings.RememberWindowSize)
+        {
+            if (IsUsableLength(_settings.WindowWidth)) Width = _settings.WindowWidth;
+            if (IsUsableLength(_settings.WindowHeight)) Height = _settings.WindowHeight;
+            if (!double.IsNaN(_settings.WindowLeft) && !double.IsNaN(_settings.WindowTop))
+            {
+                WindowStartupLocation = WindowStartupLocation.Manual;
+                Left = _settings.WindowLeft;
+                Top = _settings.WindowTop;
+                return;
+            }
+        }
+
+        _placeOnPrimary = true;
+        PrimaryMonitorPlacement.Center(this);
+    }
+
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        if (_placeOnPrimary)
+            CenterOnPrimary();
+    }
+
+    private void CenterOnPrimary()
+    {
+        var hwnd = new WindowInteropHelper(this).Handle;
+        // SetWindowPos на другой монитор синхронно шлёт WM_DPICHANGED.
+        // WPF в обработчике ставит предложенный Windows прямоугольник и сдвигает окно.
+        // Повторно центрируем уже после этой подмены, когда DPI окна — DPI основного монитора.
+        bool crossedMonitor = hwnd != IntPtr.Zero && !PrimaryMonitorPlacement.IsOnPrimary(hwnd);
+        PrimaryMonitorPlacement.Center(this);
+        if (crossedMonitor)
+            PrimaryMonitorPlacement.Center(this);
+    }
+
+    private static bool IsUsableLength(double value) => !double.IsNaN(value) && value > 0;
 
     private void UpdateBlob(System.Windows.Shapes.Rectangle rect, int index, double bx, double by, double ampX, double ampY, double freqX, double freqY, double phX, double phY, byte baseAlpha)
     {
@@ -402,14 +444,6 @@ public partial class MainWindow : Window
             StartMinimizedCB.IsEnabled = false;
             StartMinimizedCB.IsChecked = false;
         };
-
-        if (_settings.RememberWindowSize)
-        {
-            if (!double.IsNaN(_settings.WindowWidth)) Width = _settings.WindowWidth;
-            if (!double.IsNaN(_settings.WindowHeight)) Height = _settings.WindowHeight;
-            if (!double.IsNaN(_settings.WindowLeft)) Left = _settings.WindowLeft;
-            if (!double.IsNaN(_settings.WindowTop)) Top = _settings.WindowTop;
-        }
 
         _savePosTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _savePosTimer.Tick += (_, _) =>
@@ -9642,13 +9676,7 @@ public partial class MainWindow : Window
     {
         Width = 880;
         Height = 680;
-        var screen = System.Windows.Forms.Screen.PrimaryScreen;
-        if (screen is not null)
-        {
-            var bounds = screen.WorkingArea;
-            Left = (bounds.Width - 880) / 2.0 + bounds.Left;
-            Top = (bounds.Height - 680) / 2.0 + bounds.Top;
-        }
+        CenterOnPrimary();
         if (_settings.RememberWindowSize)
             SaveWindowPosition();
     }
