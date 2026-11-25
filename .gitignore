@@ -370,3 +370,9 @@ NetFix_Setup*.iss
 # NetFix Fallback Binaries
 Assets/Fallback/zapret-fallback.zip
 Assets/Fallback/tgwsproxy-fallback.exe
+
+# macOS client
+macos/.build/
+macos/NetFix.app/
+macos/AppIcon.icns
+macos/AppIcon.iconset/
