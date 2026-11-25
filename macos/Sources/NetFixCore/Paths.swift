@@ -17,6 +17,8 @@ public enum Paths {
 
     public static var bin: URL { support.appendingPathComponent("bin", isDirectory: true) }
     public static var tpws: URL { bin.appendingPathComponent("tpws") }
+    /// Копия, которую реально запускает root-служба. Каталог принадлежит root и не доступен пользователю на запись.
+    public static let privilegedTpws = URL(fileURLWithPath: "/Library/Application Support/NetFix/tpws")
     public static var effectiveTpws: URL {
         if !customTpws.isEmpty, FileManager.default.isExecutableFile(atPath: customTpws) {
             return URL(fileURLWithPath: customTpws)

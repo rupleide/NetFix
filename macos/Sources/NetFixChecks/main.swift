@@ -59,6 +59,10 @@ check(ModStore.sanitize("../hosts") == nil && ModStore.sanitize("a/b") == nil &&
 check(!BypassScripts.start.contains("--daemon") && BypassScripts.start.contains("com.apple/netfix"), "start script")
 check(BypassScripts.start.contains("printf '%s\\n'"), "printf newline")
 check(BypassScripts.scan.contains("BEST") && BypassScripts.stop.contains("disable_all"), "scan and stop")
+check(Paths.privilegedTpws.path == "/Library/Application Support/NetFix/tpws", "privileged path")
+check(BypassScripts.start.contains(Paths.privilegedTpws.path) && BypassScripts.start.contains("chown root:wheel"), "root owns tpws")
+check(BypassScripts.start.contains("Set :ProgramArguments:0"), "daemon binary rewritten")
+check(BypassScripts.scan.contains(#"sudo -u "$CONSOLE_USER""#), "scan curl drops uid")
 
 if CommandLine.arguments.contains("live") {
     let service = DnsService.activeService() ?? "—"

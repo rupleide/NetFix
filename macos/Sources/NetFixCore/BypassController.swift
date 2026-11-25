@@ -2,10 +2,10 @@ import Foundation
 
 public enum BypassController {
     public static func isRunning() -> Bool {
-        let binary = Paths.effectiveTpws.path
+        let markers = [Paths.privilegedTpws.path, Paths.effectiveTpws.path]
         let lines = Shell.run("/bin/ps", ["-ax", "-o", "command="]).stdout.split(separator: "\n")
         return lines.contains { line in
-            line.contains(binary) && !line.contains("netfix-") && !line.contains("grep")
+            markers.contains { line.contains($0) } && !line.contains("netfix-") && !line.contains("grep")
         }
     }
 
