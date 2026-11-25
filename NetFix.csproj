@@ -50,7 +50,12 @@
     <Resource Include="Assets\Screenshots\hd_phototv.png" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="DiscordRichPresence" Version="1.4.1.37" />
+    <Reference Include="DiscordRPC">
+      <HintPath>Libs\DiscordRPC.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>Libs\Newtonsoft.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
