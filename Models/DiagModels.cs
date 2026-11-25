@@ -70,6 +70,8 @@ public class AppStatus
     public string WarpProcName { get; set; } = "";
     public bool TgWsProxyRunning { get; set; }
     public string TgWsProxyProcName { get; set; } = "";
+    public bool ByeDpiRunning { get; set; }
+    public string ByeDpiProcName { get; set; } = "";
 }
 
 public class DiscordPingResult
@@ -96,6 +98,8 @@ public class DiagReport
 }
 
 public enum FixMode { Full, Fast }
+
+public enum BypassEngine { Zapret, ByeDpi }
 
 public class AppSettings
 {
@@ -124,6 +128,10 @@ public class AppSettings
     public bool StartMinimizedToTray { get; set; } = false;
     public bool EnableZapret { get; set; } = true;
     public bool EnableTgWsProxy { get; set; } = true;
+    public BypassEngine BypassEngine { get; set; } = BypassEngine.Zapret;
+    public string ByeDpiPresetId { get; set; } = "default";
+    public int ByeDpiPort { get; set; } = 1080;
+    public bool ByeDpiSystemProxy { get; set; } = true;
     public List<string> ActiveStrategyMods { get; set; } = [];
     public List<string> ActiveListMods { get; set; } = [];
     public List<string> ActiveHostsMods { get; set; } = [];

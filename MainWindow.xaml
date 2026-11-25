@@ -6402,6 +6402,42 @@
                                 <CheckBox x:Name="UseTgWsCB" Style="{StaticResource Toggle}"
                                           Content="Использовать TgWsProxy" Margin="0,0,0,10"
                                           Checked="SettingCB_Checked" Unchecked="SettingCB_Unchecked"/>
+                                <Border Height="1" Background="#333333" Margin="0,4,0,16"/>
+                                <TextBlock Text="ДВИЖОК ОБХОДА" FontFamily="Segoe UI" FontSize="11"
+                                           Foreground="#888888" FontWeight="Bold" Margin="0,0,0,10"/>
+                                <ComboBox x:Name="BypassEngineBox" Style="{StaticResource DarkGlassComboBox}"
+                                          Margin="0,0,0,10"
+                                          SelectionChanged="BypassEngineBox_SelectionChanged"/>
+                                <StackPanel x:Name="ByeDpiOptionsPanel" Visibility="Collapsed">
+                                    <TextBlock Text="Пресет" FontSize="12" Foreground="#f0f0f0" Margin="0,0,0,4"/>
+                                    <ComboBox x:Name="ByeDpiPresetBox" Style="{StaticResource DarkGlassComboBox}"
+                                              DisplayMemberPath="Title" Margin="0,0,0,6"
+                                              SelectionChanged="ByeDpiPresetBox_SelectionChanged"/>
+                                    <TextBlock x:Name="ByeDpiPresetHint" TextWrapping="Wrap"
+                                               FontSize="11" Foreground="#888888" Margin="0,0,0,10"/>
+                                    <TextBlock Text="Порт SOCKS5" FontSize="12" Foreground="#f0f0f0" Margin="0,0,0,4"/>
+                                    <TextBox x:Name="ByeDpiPortBox" Style="{StaticResource InputBox}" Height="32"
+                                             Margin="0,0,0,10" Padding="8,0,8,0"
+                                             LostFocus="ByeDpiPortBox_LostFocus"/>
+                                    <CheckBox x:Name="ByeDpiSystemProxyCB" Style="{StaticResource Toggle}"
+                                              Content="Системный прокси Windows" Margin="0,0,0,8"
+                                              Checked="ByeDpiSystemProxy_Changed" Unchecked="ByeDpiSystemProxy_Changed"/>
+                                    <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="#888888" Margin="0,0,0,8"
+                                               Text="Его подхватывают браузеры и программы, которые читают системный прокси. Игры и античит не затрагиваются. Запуск ByeDPI останавливает Zapret."/>
+                                    <TextBlock x:Name="ByeDpiEndpointLbl" FontSize="11.5" Foreground="#a1a1aa" Margin="0,0,0,10"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                        <Button x:Name="ByeDpiTestBtn" Content="Проверить" Height="32" Width="148"
+                                                Style="{StaticResource OutlineBtn}" Margin="0,0,8,0" Padding="0"
+                                                WindowChrome.IsHitTestVisibleInChrome="True"
+                                                Click="ByeDpiTestBtn_Click"/>
+                                        <Button x:Name="ByeDpiPickBtn" Content="Подобрать" Height="32" Width="148"
+                                                Style="{StaticResource AccentBtn}" Padding="0"
+                                                WindowChrome.IsHitTestVisibleInChrome="True"
+                                                Click="ByeDpiPickBtn_Click"/>
+                                    </StackPanel>
+                                    <TextBlock x:Name="ByeDpiActionStatus" TextWrapping="Wrap"
+                                               FontSize="11" Foreground="#aaaaaa" Margin="0,0,0,12"/>
+                                </StackPanel>
                                 <Grid Margin="0,0,0,14" Height="22">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
@@ -7189,6 +7225,62 @@
                                                          Foreground="#3b82f6"
                                                          Background="#1a1a1c"
                                                          BorderThickness="0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Background="#252525" CornerRadius="12"
+                                            BorderBrush="#333333" BorderThickness="1"
+                                            Padding="15,12" Margin="0,0,0,8">
+                                        <StackPanel>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Border Width="32" Height="32" CornerRadius="9" Margin="0,0,10,0" VerticalAlignment="Center">
+                                                    <Border.Background>
+                                                        <RadialGradientBrush Center="0.5,1.05" GradientOrigin="0.5,1.05" RadiusX="0.8" RadiusY="0.9">
+                                                            <GradientStop Color="#4e4e56" Offset="0.0"/>
+                                                            <GradientStop Color="#3e3e46" Offset="0.25"/>
+                                                            <GradientStop Color="#323238" Offset="0.55"/>
+                                                            <GradientStop Color="#28282d" Offset="0.85"/>
+                                                            <GradientStop Color="#212124" Offset="1.0"/>
+                                                        </RadialGradientBrush>
+                                                    </Border.Background>
+                                                    <TextBlock Text="BD" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
+                                                               Foreground="#f4f4f5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="ByeDPI" FontFamily="Segoe UI" FontSize="13"
+                                                               FontWeight="SemiBold" Foreground="White"/>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                        <Ellipse x:Name="ByeDpiDot2" Width="6" Height="6"
+                                                                 Fill="#888888" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                        <TextBlock x:Name="ByeDpiStatusLbl" Text="Не запущен"
+                                                                   FontFamily="Segoe UI" FontSize="11" Foreground="#888888"/>
+                                                    </StackPanel>
+                                                    <TextBlock x:Name="ByeDpiPresetLbl" Text=""
+                                                               FontFamily="Segoe UI" FontSize="10.5"
+                                                               Foreground="#71717a" Margin="0,2,0,0"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                                <Button x:Name="ByeDpiToggleBtn" Grid.Column="2"
+                                                        Style="{StaticResource AccentBtn}"
+                                                        Padding="10,6" FontSize="12"
+                                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                                        Click="ByeDpiToggle_Click">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Path Data="{StaticResource PlayIcon}" Fill="White"
+                                                              Width="11" Height="11" Stretch="Uniform"
+                                                              Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Запустить" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </Grid>
+                                            <ProgressBar x:Name="ByeDpiToggleProgress"
+                                                         Height="3" Margin="0,7,0,0"
+                                                         IsIndeterminate="True" Visibility="Collapsed"
+                                                         Foreground="#3b82f6" Background="#1a1a1c" BorderThickness="0"/>
                                         </StackPanel>
                                     </Border>
                                     <Border Background="#252525" CornerRadius="12"

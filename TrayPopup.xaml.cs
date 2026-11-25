@@ -385,7 +385,10 @@ public partial class TrayPopup : Window
                 if (cache?.CurrentConfig is { Length: > 0 })
                     await ZapretConfigService.ApplyConfigAsync(settings.ZapretPath, cache.CurrentConfig);
                 else
+                {
+                    ByeDpiService.Stop();
                     Process.Start(new ProcessStartInfo("cmd.exe", $"/c \"{settings.ZapretPath}\"") { UseShellExecute = false, CreateNoWindow = true });
+                }
             }
             await Task.Delay(1000);
         }
