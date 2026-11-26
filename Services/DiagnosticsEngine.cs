@@ -41,6 +41,7 @@ public static class DiagnosticsEngine
         ["goodbyedpi"] = ["goodbyedpi", "goodbye"],
         ["warp"]       = ["warp-svc", "warp-cli", "cloudflare"],
         ["tgwsproxy"]  = ["tg-ws-proxy", "tgwsproxy", "tg_ws_proxy", "flowseal"],
+        ["byedpi"]     = ["ciadpi"],
     };
 
 
@@ -228,6 +229,7 @@ public static class DiagnosticsEngine
             var gd = Match("goodbyedpi"); if (gd != "") { status.GoodbyeDpiRunning = true; status.GoodbyeDpiProcName = gd; }
             var wp = Match("warp");     if (wp != "") { status.WarpRunning = true;     status.WarpProcName = wp; }
             var tw = Match("tgwsproxy"); if (tw != "") { status.TgWsProxyRunning = true; status.TgWsProxyProcName = tw; }
+            var bd = Match("byedpi"); if (bd != "") { status.ByeDpiRunning = true; status.ByeDpiProcName = bd; }
         }
         catch { }
         return status;

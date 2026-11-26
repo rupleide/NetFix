@@ -549,6 +549,7 @@ public class ZapretConfigService
                 return false;
             }
 
+            ByeDpiService.Stop();
             await StopAndRemoveServiceAsync("zapret");
 
             EnableTcpTimestamps();

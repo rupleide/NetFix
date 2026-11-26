@@ -270,6 +270,9 @@ public partial class MainWindow : Window
     private bool _settingsLoaded;
     private bool? _lastZapretActive = null;
     private bool? _lastTgWsActive = null;
+    private bool _byeDpiBusy;
+    private bool _suppressEngineEvent;
+    private bool _lastNetOk = true;
 
     private List<ModEntry> _allMods = [];
     private ModType _currentModsTab = ModType.Strategy;
@@ -316,6 +319,9 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
+        BypassSession.ReadSettings = () => _settings;
+        BypassSession.EngineChanged = SyncBypassEngine;
+
         InitializeComponent();
 
         Loaded += OnLoaded;
@@ -390,6 +396,7 @@ public partial class MainWindow : Window
             _discord.Initialize();
         UpdateMainGridClip();
         LoadSettingsToPanel();
+        ByeDpiService.RecoverOrphanedProxy();
         UpdateSelectedConfigDisplay();
         _settingsLoaded = true;
 
@@ -779,10 +786,7 @@ public partial class MainWindow : Window
 
             if (st.ZapretRunning)
             {
-                foreach (var p in Process.GetProcessesByName("winws"))
-                    try { p.Kill(); } catch { }
-                foreach (var p in Process.GetProcessesByName("winws.exe"))
-                    try { p.Kill(); } catch { }
+                await AntiCheatBypassService.StopZapretAndWinDivertAsync();
                 _zapretToggleFails = 0;
             }
             else
@@ -827,6 +831,7 @@ public partial class MainWindow : Window
                     }
                     else
                     {
+                        ByeDpiService.Stop();
                         Process.Start(new ProcessStartInfo(_settings.ZapretPath) { UseShellExecute = true });
                     }
                 }
@@ -837,17 +842,334 @@ public partial class MainWindow : Window
             }
 
             await Task.Delay(2000);
-            UpdateActiveApps();
-
             var afterSt = DiagnosticsEngine.CheckAppStatus();
+            if (!st.ZapretRunning && afterSt.ZapretRunning)
+                SyncBypassEngine(BypassEngine.Zapret);
+            else
+                UpdateActiveApps();
+
             if (afterSt.ZapretRunning)
                 _zapretToggleFails = 0;
-            else
+            else if (!st.ZapretRunning)
                 TrackZapretStartFail();
         }
         finally
         {
             ZapretToggleProgress.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private async void ByeDpiToggle_Click(object sender, RoutedEventArgs e)
+    {
+        if (_byeDpiBusy) return;
+        _byeDpiBusy = true;
+        ByeDpiToggleProgress.Visibility = Visibility.Visible;
+        ByeDpiToggleBtn.IsEnabled = false;
+
+        try
+        {
+            var wasRunning = ByeDpiService.IsRunning;
+            if (wasRunning)
+            {
+                ByeDpiService.Stop();
+            }
+            else
+            {
+                ReadByeDpiSettingsFromPanel();
+                var result = await ByeDpiService.StartAsync(_settings);
+                if (!result.Ok)
+                    AppendLog($"ByeDPI: {result.Message}", "error");
+                else if (!string.IsNullOrEmpty(result.Message))
+                    AppendLog($"ByeDPI: {result.Message}", "warn");
+                else
+                    AppendLog($"ByeDPI запущен, SOCKS5 {result.Endpoint}", "ok");
+            }
+
+            await Task.Delay(300);
+            if (!wasRunning && ByeDpiService.IsRunning)
+                SyncBypassEngine(BypassEngine.ByeDpi);
+            else
+                UpdateActiveApps();
+        }
+        finally
+        {
+            _byeDpiBusy = false;
+            ByeDpiToggleBtn.IsEnabled = true;
+            ByeDpiToggleProgress.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private async void ByeDpiTestBtn_Click(object sender, RoutedEventArgs e) =>
+        await RunByeDpiCheckAsync(pick: false);
+
+    private async void ByeDpiPickBtn_Click(object sender, RoutedEventArgs e) =>
+        await RunByeDpiCheckAsync(pick: true);
+
+    private async Task RunByeDpiCheckAsync(bool pick)
+    {
+        if (_byeDpiBusy) return;
+        _byeDpiBusy = true;
+        ByeDpiTestBtn.IsEnabled = false;
+        ByeDpiPickBtn.IsEnabled = false;
+        ByeDpiActionStatus.Text = pick ? "Подбираю пресет..." : "Проверяю пресет...";
+
+        try
+        {
+            ReadByeDpiSettingsFromPanel();
+
+            if (pick)
+            {
+                var found = await ByeDpiService.FindWorkingPresetAsync(
+                    _settings,
+                    title => Dispatcher.Invoke(() => ByeDpiActionStatus.Text = $"Пробую «{title}»"));
+
+                if (found.Preset is null)
+                {
+                    ByeDpiActionStatus.Text = found.Message;
+                    AppendLog($"ByeDPI: {found.Message}", "warn");
+                }
+                else
+                {
+                    ByeDpiPresetBox.SelectedItem = found.Preset;
+                    ByeDpiActionStatus.Text = $"{found.Message}. Пресет «{found.Preset.Title}»";
+                    AppendLog($"ByeDPI: {found.Message}. Пресет «{found.Preset.Title}»", "ok");
+                    SettingsService.Save(_settings);
+                }
+            }
+            else
+            {
+                if (!ByeDpiService.IsRunning)
+                {
+                    var start = await ByeDpiService.StartAsync(_settings);
+                    if (!start.Ok)
+                    {
+                        ByeDpiActionStatus.Text = start.Message;
+                        AppendLog($"ByeDPI: {start.Message}", "error");
+                        return;
+                    }
+                }
+
+                var probe = await ByeDpiService.ProbeAsync(_settings.ByeDpiPort);
+                if (probe.Ok)
+                {
+                    ByeDpiActionStatus.Text = $"Открылся {probe.Host}";
+                    AppendLog($"ByeDPI открыл {probe.Host}", "ok");
+                }
+                else
+                {
+                    ByeDpiActionStatus.Text = "Контрольные сайты не открылись";
+                    AppendLog($"ByeDPI: {probe.Detail}", "warn");
+                }
+            }
+
+            UpdateActiveApps();
+        }
+        finally
+        {
+            _byeDpiBusy = false;
+            ByeDpiTestBtn.IsEnabled = true;
+            ByeDpiPickBtn.IsEnabled = true;
+        }
+    }
+
+    private void BypassEngineBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_settingsLoaded || _suppressEngineEvent) return;
+        ReadByeDpiSettingsFromPanel();
+        UpdateByeDpiOptionsVisibility();
+        SettingsService.Save(_settings);
+    }
+
+    private void ByeDpiPresetBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_settingsLoaded) return;
+        if (ByeDpiPresetBox.SelectedItem is not ByeDpiPreset preset) return;
+        _settings.ByeDpiPresetId = preset.Id;
+        ByeDpiPresetHint.Text = preset.Description;
+        SettingsService.Save(_settings);
+        UpdateActiveApps();
+    }
+
+    private void ByeDpiPortBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (!_settingsLoaded) return;
+        if (!int.TryParse(ByeDpiPortBox.Text.Trim(), out var port) || port is < 1 or > 65535)
+        {
+            ByeDpiPortBox.Text = ByeDpiService.NormalizePort(_settings.ByeDpiPort).ToString();
+            return;
+        }
+
+        _settings.ByeDpiPort = port;
+        UpdateByeDpiEndpointLabel();
+        SettingsService.Save(_settings);
+    }
+
+    private void ByeDpiSystemProxy_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!_settingsLoaded) return;
+        _settings.ByeDpiSystemProxy = ByeDpiSystemProxyCB.IsChecked == true;
+        SettingsService.Save(_settings);
+
+        if (!ByeDpiService.IsRunning) return;
+
+        if (_settings.ByeDpiSystemProxy)
+            ByeDpiService.ApplySystemProxy(_settings.ByeDpiPort);
+        else
+            ByeDpiService.RestoreSystemProxy();
+    }
+
+    private void SyncBypassEngine(BypassEngine? started)
+    {
+        if (started is BypassEngine engine)
+            ApplySelectedEngine(engine);
+
+        UpdateActiveApps();
+    }
+
+    private void ApplySelectedEngine(BypassEngine engine)
+    {
+        _settings.BypassEngine = engine;
+        var index = engine == BypassEngine.ByeDpi ? 1 : 0;
+        if (BypassEngineBox.Items.Count < 2)
+        {
+            BypassEngineBox.Items.Clear();
+            BypassEngineBox.Items.Add("Zapret");
+            BypassEngineBox.Items.Add("ByeDPI");
+        }
+
+        _suppressEngineEvent = true;
+        try
+        {
+            if (BypassEngineBox.SelectedIndex != index)
+                BypassEngineBox.SelectedIndex = index;
+        }
+        finally
+        {
+            _suppressEngineEvent = false;
+        }
+
+        UpdateByeDpiOptionsVisibility();
+        SettingsService.Save(_settings);
+
+        if (_autoFixRunning || _checkInProgress || _isInstalling)
+            return;
+
+        var st = DiagnosticsEngine.CheckAppStatus();
+        var green = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+        var gray = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+        ZapretDot.Fill = st.ZapretRunning ? green : gray;
+        ByeDpiDot.Fill = st.ByeDpiRunning ? green : gray;
+
+        var running = engine == BypassEngine.ByeDpi ? st.ByeDpiRunning : st.ZapretRunning;
+        if (running)
+            SetConnectedFromStatus();
+        else if (_isConnected)
+            SetFixBtnDisconnected();
+    }
+
+    private void ReadByeDpiSettingsFromPanel()
+    {
+        _settings.BypassEngine = BypassEngineBox.SelectedIndex == 1 ? BypassEngine.ByeDpi : BypassEngine.Zapret;
+        if (ByeDpiPresetBox.SelectedItem is ByeDpiPreset preset)
+            _settings.ByeDpiPresetId = preset.Id;
+        if (int.TryParse(ByeDpiPortBox.Text.Trim(), out var port) && port is >= 1 and <= 65535)
+            _settings.ByeDpiPort = port;
+        _settings.ByeDpiSystemProxy = ByeDpiSystemProxyCB.IsChecked == true;
+    }
+
+    private void UpdateByeDpiOptionsVisibility()
+    {
+        var byeDpi = BypassEngineBox.SelectedIndex == 1;
+        ByeDpiOptionsPanel.Visibility = byeDpi ? Visibility.Visible : Visibility.Collapsed;
+        if (ByeDpiPresetBox.SelectedItem is ByeDpiPreset preset)
+            ByeDpiPresetHint.Text = preset.Description;
+    }
+
+    private void UpdateByeDpiEndpointLabel()
+    {
+        var port = ByeDpiService.NormalizePort(
+            int.TryParse(ByeDpiPortBox.Text.Trim(), out var parsed) ? parsed : _settings.ByeDpiPort);
+        ByeDpiEndpointLbl.Text = $"Адрес для ручной настройки: 127.0.0.1:{port}";
+    }
+
+    private async void RunByeDpiFix()
+    {
+        if (_autoFixRunning)
+        {
+            _checkInProgress = false;
+            FixBtn.IsEnabled = true;
+            StopLongCheckTimer();
+            return;
+        }
+
+        _autoFixRunning = true;
+
+        try
+        {
+            EnterWorkingState("Запуск ByeDPI...");
+            LogBox.Document.Blocks.Clear();
+            AppendLog("BYE DPI", "system");
+            AppendLog("Локальный SOCKS5 без WinDivert. Zapret будет остановлен.", "info");
+
+            ReadByeDpiSettingsFromPanel();
+            var preset = ByeDpiPresets.Get(_settings.ByeDpiPresetId);
+            AppendLog($"Пресет: {preset.Title}", "info");
+
+            var result = await ByeDpiService.StartAsync(_settings);
+            if (!result.Ok)
+            {
+                AppendLog(result.Message, "error");
+                StopGlow(false);
+                AnimateProgressBar(100, Color.FromRgb(239, 68, 68), "Ошибка", 0.5);
+                PlayErrorRing();
+                return;
+            }
+
+            AppendLog($"SOCKS5 {result.Endpoint}", "ok");
+            if (!string.IsNullOrEmpty(result.Message))
+                AppendLog(result.Message, "warn");
+            else if (_settings.ByeDpiSystemProxy)
+                AppendLog("Системный прокси включён. Его видят браузеры и программы, которые читают настройки Windows.", "ok");
+            else
+                AppendLog("Системный прокси не включался. Адрес можно вписать в программу вручную.", "info");
+
+            AppendLog("Проверяю discord.com и youtube.com через прокси...", "info");
+            var probe = await ByeDpiService.ProbeAsync(_settings.ByeDpiPort);
+            var probeOk = probe.Ok;
+            if (probeOk)
+                AppendLog($"Пресет открыл {probe.Host}", "ok");
+            else
+                AppendLog($"Контрольные сайты не открылись. В настройках можно нажать «Подобрать». {probe.Detail}", "warn");
+
+            if (_settings.EnableTgWsProxy && !DiagnosticsEngine.CheckAppStatus().TgWsProxyRunning)
+            {
+                AppendLog("Запускаю TgWsProxy...", "info");
+                StartTgWsProxyWithActivation();
+            }
+
+            StopGlow(probeOk);
+            if (probeOk)
+            {
+                Dispatcher.Invoke(() => SetFixBtnConnected());
+                AppendLog("spacer");
+                AppendLog("ByeDPI запущен.", "final");
+                PlaySuccessRing();
+                AnimateProgressBar(100, Color.FromRgb(34, 197, 94), "Готово", 0.5);
+            }
+            else
+            {
+                AnimateProgressBar(100, Color.FromRgb(234, 179, 8), "Проверьте пресет", 0.5);
+            }
+
+            UpdateActiveApps();
+        }
+        finally
+        {
+            _discord.IsScanning = false;
+            _autoFixRunning = false;
+            _checkInProgress = false;
+            FixBtn.IsEnabled = true;
+            StopLongCheckTimer();
         }
     }
 
@@ -5447,8 +5769,7 @@ public partial class MainWindow : Window
         {
             var st = DiagnosticsEngine.CheckAppStatus();
             bool vpn = DetectVpn(out string _);
-            bool netOk = await DiagnosticsEngine.CheckInternetAsync();
-            if (_settings.ForceNetworkOk) netOk = true;
+            bool netOk = _lastNetOk;
 
             Dispatcher.Invoke(() =>
             {
@@ -5458,6 +5779,7 @@ public partial class MainWindow : Window
 
                 VpnDot.Fill = vpn ? greenBrush : grayBrush;
                 ZapretDot.Fill = st.ZapretRunning ? greenBrush : grayBrush;
+                ByeDpiDot.Fill = st.ByeDpiRunning ? greenBrush : grayBrush;
                 TgWsDot.Fill = st.TgWsProxyRunning ? greenBrush : grayBrush;
 
                 ZapretDot2.Fill = st.ZapretRunning ? greenBrush : grayBrush;
@@ -5478,6 +5800,24 @@ public partial class MainWindow : Window
 
                 UpdateActiveConfigDisplay(st.ZapretRunning);
                 UpdateSelectedConfigDisplay();
+
+                ByeDpiDot2.Fill = st.ByeDpiRunning ? greenBrush : grayBrush;
+                var byePreset = ByeDpiPresets.Get(_settings.ByeDpiPresetId);
+                ByeDpiPresetLbl.Text = st.ByeDpiRunning
+                    ? $"{byePreset.Title} · 127.0.0.1:{ByeDpiService.NormalizePort(_settings.ByeDpiPort)}"
+                    : byePreset.Title;
+                ByeDpiStatusLbl.Text = st.ByeDpiRunning ? "Запущен" : "Не запущен";
+                ByeDpiStatusLbl.Foreground = st.ByeDpiRunning ? greenBrush : grayBrush;
+                if (st.ByeDpiRunning)
+                {
+                    ByeDpiToggleBtn.Style = (Style)FindResource("RedAccentBtn");
+                    ByeDpiToggleBtn.Content = "■  Закрыть";
+                }
+                else
+                {
+                    ByeDpiToggleBtn.Style = (Style)FindResource("AccentBtn");
+                    ByeDpiToggleBtn.Content = CreateButtonContentWithIcon("PlayIcon", "Запустить", Brushes.White);
+                }
 
                 TgWsDot2.Fill = st.TgWsProxyRunning ? greenBrush : grayBrush;
                 TgWsStatusLbl.Text = st.TgWsProxyRunning ? "Запущен" : "Не запущен";
@@ -5511,10 +5851,11 @@ public partial class MainWindow : Window
                 if (!_isInGame && !_discord.IsScanning)
                     _discord.SetAllGood(st.ZapretRunning, st.TgWsProxyRunning);
 
-                bool allEnabledRunning =
-                    (!_settings.EnableZapret || st.ZapretRunning) &&
-                    (!_settings.EnableTgWsProxy || st.TgWsProxyRunning);
-                bool anyEnabled = _settings.EnableZapret || _settings.EnableTgWsProxy;
+                bool byeDpiMode = _settings.BypassEngine == BypassEngine.ByeDpi;
+                bool allEnabledRunning = byeDpiMode
+                    ? st.ByeDpiRunning
+                    : st.ZapretRunning || (!_settings.EnableZapret && _settings.EnableTgWsProxy && st.TgWsProxyRunning);
+                bool anyEnabled = byeDpiMode || _settings.EnableZapret || _settings.EnableTgWsProxy || st.ZapretRunning || st.ByeDpiRunning;
 
                 if (!allEnabledRunning && _isConnected
                     && !_isInstalling && !_autoFixRunning && !_checkInProgress)
@@ -5523,7 +5864,21 @@ public partial class MainWindow : Window
                 if (allEnabledRunning && anyEnabled && !_isConnected
                     && !_isInstalling && !_autoFixRunning && !_checkInProgress)
                     SetConnectedFromStatus();
+
+                foreach (Window window in System.Windows.Application.Current.Windows)
+                {
+                    if (window is TrayPopup tray)
+                        tray.RefreshStatus();
+                }
             });
+
+            try
+            {
+                var freshNet = await DiagnosticsEngine.CheckInternetAsync();
+                if (_settings.ForceNetworkOk) freshNet = true;
+                _lastNetOk = freshNet;
+            }
+            catch { }
         });
     }
 
@@ -6016,6 +6371,25 @@ public partial class MainWindow : Window
     private async void FixBtn_Click(object s, RoutedEventArgs e)
     {
         if (_checkInProgress || _autoFixRunning || _isInstalling) return;
+
+        if (_settings.BypassEngine == BypassEngine.ByeDpi)
+        {
+            if (ByeDpiService.IsRunning)
+            {
+                ByeDpiService.Stop();
+                AppendLog("ByeDPI остановлен. Системный прокси возвращён.", "info");
+                SetFixBtnDisconnected();
+                UpdateActiveApps();
+                return;
+            }
+
+            ShowPlayWhileScanDialog();
+            FixBtn.IsEnabled = false;
+            _checkInProgress = true;
+            StartLongCheckTimer();
+            RunByeDpiFix();
+            return;
+        }
 
         ShowPlayWhileScanDialog();
 
@@ -6526,6 +6900,8 @@ public partial class MainWindow : Window
             foreach (var p in Process.GetProcessesByName("winws"))
                 try { p.Kill(); } catch { }
         }
+        if (st.ByeDpiRunning)
+            ByeDpiService.Stop();
         if (_settings.EnableTgWsProxy && st.TgWsProxyRunning)
         {
             foreach (var p in Process.GetProcessesByName("TgWsProxy"))
@@ -6791,8 +7167,9 @@ public partial class MainWindow : Window
         {
             t.Stop();
             var st = DiagnosticsEngine.CheckAppStatus();
-            bool allRunning = (!_settings.EnableZapret || st.ZapretRunning)
-                           && (!_settings.EnableTgWsProxy || st.TgWsProxyRunning);
+            bool allRunning = _settings.BypassEngine == BypassEngine.ByeDpi
+                ? st.ByeDpiRunning
+                : st.ZapretRunning || (!_settings.EnableZapret && _settings.EnableTgWsProxy && st.TgWsProxyRunning);
             if (!allRunning) return;
 
             HideAllRings();
@@ -9526,6 +9903,18 @@ public partial class MainWindow : Window
         AutoUpdatesCB.IsChecked     = _settings.AutoUpdates;
         UseZapretCB.IsChecked = _settings.EnableZapret;
         UseTgWsCB.IsChecked = _settings.EnableTgWsProxy;
+        if (BypassEngineBox.Items.Count == 0)
+        {
+            BypassEngineBox.Items.Add("Zapret");
+            BypassEngineBox.Items.Add("ByeDPI");
+        }
+        BypassEngineBox.SelectedIndex = _settings.BypassEngine == BypassEngine.ByeDpi ? 1 : 0;
+        ByeDpiPresetBox.ItemsSource ??= ByeDpiPresets.All;
+        ByeDpiPresetBox.SelectedItem = ByeDpiPresets.Get(_settings.ByeDpiPresetId);
+        ByeDpiPortBox.Text = ByeDpiService.NormalizePort(_settings.ByeDpiPort).ToString();
+        ByeDpiSystemProxyCB.IsChecked = _settings.ByeDpiSystemProxy;
+        UpdateByeDpiOptionsVisibility();
+        UpdateByeDpiEndpointLabel();
         AutoEacBypassCB.IsChecked = _settings.AutoEacBypass;
         ShowGameOfferCB.IsChecked   = _settings.ShowGameOfferDialog;
         ShowServiceReminderCB.IsChecked = _settings.ShowLongCheckDialog;
@@ -9559,6 +9948,12 @@ public partial class MainWindow : Window
         _settings.ShowLongCheckDialog  = ShowServiceReminderCB.IsChecked == true;
         _settings.EnableZapret = UseZapretCB.IsChecked == true;
         _settings.EnableTgWsProxy = UseTgWsCB.IsChecked == true;
+        _settings.BypassEngine = BypassEngineBox.SelectedIndex == 1 ? BypassEngine.ByeDpi : BypassEngine.Zapret;
+        if (ByeDpiPresetBox.SelectedItem is ByeDpiPreset byePreset)
+            _settings.ByeDpiPresetId = byePreset.Id;
+        if (int.TryParse(ByeDpiPortBox.Text.Trim(), out var byePort) && byePort is >= 1 and <= 65535)
+            _settings.ByeDpiPort = byePort;
+        _settings.ByeDpiSystemProxy = ByeDpiSystemProxyCB.IsChecked == true;
         _settings.AutoEacBypass = AutoEacBypassCB.IsChecked == true;
         _settings.RememberWindowSize = RememberSizeCB.IsChecked == true;
         _settings.ForceNetworkOk = ForceNetOkCB.IsChecked == true;
@@ -14617,6 +15012,7 @@ public partial class MainWindow : Window
     {
         try
         {
+            ByeDpiService.Stop();
             Process.Start(new ProcessStartInfo(_settings.ZapretPath)
             {
                 UseShellExecute = true,
@@ -15760,7 +16156,7 @@ public partial class MainWindow : Window
             btn.RenderTransform = new TranslateTransform(14, 0);
         }
 
-        UIElement?[] statusBeads = [NetDot, NetLbl, VpnStatusPanel, ZapretDot, ZapretLbl, TgWsDot, TgWsLbl];
+        UIElement?[] statusBeads = [NetDot, NetLbl, VpnStatusPanel, ZapretDot, ZapretLbl, ByeDpiDot, ByeDpiLbl, TgWsDot, TgWsLbl];
         foreach (var bead in statusBeads)
         {
             if (bead == null) continue;
@@ -15865,7 +16261,7 @@ public partial class MainWindow : Window
             authorTrans.BeginAnimation(TranslateTransform.XProperty, authorSlide);
         }
 
-        UIElement?[] statusBeads = [NetDot, NetLbl, VpnStatusPanel, ZapretDot, ZapretLbl, TgWsDot, TgWsLbl];
+        UIElement?[] statusBeads = [NetDot, NetLbl, VpnStatusPanel, ZapretDot, ZapretLbl, ByeDpiDot, ByeDpiLbl, TgWsDot, TgWsLbl];
         int statusDelay = baseDelayMs + 120;
         foreach (var bead in statusBeads)
         {
