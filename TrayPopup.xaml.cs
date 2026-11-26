@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Net.NetworkInformation;
+using NetFix.Models;
 using NetFix.Services;
 
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
@@ -29,6 +30,7 @@ public partial class TrayPopup : Window
     private static readonly SolidColorBrush _brushTransparent = new(Colors.Transparent);
 
     public static DateTime LastClosedTime { get; private set; }
+    private bool _bypassBusy;
 
     public TrayPopup()
     {
@@ -61,6 +63,12 @@ public partial class TrayPopup : Window
     }
 
 
+    public void RefreshStatus()
+    {
+        if (_bypassBusy) return;
+        UpdateStatus();
+    }
+
     private void UpdateStatus()
     {
         var s = DiagnosticsEngine.CheckAppStatus();
@@ -68,6 +76,10 @@ public partial class TrayPopup : Window
             s.ZapretRunning,
             ZapretDot, ZapretLabel,
             ZapretBtn, ZapretBtnIcon, ZapretBtnText);
+        ApplyServiceState(
+            s.ByeDpiRunning,
+            ByeDpiDot, ByeDpiLabel,
+            ByeDpiBtn, ByeDpiBtnIcon, ByeDpiBtnText);
         ApplyServiceState(
             s.TgWsProxyRunning,
             TgWsDot, TgWsLabel,
@@ -139,6 +151,13 @@ public partial class TrayPopup : Window
     {
         var st = DiagnosticsEngine.CheckAppStatus();
         ZapretBtn.Background = st.ZapretRunning ? _brushRunning : _brushStopped;
+    }
+
+    private void ByeDpiBtn_Enter(object s, MouseEventArgs e) => ByeDpiBtn.Background = _brushHover;
+    private void ByeDpiBtn_Leave(object s, MouseEventArgs e)
+    {
+        var st = DiagnosticsEngine.CheckAppStatus();
+        ByeDpiBtn.Background = st.ByeDpiRunning ? _brushRunning : _brushStopped;
     }
 
     private void TgWsBtn_Enter(object s, MouseEventArgs e) => TgWsBtn.Background = _brushHover;
@@ -367,34 +386,80 @@ public partial class TrayPopup : Window
 
     private async void ZapretBtn_Click(object s, MouseButtonEventArgs e)
     {
+        if (_bypassBusy) return;
+        _bypassBusy = true;
         ZapretBtn.IsHitTestVisible = false;
+        ByeDpiBtn.IsHitTestVisible = false;
         ZapretBtnText.Text = "...";
 
-        var running = DiagnosticsEngine.CheckAppStatus().ZapretRunning;
-        if (running)
+        var starting = false;
+        try
         {
-            foreach (var p in Process.GetProcessesByName("winws")) try { p.Kill(); } catch { }
-            await Task.Delay(500);
-        }
-        else
-        {
-            var settings = SettingsService.Load();
-            if (!string.IsNullOrEmpty(settings.ZapretPath) && System.IO.File.Exists(settings.ZapretPath))
+            var running = DiagnosticsEngine.CheckAppStatus().ZapretRunning;
+            if (running)
             {
-                var cache = ZapretConfigService.LoadCache();
-                if (cache?.CurrentConfig is { Length: > 0 })
-                    await ZapretConfigService.ApplyConfigAsync(settings.ZapretPath, cache.CurrentConfig);
-                else
-                {
-                    ByeDpiService.Stop();
-                    Process.Start(new ProcessStartInfo("cmd.exe", $"/c \"{settings.ZapretPath}\"") { UseShellExecute = false, CreateNoWindow = true });
-                }
+                await AntiCheatBypassService.StopZapretAndWinDivertAsync();
             }
-            await Task.Delay(1000);
+            else
+            {
+                starting = true;
+                var settings = BypassSession.LoadSettings();
+                if (!string.IsNullOrEmpty(settings.ZapretPath) && System.IO.File.Exists(settings.ZapretPath))
+                {
+                    var cache = ZapretConfigService.LoadCache();
+                    if (cache?.CurrentConfig is { Length: > 0 })
+                        await ZapretConfigService.ApplyConfigAsync(settings.ZapretPath, cache.CurrentConfig);
+                    else
+                    {
+                        ByeDpiService.Stop();
+                        Process.Start(new ProcessStartInfo("cmd.exe", $"/c \"{settings.ZapretPath}\"") { UseShellExecute = false, CreateNoWindow = true });
+                    }
+                }
+                await Task.Delay(1000);
+            }
         }
+        finally
+        {
+            _bypassBusy = false;
+            try { UpdateStatus(); } catch { }
+            BypassSession.Publish(starting, BypassEngine.Zapret);
+            ZapretBtn.IsHitTestVisible = true;
+            ByeDpiBtn.IsHitTestVisible = true;
+        }
+    }
 
-        UpdateStatus();
-        ZapretBtn.IsHitTestVisible = true;
+    private async void ByeDpiBtn_Click(object s, MouseButtonEventArgs e)
+    {
+        if (_bypassBusy) return;
+        _bypassBusy = true;
+        ByeDpiBtn.IsHitTestVisible = false;
+        ZapretBtn.IsHitTestVisible = false;
+        ByeDpiBtnText.Text = "...";
+
+        var starting = false;
+        try
+        {
+            if (DiagnosticsEngine.CheckAppStatus().ByeDpiRunning)
+            {
+                ByeDpiService.Stop();
+                await Task.Delay(300);
+            }
+            else
+            {
+                starting = true;
+                var settings = BypassSession.LoadSettings();
+                await ByeDpiService.StartAsync(settings);
+                await Task.Delay(300);
+            }
+        }
+        finally
+        {
+            _bypassBusy = false;
+            try { UpdateStatus(); } catch { }
+            BypassSession.Publish(starting, BypassEngine.ByeDpi);
+            ByeDpiBtn.IsHitTestVisible = true;
+            ZapretBtn.IsHitTestVisible = true;
+        }
     }
 
     private async void TgWsBtn_Click(object s, MouseButtonEventArgs e)

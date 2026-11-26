@@ -271,6 +271,8 @@ public partial class MainWindow : Window
     private bool? _lastZapretActive = null;
     private bool? _lastTgWsActive = null;
     private bool _byeDpiBusy;
+    private bool _suppressEngineEvent;
+    private bool _lastNetOk = true;
 
     private List<ModEntry> _allMods = [];
     private ModType _currentModsTab = ModType.Strategy;
@@ -317,6 +319,9 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
+        BypassSession.ReadSettings = () => _settings;
+        BypassSession.EngineChanged = SyncBypassEngine;
+
         InitializeComponent();
 
         Loaded += OnLoaded;
@@ -781,10 +786,7 @@ public partial class MainWindow : Window
 
             if (st.ZapretRunning)
             {
-                foreach (var p in Process.GetProcessesByName("winws"))
-                    try { p.Kill(); } catch { }
-                foreach (var p in Process.GetProcessesByName("winws.exe"))
-                    try { p.Kill(); } catch { }
+                await AntiCheatBypassService.StopZapretAndWinDivertAsync();
                 _zapretToggleFails = 0;
             }
             else
@@ -840,12 +842,15 @@ public partial class MainWindow : Window
             }
 
             await Task.Delay(2000);
-            UpdateActiveApps();
-
             var afterSt = DiagnosticsEngine.CheckAppStatus();
+            if (!st.ZapretRunning && afterSt.ZapretRunning)
+                SyncBypassEngine(BypassEngine.Zapret);
+            else
+                UpdateActiveApps();
+
             if (afterSt.ZapretRunning)
                 _zapretToggleFails = 0;
-            else
+            else if (!st.ZapretRunning)
                 TrackZapretStartFail();
         }
         finally
@@ -863,7 +868,8 @@ public partial class MainWindow : Window
 
         try
         {
-            if (ByeDpiService.IsRunning)
+            var wasRunning = ByeDpiService.IsRunning;
+            if (wasRunning)
             {
                 ByeDpiService.Stop();
             }
@@ -880,7 +886,10 @@ public partial class MainWindow : Window
             }
 
             await Task.Delay(300);
-            UpdateActiveApps();
+            if (!wasRunning && ByeDpiService.IsRunning)
+                SyncBypassEngine(BypassEngine.ByeDpi);
+            else
+                UpdateActiveApps();
         }
         finally
         {
@@ -965,7 +974,7 @@ public partial class MainWindow : Window
 
     private void BypassEngineBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (!_settingsLoaded) return;
+        if (!_settingsLoaded || _suppressEngineEvent) return;
         ReadByeDpiSettingsFromPanel();
         UpdateByeDpiOptionsVisibility();
         SettingsService.Save(_settings);
@@ -1007,6 +1016,55 @@ public partial class MainWindow : Window
             ByeDpiService.ApplySystemProxy(_settings.ByeDpiPort);
         else
             ByeDpiService.RestoreSystemProxy();
+    }
+
+    private void SyncBypassEngine(BypassEngine? started)
+    {
+        if (started is BypassEngine engine)
+            ApplySelectedEngine(engine);
+
+        UpdateActiveApps();
+    }
+
+    private void ApplySelectedEngine(BypassEngine engine)
+    {
+        _settings.BypassEngine = engine;
+        var index = engine == BypassEngine.ByeDpi ? 1 : 0;
+        if (BypassEngineBox.Items.Count < 2)
+        {
+            BypassEngineBox.Items.Clear();
+            BypassEngineBox.Items.Add("Zapret");
+            BypassEngineBox.Items.Add("ByeDPI");
+        }
+
+        _suppressEngineEvent = true;
+        try
+        {
+            if (BypassEngineBox.SelectedIndex != index)
+                BypassEngineBox.SelectedIndex = index;
+        }
+        finally
+        {
+            _suppressEngineEvent = false;
+        }
+
+        UpdateByeDpiOptionsVisibility();
+        SettingsService.Save(_settings);
+
+        if (_autoFixRunning || _checkInProgress || _isInstalling)
+            return;
+
+        var st = DiagnosticsEngine.CheckAppStatus();
+        var green = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+        var gray = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+        ZapretDot.Fill = st.ZapretRunning ? green : gray;
+        ByeDpiDot.Fill = st.ByeDpiRunning ? green : gray;
+
+        var running = engine == BypassEngine.ByeDpi ? st.ByeDpiRunning : st.ZapretRunning;
+        if (running)
+            SetConnectedFromStatus();
+        else if (_isConnected)
+            SetFixBtnDisconnected();
     }
 
     private void ReadByeDpiSettingsFromPanel()
@@ -5711,8 +5769,7 @@ public partial class MainWindow : Window
         {
             var st = DiagnosticsEngine.CheckAppStatus();
             bool vpn = DetectVpn(out string _);
-            bool netOk = await DiagnosticsEngine.CheckInternetAsync();
-            if (_settings.ForceNetworkOk) netOk = true;
+            bool netOk = _lastNetOk;
 
             Dispatcher.Invoke(() =>
             {
@@ -5722,6 +5779,7 @@ public partial class MainWindow : Window
 
                 VpnDot.Fill = vpn ? greenBrush : grayBrush;
                 ZapretDot.Fill = st.ZapretRunning ? greenBrush : grayBrush;
+                ByeDpiDot.Fill = st.ByeDpiRunning ? greenBrush : grayBrush;
                 TgWsDot.Fill = st.TgWsProxyRunning ? greenBrush : grayBrush;
 
                 ZapretDot2.Fill = st.ZapretRunning ? greenBrush : grayBrush;
@@ -5793,10 +5851,11 @@ public partial class MainWindow : Window
                 if (!_isInGame && !_discord.IsScanning)
                     _discord.SetAllGood(st.ZapretRunning, st.TgWsProxyRunning);
 
-                bool allEnabledRunning =
-                    (!_settings.EnableZapret || st.ZapretRunning) &&
-                    (!_settings.EnableTgWsProxy || st.TgWsProxyRunning);
-                bool anyEnabled = _settings.EnableZapret || _settings.EnableTgWsProxy;
+                bool byeDpiMode = _settings.BypassEngine == BypassEngine.ByeDpi;
+                bool allEnabledRunning = byeDpiMode
+                    ? st.ByeDpiRunning
+                    : st.ZapretRunning || (!_settings.EnableZapret && _settings.EnableTgWsProxy && st.TgWsProxyRunning);
+                bool anyEnabled = byeDpiMode || _settings.EnableZapret || _settings.EnableTgWsProxy || st.ZapretRunning || st.ByeDpiRunning;
 
                 if (!allEnabledRunning && _isConnected
                     && !_isInstalling && !_autoFixRunning && !_checkInProgress)
@@ -5805,7 +5864,21 @@ public partial class MainWindow : Window
                 if (allEnabledRunning && anyEnabled && !_isConnected
                     && !_isInstalling && !_autoFixRunning && !_checkInProgress)
                     SetConnectedFromStatus();
+
+                foreach (Window window in System.Windows.Application.Current.Windows)
+                {
+                    if (window is TrayPopup tray)
+                        tray.RefreshStatus();
+                }
             });
+
+            try
+            {
+                var freshNet = await DiagnosticsEngine.CheckInternetAsync();
+                if (_settings.ForceNetworkOk) freshNet = true;
+                _lastNetOk = freshNet;
+            }
+            catch { }
         });
     }
 
@@ -6301,6 +6374,15 @@ public partial class MainWindow : Window
 
         if (_settings.BypassEngine == BypassEngine.ByeDpi)
         {
+            if (ByeDpiService.IsRunning)
+            {
+                ByeDpiService.Stop();
+                AppendLog("ByeDPI остановлен. Системный прокси возвращён.", "info");
+                SetFixBtnDisconnected();
+                UpdateActiveApps();
+                return;
+            }
+
             ShowPlayWhileScanDialog();
             FixBtn.IsEnabled = false;
             _checkInProgress = true;
@@ -7085,8 +7167,9 @@ public partial class MainWindow : Window
         {
             t.Stop();
             var st = DiagnosticsEngine.CheckAppStatus();
-            bool allRunning = (!_settings.EnableZapret || st.ZapretRunning)
-                           && (!_settings.EnableTgWsProxy || st.TgWsProxyRunning);
+            bool allRunning = _settings.BypassEngine == BypassEngine.ByeDpi
+                ? st.ByeDpiRunning
+                : st.ZapretRunning || (!_settings.EnableZapret && _settings.EnableTgWsProxy && st.TgWsProxyRunning);
             if (!allRunning) return;
 
             HideAllRings();
@@ -16073,7 +16156,7 @@ public partial class MainWindow : Window
             btn.RenderTransform = new TranslateTransform(14, 0);
         }
 
-        UIElement?[] statusBeads = [NetDot, NetLbl, VpnStatusPanel, ZapretDot, ZapretLbl, TgWsDot, TgWsLbl];
+        UIElement?[] statusBeads = [NetDot, NetLbl, VpnStatusPanel, ZapretDot, ZapretLbl, ByeDpiDot, ByeDpiLbl, TgWsDot, TgWsLbl];
         foreach (var bead in statusBeads)
         {
             if (bead == null) continue;
@@ -16178,7 +16261,7 @@ public partial class MainWindow : Window
             authorTrans.BeginAnimation(TranslateTransform.XProperty, authorSlide);
         }
 
-        UIElement?[] statusBeads = [NetDot, NetLbl, VpnStatusPanel, ZapretDot, ZapretLbl, TgWsDot, TgWsLbl];
+        UIElement?[] statusBeads = [NetDot, NetLbl, VpnStatusPanel, ZapretDot, ZapretLbl, ByeDpiDot, ByeDpiLbl, TgWsDot, TgWsLbl];
         int statusDelay = baseDelayMs + 120;
         foreach (var bead in statusBeads)
         {

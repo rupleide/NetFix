@@ -109,6 +109,32 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse x:Name="ByeDpiDot" Width="6" Height="6"
+                                     Fill="#3F3F46" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock x:Name="ByeDpiLabel" Text="ByeDPI"
+                                       Foreground="#A1A1AA" FontFamily="Segoe UI" FontSize="12"/>
+                        </StackPanel>
+                        <Border x:Name="ByeDpiBtn" Grid.Column="1" CornerRadius="6"
+                                Padding="9,4" Cursor="Hand"
+                                MouseEnter="ByeDpiBtn_Enter" MouseLeave="ByeDpiBtn_Leave"
+                                MouseLeftButtonUp="ByeDpiBtn_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock x:Name="ByeDpiBtnIcon" Text="▶" FontSize="9"
+                                           Foreground="#4ADE80" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock x:Name="ByeDpiBtnText" Text="Запустить"
+                                           Foreground="#4ADE80" FontFamily="Segoe UI"
+                                           FontSize="11" FontWeight="Medium" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+                <Border Background="#1F1F22" CornerRadius="8" Margin="0,0,0,4" Padding="8,7">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <Ellipse x:Name="TgWsDot" Width="6" Height="6"
                                      Fill="#3F3F46" VerticalAlignment="Center" Margin="0,0,8,0"/>
                             <TextBlock x:Name="TgWsLabel" Text="TgWsProxy"

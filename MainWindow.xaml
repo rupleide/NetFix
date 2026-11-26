@@ -937,6 +937,9 @@
                         <Ellipse x:Name="ZapretDot" Width="8" Height="8" Fill="#888888" VerticalAlignment="Center"/>
                         <TextBlock x:Name="ZapretLbl" Text="Zapret" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
                                    Foreground="#888888" VerticalAlignment="Center" Margin="5,0,15,0"/>
+                        <Ellipse x:Name="ByeDpiDot" Width="8" Height="8" Fill="#888888" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="ByeDpiLbl" Text="ByeDPI" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
+                                   Foreground="#888888" VerticalAlignment="Center" Margin="5,0,15,0"/>
                         <Ellipse x:Name="TgWsDot" Width="8" Height="8" Fill="#888888" VerticalAlignment="Center"/>
                         <TextBlock x:Name="TgWsLbl" Text="TgWsProxy" FontFamily="Segoe UI" FontSize="11" FontWeight="Bold"
                                    Foreground="#888888" VerticalAlignment="Center" Margin="5,0,0,0"/>
